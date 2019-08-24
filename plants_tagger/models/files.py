@@ -210,6 +210,8 @@ class PhotoDirectory:
     def get_all_plants(self):
         """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant
         list) in form of list of dicts"""
+        if not self.directory:
+            return []
         plants_list_list = [file['tag_authors_plants'] for file in self.directory]
         plants_list = functools.reduce(operator.add, plants_list_list)
         plants = list(set(plants_list))
