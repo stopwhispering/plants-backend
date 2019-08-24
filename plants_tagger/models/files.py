@@ -77,7 +77,10 @@ def generate_thumbnail(path_basic_folder: str,
     filename_thumb_list = filename_image.split('.')
     filename_thumb_list.insert(-1, suffix)
     filename_thumb = ".".join(filename_thumb_list)
-    path_save = os.path.join(path_basic_folder, PATH_GEN, filename_thumb)
+    folder_gen = os.path.join(path_basic_folder, PATH_GEN)
+    if not os.path.exists(folder_gen):
+        os.makedirs(folder_gen)
+    path_save = os.path.join(folder_gen, filename_thumb)
     im.save(path_save, "JPEG")
 
     # exif_dict = piexif.load(path)

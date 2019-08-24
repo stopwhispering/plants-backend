@@ -27,7 +27,7 @@ class PhotoFolderFileEventsHandler(FileSystemEventHandler):
         queue = self.observer.event_queue
         finished = False
         while not finished:
-            time.sleep(10)
+            time.sleep(15)
             if not queue.qsize():
                 finished = True
             else:
@@ -57,10 +57,11 @@ def run_watcher():
     observer.schedule(handler, folder_root_original_images, recursive=True)
     # observer.schedule(handler, path_uploaded_photos_original, recursive=True)
     observer.start()
+    logger.info(f'Started Watchdog for folder: {folder_root_original_images}.')
 
     try:
         while True:
-            time.sleep(15)
+            time.sleep(30)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
