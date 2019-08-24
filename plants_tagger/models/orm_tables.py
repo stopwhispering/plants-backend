@@ -1,6 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import INTEGER, TEXT, BOOLEAN, TIMESTAMP, DATE, CHAR
+import logging
 
+from plants_tagger.models import init_sqlalchemy_engine
 from plants_tagger.models.orm_util import Base
 
 
@@ -78,3 +80,7 @@ class Botany(Base):
     superdivisio = Column(CHAR(100))
     subregnum = Column(CHAR(100))
     notes = Column(TEXT)
+
+
+logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')
+init_sqlalchemy_engine()
