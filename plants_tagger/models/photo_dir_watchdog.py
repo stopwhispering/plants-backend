@@ -4,8 +4,8 @@ import time
 import logging
 
 import plants_tagger.config_local
+from plants_tagger.config_local import folder_root_original_images, path_uploaded_photos_original
 from plants_tagger.models.files import photo_directory, lock_photo_directory, FOLDER_ROOT
-from plants_tagger import config
 import plants_tagger.models.files
 
 dt_last_change = None
@@ -54,7 +54,8 @@ def run_watcher():
     """run in thread from wsgi.py"""
     observer = Observer()
     handler = PhotoFolderFileEventsHandler(observer)
-    observer.schedule(handler, FOLDER_ROOT, recursive=True)
+    observer.schedule(handler, folder_root_original_images, recursive=True)
+    observer.schedule(handler, path_uploaded_photos_original, recursive=True)
     observer.start()
 
     try:
