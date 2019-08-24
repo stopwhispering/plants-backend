@@ -55,7 +55,7 @@ def run_watcher():
     observer = Observer()
     handler = PhotoFolderFileEventsHandler(observer)
     observer.schedule(handler, folder_root_original_images, recursive=True)
-    observer.schedule(handler, path_uploaded_photos_original, recursive=True)
+    # observer.schedule(handler, path_uploaded_photos_original, recursive=True)
     observer.start()
 
     try:

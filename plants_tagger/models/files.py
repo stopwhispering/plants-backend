@@ -11,6 +11,7 @@ import logging
 
 import plants_tagger.config_local
 from plants_tagger import config
+from plants_tagger.config_local import folder_root_original_images
 
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, copy_exif
@@ -225,7 +226,7 @@ def get_exif_tags_for_folder(path_basic_folder: str):
     with lock_photo_directory:
         global photo_directory
         if not photo_directory:
-            photo_directory = PhotoDirectory(FOLDER_ROOT)
+            photo_directory = PhotoDirectory(folder_root_original_images)
             photo_directory.refresh_directory(path_basic_folder)
             # photo_directory._read_exif_tags()
             # photo_directory._generate_images(path_basic_folder)
