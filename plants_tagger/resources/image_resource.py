@@ -3,7 +3,7 @@ from flask import request
 import os
 import logging
 
-from plants_tagger.config import path_uploaded_photos_original
+from plants_tagger.config_local import path_uploaded_photos_original
 
 logger = logging.getLogger(__name__)
 

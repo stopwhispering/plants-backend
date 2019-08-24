@@ -2,12 +2,14 @@ import os
 import glob
 import collections
 
+import plants_tagger.config_local
 from plants_tagger import config
 from plants_tagger.util.exif_helper import modified_date, set_modified_date
 
 
 def get_duplicate_filenames():
-    folder = os.path.join(config.path_frontend_temp, config.rel_folder_photos_original)
+    folder = os.path.join(plants_tagger.config_local.path_frontend_temp,
+                          plants_tagger.config_local.rel_folder_photos_original)
     # folder = folder + '\\'
     paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
     files = [{'path': path_full,

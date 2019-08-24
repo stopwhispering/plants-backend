@@ -2,6 +2,7 @@ from flask_restful import Resource
 from flask import request
 import logging
 
+import plants_tagger.config_local
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
 from plants_tagger.models.orm_tables import Plant, Botany
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ImageResource2(Resource):
     @staticmethod
     def get(**kwargs):
-        files_data, _ = get_exif_tags_for_folder(config.path_frontend_temp)
+        files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.path_frontend_temp)
 
         # filter out archived
         # todo: move on filesystem to other folder

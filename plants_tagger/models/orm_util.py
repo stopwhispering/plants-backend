@@ -2,7 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from plants_tagger.config import connection_string
+from plants_tagger.config_local import connection_string
 
 # using the <<base>> we can define any number of mapped classes
 Base = declarative_base()

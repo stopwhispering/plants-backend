@@ -3,6 +3,7 @@ from watchdog.events import FileSystemEventHandler
 import time
 import logging
 
+import plants_tagger.config_local
 from plants_tagger.models.files import photo_directory, lock_photo_directory, FOLDER_ROOT
 from plants_tagger import config
 import plants_tagger.models.files
@@ -36,7 +37,8 @@ class PhotoFolderFileEventsHandler(FileSystemEventHandler):
 
         with lock_photo_directory:
             if plants_tagger.models.files.photo_directory:
-                plants_tagger.models.files.photo_directory.refresh_directory(config.path_frontend_temp)
+                plants_tagger.models.files.photo_directory.refresh_directory(
+                    plants_tagger.config_local.path_frontend_temp)
 
     def on_created(self, event):
         self._order_refresh(event)

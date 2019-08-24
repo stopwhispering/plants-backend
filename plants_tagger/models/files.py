@@ -9,26 +9,23 @@ import operator
 import threading
 import logging
 
+import plants_tagger.config_local
 from plants_tagger import config
 
-# PATH_MAIN = r"C:\IDEs\sap-webide-personal-edition-1.53.5-trial\serverworkspace\my\myuser\OrionContent" \
-#             r"\PlantsTaggerFrontend\webapp"
-# PATH_MAIN = r"C:\IDEs\sap-webide-personal-edition-1.53.5-trial\serverworkspace\my\myuser\OrionContent" \
-#             r"\tempMyFrontend\webapp"
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, copy_exif
 
-PATH_GEN = config.rel_folder_photos_generated
+PATH_GEN = plants_tagger.config_local.rel_folder_photos_generated
 PATH_SUB = r"localService\photos"
-REL_FOLDER_PHOTOS_ORIGINAL = config.rel_folder_photos_original  # r"localService\original"
+REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.rel_folder_photos_original  # r"localService\original"
 
 lock_photo_directory = threading.RLock()
 photo_directory = None
 logger = logging.getLogger(__name__)
 
-# FOLDER_ROOT = r'C:\temp\pictures'
-FOLDER_ROOT = config.folder_root_original_images
-FOLDER_GENERATED = os.path.join(config.path_frontend_temp, config.rel_folder_photos_generated)
+FOLDER_ROOT = plants_tagger.config_local.folder_root_original_images
+FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
+                                plants_tagger.config_local.rel_folder_photos_generated)
 
 
 def generate_previewimage_get_rel_path(original_image_rel_path):
@@ -38,16 +35,17 @@ def generate_previewimage_get_rel_path(original_image_rel_path):
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
     # todo: use PhotoDirectory list
-    path_full = os.path.join(config.path_frontend_temp, original_image_rel_path)
-    path_generated = os.path.join(config.path_frontend_temp, config.rel_folder_photos_generated, filename_generated)
+    path_full = os.path.join(plants_tagger.config_local.path_frontend_temp, original_image_rel_path)
+    path_generated = os.path.join(plants_tagger.config_local.path_frontend_temp,
+                                  plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
     # create the preview image if not exists
     if not os.path.isfile(path_generated):
-        generate_thumbnail(path_basic_folder=config.path_frontend_temp,
+        generate_thumbnail(path_basic_folder=plants_tagger.config_local.path_frontend_temp,
                            path_image=path_full,
                            size=config.size_preview_image)
 
     # return webapp-relative path to preview image
-    rel_path = os.path.join(config.rel_folder_photos_generated, filename_generated)
+    rel_path = os.path.join(plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
     return rel_path
 
 
