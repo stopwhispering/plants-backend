@@ -30,23 +30,30 @@ FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
 
 
 def generate_previewimage_get_rel_path(original_image_rel_path):
-
+    """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
     # get filename of preview image and check if that file already exists
     filename_original = os.path.basename(original_image_rel_path)
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
     # todo: use PhotoDirectory list
-    path_full = os.path.join(plants_tagger.config_local.path_frontend_temp, original_image_rel_path)
-    path_generated = os.path.join(plants_tagger.config_local.path_frontend_temp,
-                                  plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
+    # path_full = os.path.join(plants_tagger.config_local.path_frontend_temp, original_image_rel_path)
+    path_full = os.path.join(plants_tagger.config_local.path_photos, original_image_rel_path)
+    # path_generated = os.path.join(plants_tagger.config_local.path_frontend_temp,
+    #                               plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
+    logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
+    path_generated = os.path.join(plants_tagger.config_local.path_photos,
+                                  plants_tagger.config_local.subfolder_generated, filename_generated)
+    logger.debug(f"Preview Image Path Generated: {path_generated}")
     # create the preview image if not exists
     if not os.path.isfile(path_generated):
+        logger.debug('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(path_basic_folder=plants_tagger.config_local.path_frontend_temp,
                            path_image=path_full,
                            size=config.size_preview_image)
 
     # return webapp-relative path to preview image
     rel_path = os.path.join(plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
+    logger.debug(f"Preview Image relative path: {rel_path}")
     return rel_path
 
 
@@ -71,9 +78,9 @@ def generate_thumbnail(path_basic_folder: str,
         if exif[orientation] == 3:
             im = im.rotate(180, expand=True)
         elif exif[orientation] == 6:
-            im= im.rotate(270, expand=True)
+            im = im.rotate(270, expand=True)
         elif exif[orientation] == 8:
-            im= im.rotate(90, expand=True)
+            im = im.rotate(90, expand=True)
 
     im.thumbnail(size)
     filename_image = os.path.basename(path_image)  # todo use get filename method

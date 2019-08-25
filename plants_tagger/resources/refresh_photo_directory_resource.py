@@ -2,12 +2,12 @@ from flask_restful import Resource
 
 import plants_tagger.config_local
 from plants_tagger.models.files import photo_directory, lock_photo_directory, PhotoDirectory, FOLDER_ROOT
-from plants_tagger import config
+
 
 # todo: implement api for this (button )
 class RefreshPhotoDirectoryResource(Resource):
     @staticmethod
-    def get():  # todo post
+    def post():
         """recreates the photo directory, i.e. re-reads directory, creates missing thumbnails etc."""
         with lock_photo_directory:
             global photo_directory
