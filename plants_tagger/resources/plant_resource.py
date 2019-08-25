@@ -120,6 +120,5 @@ class PlantResource(Resource):
         if measurements:
             update_measurements_from_list_of_dicts(measurements)
 
-
         return {'action': 'Saved',
                 'resource': 'PlantResource'}, 200

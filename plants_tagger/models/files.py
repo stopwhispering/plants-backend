@@ -219,6 +219,18 @@ class PhotoDirectory:
         plants_dicts = [{'key': plant} for plant in plants]
         return plants_dicts
 
+    def update_image_data(self, plant_data):
+        # find the directory entry for the changed image (the full original path acts as a kind of unique key here)
+        directory_entries = [x for x in self.directory if x['path_full_local'] == plant_data['path_full_local']]
+        if not directory_entries or len(directory_entries) != 1:
+            logger.error(f"Can't update photo directory cache: Unique entry for changed image not found: "
+                         f"{plant_data['path_full_local']}")
+            return
+        logger.info(f'Updating changed image in PhotoDirectory Cache: {plant_data["path_full_local"]}')
+        directory_entries[0]['tag_keywords'] = [k['key'] for k in plant_data['keywords']]
+        directory_entries[0]['tag_authors_plants'] = [p['key'] for p in plant_data['plants']]
+        directory_entries[0]['tag_description'] = plant_data['description']
+
 
 def get_exif_tags_for_folder(path_basic_folder: str):
     """get list of image dicts; uses global photo directory object, initialized only
@@ -317,3 +329,8 @@ def write_new_exif_tags(plants_data, temp: bool = False):
             piexif.insert(exif_bytes, path)
             # reset modified time
             set_modified_date(path, modified_time_seconds)  # set access and modifide date
+
+            # update cache in PhotoDirectory
+            global photo_directory
+            if photo_directory:
+                photo_directory.update_image_data(data)
