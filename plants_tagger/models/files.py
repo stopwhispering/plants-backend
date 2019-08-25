@@ -29,9 +29,15 @@ FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
                                 plants_tagger.config_local.rel_folder_photos_generated)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path):
+def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
     # get filename of preview image and check if that file already exists
+
+    if os.name == 'nt':  # handle forward- and backslash for linux/windows systems
+        original_image_rel_path = original_image_rel_path_raw.replace('/', '\\')
+    else:
+        original_image_rel_path = original_image_rel_path_raw.replace('\\', '/')
+
     filename_original = os.path.basename(original_image_rel_path)
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
