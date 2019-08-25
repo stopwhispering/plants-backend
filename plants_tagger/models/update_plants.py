@@ -45,8 +45,8 @@ def update_plants_from_list_of_dicts(plants: [dict]):
             # we need to remove the localService prefix
             filename_previewimage = plant['filename_previewimage'].replace('\\\\', '\\')
             logger.debug(f"Saving {plant['plant_name']}, setting preview image as {filename_previewimage}")
-            if filename_previewimage.startswith(subfolder_photos+'\\'):
-                filename_previewimage_modified = filename_previewimage[len(subfolder_photos+'\\'):]
+            if filename_previewimage.startswith(subfolder_photos):
+                filename_previewimage_modified = filename_previewimage[len(subfolder_photos):]
                 logger.debug(f"Changing to {filename_previewimage_modified}")
                 record_update.filename_previewimage = filename_previewimage_modified
             else:
