@@ -33,6 +33,8 @@ class ImageResource(Resource):
         # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
         if photo_directory:
             photo_directory.refresh_directory(path_frontend_temp)
+        else:
+            logger.warning('No instantiated photo directory found.')
 
         logger.info(f'Successfully saved {len(files)} images.')
         return {'success': f'Successfully saved {len(files)} images.'}, 200

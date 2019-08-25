@@ -18,6 +18,6 @@ def configure_root_logger():
     # create console handler
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(LOG_SEVERITY_CONSOLE)
-    format_stream = '%(name)s - %(levelname)s - %(message)s'
+    format_stream = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     stream_handler.setFormatter(logging.Formatter(format_stream))
     logger.addHandler(stream_handler)
