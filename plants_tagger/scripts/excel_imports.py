@@ -9,7 +9,7 @@ import sys
 
 ip = socket.gethostbyname(socket.gethostname())
 if ip.startswith('80.241'):
-    logging.getLogger().info('Server 80.241... detected. Adding path to sys path')
+    logging.getLogger().warning('Server 80.241... detected. Adding path to sys path')
     sys.path.append('/projects/plants/plants_backend')
 
 
