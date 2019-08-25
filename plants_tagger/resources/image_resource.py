@@ -3,7 +3,8 @@ from flask import request
 import os
 import logging
 
-from plants_tagger.models.files import photo_directory
+import plants_tagger.models.files
+# from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import path_uploaded_photos_original, path_frontend_temp
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,8 @@ class ImageResource(Resource):
             photo_upload.save(path)
 
         # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
-        if photo_directory:
-            photo_directory.refresh_directory(path_frontend_temp)
+        if plants_tagger.models.files.photo_directory:
+            plants_tagger.models.files.photo_directory.refresh_directory(path_frontend_temp)
         else:
             logger.warning('No instantiated photo directory found.')
 
