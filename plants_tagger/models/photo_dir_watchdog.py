@@ -12,7 +12,7 @@ import plants_tagger.models.files
 dt_last_change = None
 logger = logging.getLogger(__name__)
 
-
+# todo: not used anymore (seems not to work on linux server environment as is; not needed anyway)
 class PhotoFolderFileEventsHandler(FileSystemEventHandler):
 
     def __init__(self, observer):

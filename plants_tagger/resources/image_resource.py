@@ -32,6 +32,7 @@ class ImageResource(Resource):
             photo_upload.save(path)
 
         # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
+        # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
         if plants_tagger.models.files.photo_directory:
             plants_tagger.models.files.photo_directory.refresh_directory(path_frontend_temp)
         else:
