@@ -136,6 +136,7 @@ class PhotoDirectory:
     def _scan_files(self, folder):
         """read all image files and create a list of dicts (one dict for each file)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
+        logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
         self.directory = [{'path_full_local': path_full,
                            'filename': os.path.basename(path_full)} for path_full in paths]
 
@@ -153,6 +154,7 @@ class PhotoDirectory:
     def _read_exif_tags(self):
         """reads exif info for each original file and parses information from it (plants list etc.), adds these
         information to directory (i.e. to the list of dicts (one dict for each image file))"""
+        logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
         for file in self.directory:
             exif_dict = piexif.load(file['path_full_local'])
             # file['exif_dict'] = exif_dict
