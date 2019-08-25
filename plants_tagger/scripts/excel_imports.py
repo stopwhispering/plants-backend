@@ -5,11 +5,11 @@ import datetime
 import math
 import logging
 import socket
+import sys
 
-import logging
-
-logging.getLogger().error(socket.gethostbyname(socket.gethostname()))
-logging.getLogger().error(socket.gethostname())
+if socket.gethostbyname(socket.gethostname().startswith('80.241')):
+    logging.getLogger().info('Server 80.241... detected. Adding path to sys path')
+    sys.path.append('/projects/plants/plants_backend')
 
 from plants_tagger.config_local import PATH_BOTANICA_XLSX
 from plants_tagger.models.orm_tables import Botany, Plant, Measurement
