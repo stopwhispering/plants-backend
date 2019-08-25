@@ -3,6 +3,7 @@ from watchdog.events import FileSystemEventHandler
 import time
 import logging
 
+import plants_tagger.models.files
 import plants_tagger.config_local
 from plants_tagger.config_local import folder_root_original_images, path_uploaded_photos_original
 from plants_tagger.models.files import photo_directory, lock_photo_directory, FOLDER_ROOT

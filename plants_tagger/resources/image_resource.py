@@ -3,7 +3,8 @@ from flask import request
 import os
 import logging
 
-from plants_tagger.config_local import path_uploaded_photos_original
+from plants_tagger.models.files import photo_directory
+from plants_tagger.config_local import path_uploaded_photos_original, path_frontend_temp
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,10 @@ class ImageResource(Resource):
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
             logger.info(f'Saving {path}.')
             photo_upload.save(path)
+
+        # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
+        if photo_directory:
+            photo_directory.refresh_directory(path_frontend_temp)
 
         logger.info(f'Successfully saved {len(files)} images.')
         return {'success': f'Successfully saved {len(files)} images.'}, 200
