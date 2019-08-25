@@ -5,18 +5,24 @@ import datetime
 import math
 import logging
 
+from plants_tagger.config_local import PATH_BOTANICA_XLSX
 from plants_tagger.models.orm_tables import Botany, Plant, Measurement
 from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engine
 
 init_sqlalchemy_engine()
 logger = logging.getLogger(__name__)
 
+import socket
+print(socket.gethostbyname(socket.gethostname()))
+print(socket.gethostname())
+
+
 # PATH = r'C:\temp\pflanzen_temp.xlsx'
-PATH_BOTANIK = r'C:\IDEs\sap-webide-personal-edition-1.53.5-trial\serverworkspace\my\myuser\OrionContent\plants_tagger\webapp\localService\Botanik.xlsx'
+# PATH_BOTANIK = r'C:\IDEs\sap-webide-personal-edition-1.53.5-trial\serverworkspace\my\myuser\OrionContent\plants_tagger\webapp\localService\Botanik.xlsx'
 
 
 def import_botany_from_xlsx_to_db():
-    df = pd.read_excel(PATH_BOTANIK, sheet_name=2)
+    df = pd.read_excel(PATH_BOTANICA_XLSX, sheet_name=2)
     for index, row in df.iterrows():
         b = get_sql_session().query(Botany).filter(Botany.species == row['Art_species']).first()
         if not b:
