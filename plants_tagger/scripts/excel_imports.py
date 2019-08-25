@@ -4,6 +4,12 @@ from sqlalchemy.exc import IntegrityError
 import datetime
 import math
 import logging
+import socket
+
+import logging
+
+logging.getLogger().error(socket.gethostbyname(socket.gethostname()))
+logging.getLogger().error(socket.gethostname())
 
 from plants_tagger.config_local import PATH_BOTANICA_XLSX
 from plants_tagger.models.orm_tables import Botany, Plant, Measurement
@@ -12,9 +18,7 @@ from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engin
 init_sqlalchemy_engine()
 logger = logging.getLogger(__name__)
 
-import socket
-print(socket.gethostbyname(socket.gethostname()))
-print(socket.gethostname())
+
 
 
 # PATH = r'C:\temp\pflanzen_temp.xlsx'
