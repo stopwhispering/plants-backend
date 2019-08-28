@@ -18,6 +18,10 @@ class ImageResource(Resource):
     def post():
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
+
+        # import sys
+        # print(sys.getsizeof(request.data))
+
         for photo_upload in files:
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
             logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')

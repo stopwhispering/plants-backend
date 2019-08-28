@@ -46,20 +46,20 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     path_full = os.path.join(plants_tagger.config_local.path_photos, original_image_rel_path)
     # path_generated = os.path.join(plants_tagger.config_local.path_frontend_temp,
     #                               plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
-    logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
+    # logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
     path_generated = os.path.join(plants_tagger.config_local.path_photos,
                                   plants_tagger.config_local.subfolder_generated, filename_generated)
-    logger.debug(f"Preview Image Path Generated: {path_generated}")
+    # logger.debug(f"Preview Image Path Generated: {path_generated}")
     # create the preview image if not exists
     if not os.path.isfile(path_generated):
-        logger.debug('Preview Image: Generating the not-yet-existing preview image.')
+        logger.info('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(path_basic_folder=plants_tagger.config_local.path_frontend_temp,
                            path_image=path_full,
                            size=config.size_preview_image)
 
     # return webapp-relative path to preview image
     rel_path = os.path.join(plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
-    logger.debug(f"Preview Image relative path: {rel_path}")
+    # logger.debug(f"Preview Image relative path: {rel_path}")
     return rel_path
 
 

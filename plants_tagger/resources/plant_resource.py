@@ -38,7 +38,7 @@ class PlantResource(Resource):
 
         # add path to preview image
             if p['filename_previewimage']:  # supply relative path of original image
-                logger.debug(f"Preview Image for {p['plant_name']}: {p['filename_previewimage']}")
+                # logger.debug(f"Preview Image for {p['plant_name']}: {p['filename_previewimage']}")
                 rel_path_gen = generate_previewimage_get_rel_path(p['filename_previewimage'])
                 # there is a huge problem with the slashes
                 p['url_preview'] = json.dumps(rel_path_gen)[1:-1]
