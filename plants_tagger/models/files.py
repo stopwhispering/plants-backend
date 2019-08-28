@@ -237,17 +237,27 @@ class PhotoDirectory:
         plants_dicts = [{'key': plant} for plant in plants]
         return plants_dicts
 
-    def update_image_data(self, plant_data):
+    def update_image_data(self, photo):
         # find the directory entry for the changed image (the full original path acts as a kind of unique key here)
-        directory_entries = [x for x in self.directory if x['path_full_local'] == plant_data['path_full_local']]
+        directory_entries = [x for x in self.directory if x['path_full_local'] == photo['path_full_local']]
         if not directory_entries or len(directory_entries) != 1:
             logger.error(f"Can't update photo directory cache: Unique entry for changed image not found: "
-                         f"{plant_data['path_full_local']}")
+                         f"{photo['path_full_local']}")
             return
-        logger.info(f'Updating changed image in PhotoDirectory Cache: {plant_data["path_full_local"]}')
-        directory_entries[0]['tag_keywords'] = [k['key'] for k in plant_data['keywords']]
-        directory_entries[0]['tag_authors_plants'] = [p['key'] for p in plant_data['plants']]
-        directory_entries[0]['tag_description'] = plant_data['description']
+        logger.info(f'Updating changed image in PhotoDirectory Cache: {photo["path_full_local"]}')
+        directory_entries[0]['tag_keywords'] = [k['key'] for k in photo['keywords']]
+        directory_entries[0]['tag_authors_plants'] = [p['key'] for p in photo['plants']]
+        directory_entries[0]['tag_description'] = photo['description']
+
+    def remove_image_from_directory(self, photo):
+        # find the directory entry for the deleted image (the full original path acts as a kind of unique key here)
+        directory_entries = [x for x in self.directory if x['path_full_local'] == photo['path_full_local']]
+        if not directory_entries or len(directory_entries) != 1:
+            logger.error(f"Can't delete photo directory cache: Unique entry for deleted image not found: "
+                         f"{photo['path_full_local']}")
+            return
+        self.directory.remove(directory_entries[0])
+        logger.info(f'Removed deleted image from PhotoDirectory Cache.')
 
 
 def get_exif_tags_for_folder(path_basic_folder: str):
