@@ -79,14 +79,17 @@ def generate_thumbnail(path_basic_folder: str,
     for orientation in ExifTags.TAGS.keys():
         if ExifTags.TAGS[orientation] == 'Orientation':
             break
-    exif = dict(im._getexif().items())
-    if orientation in exif:
-        if exif[orientation] == 3:
-            im = im.rotate(180, expand=True)
-        elif exif[orientation] == 6:
-            im = im.rotate(270, expand=True)
-        elif exif[orientation] == 8:
-            im = im.rotate(90, expand=True)
+
+    exif_obj = im._getexif()
+    if exif_obj:  # the image might have no exif-tags
+        exif = dict(im._getexif().items())
+        if orientation in exif:
+            if exif[orientation] == 3:
+                im = im.rotate(180, expand=True)
+            elif exif[orientation] == 6:
+                im = im.rotate(270, expand=True)
+            elif exif[orientation] == 8:
+                im = im.rotate(90, expand=True)
 
     im.thumbnail(size)
     filename_image = os.path.basename(path_image)  # todo use get filename method
