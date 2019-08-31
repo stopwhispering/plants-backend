@@ -45,7 +45,13 @@ class ImageResource(Resource):
             logger.warning('No instantiated photo directory found.')
 
         logger.info(f'Successfully saved {len(files)} images.')
-        return {'success': f'Successfully saved {len(files)} images.'}, 200
+        # return {'success': f'Successfully saved {len(files)} images.'}, 200
+        return {'message':  {
+                'type':           'Information',
+                'message':        f'Successfully saved {len(files)} images',
+                'additionalText': None,
+                'description':    f'Resource: {parse_resource_from_request(request)}'
+                }}, 200
 
     @staticmethod
     def delete():
@@ -63,7 +69,14 @@ class ImageResource(Resource):
                        dst=new_path)  # silently overwrites if privileges are sufficient
         except OSError as e:
             logger.error(f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-            return {'error': f'OSError when moving file {old_path} to {new_path}'}, 500
+            # return {'error': f'OSError when moving file {old_path} to {new_path}'}, 500
+            return({'message': {
+                            'type': 'Error',
+                            'message': f'OSError when moving file {old_path} to {new_path}',
+                            'additionalText': None,
+                            'description': f'Filename: {os.path.basename(old_path)}\nResource:'
+                                           f' {parse_resource_from_request(request)}'
+                            }}), 500
         logger.info(f'Moved file {old_path} to {new_path}')
 
         # remove from PhotoDirectory cache
@@ -77,7 +90,7 @@ class ImageResource(Resource):
                             'type': 'Information',
                             'message': f'Successfully deleted image',
                             'additionalText': None,
-                            'description': f'{os.path.basename(old_path)}\nResource:'
+                            'description': f'Filename: {os.path.basename(old_path)}\nResource:'
                                            f' {parse_resource_from_request(request)}'
                             },
                 'photo': photo}, 200
