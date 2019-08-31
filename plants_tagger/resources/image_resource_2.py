@@ -8,6 +8,7 @@ from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_
 from plants_tagger.models.orm_tables import Plant, Botany
 from plants_tagger.util.json_helper import make_list_items_json_serializable
 from plants_tagger import config
+from plants_tagger.util.util import parse_resource_from_request
 
 MAX_IMAGES = None
 logger = logging.getLogger(__name__)
@@ -47,7 +48,12 @@ class ImageResource2(Resource):
         logger.info(f'Returned {len(files_data)} images.')
 
         return {'ImagesCollection': files_data,
-                'meta': 'dummy'}, 200
+                'message': {
+                    'type': 'Information',
+                    'message': 'Loaded images from backend.',
+                    'additionalText': None,
+                    'description': f'Count: {len(files_data)}\nResource: {parse_resource_from_request(request)}'
+                    }}, 200
 
     @staticmethod
     def post(**kwargs):

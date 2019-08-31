@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_app():
-    pass
+    # pass
     app = Flask(__name__)
     # update the flask config dict
     # app.config.from_object(config)

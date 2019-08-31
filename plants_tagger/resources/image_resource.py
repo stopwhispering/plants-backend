@@ -7,6 +7,7 @@ import plants_tagger.models.files
 # from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import path_uploaded_photos_original, path_frontend_temp, path_deleted_photos
 from plants_tagger.models.files import lock_photo_directory
+from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -71,5 +72,14 @@ class ImageResource(Resource):
                 plants_tagger.models.files.photo_directory.remove_image_from_directory(photo)
 
         # send the photo back to frontend; it will be removed from json model there
-        return {'success': f'Successfully deleted image {os.path.basename(old_path)}',
+        # return {'success': f'Successfully deleted image {os.path.basename(old_path)}', 'photo': photo}, 200
+        return {'message': {
+                            'type': 'Information',
+                            'message': f'Successfully deleted image',
+                            'additionalText': None,
+                            'description': f'{os.path.basename(old_path)}\nResource:'
+                                           f' {parse_resource_from_request(request)}'
+                            },
                 'photo': photo}, 200
+
+
