@@ -1,28 +1,25 @@
 from flask_restful import Resource
 from flask import request
 import os
+import json
 import logging
 
 import plants_tagger.models.files
 # from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import path_uploaded_photos_original, path_frontend_temp, path_deleted_photos
-from plants_tagger.models.files import lock_photo_directory
+from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data
 from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
 
 
-# called ImageResource without 2 for historical reasons
-# currently only used for uploading images
-# todo: merge with other images resource
 class ImageResource(Resource):
     @staticmethod
     def post():
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
-
-        # import sys
-        # print(sys.getsizeof(request.data))
+        plants_raw = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else []
+        plants = [{'key': p, 'text': p} for p in plants_raw]
 
         for photo_upload in files:
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
@@ -36,6 +33,15 @@ class ImageResource(Resource):
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
             logger.info(f'Saving {path}.')
             photo_upload.save(path)
+
+            # add tagged plants (update/create exif tags)
+            if plants:
+                logger.info(f'Tagging new image with plants: {plants_raw}')
+                image_metadata = {'path_full_local': path}
+                read_exif_tags(image_metadata)
+                plants_data = get_plants_data([image_metadata])
+                plants_data[0]['plants'] = plants
+                write_new_exif_tags(plants_data, temp=True)
 
         # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
         # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
@@ -94,5 +100,4 @@ class ImageResource(Resource):
                                            f' {parse_resource_from_request(request)}'
                             },
                 'photo': photo}, 200
-
 

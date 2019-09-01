@@ -10,6 +10,7 @@ from plants_tagger.models.update_measurements import update_measurements_from_li
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from plants_tagger.util.json_helper import make_list_items_json_serializable
 from plants_tagger import config
+from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -123,3 +124,22 @@ class PlantResource(Resource):
 
         return {'action': 'Saved',
                 'resource': 'PlantResource'}, 200
+
+    def delete(self):
+        # tag deleted plant as 'hide' in database
+        plant_name = request.get_json()['plant']
+        record_update: Plant = get_sql_session().query(Plant).filter_by(plant_name=plant_name).first()
+        if not record_update:
+            raise ValueError(f'Plant to be deleted not found in database: {plant_name}.')
+        record_update.hide = True
+        get_sql_session().commit()
+
+        return {'message':  {
+            'type':           'Information',
+            'message':        f'Deleted plant {plant_name}',
+            'additionalText': None,
+            'description':    f'Plant name: {plant_name}'
+                              f'\nResource: {parse_resource_from_request(request)}'
+                              f'\nHide: True'
+            }
+                }, 200

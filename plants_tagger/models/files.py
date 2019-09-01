@@ -133,7 +133,7 @@ class PhotoDirectory:
         logger.info('Re-reading exif files from Photos Folder.')
         self._scan_files(self.root_folder)
         self._get_files_already_generated(FOLDER_GENERATED)
-        self._read_exif_tags()
+        self._read_exif_tags_all_images()
         self._generate_images(path_basic_folder)
 
     def _scan_files(self, folder):
@@ -154,38 +154,39 @@ class PhotoDirectory:
         else:
             return False
 
-    def _read_exif_tags(self):
+    def _read_exif_tags_all_images(self):
         """reads exif info for each original file and parses information from it (plants list etc.), adds these
         information to directory (i.e. to the list of dicts (one dict for each image file))"""
         logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
         for file in self.directory:
-            exif_dict = piexif.load(file['path_full_local'])
-            # file['exif_dict'] = exif_dict
-
-            try:  # description
-                file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
-            except KeyError:
-                file['tag_description'] = ''
-
-            try:  # keywords
-                file['tag_keywords'] = decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
-                if not file['tag_keywords'][0]:  # ''
-                    file['tag_keywords'] = []
-            except KeyError:
-                file['tag_keywords'] = []
-
-            try:  # plants (list); read from authors exif tag
-                # if 315 in exif_dict['0th']:
-                file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
-                if not file['tag_authors_plants'][0]:  # ''
-                    file['tag_authors_plants'] = []
-            except KeyError:
-                file['tag_authors_plants'] = []
-
-            try:  # record date+time
-                file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
-            except KeyError:
-                file['record_date_time'] = None
+            read_exif_tags(file)
+            # exif_dict = piexif.load(file['path_full_local'])
+            # # file['exif_dict'] = exif_dict
+            #
+            # try:  # description
+            #     file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
+            # except KeyError:
+            #     file['tag_description'] = ''
+            #
+            # try:  # keywords
+            #     file['tag_keywords'] = decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
+            #     if not file['tag_keywords'][0]:  # ''
+            #         file['tag_keywords'] = []
+            # except KeyError:
+            #     file['tag_keywords'] = []
+            #
+            # try:  # plants (list); read from authors exif tag
+            #     # if 315 in exif_dict['0th']:
+            #     file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
+            #     if not file['tag_authors_plants'][0]:  # ''
+            #         file['tag_authors_plants'] = []
+            # except KeyError:
+            #     file['tag_authors_plants'] = []
+            #
+            # try:  # record date+time
+            #     file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
+            # except KeyError:
+            #     file['record_date_time'] = None
 
     def _generate_images(self, path_basic_folder: str):
         """generates image derivatives (resized & thumbnail) for each original image file if not already exists;
@@ -213,21 +214,21 @@ class PhotoDirectory:
             # file['path_big'] = os.path.join(PATH_GEN, file['filename_big'])
             file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_FOLDER_PHOTOS_ORIGINAL):]
 
-    def get_plants_data(self):
-        """extracts information from the directory that is relevant for the frontend;
-        returns list of dicts (just like directory)"""
-        plants_data = [
-            {#"url_big": file['path_big'],
-             "url_small": file['path_thumb'],
-             "url_original": file['path_original'],
-             "keywords": file['tag_keywords'],
-             "plants": file['tag_authors_plants'],
-             "description": file['tag_description'],
-             "filename": file['filename'],
-             "path_full_local": file['path_full_local'],
-             "record_date_time": file['record_date_time']
-             } for file in self.directory]
-        return plants_data
+    # def get_plants_data(self, directory):
+    #     """extracts information from the directory that is relevant for the frontend;
+    #     returns list of dicts (just like directory)"""
+    #     plants_data = [
+    #         {#"url_big": file['path_big'],
+    #          "url_small": file['path_thumb'],
+    #          "url_original": file['path_original'],
+    #          "keywords": file['tag_keywords'],
+    #          "plants": file['tag_authors_plants'],
+    #          "description": file['tag_description'],
+    #          "filename": file['filename'],
+    #          "path_full_local": file['path_full_local'],
+    #          "record_date_time": file['record_date_time']
+    #          } for file in directory]
+    #     return plants_data
 
     def get_all_plants(self):
         """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant
@@ -263,6 +264,55 @@ class PhotoDirectory:
         logger.info(f'Removed deleted image from PhotoDirectory Cache.')
 
 
+def read_exif_tags(file):
+    """reads exif info for supplied file and parses information from it (plants list etc.);
+    data is directly written into the file dictionary parameter that requires at least the
+    'path_full_local' key"""
+    exif_dict = piexif.load(file['path_full_local'])
+
+    try:  # description
+        file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
+    except KeyError:
+        file['tag_description'] = ''
+
+    try:  # keywords
+        file['tag_keywords'] = decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
+        if not file['tag_keywords'][0]:  # ''
+            file['tag_keywords'] = []
+    except KeyError:
+        file['tag_keywords'] = []
+
+    try:  # plants (list); read from authors exif tag
+        # if 315 in exif_dict['0th']:
+        file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
+        if not file['tag_authors_plants'][0]:  # ''
+            file['tag_authors_plants'] = []
+    except KeyError:
+        file['tag_authors_plants'] = []
+
+    try:  # record date+time
+        file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
+    except KeyError:
+        file['record_date_time'] = None
+
+
+def get_plants_data(directory):
+    """extracts information from the directory that is relevant for the frontend;
+    returns list of dicts (just like directory)"""
+    plants_data = [
+        {#"url_big": file['path_big'],
+         "url_small": file['path_thumb'] if 'path_thumb' in file else '',
+         "url_original": file['path_original'] if 'path_original' in file else '',
+         "keywords": file['tag_keywords'],
+         "plants": file['tag_authors_plants'],
+         "description": file['tag_description'] if 'tag_description' in file else '',
+         "filename": file['filename'] if 'filename' in file else '',
+         "path_full_local": file['path_full_local'],
+         "record_date_time": file['record_date_time']
+         } for file in directory]
+    return plants_data
+
+
 def get_exif_tags_for_folder(path_basic_folder: str):
     """get list of image dicts; uses global photo directory object, initialized only
     at first time after server (re-)start"""
@@ -273,7 +323,8 @@ def get_exif_tags_for_folder(path_basic_folder: str):
             photo_directory.refresh_directory(path_basic_folder)
             # photo_directory._read_exif_tags()
             # photo_directory._generate_images(path_basic_folder)
-        plants_data = photo_directory.get_plants_data()
+        # plants_data = photo_directory.get_plants_data(photo_directory.directory)
+        plants_data = get_plants_data(photo_directory.directory)
         plants_unique = photo_directory.get_all_plants()
     return plants_data, plants_unique
 
@@ -300,8 +351,8 @@ def encode_keywords_tag(l: list):
     return tuple(ord_list_final)
 
 
-def write_new_exif_tags(plants_data, temp: bool = False):
-    for data in plants_data:
+def write_new_exif_tags(images_data, temp: bool = False):
+    for data in images_data:
         tag_descriptions = data['description'].encode('utf-8')
         if temp:
             # from list of dicts to list of str
