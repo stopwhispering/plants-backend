@@ -18,8 +18,20 @@ class ImageResource(Resource):
     def post():
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
-        plants_raw = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else []
-        plants = [{'key': p, 'text': p} for p in plants_raw]
+        # plants_raw = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else []
+        # plants = [{'key': p, 'text': p} for p in plants_raw]
+
+        additional_data = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else {}
+        if 'plants' in additional_data:
+            plants = [{'key': p, 'text': p} for p in additional_data['plants']]
+        else:
+            plants = []
+
+        if 'keywords' in additional_data:
+            keywords = [{'key': k, 'text': k} for k in additional_data['keywords']]
+        else:
+            keywords = []
+
 
         for photo_upload in files:
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
@@ -35,12 +47,16 @@ class ImageResource(Resource):
             photo_upload.save(path)
 
             # add tagged plants (update/create exif tags)
-            if plants:
-                logger.info(f'Tagging new image with plants: {plants_raw}')
+            if plants or keywords:
                 image_metadata = {'path_full_local': path}
                 read_exif_tags(image_metadata)
                 plants_data = get_plants_data([image_metadata])
-                plants_data[0]['plants'] = plants
+                if plants:
+                    logger.info(f'Tagging new image with plants: {additional_data["plants"]}')
+                    plants_data[0]['plants'] = plants
+                if keywords:
+                    logger.info(f'Tagging new image with keywords: {additional_data["keywords"]}')
+                    plants_data[0]['keywords'] = keywords
                 write_new_exif_tags(plants_data, temp=True)
 
         # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
