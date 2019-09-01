@@ -27,8 +27,10 @@ class ImageResource2(Resource):
         i = len(files_data)
         plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
         plants_to_hide_names = [p.plant_name for p in plants_to_hide]
-        logger.debug(f'Hiding: {plants_to_hide_names}')
+        logger.debug(f'Hiding images for plants: {plants_to_hide_names}')
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
+        hiding = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
+        logger.debug(f'Hiding images: {hiding}')
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
 
         # todo get rid of (not required in frontend)
