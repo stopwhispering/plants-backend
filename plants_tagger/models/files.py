@@ -139,6 +139,7 @@ class PhotoDirectory:
     def _scan_files(self, folder):
         """read all image files and create a list of dicts (one dict for each file)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
+        paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
         logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
         self.directory = [{'path_full_local': path_full,
                            'filename': os.path.basename(path_full)} for path_full in paths]
