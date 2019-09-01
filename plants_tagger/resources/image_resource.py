@@ -69,11 +69,12 @@ class ImageResource(Resource):
         logger.info(f'Successfully saved {len(files)} images.')
         # return {'success': f'Successfully saved {len(files)} images.'}, 200
         return {'message':  {
-                'type':           'Information',
-                'message':        f'Successfully saved {len(files)} images',
-                'additionalText': None,
-                'description':    f'Resource: {parse_resource_from_request(request)}'
-                }}, 200
+                    'type':           'Information',
+                    'message':        f'Successfully saved {len(files)} images',
+                    'additionalText': None,
+                    'description':    f'Resource: {parse_resource_from_request(request)}',
+                    }
+                }, 200
 
     @staticmethod
     def delete():
