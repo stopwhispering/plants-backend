@@ -269,7 +269,7 @@ def read_exif_tags(file):
     data is directly written into the file dictionary parameter that requires at least the
     'path_full_local' key"""
     exif_dict = piexif.load(file['path_full_local'])
-    logger.debug(file['path_full_local'])
+    # logger.debug(file['path_full_local'])
 
     try:  # description
         file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
