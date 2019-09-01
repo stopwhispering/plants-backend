@@ -10,7 +10,6 @@ from plants_tagger.util.json_helper import make_list_items_json_serializable
 from plants_tagger import config
 from plants_tagger.util.util import parse_resource_from_request
 
-MAX_IMAGES = None
 logger = logging.getLogger(__name__)
 
 
@@ -19,8 +18,7 @@ class ImageResource2(Resource):
     def get(**kwargs):
         files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.path_frontend_temp)
 
-        # filter out archived
-        # todo: move on filesystem to other folder
+        # filter out archived images (todo: required?)
         i = len(files_data)
         files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
         logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
@@ -32,8 +30,7 @@ class ImageResource2(Resource):
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
 
-        # todo make earlier
-        # todo save
+        # todo get rid of (not required in frontend)
         for image in files_data:
             if image['plants']:
                 image['plants'] = [{'key': p, 'text': p} for p in image['plants']]
@@ -41,9 +38,6 @@ class ImageResource2(Resource):
                 image['keywords'] = [{'key': p, 'text': p} for p in image['keywords']]
 
         make_list_items_json_serializable(files_data)
-
-        if MAX_IMAGES:
-            files_data = files_data[-MAX_IMAGES:]
 
         logger.info(f'Returned {len(files_data)} images.')
 
