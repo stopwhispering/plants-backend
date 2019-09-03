@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 FOLDER_ROOT = plants_tagger.config_local.folder_root_original_images
 FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
                                 plants_tagger.config_local.rel_folder_photos_generated)
-
+delme = {-1: 0}
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
@@ -99,6 +99,7 @@ def generate_thumbnail(path_basic_folder: str,
     path_save = os.path.join(path_basic_folder, PATH_GEN, filename_thumb)
     im.save(path_save, "JPEG")
 
+    # thumbnails don't require any exif tags
     # exif_dict = piexif.load(path)
     # exif_bytes = piexif.dump(exif_dict)
     # piexif.insert(exif_bytes, path_new)
@@ -161,33 +162,8 @@ class PhotoDirectory:
         logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
         for file in self.directory:
             read_exif_tags(file)
-            # exif_dict = piexif.load(file['path_full_local'])
-            # # file['exif_dict'] = exif_dict
-            #
-            # try:  # description
-            #     file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
-            # except KeyError:
-            #     file['tag_description'] = ''
-            #
-            # try:  # keywords
-            #     file['tag_keywords'] = decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
-            #     if not file['tag_keywords'][0]:  # ''
-            #         file['tag_keywords'] = []
-            # except KeyError:
-            #     file['tag_keywords'] = []
-            #
-            # try:  # plants (list); read from authors exif tag
-            #     # if 315 in exif_dict['0th']:
-            #     file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
-            #     if not file['tag_authors_plants'][0]:  # ''
-            #         file['tag_authors_plants'] = []
-            # except KeyError:
-            #     file['tag_authors_plants'] = []
-            #
-            # try:  # record date+time
-            #     file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
-            # except KeyError:
-            #     file['record_date_time'] = None
+        logger.warning(delme)
+
 
     def _generate_images(self, path_basic_folder: str):
         """generates image derivatives (resized & thumbnail) for each original image file if not already exists;
@@ -215,21 +191,6 @@ class PhotoDirectory:
             # file['path_big'] = os.path.join(PATH_GEN, file['filename_big'])
             file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_FOLDER_PHOTOS_ORIGINAL):]
 
-    # def get_plants_data(self, directory):
-    #     """extracts information from the directory that is relevant for the frontend;
-    #     returns list of dicts (just like directory)"""
-    #     plants_data = [
-    #         {#"url_big": file['path_big'],
-    #          "url_small": file['path_thumb'],
-    #          "url_original": file['path_original'],
-    #          "keywords": file['tag_keywords'],
-    #          "plants": file['tag_authors_plants'],
-    #          "description": file['tag_description'],
-    #          "filename": file['filename'],
-    #          "path_full_local": file['path_full_local'],
-    #          "record_date_time": file['record_date_time']
-    #          } for file in directory]
-    #     return plants_data
 
     def get_all_plants(self):
         """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant
@@ -271,6 +232,17 @@ def read_exif_tags(file):
     'path_full_local' key"""
     exif_dict = piexif.load(file['path_full_local'])
     # logger.debug(file['path_full_local'])
+
+    global delme
+    if exif_dict:
+        if piexif.ImageIFD.Orientation in exif_dict["0th"]:
+            o = exif_dict["0th"][piexif.ImageIFD.Orientation]
+            if o in delme:
+                delme[o] += 1
+            else:
+                delme[0] = 1
+        else:
+            delme[-1] += 1
 
     try:  # description
         file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
