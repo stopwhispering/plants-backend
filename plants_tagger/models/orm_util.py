@@ -11,6 +11,7 @@ ScopedSession = None
 
 def get_sql_session() -> ScopedSession:
     # all calls to ScopedSession() will create a thread-local session
+    # noinspection PyCallingNonCallable
     return ScopedSession()
 
 

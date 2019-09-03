@@ -35,13 +35,13 @@ def set_modified_date(path_to_file, modified_time_seconds):
     os.utime(path_to_file, (modified_time_seconds, modified_time_seconds))
 
 
-def decode_record_date_time(bDateTime: bytes):
+def decode_record_date_time(date_time_bin: bytes):
     # from b"YYYY:MM:DD HH:MM:SS" to datetime object
     try:
-        s_dt = bDateTime.decode('utf-8')
+        s_dt = date_time_bin.decode('utf-8')
         s_format = '%Y:%m:%d %H:%M:%S'
     except AttributeError:  # manually entered string 
-        s_dt = bDateTime
+        s_dt = date_time_bin
         s_format = '%Y-%m-%d'
     dt = datetime.datetime.strptime(s_dt, s_format)
     return dt
@@ -55,7 +55,7 @@ def encode_record_date_time(dt: datetime.datetime):
     return b_dt
 
 
-def dicts_to_strings(list_of_dicts:[dict]):
+def dicts_to_strings(list_of_dicts: [dict]):
     results = []
     for d in list_of_dicts:
         results.append(d['key'])

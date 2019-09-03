@@ -5,9 +5,8 @@ import logging
 import plants_tagger.config_local
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
-from plants_tagger.models.orm_tables import Plant, Botany
+from plants_tagger.models.orm_tables import Plant
 from plants_tagger.util.json_helper import make_list_items_json_serializable
-from plants_tagger import config
 from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class ImageResource2(Resource):
     @staticmethod
-    def get(**kwargs):
+    def get():
         files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.path_frontend_temp)
 
         # filter out archived images (todo: required?)

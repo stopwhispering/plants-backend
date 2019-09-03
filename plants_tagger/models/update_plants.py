@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 
 from plants_tagger.config_local import subfolder_photos

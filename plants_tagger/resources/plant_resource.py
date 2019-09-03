@@ -17,13 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PlantResource(Resource):
     @staticmethod
-    def get(**kwargs):
-        if not kwargs:
-            try:
-                kwargs = {key: value for (key, value) in request.args.items()}
-            except RuntimeError:  # if called directly without kwargs
-                pass
-
+    def get():
         plants_obj = get_sql_session().query(Plant).all()
         plants_list = [p.__dict__ for p in plants_obj]
         _ = [p.pop('_sa_instance_state') for p in plants_list]  # remove instance state objects
@@ -63,35 +57,20 @@ class PlantResource(Resource):
         else:
             logger.debug('Filter hidden-flagged plants disabled.')
 
-        dummy_untagged = {
-            "dead": None,
-            "count": None,
-            "plant_name": "_untagged photos",
-            "last_update": None,
-            "generation_origin": None,
-            "generation_notes": None,
-            "generation_date": None,
-            "active": True,
-            "species": None,
-            "plant_notes": None,
-            "mother_plant": None,
-            "generation_type": None
-            }
-
-        dummy_all = {
-            "dead":              None,
-            "count":             None,
-            "plant_name":        "_all photos",
-            "last_update":       None,
-            "generation_origin": None,
-            "generation_notes":  None,
-            "generation_date":   None,
-            "active":            None,
-            "species":           None,
-            "plant_notes":       None,
-            "mother_plant":      None,
-            "generation_type":   None
-            }
+        # dummy_untagged = {
+        #     "dead": None,
+        #     "count": None,
+        #     "plant_name": "_untagged photos",
+        #     "last_update": None,
+        #     "generation_origin": None,
+        #     "generation_notes": None,
+        #     "generation_date": None,
+        #     "active": True,
+        #     "species": None,
+        #     "plant_notes": None,
+        #     "mother_plant": None,
+        #     "generation_type": None
+        #     }
 
         # plants_list.insert(0, dummy_all)
         # if not [p for p in plants_list if p['plant_name'] == '_untagged photos']:
@@ -125,7 +104,8 @@ class PlantResource(Resource):
         return {'action': 'Saved',
                 'resource': 'PlantResource'}, 200
 
-    def delete(self):
+    @staticmethod
+    def delete():
         # tag deleted plant as 'hide' in database
         plant_name = request.get_json()['plant']
         record_update: Plant = get_sql_session().query(Plant).filter_by(plant_name=plant_name).first()
