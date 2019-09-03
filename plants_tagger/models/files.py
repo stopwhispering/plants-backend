@@ -14,7 +14,7 @@ from plants_tagger import config
 from plants_tagger.config_local import folder_root_original_images
 
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
-    decode_record_date_time, encode_record_date_time, dicts_to_strings, copy_exif
+    decode_record_date_time, encode_record_date_time, dicts_to_strings, copy_exif, auto_rotate_jpeg
 
 PATH_GEN = plants_tagger.config_local.rel_folder_photos_generated
 PATH_SUB = r"localService\photos"
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 FOLDER_ROOT = plants_tagger.config_local.folder_root_original_images
 FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
                                 plants_tagger.config_local.rel_folder_photos_generated)
-delme = {-1: 0}
+delme = 0
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
@@ -163,7 +163,7 @@ class PhotoDirectory:
         logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
         for file in self.directory:
             read_exif_tags(file)
-        logger.warning(delme)
+        logger.warning(f'Reached {delme}')
 
 
     def _generate_images(self, path_basic_folder: str):
@@ -235,15 +235,9 @@ def read_exif_tags(file):
     # logger.debug(file['path_full_local'])
 
     global delme
-    if exif_dict:
-        if piexif.ImageIFD.Orientation in exif_dict["0th"]:
-            o = exif_dict["0th"][piexif.ImageIFD.Orientation]
-            if o in delme:
-                delme[o] += 1
-            else:
-                delme[o] = 1
-        else:
-            delme[-1] += 1
+    if not delme > 10:
+        auto_rotate_jpeg(file['path_full_local'], exif_dict)
+        delme += 1
 
     try:  # description
         file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
