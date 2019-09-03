@@ -240,7 +240,7 @@ def read_exif_tags(file):
             if o in delme:
                 delme[o] += 1
             else:
-                delme[0] = 1
+                delme[o] = 1
         else:
             delme[-1] += 1
 
