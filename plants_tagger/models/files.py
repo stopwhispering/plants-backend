@@ -235,7 +235,8 @@ def read_exif_tags(file):
     # logger.debug(file['path_full_local'])
 
     global delme
-    if not delme > 10:
+    if not delme > 50:
+        logger.warning(f"treating {file['path_full_local']}")
         auto_rotate_jpeg(file['path_full_local'], exif_dict)
         delme += 1
 
