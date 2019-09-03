@@ -148,6 +148,7 @@ class PhotoDirectory:
     def _get_files_already_generated(self, folder):
         """returns a list of already-generated file derivatives (thumbnails & resized)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
+        paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
         self.files_already_generated = [os.path.basename(path_full) for path_full in paths]
 
     def _generated_file_exists(self, filename_generated: str):
