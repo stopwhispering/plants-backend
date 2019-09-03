@@ -2,7 +2,7 @@ from typing import List
 import piexif
 import datetime
 import os
-from PIL import Image, ExifTags
+from PIL import Image
 import glob
 import functools
 import operator
@@ -14,11 +14,11 @@ from plants_tagger import config
 from plants_tagger.config_local import folder_root_original_images
 
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
-    decode_record_date_time, encode_record_date_time, dicts_to_strings, copy_exif, auto_rotate_jpeg
+    decode_record_date_time, encode_record_date_time, dicts_to_strings, auto_rotate_jpeg
 
 PATH_GEN = plants_tagger.config_local.rel_folder_photos_generated
 PATH_SUB = r"localService\photos"
-REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.rel_folder_photos_original  # r"localService\original"
+REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.rel_folder_photos_original
 
 lock_photo_directory = threading.RLock()
 photo_directory = None
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 FOLDER_ROOT = plants_tagger.config_local.folder_root_original_images
 FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
                                 plants_tagger.config_local.rel_folder_photos_generated)
-delme = 0
+
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
@@ -76,24 +76,27 @@ def generate_thumbnail(path_basic_folder: str,
 
     # there's a bug in chrome: it's not respecting the orientation exif (unless directly opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
-    for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation] == 'Orientation':
-            break
+    # for orientation in ExifTags.TAGS.keys():
+    #     if ExifTags.TAGS[orientation] == 'Orientation':
+    #         break
 
+    # noinspection PyProtectedMember
     exif_obj = im._getexif()
     if exif_obj:  # the image might have no exif-tags
+        # noinspection PyProtectedMember
         exif = dict(im._getexif().items())
-        if orientation in exif:
-            if exif[orientation] == 3:
+        if piexif.ImageIFD.Orientation in exif:
+            if exif[piexif.ImageIFD.Orientation] == 3:
                 im = im.rotate(180, expand=True)
-            elif exif[orientation] == 6:
+            elif exif[piexif.ImageIFD.Orientation] == 6:
                 im = im.rotate(270, expand=True)
-            elif exif[orientation] == 8:
+            elif exif[piexif.ImageIFD.Orientation] == 8:
                 im = im.rotate(90, expand=True)
 
     im.thumbnail(size)
-    filename_image = os.path.basename(path_image)  # todo use get filename method
+    filename_image = os.path.basename(path_image)
     filename_thumb_list = filename_image.split('.')
+    # noinspection PyTypeChecker
     filename_thumb_list.insert(-1, suffix)
     filename_thumb = ".".join(filename_thumb_list)
     path_save = os.path.join(path_basic_folder, PATH_GEN, filename_thumb)
@@ -163,8 +166,6 @@ class PhotoDirectory:
         logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
         for file in self.directory:
             read_exif_tags(file)
-        logger.warning(f'Reached {delme}')
-
 
     def _generate_images(self, path_basic_folder: str):
         """generates image derivatives (resized & thumbnail) for each original image file if not already exists;
@@ -175,23 +176,12 @@ class PhotoDirectory:
             # generate a thumbnail...
             file['filename_thumb'] = _util_get_generated_filename(file['filename'], size=config.size_thumbnail_image)
             if not self._generated_file_exists(file['filename_thumb']):
-                path_full_local_gen = generate_thumbnail(path_basic_folder,
-                                                        file['path_full_local'],
-                                                        config.size_thumbnail_image)
-                # copy_exif(file['path_full_local'], path_full_local_gen)
-
-            # # ... and a display photo
-            # file['filename_big'] = self._util_get_generated_filename(file['filename'], size=(800, 600))
-            # if not self._generated_file_exists(file['filename_big']):
-            #     path_full_local_gen = generate_thumbnail(path_basic_folder,
-            #                                              file['path_full_local'],
-            #                                              size=(800, 600))
-            #     # copy_exif(file['path_full_local'], path_full_local_gen)
+                _ = generate_thumbnail(path_basic_folder,
+                                       file['path_full_local'],
+                                       config.size_thumbnail_image)
 
             file['path_thumb'] = os.path.join(PATH_GEN, file['filename_thumb'])
-            # file['path_big'] = os.path.join(PATH_GEN, file['filename_big'])
             file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_FOLDER_PHOTOS_ORIGINAL):]
-
 
     def get_all_plants(self):
         """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant
@@ -234,11 +224,7 @@ def read_exif_tags(file):
     exif_dict = piexif.load(file['path_full_local'])
     # logger.debug(file['path_full_local'])
 
-    global delme
-    if not delme > 50:
-        logger.warning(f"treating {file['path_full_local']}")
-        auto_rotate_jpeg(file['path_full_local'], exif_dict)
-        delme += 1
+    auto_rotate_jpeg(file['path_full_local'], exif_dict)
 
     try:  # description
         file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
@@ -270,8 +256,7 @@ def get_plants_data(directory):
     """extracts information from the directory that is relevant for the frontend;
     returns list of dicts (just like directory)"""
     plants_data = [
-        {#"url_big": file['path_big'],
-         "url_small": file['path_thumb'] if 'path_thumb' in file else '',
+        {"url_small": file['path_thumb'] if 'path_thumb' in file else '',
          "url_original": file['path_original'] if 'path_original' in file else '',
          "keywords": file['tag_keywords'],
          "plants": file['tag_authors_plants'],
@@ -353,7 +338,8 @@ def write_new_exif_tags(images_data, temp: bool = False):
                         or exif_dict['0th'][315] != tag_authors_plants else False
             # if exif_dict['0th'][270] != tag_descriptions\
             #     or exif_dict['0th'][40094] != tag_keywords\
-            #         or ((315 in exif_dict['0th'] and exif_dict['0th'][315] != tag_authors_plants and tag_authors_plants)
+            #         or ((315 in exif_dict['0th'] and exif_dict['0th'][315] != tag_authors_plants and tag_authors_
+            #         plants)
             #             or (315 in exif_dict['0th'] and not tag_authors_plants)
             #             or (315 not in exif_dict['0th'] and tag_authors_plants)):
         if modified:
