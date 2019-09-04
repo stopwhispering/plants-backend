@@ -32,45 +32,57 @@ class ImageResource(Resource):
         else:
             keywords = []
 
-        for photo_upload in files:
+        # remove duplicates (already saved)
+        duplicate_filenames = []
+        for i, photo_upload in enumerate(files[:]):  # need to loop on copy if we want to delete within loop
             path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
             logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
             if os.path.isfile(path):  # todo: better check in all folders!
-                logger.error(f'Canceled file upload (duplicate): {photo_upload.filename}')
-                return {'error': f'File already uploaded: {photo_upload.filename}'}, 500
+                duplicate_filenames.append(photo_upload.filename)
+                files.pop(i)
+                logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
+                # return {'error': f'File already uploaded: {photo_upload.filename}'}, 500
 
-        # save only if there's no duplicate among uploaded files
-        for photo_upload in files:
-            path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
-            logger.info(f'Saving {path}.')
-            photo_upload.save(path)
+        if files:
+            for photo_upload in files:
+                path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
+                logger.info(f'Saving {path}.')
+                photo_upload.save(path)
 
-            # add tagged plants (update/create exif tags)
-            if plants or keywords:
-                image_metadata = {'path_full_local': path}
-                read_exif_tags(image_metadata)
-                plants_data = get_plants_data([image_metadata])
-                if plants:
-                    logger.info(f'Tagging new image with plants: {additional_data["plants"]}')
-                    plants_data[0]['plants'] = plants
-                if keywords:
-                    logger.info(f'Tagging new image with keywords: {additional_data["keywords"]}')
-                    plants_data[0]['keywords'] = keywords
-                write_new_exif_tags(plants_data, temp=True)
+                # add tagged plants (update/create exif tags)
+                if plants or keywords:
+                    image_metadata = {'path_full_local': path}
+                    read_exif_tags(image_metadata)
+                    plants_data = get_plants_data([image_metadata])
+                    if plants:
+                        logger.info(f'Tagging new image with plants: {additional_data["plants"]}')
+                        plants_data[0]['plants'] = plants
+                    if keywords:
+                        logger.info(f'Tagging new image with keywords: {additional_data["keywords"]}')
+                        plants_data[0]['keywords'] = keywords
+                    write_new_exif_tags(plants_data, temp=True)
 
-        # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
-        # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
-        if plants_tagger.models.files.photo_directory:
-            plants_tagger.models.files.photo_directory.refresh_directory(path_frontend_temp)
+            # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
+            # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
+            if plants_tagger.models.files.photo_directory:
+                plants_tagger.models.files.photo_directory.refresh_directory(path_frontend_temp)
+            else:
+                logger.warning('No instantiated photo directory found.')
+
+        if files and not duplicate_filenames:
+            msg_type = 'Information'
+            msg_message = f'Successfully saved {len(files)} images.'
+            msg_additional_text = None
         else:
-            logger.warning('No instantiated photo directory found.')
+            msg_type = 'Warning'
+            msg_message = f'Duplicates found when saving.'
+            msg_additional_text = 'Saved {[p.filename for p in files]}.\nSkipped {duplicate_filenames}.'
 
-        logger.info(f'Successfully saved {len(files)} images.')
-        # return {'success': f'Successfully saved {len(files)} images.'}, 200
+        logger.info(msg_message)
         return {'message':  {
-                    'type':           'Information',
-                    'message':        f'Successfully saved {len(files)} images',
-                    'additionalText': None,
+                    'type':           msg_type,
+                    'message':        msg_message,
+                    'additionalText': msg_additional_text,
                     'description':    f'Resource: {parse_resource_from_request(request)}',
                     }
                 }, 200
