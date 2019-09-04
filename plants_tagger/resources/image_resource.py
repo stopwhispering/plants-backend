@@ -73,17 +73,21 @@ class ImageResource(Resource):
             msg_type = 'Information'
             msg_message = f'Successfully saved {len(files)} images.'
             msg_additional_text = None
+            msg_description = f'Resource: {parse_resource_from_request(request)}'
         else:
             msg_type = 'Warning'
             msg_message = f'Duplicates found when saving.'
-            msg_additional_text = 'Saved {[p.filename for p in files]}.\nSkipped {duplicate_filenames}.'
+            msg_additional_text = 'click for details'
+            msg_description = f'Resource: {parse_resource_from_request(request)}\n' \
+                              f'Saved {[p.filename for p in files]}.' \
+                              f'\nSkipped {duplicate_filenames}.'
 
         logger.info(msg_message)
         return {'message':  {
                     'type':           msg_type,
                     'message':        msg_message,
                     'additionalText': msg_additional_text,
-                    'description':    f'Resource: {parse_resource_from_request(request)}',
+                    'description':    msg_description,
                     }
                 }, 200
 
