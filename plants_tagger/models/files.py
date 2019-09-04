@@ -144,6 +144,7 @@ class PhotoDirectory:
         """read all image files and create a list of dicts (one dict for each file)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
         paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
+        paths = list(set(paths))  # on windows, on the other hand, the extension would produce duplicates...
         logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
         self.directory = [{'path_full_local': path_full,
                            'filename': os.path.basename(path_full)} for path_full in paths]
@@ -152,6 +153,7 @@ class PhotoDirectory:
         """returns a list of already-generated file derivatives (thumbnails & resized)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
         paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
+        paths = list(set(paths))
         self.files_already_generated = [os.path.basename(path_full) for path_full in paths]
 
     def _generated_file_exists(self, filename_generated: str):
