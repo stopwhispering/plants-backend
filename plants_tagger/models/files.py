@@ -11,22 +11,22 @@ import logging
 
 import plants_tagger.config_local
 from plants_tagger import config
-from plants_tagger.config_local import folder_root_original_images
+from plants_tagger.config_local import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS
 
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, auto_rotate_jpeg
 
-PATH_GEN = plants_tagger.config_local.rel_folder_photos_generated
+PATH_GEN = plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED
 PATH_SUB = r"localService\photos"
-REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.rel_folder_photos_original
+REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.REL_PATH_PHOTOS_ORIGINAL
 
 lock_photo_directory = threading.RLock()
 photo_directory = None
 logger = logging.getLogger(__name__)
 
-FOLDER_ROOT = plants_tagger.config_local.folder_root_original_images
-FOLDER_GENERATED = os.path.join(plants_tagger.config_local.path_frontend_temp,
-                                plants_tagger.config_local.rel_folder_photos_generated)
+FOLDER_ROOT = plants_tagger.config_local.PATH_ORIGINAL_PHOTOS
+FOLDER_GENERATED = os.path.join(plants_tagger.config_local.PATH_BASE,
+                                plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED)
 
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
@@ -42,23 +42,22 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
     # todo: use PhotoDirectory list
-    # path_full = os.path.join(plants_tagger.config_local.path_frontend_temp, original_image_rel_path)
-    path_full = os.path.join(plants_tagger.config_local.path_photos, original_image_rel_path)
-    # path_generated = os.path.join(plants_tagger.config_local.path_frontend_temp,
-    #                               plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
+    # path_full = os.path.join(plants_tagger.config_local.PATH_BASE, original_image_rel_path)
+    path_full = os.path.join(plants_tagger.config_local.PATH_PHOTOS_BASE, original_image_rel_path)
+    # path_generated = os.path.join(plants_tagger.config_local.PATH_BASE,
+    #                               plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED, filename_generated)
     # logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
-    path_generated = os.path.join(plants_tagger.config_local.path_photos,
-                                  plants_tagger.config_local.subfolder_generated, filename_generated)
+    path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
     # logger.debug(f"Preview Image Path Generated: {path_generated}")
     # create the preview image if not exists
     if not os.path.isfile(path_generated):
         logger.info('Preview Image: Generating the not-yet-existing preview image.')
-        generate_thumbnail(path_basic_folder=plants_tagger.config_local.path_frontend_temp,
+        generate_thumbnail(path_basic_folder=plants_tagger.config_local.PATH_BASE,
                            path_image=path_full,
                            size=config.size_preview_image)
 
     # return webapp-relative path to preview image
-    rel_path = os.path.join(plants_tagger.config_local.rel_folder_photos_generated, filename_generated)
+    rel_path = os.path.join(plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED, filename_generated)
     # logger.debug(f"Preview Image relative path: {rel_path}")
     return rel_path
 
@@ -276,7 +275,7 @@ def get_exif_tags_for_folder(path_basic_folder: str):
     with lock_photo_directory:
         global photo_directory
         if not photo_directory:
-            photo_directory = PhotoDirectory(folder_root_original_images)
+            photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
             photo_directory.refresh_directory(path_basic_folder)
             # photo_directory._read_exif_tags()
             # photo_directory._generate_images(path_basic_folder)

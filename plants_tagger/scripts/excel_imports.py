@@ -13,7 +13,7 @@ if ip.startswith('80.241'):
     sys.path.append('/projects/plants/plants_backend')
 
 
-from plants_tagger.config_local import PATH_BOTANICA_XLSX
+from plants_tagger.config_local import FILE_PATH_BOTANICA_XLSX
 from plants_tagger.models.orm_tables import Botany, Plant, Measurement
 from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engine
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def import_botany_from_xlsx_to_db():
-    df = pd.read_excel(PATH_BOTANICA_XLSX, sheet_name=2)
+    df = pd.read_excel(FILE_PATH_BOTANICA_XLSX, sheet_name=2)
     for index, row in df.iterrows():
         b = get_sql_session().query(Botany).filter(Botany.species == row['Art_species']).first()
         if not b:

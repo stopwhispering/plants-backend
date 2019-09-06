@@ -5,7 +5,7 @@ import logging
 
 import plants_tagger.models.files
 import plants_tagger.config_local
-from plants_tagger.config_local import folder_root_original_images
+from plants_tagger.config_local import PATH_ORIGINAL_PHOTOS
 from plants_tagger.models.files import lock_photo_directory
 import plants_tagger.models.files
 
@@ -40,7 +40,7 @@ class PhotoFolderFileEventsHandler(FileSystemEventHandler):
         with lock_photo_directory:
             if plants_tagger.models.files.photo_directory:
                 plants_tagger.models.files.photo_directory.refresh_directory(
-                    plants_tagger.config_local.path_frontend_temp)
+                    plants_tagger.config_local.PATH_BASE)
 
     def on_created(self, event):
         self._order_refresh(event)
@@ -56,10 +56,10 @@ def run_watcher():
     """run in thread from wsgi.py"""
     observer = Observer()
     handler = PhotoFolderFileEventsHandler(observer)
-    observer.schedule(handler, folder_root_original_images, recursive=True)
-    # observer.schedule(handler, path_uploaded_photos_original, recursive=True)
+    observer.schedule(handler, PATH_ORIGINAL_PHOTOS, recursive=True)
+    # observer.schedule(handler, PATH_ORIGINAL_PHOTOS_UPLOADED, recursive=True)
     observer.start()
-    logger.info(f'Started Watchdog for folder: {folder_root_original_images}.')
+    logger.info(f'Started Watchdog for folder: {PATH_ORIGINAL_PHOTOS}.')
 
     try:
         while True:

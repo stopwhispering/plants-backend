@@ -6,7 +6,7 @@ import logging
 
 import plants_tagger.models.files
 # from plants_tagger.models.files import photo_directory
-from plants_tagger.config_local import path_uploaded_photos_original, path_frontend_temp, path_deleted_photos
+from plants_tagger.config_local import PATH_ORIGINAL_PHOTOS_UPLOADED, PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data
 from plants_tagger.util.util import parse_resource_from_request
 
@@ -35,7 +35,7 @@ class ImageResource(Resource):
         # remove duplicates (already saved)
         duplicate_filenames = []
         for i, photo_upload in enumerate(files[:]):  # need to loop on copy if we want to delete within loop
-            path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
+            path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
             logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
             if os.path.isfile(path):  # todo: better check in all folders!
                 duplicate_filenames.append(photo_upload.filename)
@@ -45,7 +45,7 @@ class ImageResource(Resource):
 
         if files:
             for photo_upload in files:
-                path = os.path.join(path_uploaded_photos_original, photo_upload.filename)
+                path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
                 logger.info(f'Saving {path}.')
                 photo_upload.save(path)
 
@@ -65,7 +65,7 @@ class ImageResource(Resource):
             # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
             # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
             if plants_tagger.models.files.photo_directory:
-                plants_tagger.models.files.photo_directory.refresh_directory(path_frontend_temp)
+                plants_tagger.models.files.photo_directory.refresh_directory(PATH_BASE)
             else:
                 logger.warning('No instantiated photo directory found.')
 
@@ -100,7 +100,7 @@ class ImageResource(Resource):
             return {'error': 'File not found'}, 500
 
         filename = os.path.basename(old_path)
-        new_path = os.path.join(path_deleted_photos, filename)
+        new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
 
         try:
             os.replace(src=old_path,

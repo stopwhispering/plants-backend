@@ -17,7 +17,7 @@ class RefreshPhotoDirectoryResource(Resource):
             global photo_directory
             if not photo_directory:
                 photo_directory = PhotoDirectory(FOLDER_ROOT)
-            photo_directory.refresh_directory(plants_tagger.config_local.path_frontend_temp)
+            photo_directory.refresh_directory(plants_tagger.config_local.PATH_BASE)
         # return {'success': 'Refreshed photo directory.'}  # todo return image list ?
         return {'message':  {
             'type':           'Information',

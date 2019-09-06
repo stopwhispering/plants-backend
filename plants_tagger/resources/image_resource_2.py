@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ImageResource2(Resource):
     @staticmethod
     def get():
-        files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.path_frontend_temp)
+        files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.PATH_BASE)
 
         # filter out archived images (todo: required?)
         i = len(files_data)
