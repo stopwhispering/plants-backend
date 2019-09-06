@@ -2,6 +2,7 @@ from flask_restful import Resource
 from flask import request
 import json
 import logging
+import datetime
 
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
@@ -62,6 +63,7 @@ class PlantResource(Resource):
         # get latest photo record date per plant
         # todo: maybe cache in database; reading this here renders loading plants and images in parallel impossible
         # todo: move above in for loop? but at current position, images may be loaded already
+        null_date = datetime.date(1900, 1, 1)
         with lock_photo_directory:
             if not plants_tagger.models.files.photo_directory:
                 plants_tagger.models.files.photo_directory = PhotoDirectory()
@@ -69,6 +71,9 @@ class PlantResource(Resource):
             plant_image_dates = plants_tagger.models.files.photo_directory.get_latest_date_per_plant()
         for plant in plants_list:
             plant['latest_image_record_date'] = plant_image_dates.get(plant['plant_name'])
+            # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
+            # (in ui5 formatter, we will format the null_date as an empty string)
+            plant['latest_image_record_date'] = plant_image_dates.get(plant['plant_name'], null_date)
 
         # dummy_untagged = {
         #     "dead": None,
