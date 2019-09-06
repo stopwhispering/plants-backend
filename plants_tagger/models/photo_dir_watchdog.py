@@ -5,7 +5,7 @@ import logging
 
 import plants_tagger.models.files
 import plants_tagger.config_local
-from plants_tagger.config_local import PATH_ORIGINAL_PHOTOS
+from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
 from plants_tagger.models.files import lock_photo_directory
 import plants_tagger.models.files
 

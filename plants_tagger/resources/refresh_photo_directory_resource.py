@@ -2,7 +2,8 @@ from flask_restful import Resource
 from flask import request
 
 import plants_tagger.config_local
-from plants_tagger.models.files import photo_directory, lock_photo_directory, PhotoDirectory, FOLDER_ROOT
+from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
+from plants_tagger.models.files import lock_photo_directory, PhotoDirectory
 
 
 # todo: implement api for this (button )
@@ -16,7 +17,7 @@ class RefreshPhotoDirectoryResource(Resource):
         with lock_photo_directory:
             global photo_directory
             if not photo_directory:
-                photo_directory = PhotoDirectory(FOLDER_ROOT)
+                photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
             photo_directory.refresh_directory(plants_tagger.config_local.PATH_BASE)
         # return {'success': 'Refreshed photo directory.'}  # todo return image list ?
         return {'message':  {

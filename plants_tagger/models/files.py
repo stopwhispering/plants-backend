@@ -10,23 +10,17 @@ import threading
 import logging
 
 import plants_tagger.config_local
+import plants_tagger.models.os_paths
 from plants_tagger import config
-from plants_tagger.config_local import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS
+from plants_tagger.models.os_paths import REL_PATH_PHOTOS_ORIGINAL, REL_PATH_PHOTOS_GENERATED, \
+    PATH_GENERATED_THUMBNAILS, PATH_ORIGINAL_PHOTOS
 
 from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, auto_rotate_jpeg
 
-PATH_GEN = plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED
-PATH_SUB = r"localService\photos"
-REL_FOLDER_PHOTOS_ORIGINAL = plants_tagger.config_local.REL_PATH_PHOTOS_ORIGINAL
-
 lock_photo_directory = threading.RLock()
 photo_directory = None
 logger = logging.getLogger(__name__)
-
-FOLDER_ROOT = plants_tagger.config_local.PATH_ORIGINAL_PHOTOS
-FOLDER_GENERATED = os.path.join(plants_tagger.config_local.PATH_BASE,
-                                plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED)
 
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
@@ -43,7 +37,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
                                                       size=config.size_preview_image)
     # todo: use PhotoDirectory list
     # path_full = os.path.join(plants_tagger.config_local.PATH_BASE, original_image_rel_path)
-    path_full = os.path.join(plants_tagger.config_local.PATH_PHOTOS_BASE, original_image_rel_path)
+    path_full = os.path.join(plants_tagger.models.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
     # path_generated = os.path.join(plants_tagger.config_local.PATH_BASE,
     #                               plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED, filename_generated)
     # logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
@@ -57,7 +51,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
                            size=config.size_preview_image)
 
     # return webapp-relative path to preview image
-    rel_path = os.path.join(plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED, filename_generated)
+    rel_path = os.path.join(plants_tagger.models.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
     # logger.debug(f"Preview Image relative path: {rel_path}")
     return rel_path
 
@@ -98,7 +92,7 @@ def generate_thumbnail(path_basic_folder: str,
     # noinspection PyTypeChecker
     filename_thumb_list.insert(-1, suffix)
     filename_thumb = ".".join(filename_thumb_list)
-    path_save = os.path.join(path_basic_folder, PATH_GEN, filename_thumb)
+    path_save = os.path.join(path_basic_folder, REL_PATH_PHOTOS_GENERATED, filename_thumb)
     im.save(path_save, "JPEG")
 
     # thumbnails don't require any exif tags
@@ -135,7 +129,7 @@ class PhotoDirectory:
     def refresh_directory(self, path_basic_folder):
         logger.info('Re-reading exif files from Photos Folder.')
         self._scan_files(self.root_folder)
-        self._get_files_already_generated(FOLDER_GENERATED)
+        self._get_files_already_generated(PATH_GENERATED_THUMBNAILS)
         self._read_exif_tags_all_images()
         self._generate_images(path_basic_folder)
 
@@ -181,8 +175,8 @@ class PhotoDirectory:
                                        file['path_full_local'],
                                        config.size_thumbnail_image)
 
-            file['path_thumb'] = os.path.join(PATH_GEN, file['filename_thumb'])
-            file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_FOLDER_PHOTOS_ORIGINAL):]
+            file['path_thumb'] = os.path.join(REL_PATH_PHOTOS_GENERATED, file['filename_thumb'])
+            file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_PATH_PHOTOS_ORIGINAL):]
 
     def get_all_plants(self):
         """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant

@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from plants_tagger.config_local import subfolder_photos
+from plants_tagger.models.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Plant
 from plants_tagger.util.exif_helper import decode_record_date_time
@@ -44,8 +44,8 @@ def update_plants_from_list_of_dicts(plants: [dict]):
             # we need to remove the localService prefix
             filename_previewimage = plant['filename_previewimage'].replace('\\\\', '\\')
             logger.debug(f"Saving {plant['plant_name']}, setting preview image as {filename_previewimage}")
-            if filename_previewimage.startswith(subfolder_photos):
-                filename_previewimage_modified = filename_previewimage[len(subfolder_photos):]
+            if filename_previewimage.startswith(SUBDIRECTORY_PHOTOS_SEARCH):
+                filename_previewimage_modified = filename_previewimage[len(SUBDIRECTORY_PHOTOS_SEARCH):]
                 logger.debug(f"Changing to {filename_previewimage_modified}")
                 record_update.filename_previewimage = filename_previewimage_modified
             else:
