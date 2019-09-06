@@ -12,6 +12,7 @@ import logging
 import plants_tagger.config_local
 import plants_tagger.models.os_paths
 from plants_tagger import config
+from plants_tagger.config_local import PATH_BASE
 from plants_tagger.models.os_paths import REL_PATH_PHOTOS_ORIGINAL, REL_PATH_PHOTOS_GENERATED, \
     PATH_GENERATED_THUMBNAILS, PATH_ORIGINAL_PHOTOS
 
@@ -123,10 +124,10 @@ def _util_get_generated_filename(filename_original: str, size: tuple):
 class PhotoDirectory:
     directory = None
 
-    def __init__(self, root_folder):
+    def __init__(self, root_folder: str = PATH_ORIGINAL_PHOTOS):
         self.root_folder = root_folder
 
-    def refresh_directory(self, path_basic_folder):
+    def refresh_directory(self, path_basic_folder: str = PATH_BASE):
         logger.info('Re-reading exif files from Photos Folder.')
         self._scan_files(self.root_folder)
         self._get_files_already_generated(PATH_GENERATED_THUMBNAILS)
@@ -211,6 +212,19 @@ class PhotoDirectory:
         self.directory.remove(directory_entries[0])
         logger.info(f'Removed deleted image from PhotoDirectory Cache.')
 
+    def get_latest_date_per_plant(self):
+        """called by plants resource! returns latest image record date per plant; contains only plants that have
+        at least one image
+        :rtype: dict
+        """
+        plant_image_dates = {}
+        for image in self.directory:
+            for p in image['tag_authors_plants']:
+                if p not in plant_image_dates or plant_image_dates[p] < image['record_date_time']:
+                    plant_image_dates[p] = image['record_date_time']
+
+        return plant_image_dates
+
 
 def read_exif_tags(file):
     """reads exif info for supplied file and parses information from it (plants list etc.);
@@ -248,6 +262,7 @@ def read_exif_tags(file):
 
 
 def get_plants_data(directory):
+    # todo: get rid of this useless mapping
     """extracts information from the directory that is relevant for the frontend;
     returns list of dicts (just like directory)"""
     plants_data = [
@@ -263,14 +278,14 @@ def get_plants_data(directory):
     return plants_data
 
 
-def get_exif_tags_for_folder(path_basic_folder: str):
+def get_exif_tags_for_folder():
     """get list of image dicts; uses global photo directory object, initialized only
     at first time after server (re-)start"""
     with lock_photo_directory:
         global photo_directory
         if not photo_directory:
             photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-            photo_directory.refresh_directory(path_basic_folder)
+            photo_directory.refresh_directory(PATH_BASE)
             # photo_directory._read_exif_tags()
             # photo_directory._generate_images(path_basic_folder)
         # plants_data = photo_directory.get_plants_data(photo_directory.directory)

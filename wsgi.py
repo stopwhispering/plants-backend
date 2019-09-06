@@ -9,5 +9,5 @@ logging.getLogger(__name__).info('Creating App.')
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
     logging.getLogger(__name__).info('Starting App serving UWSGI.')

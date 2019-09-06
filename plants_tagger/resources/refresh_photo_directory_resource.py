@@ -3,8 +3,7 @@ from flask import request
 
 import plants_tagger.config_local
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
-from plants_tagger.models.files import lock_photo_directory, PhotoDirectory
-
+from plants_tagger.models.files import lock_photo_directory, PhotoDirectory, photo_directory
 
 # todo: implement api for this (button )
 from plants_tagger.util.util import parse_resource_from_request

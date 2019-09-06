@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ImageResource2(Resource):
     @staticmethod
     def get():
-        files_data, _ = get_exif_tags_for_folder(plants_tagger.config_local.PATH_BASE)
+        files_data, _ = get_exif_tags_for_folder()
 
         # filter out archived images (todo: required?)
         i = len(files_data)
@@ -31,6 +31,7 @@ class ImageResource2(Resource):
         # logger.debug(f'Hiding images: {hiding}')
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
+
 
         # todo get rid of (not required in frontend)
         for image in files_data:

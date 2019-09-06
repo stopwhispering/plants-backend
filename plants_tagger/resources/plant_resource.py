@@ -4,8 +4,10 @@ import json
 import logging
 
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.files import generate_previewimage_get_rel_path
+import plants_tagger.models.files
+from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
 from plants_tagger.models.orm_tables import Plant, Botany, Measurement
+from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
 from plants_tagger.models.update_measurements import update_measurements_from_list_of_dicts
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from plants_tagger.util.json_helper import make_list_items_json_serializable
@@ -56,6 +58,17 @@ class PlantResource(Resource):
             logger.debug(f'Filter out {count-len(plants_list)} plants due to Hide flag.')
         else:
             logger.debug('Filter hidden-flagged plants disabled.')
+
+        # get latest photo record date per plant
+        # todo: maybe cache in database; reading this here renders loading plants and images in parallel impossible
+        # todo: move above in for loop? but at current position, images may be loaded already
+        with lock_photo_directory:
+            if not plants_tagger.models.files.photo_directory:
+                plants_tagger.models.files.photo_directory = PhotoDirectory()
+                plants_tagger.models.files.photo_directory.refresh_directory()
+            plant_image_dates = plants_tagger.models.files.photo_directory.get_latest_date_per_plant()
+        for plant in plants_list:
+            plant['latest_image_record_date'] = plant_image_dates.get(plant['plant_name'])
 
         # dummy_untagged = {
         #     "dead": None,
