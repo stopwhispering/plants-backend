@@ -7,6 +7,7 @@ from plants_tagger.resources.image_resource import ImageResource
 from plants_tagger.resources.image_resource_2 import ImageResource2
 from plants_tagger.resources.plant_resource import PlantResource
 from plants_tagger.resources.refresh_photo_directory_resource import RefreshPhotoDirectoryResource
+from plants_tagger.resources.species_resource import SpeciesResource
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ def create_app():
     api.add_resource(ImageResource2, '/plants_tagger/backend/Image2')
     api.add_resource(ImageResource, '/plants_tagger/backend/Image')
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
+    api.add_resource(SpeciesResource, '/plants_tagger/backend/Species')
     logger.info('Added REST Resources.')
 
     return app

@@ -75,31 +75,30 @@ class PlantResource(Resource):
             # (in ui5 formatter, we will format the null_date as an empty string)
             plant['latest_image_record_date'] = plant_image_dates.get(plant['plant_name'], null_date)
 
-        # dummy_untagged = {
-        #     "dead": None,
-        #     "count": None,
-        #     "plant_name": "_untagged photos",
-        #     "last_update": None,
-        #     "generation_origin": None,
-        #     "generation_notes": None,
-        #     "generation_date": None,
-        #     "active": True,
-        #     "species": None,
-        #     "plant_notes": None,
-        #     "mother_plant": None,
-        #     "generation_type": None
-        #     }
+        # # todo: all
+        # for plant in plants_list:
+        #     plant['origin'] = [
+        #         {'key': 'generation_origin', 'text': plant['generation_origin'], 'title': 'Origin',
+        #             'value_state': 'Information', 'visible': True},
+        #         {'key': 'generation_notes', 'text': plant['generation_notes'], 'title': 'Notes', 'value_state':
+        #             'Information', 'visible': True if plant['generation_notes'] else False},
+        #         {'key': 'generation_type', 'text': plant['generation_type'], 'title': 'Type', 'value_state':
+        #             'Information', 'visible': True if plant['generation_type'] else False},
+        #         {'key': 'generation_date', 'text': plant['generation_date'], 'title': 'Date ', 'value_state':
+        #             'Information', 'visible': True if plant['generation_date'] else False},
+        #         {'key': 'mother_plant', 'text': plant['mother_plant'], 'title': 'Mother plant', 'value_state':
+        #             'Information', 'visible': True if plant['mother_plant'] else False}
+        #         ]
+        #
+        #     plant['misc'] = [
+        #         {'key': 'species', 'text': plant['species'], 'title': 'Species', 'value_state': 'Success' if
+        #                                                                                         plant.get('botany') else 'Error'},
+        #         # last_update is read-only, i.e. not saved from gui input
+        #         {'key': 'count', 'text': plant['count'], 'title': 'Count', 'value_state':
+        #             'Information'}
+        #         ]
 
-        # plants_list.insert(0, dummy_all)
-        # if not [p for p in plants_list if p['plant_name'] == '_untagged photos']:
-        #     plants_list.insert(0, dummy_untagged)
         make_list_items_json_serializable(plants_list)
-
-        # for p in plants_list:
-        #     if 'url_preview' in p and p['url_preview']:
-        #         a = p['url_preview']
-        #         p['url_preview'] = r'localService\\generated\\CrOv21_w.300_300.jpg'
-        #         a = 1
 
         return {'PlantsCollection': plants_list,
                 'meta': 'dummy'}, 200
