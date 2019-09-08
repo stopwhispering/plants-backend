@@ -2,7 +2,6 @@ from flask_restful import Resource
 from flask import request
 import logging
 
-import plants_tagger.config_local
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
 from plants_tagger.models.orm_tables import Plant
@@ -17,11 +16,6 @@ class ImageResource2(Resource):
     def get():
         files_data, _ = get_exif_tags_for_folder()
 
-        # filter out archived images (todo: required?)
-        i = len(files_data)
-        files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
-        logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
-
         # get plants whose images are configured to be hidden (hide-flag is set in plants table)
         i = len(files_data)
         plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
@@ -32,13 +26,12 @@ class ImageResource2(Resource):
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
 
-
-        # todo get rid of (not required in frontend)
         for image in files_data:
             if image['plants']:
                 image['plants'] = [{'key': p, 'text': p} for p in image['plants']]
             if image['keywords']:
-                image['keywords'] = [{'key': p, 'text': p} for p in image['keywords']]
+                image['keywords'] = [{'keyword': p} for p in image['keywords']]
+                # image['keywords'] = [{'key': p, 'text': p} for p in image['keywords']]
 
         make_list_items_json_serializable(files_data)
 
@@ -57,7 +50,7 @@ class ImageResource2(Resource):
         if not kwargs:
             kwargs = request.get_json(force=True)
         logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
-        write_new_exif_tags(kwargs['ImagesCollection'], temp=True)
+        write_new_exif_tags(kwargs['ImagesCollection'])
         # try:
         #     create_entry(category=category, date_=date_, text=text)
         # except (EntryExists, CategoryNotValid) as e:

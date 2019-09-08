@@ -19,9 +19,6 @@ class ImageResource(Resource):
     def post():
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
-        # plants_raw = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else []
-        # plants = [{'key': p, 'text': p} for p in plants_raw]
-
         additional_data = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else {}
         if 'plants' in additional_data:
             plants = [{'key': p, 'text': p} for p in additional_data['plants']]
@@ -61,10 +58,9 @@ class ImageResource(Resource):
                     if keywords:
                         logger.info(f'Tagging new image with keywords: {additional_data["keywords"]}')
                         plants_data[0]['keywords'] = keywords
-                    write_new_exif_tags(plants_data, temp=True)
+                    write_new_exif_tags(plants_data)
 
             # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
-            # todo: only read new files exif-tags; only implement if there are problems with lots of images (curr. not)
             if plants_tagger.models.files.photo_directory:
                 plants_tagger.models.files.photo_directory.refresh_directory(PATH_BASE)
             else:

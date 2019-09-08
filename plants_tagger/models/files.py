@@ -36,24 +36,16 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     filename_original = os.path.basename(original_image_rel_path)
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
-    # todo: use PhotoDirectory list
-    # path_full = os.path.join(plants_tagger.config_local.PATH_BASE, original_image_rel_path)
+
     path_full = os.path.join(plants_tagger.models.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
-    # path_generated = os.path.join(plants_tagger.config_local.PATH_BASE,
-    #                               plants_tagger.config_local.REL_PATH_PHOTOS_GENERATED, filename_generated)
-    # logger.debug(f"Preview Image Path Full of Original Image: {path_full}")
     path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
-    # logger.debug(f"Preview Image Path Generated: {path_generated}")
-    # create the preview image if not exists
     if not os.path.isfile(path_generated):
         logger.info('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(path_basic_folder=plants_tagger.config_local.PATH_BASE,
                            path_image=path_full,
                            size=config.size_preview_image)
 
-    # return webapp-relative path to preview image
     rel_path = os.path.join(plants_tagger.models.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
-    # logger.debug(f"Preview Image relative path: {rel_path}")
     return rel_path
 
 
@@ -198,7 +190,7 @@ class PhotoDirectory:
                          f"{photo['path_full_local']}")
             return
         logger.info(f'Updating changed image in PhotoDirectory Cache: {photo["path_full_local"]}')
-        directory_entries[0]['tag_keywords'] = [k['key'] for k in photo['keywords']]
+        directory_entries[0]['tag_keywords'] = [k['keyword'] for k in photo['keywords']]
         directory_entries[0]['tag_authors_plants'] = [p['key'] for p in photo['plants']]
         directory_entries[0]['tag_description'] = photo['description']
 
@@ -305,7 +297,6 @@ def encode_keywords_tag(l: list):
             ord_list = ord_list_new
 
     # add \x00 (0) after each element
-    # todo: better to it with something like encode(utf-8)?
     ord_list_final = []
     for item in ord_list:
         ord_list_final.append(item)
@@ -316,25 +307,24 @@ def encode_keywords_tag(l: list):
     return tuple(ord_list_final)
 
 
-def write_new_exif_tags(images_data, temp: bool = False):
+def write_new_exif_tags(images_data):
     for data in images_data:
         tag_descriptions = data['description'].encode('utf-8')
-        if temp:
-            # from list of dicts to list of str
-            list_keywords = dicts_to_strings(data['keywords'])
-            list_plants = dicts_to_strings(data['plants'])
-        else:
-            list_keywords = data['keywords']
-            list_plants = data['plants']
-
+        # if temp:
+        # from list of dicts to list of str
+        list_keywords = [k['keyword'] for k in data['keywords']]
+        # list_keywords = dicts_to_strings(data['keywords'])
+        list_plants = dicts_to_strings(data['plants'])
+        # else:
+        #     list_keywords = data['keywords']
+        #     list_plants = data['plants']
+        #
         tag_keywords = encode_keywords_tag(list_keywords)
-        # tag_authors_plants = encode_keywords_tag(data['plants'])
         if list_plants:
             tag_authors_plants = ';'.join(list_plants).encode('utf-8')
         else:
             tag_authors_plants = b''
 
-        # path = os.path.join(PATH_MAIN, PATH_SUB, data['filename'])
         path = data['path_full_local']
         exif_dict = piexif.load(path)
 
