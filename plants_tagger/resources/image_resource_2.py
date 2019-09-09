@@ -15,9 +15,13 @@ class ImageResource2(Resource):
     @staticmethod
     def get():
         files_data, _ = get_exif_tags_for_folder()
+        i = len(files_data)
+
+        # filter out archived images (todo: required?)
+        files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
+        logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
 
         # get plants whose images are configured to be hidden (hide-flag is set in plants table)
-        i = len(files_data)
         plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
         plants_to_hide_names = [p.plant_name for p in plants_to_hide]
         logger.debug(f'Hiding images that have only hidden plants tagged: {plants_to_hide_names}')
