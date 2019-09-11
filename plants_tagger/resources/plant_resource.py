@@ -22,8 +22,16 @@ class PlantResource(Resource):
     @staticmethod
     def get():
         plants_obj = get_sql_session().query(Plant).all()
-        plants_list = [p.__dict__ for p in plants_obj]
-        _ = [p.pop('_sa_instance_state') for p in plants_list]  # remove instance state objects
+
+        # unfortunately, __dict__ does not (always) include taxon (todo: try again later)
+        # plants_list = [p.__dict__ for p in plants_obj]
+        # _ = [p.pop('_sa_instance_state') for p in plants_list]  # remove instance state objects
+        plants_list = []
+        for p in plants_obj:
+            plant = p.__dict__
+            # plant.pop('_sa_instance_state')
+            plant['taxon'] = p.taxon.name if p.taxon else None
+            plants_list.append(plant)
 
         # add information from botany table
         for p in plants_list:

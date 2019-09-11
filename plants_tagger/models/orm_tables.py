@@ -2,6 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import INTEGER, TEXT, BOOLEAN, TIMESTAMP, DATE, CHAR
 import logging
 
+from sqlalchemy.orm import relationship
+
 from plants_tagger.models import init_sqlalchemy_engine
 from plants_tagger.models.orm_util import Base
 
@@ -24,6 +26,8 @@ class Plant(Base):
     hide = Column(BOOLEAN)
     # image_medium = Column(BLOB)
     last_update = Column(TIMESTAMP, nullable=False)
+    taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
+    taxon = relationship("Taxon", back_populates="plants")
 
 
 # class Group(Base):
@@ -82,9 +86,9 @@ class Botany(Base):
     notes = Column(TEXT)
 
 
-class Botany2(Base):
+class Taxon(Base):
     """botanical details"""
-    __tablename__ = 'botany2'
+    __tablename__ = 'taxon'
 
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     name = Column(CHAR(100))
@@ -96,6 +100,7 @@ class Botany2(Base):
     family = Column(CHAR(100))
     phylum = Column(CHAR(100))
     kingdom = Column(CHAR(100))
+    rank = Column(CHAR(30))
     taxonomic_status = Column(CHAR(100))
     name_published_in_year = Column(INTEGER)
     synonym = Column(BOOLEAN)
@@ -106,6 +111,9 @@ class Botany2(Base):
     distribution_concat = Column(CHAR(200))
     hybrid = Column(BOOLEAN)
     hybridgenus = Column(BOOLEAN)
+
+    plants = relationship("Plant", back_populates="taxon")
+
 
 logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')
 init_sqlalchemy_engine()
