@@ -82,5 +82,30 @@ class Botany(Base):
     notes = Column(TEXT)
 
 
+class Botany2(Base):
+    """botanical details"""
+    __tablename__ = 'botany2'
+
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    name = Column(CHAR(100))
+    is_custom = Column(BOOLEAN)
+    subsp = Column(CHAR(100))
+    species = Column(CHAR(100))
+    subgen = Column(CHAR(100))
+    genus = Column(CHAR(100))
+    family = Column(CHAR(100))
+    phylum = Column(CHAR(100))
+    kingdom = Column(CHAR(100))
+    taxonomic_status = Column(CHAR(100))
+    name_published_in_year = Column(INTEGER)
+    synonym = Column(BOOLEAN)
+    fq_id = Column(CHAR(50))
+    authors = Column(CHAR(100))
+    basionym = Column(CHAR(100))
+    synonyms_concat = Column(CHAR(200))
+    distribution_concat = Column(CHAR(200))
+    hybrid = Column(BOOLEAN)
+    hybridgenus = Column(BOOLEAN)
+
 logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')
 init_sqlalchemy_engine()
