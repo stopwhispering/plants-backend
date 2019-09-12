@@ -48,4 +48,5 @@ def add_distribution():
             print(f'Added distribution for {taxon.name} in database.')
 
 
-add_distribution()
+if __name__ == '__main__':
+    add_distribution()
