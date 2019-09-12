@@ -9,8 +9,7 @@ from typing import Optional
 from plants_tagger.constants import SOURCE_PLANTS, SOURCE_KEW
 from plants_tagger.exceptions import TooManyResultsError, Error
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Taxon
-
+from plants_tagger.models.orm_tables import Taxon, Distribution
 
 logger = logging.getLogger(__name__)
 
@@ -165,25 +164,50 @@ def copy_taxon_from_kew(fq_id: str,
             subgen=ipni_lookup.get('subgen'),  # todo or in other?
             genus=ipni_lookup.get('genus'),
             family=ipni_lookup.get('family'),
-            phylum=powo_lookup.get('phylum'),
-            kingdom=powo_lookup.get('kingdom'),
+            phylum=powo_lookup.get('phylum') if powo_lookup else None,
+            kingdom=powo_lookup.get('kingdom') if powo_lookup else None,
             rank=ipni_lookup.get('rank'),
-            taxonomic_status=powo_lookup.get('taxonomicStatus'),
-            name_published_in_year=powo_lookup.get('namePublishedInYear'),
-            synonym=powo_lookup.get('synonym'),
-            authors=powo_lookup.get('authors'),
+            taxonomic_status=powo_lookup.get('taxonomicStatus') if powo_lookup else None,
+            name_published_in_year=powo_lookup.get('namePublishedInYear') if powo_lookup else ipni_lookup.get(
+                    'publicationYear'),
+            synonym=powo_lookup.get('synonym') if powo_lookup else None,
+            authors=powo_lookup.get('authors') if powo_lookup else ipni_lookup.get('authors'),
             hybrid=ipni_lookup.get('hybrid'),
             hybridgenus=ipni_lookup.get('hybridGenus'),
 
-            basionym=powo_lookup['basionym'].get('name') if 'basionym' in powo_lookup else None,
-            synonyms_concat=get_synonyms_concat(powo_lookup),
-            distribution_concat=get_distribution_concat(powo_lookup)
+            basionym=powo_lookup['basionym'].get('name') if powo_lookup and 'basionym' in powo_lookup else None,
+            synonyms_concat=get_synonyms_concat(powo_lookup) if powo_lookup else None,
+            distribution_concat=get_distribution_concat(powo_lookup) if powo_lookup else None
             )
 
-    get_sql_session().add(taxon)
-    get_sql_session().commit()  # upon commit (flush), the id is determined
-    logger.info('Retrieved data from kew databases and created taxon in database.')
+    # distribution
+    dist = []
+    if powo_lookup and 'distribution' in powo_lookup and powo_lookup['distribution']:
+        # collect native and introduced distribution into one list
+        if 'natives' in powo_lookup['distribution']:
+            dist.extend(powo_lookup['distribution']['natives'])
+        if 'introduced' in powo_lookup['distribution']:
+            dist.extend(powo_lookup['distribution']['introduced'])
 
-    # todo: distirbution + coordinates in separates db tables
+    if not dist:
+        logger.info(f'No distribution info found for {taxon.name}.')
+    else:
+        # new_records = []
+        for area in dist:
+            record = Distribution(name=area.get('name'),
+                                  establishment=area.get('establishment'),
+                                  feature_id=area.get('featureId'),
+                                  tdwg_code=area.get('tdwgCode'),
+                                  tdwg_level=area.get('tdwgLevel')
+                                  )
+            # new_records.append(record)
+            taxon.distribution.append(record)
+
+        logger.info(f'Found {len(dist)} areas for {taxon.name}.')
+        # get_sql_session().add_all(new_records)
+
+    get_sql_session().add(taxon)
+    get_sql_session().commit()  # upon commit (flush), the ids are determined
+    logger.info(f'Retrieved data from kew databases and created taxon {taxon.name} in database.')
 
     return taxon

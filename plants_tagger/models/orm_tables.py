@@ -86,6 +86,21 @@ class Botany(Base):
     notes = Column(TEXT)
 
 
+class Distribution(Base):
+    """geographic distribution"""
+    __tablename__ = 'distribution'
+
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    name = Column(CHAR(40))
+    establishment = Column(CHAR(15))
+    feature_id = Column(CHAR(5))
+    tdwg_code = Column(CHAR(10))
+    tdwg_level = Column(INTEGER)
+
+    taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
+    taxon = relationship("Taxon", back_populates="distribution")
+
+
 class Taxon(Base):
     """botanical details"""
     __tablename__ = 'taxon'
@@ -113,6 +128,7 @@ class Taxon(Base):
     hybridgenus = Column(BOOLEAN)
 
     plants = relationship("Plant", back_populates="taxon")
+    distribution = relationship("Distribution", back_populates="taxon")
 
 
 logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')
