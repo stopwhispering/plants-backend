@@ -1,25 +1,23 @@
-import logging
 import socket
 import sys
 import pykew.powo as powo
 
 ip = socket.gethostbyname(socket.gethostname())
 if ip.startswith('80.241'):
-    logging.getLogger().warning('Server 80.241... detected. Adding path to sys path')
+    print('Server 80.241... detected. Adding path to sys path')
     sys.path.append('/projects/plants/plants_backend')
 
 from plants_tagger.models.orm_tables import Taxon, Distribution
 from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engine
 
 init_sqlalchemy_engine()
-logger = logging.getLogger(__name__)
 
 
 def add_distribution():
     query = get_sql_session().query(Taxon).all()
     for taxon in query:
-        logger.info(f'{taxon.name}: {len(taxon.distribution)}')
-        if taxon.distribution:
+        print(f'{taxon.name}: {len(taxon.distribution)}')
+        if len(taxon.distribution) > 0:
             continue
         powo_lookup = powo.lookup(taxon.fq_id, include=['distribution'])
 
@@ -32,7 +30,7 @@ def add_distribution():
                 dist.extend(powo_lookup['distribution']['introduced'])
 
         if not dist:
-            logger.warning(f'No distribution info found for {taxon.name}.')
+            print(f'No distribution info found for {taxon.name}.')
         else:
             # new_records = []
             for area in dist:
@@ -45,9 +43,9 @@ def add_distribution():
                 # new_records.append(record)
                 taxon.distribution.append(record)
 
-            logger.warning(f'Found {len(dist)} areas for {taxon.name}.')
+            print(f'Found {len(dist)} areas for {taxon.name}.')
             get_sql_session().commit()
-            logger.warning(f'Added distribution for {taxon.name} in database.')
+            print(f'Added distribution for {taxon.name} in database.')
 
 
 add_distribution()
