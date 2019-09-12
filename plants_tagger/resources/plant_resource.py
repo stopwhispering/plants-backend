@@ -28,12 +28,21 @@ class PlantResource(Resource):
         # _ = [p.pop('_sa_instance_state') for p in plants_list]  # remove instance state objects
         plants_list = []
         for p in plants_obj:
-            plant = p.__dict__
+            plant = p.__dict__.copy()
+            if '_sa_instance_state' in plant:
+                del plant['_sa_instance_state']
             # plant.pop('_sa_instance_state')
-            plant['taxon'] = p.taxon.name if p.taxon else None
+            if p.taxon:
+                plant['botanical_name'] = p.taxon.name
+                plant['taxon'] = p.taxon.__dict__.copy()
+                if '_sa_instance_state' in plant['taxon']:
+                    del plant['taxon']['_sa_instance_state']
+                a = 1
+
             plants_list.append(plant)
 
         # add information from botany table
+        # todo remove this old botany
         for p in plants_list:
             if p['species']:
                 bot = get_sql_session().query(Botany).filter(Botany.species == p['species']).first()

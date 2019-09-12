@@ -89,12 +89,13 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
         powo_lookup = powo.lookup(item.get('fqId'), include=['distribution'])
         if 'error' in powo_lookup:
             logger.warning(f'No kew powo result for fqId {item.get("fqId")}')
+            result['synonym'] = False
         else:
             result['phylum'] = powo_lookup.get('phylum')
             result['synonym'] = powo_lookup.get('synonym')
             result['author'] = powo_lookup.get('authors')  # overwrite as powo author has more information
             if powo_lookup.get('synonym'):
-                result['synonyms_concat'] = 'Accepted: ' + powo_lookup['accepted']['name']
+                result['synonyms_concat'] = get_synonym_label_if_only_a_synonym(powo_lookup['accepted']['name'])
             else:
                 result['synonyms_concat'] = get_synonyms_concat(powo_lookup)
 
@@ -103,6 +104,11 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
         kew_results.append(result)
     logger.info(f'Found {len(kew_results)} results from ipni/powo search for search term "{plant_name_pattern}".')
     return kew_results
+
+
+def get_synonym_label_if_only_a_synonym(accepted_name: str):
+    """little method just to make sure the same is stored in local db as is displayed in frontend from powo"""
+    return 'Accepted: ' + accepted_name
 
 
 def get_distribution_concat(powo_lookup: dict) -> Optional[str]:
@@ -176,11 +182,16 @@ def copy_taxon_from_kew(fq_id: str,
             hybridgenus=ipni_lookup.get('hybridGenus'),
 
             basionym=powo_lookup['basionym'].get('name') if powo_lookup and 'basionym' in powo_lookup else None,
-            synonyms_concat=get_synonyms_concat(powo_lookup) if powo_lookup else None,
             distribution_concat=get_distribution_concat(powo_lookup) if powo_lookup else None
             )
+    if powo_lookup and not powo_lookup.get('synonym'):
+        taxon.synonyms_concat = get_synonyms_concat(powo_lookup)
+    elif powo_lookup and powo_lookup.get('synonym'):
+        taxon.synonyms_concat = get_synonym_label_if_only_a_synonym(powo_lookup['accepted']['name'])
+    else:
+        taxon.synonyms_concat = None
 
-    # distribution
+        # distribution
     dist = []
     if powo_lookup and 'distribution' in powo_lookup and powo_lookup['distribution']:
         # collect native and introduced distribution into one list
