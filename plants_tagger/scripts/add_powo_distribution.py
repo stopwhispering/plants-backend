@@ -29,7 +29,7 @@ def add_distribution():
                 dist.extend(powo_lookup['distribution']['introduced'])
 
         if not dist:
-            logger.info(f'No distribution info found for {taxon.name}.')
+            logger.warning(f'No distribution info found for {taxon.name}.')
         else:
             # new_records = []
             for area in dist:
@@ -42,9 +42,9 @@ def add_distribution():
                 # new_records.append(record)
                 taxon.distribution.append(record)
 
-            logger.info(f'Found {len(dist)} areas for {taxon.name}.')
+            logger.warning(f'Found {len(dist)} areas for {taxon.name}.')
             get_sql_session().commit()
-            logger.info(f'Added distribution for {taxon.name} in database.')
+            logger.warning(f'Added distribution for {taxon.name} in database.')
 
 
 add_distribution()
