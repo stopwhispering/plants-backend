@@ -56,7 +56,7 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
     else:
         ipni_query = {Name.genus: plant_name_pattern, Name.rank: 'gen.'}
         ipni_search = ipni.search(ipni_query)
-    if ipni_search.size() > 20:
+    if ipni_search.size() > 30:
         msg = f'Too many search results for search term "{plant_name_pattern}": {ipni_search.size()}'
         raise TooManyResultsError(msg)
 
