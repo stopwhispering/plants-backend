@@ -15,6 +15,7 @@ init_sqlalchemy_engine()
 
 def add_distribution():
     query = get_sql_session().query(Taxon).all()
+    print(len(query))
     for taxon in query:
         print(f'{taxon.name}: {len(taxon.distribution)}')
         if len(taxon.distribution) > 0:
