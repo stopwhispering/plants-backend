@@ -16,8 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 def add_distribution():
-    query = get_sql_session().query(Taxon).filter(Taxon.distribution == None).all()
+    query = get_sql_session().query(Taxon).all()
     for taxon in query:
+        logger.info(f'{taxon.name}: {len(taxon.distribution)}')
+        if taxon.distribution:
+            continue
         powo_lookup = powo.lookup(taxon.fq_id, include=['distribution'])
 
         dist = []
