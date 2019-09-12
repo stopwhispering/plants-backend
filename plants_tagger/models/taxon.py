@@ -91,6 +91,8 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
             logger.warning(f'No kew powo result for fqId {item.get("fqId")}')
             result['synonym'] = False
         else:
+            if 'namePublishedInYear' in powo_lookup:
+                result['namePublishedInYear'] = powo_lookup['namePublishedInYear']
             result['phylum'] = powo_lookup.get('phylum')
             result['synonym'] = powo_lookup.get('synonym')
             result['author'] = powo_lookup.get('authors')  # overwrite as powo author has more information
