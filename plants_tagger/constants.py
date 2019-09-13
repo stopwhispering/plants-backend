@@ -1,2 +1,2 @@
-SOURCE_PLANTS = 'Local Plants Database'
-SOURCE_KEW = 'Online "Plants of the World" Database'
+SOURCE_PLANTS = 'Local DB'
+SOURCE_KEW = '"Plants of the World"'
