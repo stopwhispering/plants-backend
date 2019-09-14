@@ -126,6 +126,7 @@ class Taxon(Base):
     distribution_concat = Column(CHAR(200))
     hybrid = Column(BOOLEAN)
     hybridgenus = Column(BOOLEAN)
+    gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
 
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")

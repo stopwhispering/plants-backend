@@ -13,6 +13,7 @@ from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon, Plant
 from plants_tagger.models.taxon import copy_taxon_from_kew, get_distribution_concat, get_synonyms_concat, \
     get_taxa_from_local_database, get_taxa_from_kew_databases
+from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
 from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,14 @@ class SpeciesDatabaseResource(Resource):
             taxon = copy_taxon_from_kew(fq_id,
                                         has_custom_name,
                                         name_incl_addition)
+
+        # The (meta-)database Global Biodiversity Information Facility (gbif) has distribution information,
+        # a well-documented API and contains entries from dozens of databases; get an id for it and save it, too
+        if taxon.fq_id:
+            gbif_id = get_gbif_id_from_ipni_id(taxon.fq_id)
+            if gbif_id:
+                taxon.gbif_id = gbif_id
+                get_sql_session().commit()
 
         # finally, assign the taxon to the plant
         plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant).first()

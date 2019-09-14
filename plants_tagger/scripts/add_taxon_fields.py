@@ -2,6 +2,8 @@ import socket
 import sys
 import pykew.powo as powo
 
+from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
+
 ip = socket.gethostbyname(socket.gethostname())
 if ip.startswith('80.241'):
     print('Server 80.241... detected. Adding path to sys path')
@@ -49,5 +51,33 @@ def add_distribution():
             print(f'Added distribution for {taxon.name} in database.')
 
 
+def add_gbif_id():
+    query = get_sql_session().query(Taxon).all()
+    print(len(query))
+    count = 0
+    for taxon in query:
+        print(f'Starting {taxon.name}')
+
+        if not taxon.fq_id:
+            print(f'no taxon id: {taxon.name}')
+            continue
+
+        if taxon.gbif_id:
+            print(f'Has already gbif_id: {taxon.gbif_id}')
+            continue
+
+        gbif_id = get_gbif_id_from_ipni_id(taxon.fq_id)
+        if gbif_id:
+            taxon.gbif_id = gbif_id
+            print(f'Successfully got gbif_id: {taxon.gbif_id}')
+            get_sql_session().commit()
+            count += 1
+        else:
+            print(f'Could not get gbif_id for: {taxon.name}')
+
+    print(f'Finished. Count={count}')
+
+
 if __name__ == '__main__':
-    add_distribution()
+    # add_distribution()
+    add_gbif_id()
