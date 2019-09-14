@@ -163,25 +163,25 @@ def copy_taxon_from_kew(fq_id: str,
     ipni_lookup = ipni.lookup_name(fq_id)
 
     taxon = Taxon(
-            name=name_incl_addition if has_custom_name else ipni_lookup.get('name'),
+            name=name_incl_addition if has_custom_name else ipni_lookup.get('name'), #todo ok
             is_custom=True if has_custom_name else False,
-            fq_id=fq_id,
+            fq_id=fq_id,  # todo ok
 
             subsp=ipni_lookup.get('subsp'),  # todo or in other?
-            species=ipni_lookup.get('species'),
+            species=ipni_lookup.get('species'),  # todo ok
             subgen=ipni_lookup.get('subgen'),  # todo or in other?
-            genus=ipni_lookup.get('genus'),
-            family=ipni_lookup.get('family'),
-            phylum=powo_lookup.get('phylum') if powo_lookup else None,
-            kingdom=powo_lookup.get('kingdom') if powo_lookup else None,
-            rank=ipni_lookup.get('rank'),
-            taxonomic_status=powo_lookup.get('taxonomicStatus') if powo_lookup else None,
+            genus=ipni_lookup.get('genus'),  #todo ok
+            family=ipni_lookup.get('family'),  # todo ok
+            phylum=powo_lookup.get('phylum') if powo_lookup else None,  # todo ok
+            kingdom=powo_lookup.get('kingdom') if powo_lookup else None,  # todo langweilig
+            rank=ipni_lookup.get('rank'),  # todo ok
+            taxonomic_status=powo_lookup.get('taxonomicStatus') if powo_lookup else None,  # todo ok
             name_published_in_year=powo_lookup.get('namePublishedInYear') if powo_lookup else ipni_lookup.get(
-                    'publicationYear'),
-            synonym=powo_lookup.get('synonym') if powo_lookup else None,
-            authors=powo_lookup.get('authors') if powo_lookup else ipni_lookup.get('authors'),
-            hybrid=ipni_lookup.get('hybrid'),
-            hybridgenus=ipni_lookup.get('hybridGenus'),
+                    'publicationYear'),  # todo ok
+            synonym=powo_lookup.get('synonym') if powo_lookup else None,  # todo ok
+            authors=powo_lookup.get('authors') if powo_lookup else ipni_lookup.get('authors'), # todo ok
+            hybrid=ipni_lookup.get('hybrid'),  # todo ok
+            hybridgenus=ipni_lookup.get('hybridGenus'),  # todo ok
 
             basionym=powo_lookup['basionym'].get('name') if powo_lookup and 'basionym' in powo_lookup else None,
             distribution_concat=get_distribution_concat(powo_lookup) if powo_lookup else None
