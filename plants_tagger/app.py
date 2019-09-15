@@ -9,7 +9,7 @@ from plants_tagger.resources.plant_resource import PlantResource
 from plants_tagger.resources.refresh_photo_directory_resource import RefreshPhotoDirectoryResource
 from plants_tagger.resources.taxon_resoure import TaxonResource
 from plants_tagger.resources.taxon_to_plant_assignments_resource import TaxonToPlantAssignmentsResource
-from plants_tagger.resources.species_resource import SpeciesResource
+# from plants_tagger.resources.species_resource import SpeciesResource
 
 logger = logging.getLogger(__name__)
 
