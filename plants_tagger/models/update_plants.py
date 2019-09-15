@@ -3,7 +3,7 @@ import logging
 
 from plants_tagger.models.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Plant
+from plants_tagger.models.orm_tables import Plant, Taxon
 from plants_tagger.util.exif_helper import decode_record_date_time
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,11 @@ def update_plants_from_list_of_dicts(plants: [dict]):
                 record_update.filename_previewimage = filename_previewimage
         else:
             record_update.filename_previewimage = None
+        taxon = get_sql_session().query(Taxon).filter(Taxon.id == plant['taxon_id']).first()
+        if taxon:
+            record_update.taxon = taxon
+        else:
+            logger.error(f"Taxon with id {plant['taxon_id']} not found. Skipped taxon assignment.")
         record_update.last_update = datetime.datetime.now()
 
         if boo_new:

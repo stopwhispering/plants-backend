@@ -1,11 +1,18 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import INTEGER, TEXT, BOOLEAN, TIMESTAMP, DATE, CHAR
 import logging
-
+from sqlalchemy import inspect
 from sqlalchemy.orm import relationship
 
 from plants_tagger.models import init_sqlalchemy_engine
 from plants_tagger.models.orm_util import Base
+
+
+def object_as_dict(obj):
+    # converts an orm object into a dict
+    # does not include objects from relationships and _sa_instance_state
+    return {c.key: getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs}
 
 
 class Plant(Base):

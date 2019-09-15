@@ -34,12 +34,11 @@ class PlantResource(Resource):
             # plant.pop('_sa_instance_state')
             if p.taxon:
                 plant['botanical_name'] = p.taxon.name
-                plant['taxon'] = p.taxon.__dict__.copy()
-                if plant['taxon'].get('fq_id'):
-                    plant['taxon']['ipni_id_short'] = plant['taxon']['fq_id'][24:]
-                if '_sa_instance_state' in plant['taxon']:
-                    del plant['taxon']['_sa_instance_state']
-                a = 1
+            #     plant['taxon'] = p.taxon.__dict__.copy()
+            #     if plant['taxon'].get('fq_id'):
+            #         plant['taxon']['ipni_id_short'] = plant['taxon']['fq_id'][24:]
+            #     if '_sa_instance_state' in plant['taxon']:
+            #         del plant['taxon']['_sa_instance_state']
 
             plants_list.append(plant)
 
