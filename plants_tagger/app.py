@@ -37,7 +37,7 @@ def create_app():
     api.add_resource(ImageResource2, '/plants_tagger/backend/Image2')
     api.add_resource(ImageResource, '/plants_tagger/backend/Image')
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
-    api.add_resource(SpeciesResource, '/plants_tagger/backend/Species')  # todo remove
+    # api.add_resource(SpeciesResource, '/plants_tagger/backend/Species')  # todo remove
     api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
     api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
     logger.info('Added REST Resources.')
