@@ -17,13 +17,13 @@ class ImageResource2(Resource):
         files_data, _ = get_exif_tags_for_folder()
         i = len(files_data)
 
-        # filter out archived images (todo: required?)
-        files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
-
 
         temp = [f for f in files_data if 'keywords' in f and 'Archiv' in f['keywords']]
         logger.error(temp)
 
+
+        # filter out archived images (todo: required?)
+        files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
         logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
 
         # get plants whose images are configured to be hidden (hide-flag is set in plants table)
