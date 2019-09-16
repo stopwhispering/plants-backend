@@ -28,8 +28,9 @@ class ImageResource2(Resource):
         # hiding = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         # logger.debug(f'Hiding images: {hiding}')
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
+        temp = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
+        logger.error(temp)
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
-        logger.error(files_data)
 
         for image in files_data:
             if image['plants']:
