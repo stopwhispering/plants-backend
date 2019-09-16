@@ -19,6 +19,10 @@ class ImageResource2(Resource):
 
         # filter out archived images (todo: required?)
         files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
+
+        temp = [f for f in files_data if 'keywords' in f and 'Archiv' in f['keywords']]
+        logger.error(temp)
+
         logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
 
         # get plants whose images are configured to be hidden (hide-flag is set in plants table)
@@ -27,8 +31,6 @@ class ImageResource2(Resource):
         logger.debug(f'Hiding images that have only hidden plants tagged: {plants_to_hide_names}')
         # hiding = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         # logger.debug(f'Hiding images: {hiding}')
-        temp = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
-        logger.error(temp)
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
 
