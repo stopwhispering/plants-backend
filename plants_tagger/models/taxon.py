@@ -166,6 +166,8 @@ def copy_taxon_from_kew(fq_id: str,
     # ipni always returns a result (otherwise we wouldn't come here), powo is optional
     ipni_lookup = ipni.lookup_name(fq_id)
     powo_lookup = powo.lookup(fq_id, include=['distribution'])
+    if 'error' in powo_lookup:
+        powo_lookup = None
 
     taxon = Taxon(
             name=name_incl_addition if has_custom_name else ipni_lookup.get('name'),
