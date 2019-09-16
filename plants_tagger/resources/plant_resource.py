@@ -8,7 +8,6 @@ from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
 from plants_tagger.models.orm_tables import Plant, Botany, Measurement
-from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
 from plants_tagger.models.update_measurements import update_measurements_from_list_of_dicts
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from plants_tagger.util.json_helper import make_list_items_json_serializable
@@ -34,11 +33,6 @@ class PlantResource(Resource):
             # plant.pop('_sa_instance_state')
             if p.taxon:
                 plant['botanical_name'] = p.taxon.name
-            #     plant['taxon'] = p.taxon.__dict__.copy()
-            #     if plant['taxon'].get('fq_id'):
-            #         plant['taxon']['ipni_id_short'] = plant['taxon']['fq_id'][24:]
-            #     if '_sa_instance_state' in plant['taxon']:
-            #         del plant['taxon']['_sa_instance_state']
 
             plants_list.append(plant)
 
@@ -54,7 +48,6 @@ class PlantResource(Resource):
 
         # add path to preview image
             if p['filename_previewimage']:  # supply relative path of original image
-                # logger.debug(f"Preview Image for {p['plant_name']}: {p['filename_previewimage']}")
                 rel_path_gen = generate_previewimage_get_rel_path(p['filename_previewimage'])
                 # there is a huge problem with the slashes
                 p['url_preview'] = json.dumps(rel_path_gen)[1:-1]
@@ -70,7 +63,7 @@ class PlantResource(Resource):
                     del m['_sa_instance_state']
                 p['measurements'] = measurements
 
-        # remove hidden
+        # remove hidden (actually deleted in frontend) plants
         if config.filter_hidden:
             count = len(plants_list)
             plants_list = [p for p in plants_list if not p['hide']]
@@ -92,29 +85,6 @@ class PlantResource(Resource):
             # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
             # (in ui5 formatter, we will format the null_date as an empty string)
             plant['latest_image_record_date'] = plant_image_dates.get(plant['plant_name'], null_date)
-
-        # # todo: all
-        # for plant in plants_list:
-        #     plant['origin'] = [
-        #         {'key': 'generation_origin', 'text': plant['generation_origin'], 'title': 'Origin',
-        #             'value_state': 'Information', 'visible': True},
-        #         {'key': 'generation_notes', 'text': plant['generation_notes'], 'title': 'Notes', 'value_state':
-        #             'Information', 'visible': True if plant['generation_notes'] else False},
-        #         {'key': 'generation_type', 'text': plant['generation_type'], 'title': 'Type', 'value_state':
-        #             'Information', 'visible': True if plant['generation_type'] else False},
-        #         {'key': 'generation_date', 'text': plant['generation_date'], 'title': 'Date ', 'value_state':
-        #             'Information', 'visible': True if plant['generation_date'] else False},
-        #         {'key': 'mother_plant', 'text': plant['mother_plant'], 'title': 'Mother plant', 'value_state':
-        #             'Information', 'visible': True if plant['mother_plant'] else False}
-        #         ]
-        #
-        #     plant['misc'] = [
-        #         {'key': 'species', 'text': plant['species'], 'title': 'Species', 'value_state': 'Success' if
-        #                                                                                         plant.get('botany') else 'Error'},
-        #         # last_update is read-only, i.e. not saved from gui input
-        #         {'key': 'count', 'text': plant['count'], 'title': 'Count', 'value_state':
-        #             'Information'}
-        #         ]
 
         make_list_items_json_serializable(plants_list)
 

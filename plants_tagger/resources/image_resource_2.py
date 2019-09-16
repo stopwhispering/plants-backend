@@ -17,21 +17,11 @@ class ImageResource2(Resource):
         files_data, _ = get_exif_tags_for_folder()
         i = len(files_data)
 
-
-        temp = [f for f in files_data if 'keywords' in f and 'Archiv' in f['keywords']]
-        logger.error(temp)
-
-
-        # filter out archived images (todo: required?)
-        files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
-        logger.debug(f'Filter out {i - len(files_data)} images due to Archiv keyword.')
-
-        # get plants whose images are configured to be hidden (hide-flag is set in plants table)
+        # get plants whose images are configured to be hidden (hide-flag is set in plants table, i.e. deleted in
+        # web frontend)
         plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
         plants_to_hide_names = [p.plant_name for p in plants_to_hide]
         logger.debug(f'Hiding images that have only hidden plants tagged: {plants_to_hide_names}')
-        # hiding = [f for f in files_data if (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
-        # logger.debug(f'Hiding images: {hiding}')
         files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
         logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
 
@@ -40,7 +30,6 @@ class ImageResource2(Resource):
                 image['plants'] = [{'key': p, 'text': p} for p in image['plants']]
             if image['keywords']:
                 image['keywords'] = [{'keyword': p} for p in image['keywords']]
-                # image['keywords'] = [{'key': p, 'text': p} for p in image['keywords']]
 
         make_list_items_json_serializable(files_data)
 
@@ -60,9 +49,5 @@ class ImageResource2(Resource):
             kwargs = request.get_json(force=True)
         logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
         write_new_exif_tags(kwargs['ImagesCollection'])
-        # try:
-        #     create_entry(category=category, date_=date_, text=text)
-        # except (EntryExists, CategoryNotValid) as e:
-        #     return e.__repr__(), HTTP_CLIENT_ERROR
         return {'action':   'Saved',
                 'resource': 'ImageResource'}, 200

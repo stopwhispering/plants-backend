@@ -99,22 +99,10 @@ class TaxonToPlantAssignmentsResource(Resource):
                 taxon.gbif_id = gbif_id
                 get_sql_session().commit()
 
-        # finally, assign the taxon to the plant
-        # todo reenable or remove
-        # plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant).first()
-        # if not plant_obj:
-        #     return {'error': f"Can't find plant {plant}."}, 500
-        #
-        # plant_obj.taxon = taxon
-        # get_sql_session().commit()
-
         # we will return the taxon's data to be directly added to the model in the frontend
+        # only upon saving in the frontend, the assignment is persisted
         # the data returned should be the same as in TaxonResource's get method (which returns all the taxa)
         taxon_dict = object_as_dict(taxon)
-        # taxon_dict = taxon.__dict__.copy()
-        if 'fq_id' not in taxon_dict:
-            a = 1  # todo remove
-        # taxon_data.pop('_sa_instance_state', None)
         taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
         # make_dict_values_json_serializable(taxon_data)
 

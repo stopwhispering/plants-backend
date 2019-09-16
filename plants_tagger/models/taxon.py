@@ -34,6 +34,7 @@ def get_taxa_from_local_database(plant_name_pattern: str, search_for_genus: bool
                       'name':                query.name,
                       'rank':                query.rank,
                       'fqId':                query.fq_id if not query.is_custom else None,
+                      'powo_id':             query.powo_id,
                       'genus':               query.genus,
                       'species':             query.species,
                       'namePublishedInYear': query.name_published_in_year,
@@ -72,25 +73,28 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
 
         # build additional results from kew data
         result = {'source':              SOURCE_KEW,
-                  'id':                  None,
-                  'count':               None,
+                  'id':                  None,  # determined upon saving by database
+                  'count':               None,  # count of plants assigned the taxon in local db
                   'is_custom':           False,
                   'authors':             item.get('authors'),
                   'family':              item.get('family'),
                   'name':                item.get('name'),
                   'rank':                item.get('rank'),
-                  'fqId':                item['fqId'],
+                  'fqId':                item['fqId'],  # ipni id
                   'genus':               item.get('genus'),
                   'species':             item.get('species'),
                   'namePublishedInYear': item.get('publicationYear')
                   }
 
         # add information from powo if available
+        # powo uses the same id as ipni
         powo_lookup = powo.lookup(item.get('fqId'), include=['distribution'])
         if 'error' in powo_lookup:
             logger.warning(f'No kew powo result for fqId {item.get("fqId")}')
             result['synonym'] = False
+            result['powo_id'] = None
         else:
+            result['powo_id'] = item.get('fqId')
             if 'namePublishedInYear' in powo_lookup:
                 result['namePublishedInYear'] = powo_lookup['namePublishedInYear']
             result['phylum'] = powo_lookup.get('phylum')
@@ -158,31 +162,31 @@ def copy_taxon_from_kew(fq_id: str,
         return taxon
 
     logger.info(f'Copying taxon {fq_id} from kew databases powo and ipni.')
-    # get taxon information from pew databases powo and ipni
-    powo_lookup = powo.lookup(fq_id, include=['distribution'])
+    # get taxon information from pew databases ipni and powo
+    # ipni always returns a result (otherwise we wouldn't come here), powo is optional
     ipni_lookup = ipni.lookup_name(fq_id)
+    powo_lookup = powo.lookup(fq_id, include=['distribution'])
 
     taxon = Taxon(
-            name=name_incl_addition if has_custom_name else ipni_lookup.get('name'), #todo ok
+            name=name_incl_addition if has_custom_name else ipni_lookup.get('name'),
             is_custom=True if has_custom_name else False,
-            fq_id=fq_id,  # todo ok
-
-            subsp=ipni_lookup.get('subsp'),  # todo or in other?
-            species=ipni_lookup.get('species'),  # todo ok
-            subgen=ipni_lookup.get('subgen'),  # todo or in other?
-            genus=ipni_lookup.get('genus'),  #todo ok
-            family=ipni_lookup.get('family'),  # todo ok
-            phylum=powo_lookup.get('phylum') if powo_lookup else None,  # todo ok
-            kingdom=powo_lookup.get('kingdom') if powo_lookup else None,  # todo langweilig
-            rank=ipni_lookup.get('rank'),  # todo ok
-            taxonomic_status=powo_lookup.get('taxonomicStatus') if powo_lookup else None,  # todo ok
+            fq_id=fq_id,
+            powo_id=powo_lookup.get('fqId') if powo_lookup else None,
+            subsp=ipni_lookup.get('subsp'),
+            species=ipni_lookup.get('species'),
+            subgen=ipni_lookup.get('subgen'),
+            genus=ipni_lookup.get('genus'),
+            family=ipni_lookup.get('family'),
+            phylum=powo_lookup.get('phylum') if powo_lookup else None,
+            kingdom=powo_lookup.get('kingdom') if powo_lookup else None,
+            rank=ipni_lookup.get('rank'),
+            taxonomic_status=powo_lookup.get('taxonomicStatus') if powo_lookup else None,
             name_published_in_year=powo_lookup.get('namePublishedInYear') if powo_lookup else ipni_lookup.get(
-                    'publicationYear'),  # todo ok
-            synonym=powo_lookup.get('synonym') if powo_lookup else None,  # todo ok
-            authors=powo_lookup.get('authors') if powo_lookup else ipni_lookup.get('authors'), # todo ok
-            hybrid=ipni_lookup.get('hybrid'),  # todo ok
-            hybridgenus=ipni_lookup.get('hybridGenus'),  # todo ok
-
+                    'publicationYear'),
+            synonym=powo_lookup.get('synonym') if powo_lookup else None,
+            authors=powo_lookup.get('authors') if powo_lookup else ipni_lookup.get('authors'),
+            hybrid=ipni_lookup.get('hybrid'),
+            hybridgenus=ipni_lookup.get('hybridGenus'),
             basionym=powo_lookup['basionym'].get('name') if powo_lookup and 'basionym' in powo_lookup else None,
             distribution_concat=get_distribution_concat(powo_lookup) if powo_lookup else None
             )
@@ -193,7 +197,7 @@ def copy_taxon_from_kew(fq_id: str,
     else:
         taxon.synonyms_concat = None
 
-        # distribution
+    # distribution
     dist = []
     if powo_lookup and 'distribution' in powo_lookup and powo_lookup['distribution']:
         # collect native and introduced distribution into one list
@@ -205,7 +209,6 @@ def copy_taxon_from_kew(fq_id: str,
     if not dist:
         logger.info(f'No distribution info found for {taxon.name}.')
     else:
-        # new_records = []
         for area in dist:
             record = Distribution(name=area.get('name'),
                                   establishment=area.get('establishment'),
@@ -213,11 +216,9 @@ def copy_taxon_from_kew(fq_id: str,
                                   tdwg_code=area.get('tdwgCode'),
                                   tdwg_level=area.get('tdwgLevel')
                                   )
-            # new_records.append(record)
             taxon.distribution.append(record)
 
         logger.info(f'Found {len(dist)} areas for {taxon.name}.')
-        # get_sql_session().add_all(new_records)
 
     get_sql_session().add(taxon)
     get_sql_session().commit()  # upon commit (flush), the ids are determined

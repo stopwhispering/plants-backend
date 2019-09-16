@@ -78,6 +78,26 @@ def add_gbif_id():
     print(f'Finished. Count={count}')
 
 
+def copy_ipni_id_to_powo_id():
+    query = get_sql_session().query(Taxon).all()
+    print(len(query))
+    for taxon in query:
+        print(f'Starting {taxon.name}')
+
+        if not taxon.fq_id:
+            print(f'WARNING: no ipni id: {taxon.name}')
+            continue
+
+        if taxon.powo_id:
+            print(f'POWO already in db:: {taxon.name}')
+            continue
+
+        taxon.powo_id = taxon.fq_id
+        print(f'Updated: {taxon.name} / {taxon.powo_id}')
+        get_sql_session().commit()
+
+
 if __name__ == '__main__':
     # add_distribution()
-    add_gbif_id()
+    # add_gbif_id()
+    copy_ipni_id_to_powo_id()

@@ -22,7 +22,7 @@ class Plant(Base):
     species = Column(CHAR(60), ForeignKey('botany.species'))
     count = Column(INTEGER)
     active = Column(BOOLEAN)  # plant may be inactive (e.g. separated) but not flagged dead; inactive ~ untraceable
-    dead = Column(BOOLEAN)
+    # dead = Column(BOOLEAN)
     generation_date = Column(DATE)
     generation_type = Column(CHAR(60))
     generation_notes = Column(CHAR(120))
@@ -35,14 +35,6 @@ class Plant(Base):
     last_update = Column(TIMESTAMP, nullable=False)
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="plants")
-
-
-# class Group(Base):
-#     """group of plants"""
-#     __tablename__ = 'group'
-#     group_id = Column(INTEGER, primary_key=True, nullable=False)
-#     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), primary_key=True, nullable=True)
-#
 
 # class Event(Base):
 #     """events"""
@@ -134,6 +126,7 @@ class Taxon(Base):
     hybrid = Column(BOOLEAN)
     hybridgenus = Column(BOOLEAN)
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
+    powo_id = Column(CHAR(50))
 
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")

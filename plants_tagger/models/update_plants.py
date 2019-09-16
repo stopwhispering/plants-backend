@@ -29,7 +29,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         record_update.species = plant['species'] if 'species' in plant else None
         record_update.count = plant['count'] if 'count' in plant else None
         record_update.active = plant['active'] if 'active' in plant else None
-        record_update.dead = plant['dead'] if 'dead' in plant else None
+        # record_update.dead = plant['dead'] if 'dead' in plant else None
         if 'generation_date' not in plant or not plant['generation_date']:
             record_update.generation_date = None
         else:

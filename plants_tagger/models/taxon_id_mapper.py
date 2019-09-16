@@ -1,5 +1,6 @@
 import requests
 import urllib.parse
+import logging
 from bs4 import BeautifulSoup
 from typing import Optional
 from wikidata.client import Client
@@ -9,6 +10,8 @@ WIKIDATA_IPNI_PROPERTY_ID = 'P961'
 WIKIDATA_GBIF_PROPERTY_ID = 'P846'
 WIKIDATA_POWO_PROPERTY_ID = 'P5037'
 
+logger = logging.getLogger(__name__)
+
 
 def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
     """get mapping from ipni id to gbif id from wikidata; unfortunately, the wikidata api is defect, thus we parse
@@ -16,7 +19,7 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
     # fulltext-search wikidata for ipni id
     ipni_id_number = ipni_id[ipni_id.rfind(':')+1:]
     ipni_id_number_exact = f"\"{ipni_id_number}\""
-    print(f'Beginning search for {ipni_id_number_exact}')
+    logger.debug(f'Beginning search for {ipni_id_number_exact}')
     ipni_id_encoded = urllib.parse.quote(ipni_id_number_exact)
     search_url = URL_PATTERN_WIKIDATA_SEARCH.format(ipni_id_encoded)
     page = requests.get(search_url)
@@ -24,11 +27,15 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
 
     # get search results
     tag_search_results_list = soup.find('ul', class_="mw-search-results")
+    if not tag_search_results_list:
+        logger.warning('No wikidata search results. Aborting.')
+        return
+
     tag_search_results = tag_search_results_list.find_all('li')
     if not tag_search_results:
-        print('No wikidata search results. Aborting.')
+        logger.warning('No wikidata search results. Aborting.')
         return
-    print(f'Search results on wikidata: {len(tag_search_results)}')
+    logger.debug(f'Search results on wikidata: {len(tag_search_results)}')
 
     # use first (use that with a correct subheader/description; there are often two, whatever the reason is)
     tag_search_result = None
@@ -42,7 +49,7 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
 
     result_text_full = tag_search_result.getText()
     pos = result_text_full.find(' (Q')
-    print(f'Navigating to search result: {result_text_full[:pos]}')
+    logger.debug(f'Navigating to search result: {result_text_full[:pos]}')
     wikidata_entity_raw = tag_search_result.find('span', class_="wb-itemlink-id").getText()  # e.g. (Q15482666)
     wikidata_entity = wikidata_entity_raw.replace('(', '').replace(')', '')
 
@@ -67,20 +74,20 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
             correct_found = True
 
     if not powo_claim and not ipni_claim:
-        print('Could not determine correctness of site. Aborting.')
+        logger.warning('Could not determine correctness of site. Aborting.')
         return
     elif not correct_found:
-        print('Wikidata site is not the correct one. Aborting.')
+        logger.warning('Wikidata site is not the correct one. Aborting.')
         # todo: try other search results?
         return
 
     # finally, get the gbif id
     gbif_claim = wikidata_object.data['claims'].get(WIKIDATA_GBIF_PROPERTY_ID)
     if not gbif_claim:
-        print('Wikidata site found, but contains no gbif id.')
+        logger.warning('Wikidata site found, but contains no gbif id.')
         return
 
     gbif_id = gbif_claim[0]['mainsnak']['datavalue']['value']
-    print(f'GBIF Identifier found on Wikidata: {gbif_id}')
+    logger.info(f'GBIF Identifier found on Wikidata: {gbif_id}')
 
     return int(gbif_id)
