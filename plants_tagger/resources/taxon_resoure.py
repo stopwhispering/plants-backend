@@ -42,3 +42,29 @@ class TaxonResource(Resource):
                     'additionalText': None,
                     'description':    f'Resource: {parse_resource_from_request(request)}'
                     }}, 200
+
+    @staticmethod
+    def post():
+        """save modified custom fields in taxon model"""
+        modified_taxa = request.get_json(force=True).get('ModifiedTaxaCollection')
+        for taxon_modified in modified_taxa:
+            taxon: Taxon = get_sql_session().query(Taxon).filter(Taxon.id == taxon_modified['id']).first()
+            if not taxon:
+                logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
+                return ({'message': {
+                            'type':           'Error',
+                            'message':        f'Taxon not found: {taxon.name}. Saving canceled.',
+                            'description':    f'Filename: Resource: {parse_resource_from_request(request)}'
+                            }}), 500
+
+            taxon.custom_notes = taxon_modified['custom_notes']
+        get_sql_session().commit()
+
+        logger.info(f'Updated {len(modified_taxa)} taxa in database.')
+        return {'message': {
+                    'type': 'Information',
+                    'message': f'Updated {len(modified_taxa)} taxa in database.',
+                    'description': f'Resource: {parse_resource_from_request(request)}'
+                    },
+                'resource': 'TaxonResource'
+                }, 200

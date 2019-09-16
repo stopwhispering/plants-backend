@@ -128,6 +128,8 @@ class Taxon(Base):
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
     powo_id = Column(CHAR(50))
 
+    custom_notes = Column(TEXT)  # may be updated on web frontend
+
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")
 
