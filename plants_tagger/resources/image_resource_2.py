@@ -20,6 +20,7 @@ class ImageResource2(Resource):
         # filter out archived images (todo: required?)
         files_data = [f for f in files_data if 'keywords' not in f or 'Archiv' not in f['keywords']]
 
+
         temp = [f for f in files_data if 'keywords' in f and 'Archiv' in f['keywords']]
         logger.error(temp)
 
