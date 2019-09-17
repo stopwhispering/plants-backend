@@ -66,25 +66,6 @@ class Measurement(Base):
     notes = Column(TEXT)
 
 
-class Botany(Base):
-    """botanical information"""
-    __tablename__ = 'botany'
-
-    species = Column(CHAR(100), primary_key=True, nullable=False)
-    description = Column(CHAR(100))
-    subgenus = Column(CHAR(100))
-    genus = Column(CHAR(100))
-    subfamilia = Column(CHAR(100))
-    familia = Column(CHAR(100))
-    ordo = Column(CHAR(100))
-    subclassis = Column(CHAR(100))
-    classis = Column(CHAR(100))
-    divisio = Column(CHAR(100))
-    superdivisio = Column(CHAR(100))
-    subregnum = Column(CHAR(100))
-    notes = Column(TEXT)
-
-
 class Distribution(Base):
     """geographic distribution"""
     __tablename__ = 'distribution'

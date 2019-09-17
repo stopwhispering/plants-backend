@@ -7,7 +7,7 @@ import datetime
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
-from plants_tagger.models.orm_tables import Plant, Botany, Measurement
+from plants_tagger.models.orm_tables import Plant, Measurement
 from plants_tagger.models.update_measurements import update_measurements_from_list_of_dicts
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from plants_tagger.util.json_helper import make_list_items_json_serializable
@@ -22,29 +22,27 @@ class PlantResource(Resource):
     def get():
         plants_obj = get_sql_session().query(Plant).all()
 
-        # unfortunately, __dict__ does not (always) include taxon (todo: try again later)
-        # plants_list = [p.__dict__ for p in plants_obj]
-        # _ = [p.pop('_sa_instance_state') for p in plants_list]  # remove instance state objects
         plants_list = []
         for p in plants_obj:
             plant = p.__dict__.copy()
             if '_sa_instance_state' in plant:
                 del plant['_sa_instance_state']
-            # plant.pop('_sa_instance_state')
+
+            # add botanical name to plants resource to facilitate usage in master view
             if p.taxon:
                 plant['botanical_name'] = p.taxon.name
 
             plants_list.append(plant)
 
-        # add information from botany table
-        # todo remove this old botany
-        for p in plants_list:
-            if p['species']:
-                bot = get_sql_session().query(Botany).filter(Botany.species == p['species']).first()
-                if bot:
-                    p['botany'] = bot.__dict__.copy()
-                    if '_sa_instance_state' in p['botany']:
-                        del p['botany']['_sa_instance_state']
+        # # add information from botany table
+        # # todo remove this old botany
+        # for p in plants_list:
+        #     if p['species']:
+        #         bot = get_sql_session().query(Botany).filter(Botany.species == p['species']).first()
+        #         if bot:
+        #             p['botany'] = bot.__dict__.copy()
+        #             if '_sa_instance_state' in p['botany']:
+        #                 del p['botany']['_sa_instance_state']
 
         # add path to preview image
             if p['filename_previewimage']:  # supply relative path of original image

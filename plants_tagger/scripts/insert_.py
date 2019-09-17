@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import datetime
 import math
 
-from plants_tagger.models.orm_tables import Botany, Plant, Measurement
+from plants_tagger.models.orm_tables import Measurement
 from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engine
 
 init_sqlalchemy_engine()

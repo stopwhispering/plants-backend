@@ -1,13 +1,13 @@
-from flask_restful import Resource, fields, marshal
-import logging
-from flask import request
-
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Botany
-from plants_tagger.util.util import parse_resource_from_request
-
-logger = logging.getLogger(__name__)
-
+# from flask_restful import Resource, fields, marshal
+# import logging
+# from flask import request
+#
+# from plants_tagger.models import get_sql_session
+# from plants_tagger.models.orm_tables import Botany
+# from plants_tagger.util.util import parse_resource_from_request
+#
+# logger = logging.getLogger(__name__)
+#
 # todo: remove
 # class SpeciesResource(Resource):
 #     @staticmethod
