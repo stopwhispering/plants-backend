@@ -36,13 +36,13 @@ class PlantResource(Resource):
 
         # # add information from botany table
         # # todo remove this old botany
-        # for p in plants_list:
-        #     if p['species']:
-        #         bot = get_sql_session().query(Botany).filter(Botany.species == p['species']).first()
-        #         if bot:
-        #             p['botany'] = bot.__dict__.copy()
-        #             if '_sa_instance_state' in p['botany']:
-        #                 del p['botany']['_sa_instance_state']
+        for p in plants_list:
+            # if p['species']:
+            #     bot = get_sql_session().query(Botany).filter(Botany.species == p['species']).first()
+            #     if bot:
+            #         p['botany'] = bot.__dict__.copy()
+            #         if '_sa_instance_state' in p['botany']:
+            #             del p['botany']['_sa_instance_state']
 
         # add path to preview image
             if p['filename_previewimage']:  # supply relative path of original image
