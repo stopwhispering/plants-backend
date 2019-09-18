@@ -18,13 +18,3 @@ for path in [PATH_BASE, PATH_DELETED_PHOTOS, PATH_PHOTOS_BASE, PATH_GENERATED_TH
              PATH_ORIGINAL_PHOTOS_UPLOADED]:
     if not os.path.exists(path):
         os.makedirs(path)
-
-# PATH_PHOTOS_BASE = r"C:\IDEs\sap-webide-personal-edition-1.53.9-trial-win32.win32.x86_64\serverworkspace\my\myuser" \
-#                    r"\OrionContent\plants_tagger\webapp\localService"
-
-# REL_PATH_PHOTOS_ORIGINAL = r"localService\original"
-# REL_PATH_PHOTOS_GENERATED = r"localService\generated"
-
-# PATH_ORIGINAL_PHOTOS_UPLOADED = r'C:\IDEs\sap-webide-personal-edition-1.53.9-trial-win32.win32.x86_64' \
-#                                 r'\serverworkspace\my\myuser\OrionContent\plants_tagger\webapp\localService' \
-#                                 r'\original\uploaded'

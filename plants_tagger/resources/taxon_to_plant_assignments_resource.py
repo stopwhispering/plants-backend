@@ -1,20 +1,15 @@
 from json import JSONDecodeError
-
 from flask_restful import Resource
 import logging
-import pykew.ipni as ipni
-import pykew.powo as powo
 from flask import request
 import json
 
-from plants_tagger.constants import SOURCE_PLANTS, SOURCE_KEW
+from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Taxon, Plant, object_as_dict
-from plants_tagger.models.taxon import copy_taxon_from_kew, get_distribution_concat, get_synonyms_concat, \
-    get_taxa_from_local_database, get_taxa_from_kew_databases
+from plants_tagger.models.orm_tables import Taxon, object_as_dict
+from plants_tagger.models.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
 from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
-from plants_tagger.util.json_helper import make_dict_values_json_serializable
 from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
@@ -104,7 +99,6 @@ class TaxonToPlantAssignmentsResource(Resource):
         # the data returned should be the same as in TaxonResource's get method (which returns all the taxa)
         taxon_dict = object_as_dict(taxon)
         taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
-        # make_dict_values_json_serializable(taxon_data)
 
         msg = f'Assigned botanical name "{taxon.name}" to plant "{plant}".'
         return {'taxon_data': taxon_dict,
@@ -116,5 +110,3 @@ class TaxonToPlantAssignmentsResource(Resource):
                     'additionalText': None,
                     'description':    f'Resource: {parse_resource_from_request(request)}'
                     }}, 200
-
-

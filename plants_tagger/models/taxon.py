@@ -1,5 +1,3 @@
-from json import JSONDecodeError
-
 import pykew.ipni as ipni
 from pykew.ipni_terms import Name
 import pykew.powo as powo
@@ -7,7 +5,7 @@ import logging
 from typing import Optional
 
 from plants_tagger.constants import SOURCE_PLANTS, SOURCE_KEW
-from plants_tagger.exceptions import TooManyResultsError, Error
+from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon, Distribution
 

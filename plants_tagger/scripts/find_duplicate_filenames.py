@@ -4,7 +4,6 @@ import collections
 
 import plants_tagger.config_local
 import plants_tagger.models.os_paths
-from plants_tagger import config
 from plants_tagger.util.exif_helper import modified_date, set_modified_date
 
 

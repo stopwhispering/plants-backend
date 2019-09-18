@@ -58,6 +58,7 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
 
     # verify we have the correct plant by comparing with our ipni id
     correct_found = False
+    # noinspection PyUnresolvedReferences
     ipni_claim = wikidata_object.data['claims'].get(WIKIDATA_IPNI_PROPERTY_ID)
     if ipni_claim:
         ipni_id_found = ipni_claim[0]['mainsnak']['datavalue']['value']
@@ -66,6 +67,7 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
 
     # alternatively, wikidata might have the plants of the world online (powo) id, which is the same
     # (sometimes, ipni is a synonym and powo is the correct one)
+    # noinspection PyUnresolvedReferences
     powo_claim = wikidata_object.data['claims'].get(WIKIDATA_POWO_PROPERTY_ID)
     if powo_claim:
         powo_id_found_raw = powo_claim[0]['mainsnak']['datavalue']['value']
@@ -82,6 +84,7 @@ def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
         return
 
     # finally, get the gbif id
+    # noinspection PyUnresolvedReferences
     gbif_claim = wikidata_object.data['claims'].get(WIKIDATA_GBIF_PROPERTY_ID)
     if not gbif_claim:
         logger.warning('Wikidata site found, but contains no gbif id.')
