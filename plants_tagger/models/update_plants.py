@@ -3,8 +3,9 @@ import logging
 
 from plants_tagger.models.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Plant, Taxon
+from plants_tagger.models.orm_tables import Plant, Taxon, Tag
 from plants_tagger.util.exif_helper import decode_record_date_time
+from plants_tagger.util.tag_util import tag_modified, update_tag
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,36 @@ def update_plants_from_list_of_dicts(plants: [dict]):
                 record_update.filename_previewimage = filename_previewimage
         else:
             record_update.filename_previewimage = None
+
+        # save taxon
         taxon = get_sql_session().query(Taxon).filter(Taxon.id == plant['taxon_id']).first()
         if taxon:
             record_update.taxon = taxon
         else:
             logger.error(f"Taxon with id {plant['taxon_id']} not found. Skipped taxon assignment.")
         record_update.last_update = datetime.datetime.now()
+
+        # save tags
+        for tag in plant['tags']:
+            # new tag
+            if 'id' not in tag:
+                tag_object: Tag = Tag(text=tag['text'],
+                                      icon=tag['icon'],
+                                      state=tag['state'],
+                                      plant=record_update,
+                                      last_update=datetime.datetime.now())
+                new_list.append(tag_object)
+            else:
+                # update if modified (not implemented in frontend)
+                tag_object = get_sql_session().query(Tag).filter(Tag.id == tag['id']).first()
+                if tag_modified(tag_object, tag):
+                    update_tag(tag_object, tag)
+
+        # delete deleted tags from db
+        tag_objects = get_sql_session().query(Tag).filter(Tag.plant == record_update).all()
+        for tag_object in tag_objects:
+            if not [t for t in plant['tags'] if t.get('id') == tag_object.id] and tag_object not in new_list:
+                get_sql_session().delete(tag_object)
 
         if boo_new:
             new_list.append(record_update)
@@ -66,3 +91,5 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         get_sql_session().add_all(new_list)
 
     get_sql_session().commit()  # saves changes in existing records, too
+
+

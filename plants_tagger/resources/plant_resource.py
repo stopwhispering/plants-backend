@@ -7,7 +7,7 @@ import datetime
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
-from plants_tagger.models.orm_tables import Plant, Measurement
+from plants_tagger.models.orm_tables import Plant, Measurement, Tag, object_as_dict
 from plants_tagger.models.update_measurements import update_measurements_from_list_of_dicts
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from plants_tagger.util.json_helper import make_list_items_json_serializable
@@ -56,6 +56,10 @@ class PlantResource(Resource):
                 for m in measurements:
                     del m['_sa_instance_state']
                 plant['measurements'] = measurements
+
+            # add tags
+            if p.tags:
+                plant['tags'] = [object_as_dict(t) for t in p.tags]
 
             plants_list.append(plant)
 

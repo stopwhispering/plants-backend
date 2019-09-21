@@ -23,7 +23,7 @@ def do():
 
     m.pot_width_above = 51
     m.pot_width_below = 40
-    m.pot_height = 60
+    # m.pot_height = 60
     m.pot_circular = True
     m.pot_material = 'Plastik'
 
@@ -41,12 +41,12 @@ def do():
     m.repot_rating = 0
 
     # m.stem_max_diameter = 12
-    m.stem_outset_diameter = 89
+    # m.stem_outset_diameter = 89
     # m.height = 122
 
     m.pot_width_above = 51
     m.pot_width_below = 40
-    m.pot_height = 60
+    # m.pot_height = 60
     m.pot_circular = False
     m.pot_material = 'Terrakotta'
 

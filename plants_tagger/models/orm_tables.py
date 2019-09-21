@@ -32,10 +32,25 @@ class Plant(Base):
     plant_notes = Column(TEXT)
     filename_previewimage = Column(CHAR(240))  # original filename of the image that is set as preview image
     hide = Column(BOOLEAN)
-    # image_medium = Column(BLOB)
     last_update = Column(TIMESTAMP, nullable=False)
+    # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="plants")
+    # plant to tag: 1:n
+    tags = relationship("Tag", back_populates="plant")
+
+
+class Tag(Base):
+    """tags displayed in master view and created/deleted in details view"""
+    __tablename__ = 'tags'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    text = Column(CHAR(20))
+    icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    state = Column(CHAR(11))  # Error, Information, None, Success, Warning
+    last_update = Column(TIMESTAMP)
+    # tag to plant: n:1
+    plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'))
+    plant = relationship("Plant", back_populates="tags")
 
 # class Event(Base):
 #     """events"""
@@ -55,13 +70,13 @@ class Measurement(Base):
     plant_name = Column(CHAR(60), primary_key=True, nullable=False)
     measurement_date = Column(DATE, primary_key=True, nullable=False)
     repot_rating = Column(INTEGER)  # 0 (no repotting required) to 5 (repotting urgently required)
-    stem_outset_diameter = Column(INTEGER)  # stem or caudex (outset) in mm
+    # stem_outset_diameter = Column(INTEGER)  # stem or caudex (outset) in mm
     stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
     height = Column(INTEGER)  # in mm
     pot_width_above = Column(INTEGER)  # in mm
     # pot_width_below = Column(INTEGER)  # in mm
     pot_circular = Column(BOOLEAN)  # false = quadratic
-    pot_height = Column(INTEGER)  # in mm
+    # pot_height = Column(INTEGER)  # in mm
     pot_material = Column(CHAR(50))
     soil = Column(CHAR(200))
     notes = Column(TEXT)

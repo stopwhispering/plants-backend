@@ -37,13 +37,13 @@ def update_measurements_from_list_of_dicts(measurements: [dict]):
 
         # catch key errors (new entries don't have all keys in the dict)
         record_update.repot_rating = m['repot_rating'] if 'repot_rating' in m else None
-        record_update.stem_outset_diameter = m['stem_outset_diameter'] if 'stem_outset_diameter' in m else None
+        # record_update.stem_outset_diameter = m['stem_outset_diameter'] if 'stem_outset_diameter' in m else None
         record_update.stem_max_diameter = m['stem_max_diameter'] if 'stem_max_diameter' in m else None
         record_update.height = m['height'] if 'height' in m else None
         record_update.pot_width_above = m['pot_width_above'] if 'pot_width_above' in m else None
         record_update.pot_width_below = m['pot_width_below'] if 'pot_width_below' in m else None
         record_update.pot_circular = m['pot_circular'] if 'pot_circular' in m else None
-        record_update.pot_height = m['pot_height'] if 'pot_height' in m else None
+        # record_update.pot_height = m['pot_height'] if 'pot_height' in m else None
         record_update.pot_material = m['pot_material'] if 'pot_material' in m else None
         record_update.soil = m['soil'] if 'soil' in m else None
         record_update.notes = m['notes'] if 'notes' in m else None
