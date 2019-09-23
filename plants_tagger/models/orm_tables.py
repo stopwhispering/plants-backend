@@ -1,8 +1,8 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.dialects.sqlite import INTEGER, TEXT, BOOLEAN, TIMESTAMP, DATE, CHAR
 import logging
 from sqlalchemy import inspect
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from plants_tagger.models import init_sqlalchemy_engine
 from plants_tagger.models.orm_util import Base
@@ -33,11 +33,16 @@ class Plant(Base):
     filename_previewimage = Column(CHAR(240))  # original filename of the image that is set as preview image
     hide = Column(BOOLEAN)
     last_update = Column(TIMESTAMP, nullable=False)
+
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="plants")
+
     # plant to tag: 1:n
     tags = relationship("Tag", back_populates="plant")
+
+    # plant to event: 1:n
+    events = relationship("Event", back_populates="plant")
 
 
 class Tag(Base):
@@ -51,17 +56,6 @@ class Tag(Base):
     # tag to plant: n:1
     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'))
     plant = relationship("Plant", back_populates="tags")
-
-# class Event(Base):
-#     """events"""
-#     __tablename__ = 'events'
-#     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-#     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'))
-#     event_type = Column(CHAR(60))
-#     event_date = Column(DATE)
-#     event_notes = Column(TEXT)
-#     substrate = Column(CHAR(120))
-#
 
 
 class Measurement(Base):
@@ -124,11 +118,114 @@ class Taxon(Base):
     hybridgenus = Column(BOOLEAN)
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
     powo_id = Column(CHAR(50))
-
     custom_notes = Column(TEXT)  # may be updated on web frontend
 
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")
+
+
+# soil_to_component_association_table = Table('soil_to_component_association',
+#                                             Base.metadata,
+#                                             Column('soil_id', INTEGER, ForeignKey('soil.id')),
+#                                             Column('soil_component_id', INTEGER, ForeignKey('soil_component.id')),
+#                                             Column('portion', CHAR(20))
+#                                             )
+
+
+class Soil(Base):
+    __tablename__ = "soil"
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    soil_name = Column(CHAR(100))
+    components = relationship(
+            "SoilComponent",
+            secondary='soil_to_component_association'
+            )
+
+    # 1:n relationship to events (no need for bidirectional relationship)
+    events = relationship("Event", back_populates="soil")
+
+    # 1:n relationship to the soil/components link table
+    soil_to_component_associations = relationship("SoilToComponentAssociation", back_populates="soil")
+
+
+class SoilComponent(Base):
+    __tablename__ = "soil_component"
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    component_name = Column(CHAR(100))
+    soils = relationship(
+            Soil,
+            secondary='soil_to_component_association'
+            )
+
+    # 1:n relationship to the soil/components link table
+    soil_to_component_associations = relationship("SoilToComponentAssociation", back_populates="soil_component")
+
+
+class SoilToComponentAssociation(Base):
+    __tablename__ = 'soil_to_component_association'
+    soil_id = Column(INTEGER, ForeignKey('soil.id'), primary_key=True)
+    soil_component_id = Column(INTEGER, ForeignKey('soil_component.id'), primary_key=True)
+    portion = Column(CHAR(20))
+
+    # #n:1 relationship to the soil table and to the soil component table
+    soil = relationship('Soil', back_populates="soil_to_component_associations")
+    soil_component = relationship('SoilComponent', back_populates="soil_to_component_associations")
+
+
+class Pot(Base):
+    __tablename__ = "pot"
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    material = Column(CHAR(50))
+    shape_top = Column(CHAR(20))  # oval, square, circle  # todo enum
+    shape_side = Column(CHAR(20))   # flat, very flat, high, very high #todo enum
+    diameter_width = Column(INTEGER)  # in mm
+    # pot_notes = Column(TEXT)
+
+    # 1:n relationship to events
+    events = relationship("Event", back_populates="pot")
+
+
+class Observation(Base):
+    """formerly: Measurement"""
+    __tablename__ = 'observation'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    # plant_name = Column(CHAR(60), nullable=False)
+    diseases = Column(TEXT)
+    stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
+    height = Column(INTEGER)  # in mm
+    # location = Column(CHAR(30))
+    observation_notes = Column(TEXT)
+
+    # 1:1 relationship to event
+    event = relationship("Event", back_populates="observation", uselist=False)
+
+
+class Event(Base):
+    """events"""
+    __tablename__ = 'event'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    date = Column(CHAR(12), nullable=False)  # e.g. 201912241645 or 201903
+    # action = Column(CHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
+    icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    event_notes = Column(TEXT)
+
+    # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
+    observation_id = Column(INTEGER, ForeignKey('observation.id'))
+    observation = relationship("Observation", back_populates="event")
+
+    # n:1 relationship to pot, bi-directional
+    pot_id = Column(INTEGER, ForeignKey('pot.id'))
+    pot_event_type = Column(CHAR(15))  # Repotting, Status
+    pot = relationship("Pot", back_populates="events")
+
+    # n:1 relationship to soil, bi-directional
+    soil_id = Column(INTEGER, ForeignKey('soil.id'))
+    soil_event_type = Column(CHAR(15))  # Changing Soil, Status
+    soil = relationship("Soil", back_populates="events")
+
+    # event to plant: n:1, bi-directional
+    plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+    plant = relationship("Plant", back_populates="events")
 
 
 logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')

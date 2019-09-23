@@ -1,5 +1,9 @@
 from datetime import date, datetime, timedelta
 import json
+from flask import request
+from flask_restful import abort
+
+from plants_tagger.util.util import parse_resource_from_request
 
 
 def treat_non_serializable(x):
@@ -43,3 +47,32 @@ def make_dict_values_json_serializable(d: dict):
                 _ = json.dumps(d[key])
             except TypeError:
                 d[key] = treat_non_serializable(d[key])
+
+
+def throw_exception(message: str = None,
+                    message_type: str = 'Error',
+                    status_code: int = 409,
+                    description: str = None):
+    """uses flask request, not required as a paramter"""
+    description_text = f'Resource: {parse_resource_from_request(request)}'
+    if description:
+        description_text = description + '\n' + description_text
+    abort(status_code, message={
+                                'type':        message_type,
+                                'message':     message,
+                                'description': description_text
+                                })
+
+
+def get_message(message: str = None,
+                message_type: str = 'Information',
+                description: str = None):
+    """uses flask request, not required as a paramter"""
+    description_text = f'Resource: {parse_resource_from_request(request)}'
+    if description and description.strip():
+        description_text = description + '\n' + description_text
+    return {
+            'type':        message_type,
+            'message':     message,
+            'description': description_text
+            }

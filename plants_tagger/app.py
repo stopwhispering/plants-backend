@@ -2,9 +2,11 @@ from flask import Flask
 from flask_restful import Api
 import logging
 
+from plants_tagger.resources.event_resource import EventResource
 from plants_tagger.resources.image_resource import ImageResource
 from plants_tagger.resources.image_resource_2 import ImageResource2
 from plants_tagger.resources.plant_resource import PlantResource
+from plants_tagger.resources.proposal_resource import ProposalResource
 from plants_tagger.resources.refresh_photo_directory_resource import RefreshPhotoDirectoryResource
 from plants_tagger.resources.taxon_resoure import TaxonResource
 from plants_tagger.resources.taxon_to_plant_assignments_resource import TaxonToPlantAssignmentsResource
@@ -32,6 +34,9 @@ def create_app():
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
     api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
     api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
+    api.add_resource(EventResource, '/plants_tagger/backend/Event/<string:plant_name>',  # only get
+                                    '/plants_tagger/backend/Event')  # only post
+    api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
     logger.info('Added REST Resources.')
 
     return app
