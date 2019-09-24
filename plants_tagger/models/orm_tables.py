@@ -176,8 +176,8 @@ class Pot(Base):
     __tablename__ = "pot"
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     material = Column(CHAR(50))
-    shape_top = Column(CHAR(20))  # oval, square, circle  # todo enum
-    shape_side = Column(CHAR(20))   # flat, very flat, high, very high #todo enum
+    shape_top = Column(CHAR(20))  # oval, square, circle
+    shape_side = Column(CHAR(20))   # flat, very flat, high, very high
     diameter_width = Column(INTEGER)  # in mm
     # pot_notes = Column(TEXT)
 

@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 class TaxonToPlantAssignmentsResource(Resource):
     @staticmethod
     def get():
-        # todo: catch timeout error
         include_kew: bool = json.loads(request.args['includeKew'])
         search_for_genus: bool = json.loads(request.args['searchForGenus'])
         requested_name = request.args['species'].strip()

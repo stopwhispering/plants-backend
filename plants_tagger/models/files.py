@@ -254,7 +254,6 @@ def read_exif_tags(file):
 
 
 def get_plants_data(directory):
-    # todo: get rid of this useless mapping
     """extracts information from the directory that is relevant for the frontend;
     returns list of dicts (just like directory)"""
     plants_data = [

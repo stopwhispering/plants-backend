@@ -112,8 +112,8 @@ class EventResource(Resource):
 
                     if 'pot' in event:
                         event_obj.pot_event_type = event.get('pot_event_type')
+
                         pot_obj = Pot(material=event['pot'].get('material'),
-                                      # diameter_width=event['pot'].get('diameter_width'),
                                       shape_side=event['pot'].get('shape_side'),
                                       shape_top=event['pot'].get('shape_top')
                                       )
