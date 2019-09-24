@@ -7,12 +7,10 @@ import datetime
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
-from plants_tagger.models.orm_tables import Plant, Measurement, Tag, object_as_dict
-from plants_tagger.models.update_measurements import update_measurements_from_list_of_dicts
+from plants_tagger.models.orm_tables import Plant, object_as_dict
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
-from plants_tagger.util.json_helper import make_list_items_json_serializable
+from plants_tagger.util.json_helper import make_list_items_json_serializable, get_message, throw_exception
 from plants_tagger import config
-from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +46,6 @@ class PlantResource(Resource):
             else:
                 plant['url_preview'] = None
 
-            # add measurements
-            measurements = get_sql_session().query(Measurement).filter(Measurement.plant_name == plant[
-                 'plant_name']).all()
-            if measurements:
-                measurements = [m.__dict__.copy() for m in measurements]
-                for m in measurements:
-                    del m['_sa_instance_state']
-                plant['measurements'] = measurements
-
             # add tags
             if p.tags:
                 plant['tags'] = [object_as_dict(t) for t in p.tags]
@@ -78,7 +67,8 @@ class PlantResource(Resource):
 
         make_list_items_json_serializable(plants_list)
 
-        return {'PlantsCollection': plants_list}, 200
+        return {'PlantsCollection': plants_list,
+                'message': get_message(f"Loaded {len(plants_list)} plants from database.")}, 200
 
     @staticmethod
     def post(**kwargs):
@@ -88,15 +78,12 @@ class PlantResource(Resource):
         # update plants
         update_plants_from_list_of_dicts(kwargs['PlantsCollection'])
 
-        # update measurements & events if existing
-        measurements = [p['measurements'] for p in kwargs['PlantsCollection'] if 'measurements' in p]
-        # unflatten
-        measurements = [m for sublist in measurements for m in sublist]
-        if measurements:
-            update_measurements_from_list_of_dicts(measurements)
-
+        message = f"Saved updates for {len(kwargs['PlantsCollection'])} plants."
+        logger.info(message)
         return {'action': 'Saved',
-                'resource': 'PlantResource'}, 200
+                'resource': 'PlantResource',
+                'message': get_message(message)
+                }, 200
 
     @staticmethod
     def delete():
@@ -104,16 +91,13 @@ class PlantResource(Resource):
         plant_name = request.get_json()['plant']
         record_update: Plant = get_sql_session().query(Plant).filter_by(plant_name=plant_name).first()
         if not record_update:
-            raise ValueError(f'Plant to be deleted not found in database: {plant_name}.')
+            logger.error(f'Plant to be deleted not found in database: {plant_name}.')
+            throw_exception(f'Plant to be deleted not found in database: {plant_name}.')
         record_update.hide = True
         get_sql_session().commit()
 
-        return {'message':  {
-                            'type':           'Information',
-                            'message':        f'Deleted plant {plant_name}',
-                            'additionalText': None,
-                            'description':    f'Plant name: {plant_name}'
-                                              f'\nResource: {parse_resource_from_request(request)}'
-                                              f'\nHide: True'
-                            }
+        message = f'Deleted plant {plant_name}'
+        logger.info(message)
+        return {'message':  get_message(message,
+                                        description=f'Plant name: {plant_name}\nHide: True')
                 }, 200

@@ -5,7 +5,7 @@ from typing import List
 
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon
-from plants_tagger.util.util import parse_resource_from_request
+from plants_tagger.util.json_helper import get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +20,11 @@ class TaxonResource(Resource):
         _ = [t.pop('_sa_instance_state') for t in taxon_dict.values()]
         _ = [t.update({'ipni_id_short': t['fq_id'][24:]}) for t in taxon_dict.values() if 'fq_id' in t]
 
-        msg = f'Received {len(taxon_dict)} taxa from database.'
-        logger.info(msg)
+        message = f'Received {len(taxon_dict)} taxa from database.'
+        logger.info(message)
         return {'TaxaDict': taxon_dict,
-                'message':           {
-                    'type':     'Information',
-                    'message': msg,
-                    'additionalText': None,
-                    'description':    f'Resource: {parse_resource_from_request(request)}'
-                    }}, 200
+                'message': get_message(message)
+                }, 200
 
     @staticmethod
     def post():
@@ -38,20 +34,12 @@ class TaxonResource(Resource):
             taxon: Taxon = get_sql_session().query(Taxon).filter(Taxon.id == taxon_modified['id']).first()
             if not taxon:
                 logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
-                return ({'message': {
-                                    'type':           'Error',
-                                    'message':        f'Taxon not found: {taxon.name}. Saving canceled.',
-                                    'description':    f'Filename: Resource: {parse_resource_from_request(request)}'
-                            }}), 500
+                throw_exception(f'Taxon not found: {taxon.name}. Saving canceled.')
 
             taxon.custom_notes = taxon_modified['custom_notes']
         get_sql_session().commit()
 
         logger.info(f'Updated {len(modified_taxa)} taxa in database.')
-        return {'message': {
-                            'type': 'Information',
-                            'message': f'Updated {len(modified_taxa)} taxa in database.',
-                            'description': f'Resource: {parse_resource_from_request(request)}'
-                            },
-                'resource': 'TaxonResource'
+        return {'resource': 'TaxonResource',
+                'message': get_message(f'Updated {len(modified_taxa)} taxa in database.')
                 }, 200

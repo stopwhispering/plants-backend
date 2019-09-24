@@ -1,13 +1,12 @@
-from flask_restful import Resource, abort
+from flask_restful import Resource
 import logging
 from flask import request
 from collections import defaultdict
 
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Taxon, Event, Plant, Pot, Soil, SoilComponent, SoilToComponentAssociation, \
-    object_as_dict, Observation
+from plants_tagger.models.orm_tables import Event, Plant, Pot, object_as_dict, Observation
 from plants_tagger.models.update_events import get_or_create_soil
-from plants_tagger.util.json_helper import throw_exception, get_message
+from plants_tagger.util.json_helper import throw_exception, get_message, MessageType
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,6 @@ class EventResource(Resource):
         # get events which have references to observations, pots, and soils
         results = []
         events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
-        # todo empty?
 
         event_obj: Event
         for event_obj in events_obj:
@@ -51,9 +49,11 @@ class EventResource(Resource):
                                                    in event_obj.soil.soil_to_component_associations]
 
             results.append(event)
+
+        logger.info(f'Returning {len(results)} events for {plant_name}.')
         return {'events':  results,
-                'message': 'todo'}
-        # todo message
+                'message':  get_message(f'Returning {len(results)} events for {plant_name}.',
+                                        message_type=MessageType.DEBUG)}
 
     @staticmethod
     def post():
@@ -72,7 +72,6 @@ class EventResource(Resource):
         for plant_name, events in plants_events_dict.items():
             plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
             if not plant_obj:
-                # todo:what about plant deletions?
                 throw_exception(f'Plant not found: {plant_name}')
 
             # loop at the current plant's database events to find deleted ones
@@ -99,9 +98,7 @@ class EventResource(Resource):
 
                     # create segment records if supplied (otherwise they were not checked in frontend)
                     if 'observation' in event:
-                        observation_obj = Observation(#height=event['observation'].get('height'),
-                                                      #stem_max_diameter=event['observation'].get('stem_max_diameter'),
-                                                      diseases=event['observation'].get('diseases'),
+                        observation_obj = Observation(diseases=event['observation'].get('diseases'),
                                                       observation_notes=event['observation'].get('observation_notes')
                                                       )
                         if event['observation'].get('height'):
@@ -137,5 +134,7 @@ class EventResource(Resource):
 
         description = ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])
         logger.info(' Saving Events: ' + description)
-        return {'message':  get_message(f'Updated events in database.', description=description),
-                'resource': 'EventResource'}, 200  # required for closing busy dialog when saving
+        return {'resource': 'EventResource',
+                'message': get_message(f'Updated events in database.',
+                                       description=description)
+                }, 200  # required for closing busy dialog when saving

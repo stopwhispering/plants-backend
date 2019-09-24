@@ -1,8 +1,8 @@
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.sqlite import INTEGER, TEXT, BOOLEAN, TIMESTAMP, DATE, CHAR
 import logging
 from sqlalchemy import inspect
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from plants_tagger.models import init_sqlalchemy_engine
 from plants_tagger.models.orm_util import Base
@@ -57,23 +57,23 @@ class Tag(Base):
     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'))
     plant = relationship("Plant", back_populates="tags")
 
-
-class Measurement(Base):
-    """assessments"""
-    __tablename__ = 'measurement'
-    plant_name = Column(CHAR(60), primary_key=True, nullable=False)
-    measurement_date = Column(DATE, primary_key=True, nullable=False)
-    repot_rating = Column(INTEGER)  # 0 (no repotting required) to 5 (repotting urgently required)
-    # stem_outset_diameter = Column(INTEGER)  # stem or caudex (outset) in mm
-    stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
-    height = Column(INTEGER)  # in mm
-    pot_width_above = Column(INTEGER)  # in mm
-    # pot_width_below = Column(INTEGER)  # in mm
-    pot_circular = Column(BOOLEAN)  # false = quadratic
-    # pot_height = Column(INTEGER)  # in mm
-    pot_material = Column(CHAR(50))
-    soil = Column(CHAR(200))
-    notes = Column(TEXT)
+#
+# class Measurement(Base):
+#     """assessments"""
+#     __tablename__ = 'measurement'
+#     plant_name = Column(CHAR(60), primary_key=True, nullable=False)
+#     measurement_date = Column(DATE, primary_key=True, nullable=False)
+#     repot_rating = Column(INTEGER)  # 0 (no repotting required) to 5 (repotting urgently required)
+#     # stem_outset_diameter = Column(INTEGER)  # stem or caudex (outset) in mm
+#     stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
+#     height = Column(INTEGER)  # in mm
+#     pot_width_above = Column(INTEGER)  # in mm
+#     # pot_width_below = Column(INTEGER)  # in mm
+#     pot_circular = Column(BOOLEAN)  # false = quadratic
+#     # pot_height = Column(INTEGER)  # in mm
+#     pot_material = Column(CHAR(50))
+#     soil = Column(CHAR(200))
+#     notes = Column(TEXT)
 
 
 class Distribution(Base):

@@ -5,8 +5,7 @@ import logging
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
 from plants_tagger.models.orm_tables import Plant
-from plants_tagger.util.json_helper import make_list_items_json_serializable
-from plants_tagger.util.util import parse_resource_from_request
+from plants_tagger.util.json_helper import make_list_items_json_serializable, get_message
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +33,10 @@ class ImageResource2(Resource):
         make_list_items_json_serializable(files_data)
 
         logger.info(f'Returned {len(files_data)} images.')
-
         return {'ImagesCollection': files_data,
-                'message': {
-                    'type': 'Information',
-                    'message': 'Loaded images from backend.',
-                    'additionalText': None,
-                    'description': f'Count: {len(files_data)}\nResource: {parse_resource_from_request(request)}'
-                    }}, 200
+                'message': get_message('Loaded images from backend.',
+                                       description=f'Count: {len(files_data)}')
+                }, 200
 
     @staticmethod
     def post(**kwargs):
@@ -50,4 +45,6 @@ class ImageResource2(Resource):
         logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
         write_new_exif_tags(kwargs['ImagesCollection'])
         return {'action':   'Saved',
-                'resource': 'ImageResource'}, 200
+                'resource': 'ImageResource',
+                'message': get_message(f"Saved updates for {len(kwargs['ImagesCollection'])} images.")
+                }, 200

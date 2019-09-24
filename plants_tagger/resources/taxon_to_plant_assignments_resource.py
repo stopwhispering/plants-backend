@@ -10,6 +10,7 @@ from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon, object_as_dict
 from plants_tagger.models.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
 from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
+from plants_tagger.util.json_helper import throw_exception, get_message
 from plants_tagger.util.util import parse_resource_from_request
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         search_for_genus: bool = json.loads(request.args['searchForGenus'])
         requested_name = request.args['species'].strip()
         if not requested_name:
-            return {'error': 'No search name supplied.'}, 500
+            throw_exception('No search name supplied.')
 
         # search for supplied species in local database
         results = get_taxa_from_local_database(requested_name+'%', search_for_genus)
@@ -34,23 +35,22 @@ class TaxonToPlantAssignmentsResource(Resource):
                 kew_results = get_taxa_from_kew_databases(requested_name+'*', results, search_for_genus)
                 results.extend(kew_results)
             except TooManyResultsError as e:
-                return {'error': e.args[0]}, 500
+                logger.error('Exception catched.', exc_info=e)
+                throw_exception(e.args[0])
             except JSONDecodeError as e:
-                msg = 'ipni.search method raised an Exception.'
-                logger.error(msg, exc_info=e)
-                return {'error': msg}, 500
+                logger.error('ipni.search method raised an Exception.', exc_info=e)
+                throw_exception('ipni.search method raised an Exception.')
 
         if not results:
             logger.info(f'No search result for search term "{requested_name}".')
-            return {'error': f'No search result for search term "{requested_name}".'}, 500
+            throw_exception(f'No search result for search term "{requested_name}".')
 
         return {'ResultsCollection': results,
-                'message': {
-                    'type': 'Information',
-                    'message': 'Received species search results',
-                    'additionalText': f'Search term "{requested_name}"',
-                    'description': f'Count: {len(results)}\nResource: {parse_resource_from_request(request)}'
-                    }}, 200
+                'message': get_message('Received species search results',
+                                       additional_text=f'Search term "{requested_name}"',
+                                       description=f'Count: {len(results)}\n'
+                                                   f'Resource: {parse_resource_from_request(request)}')
+                }, 200
 
     @staticmethod
     def post():
@@ -70,7 +70,7 @@ class TaxonToPlantAssignmentsResource(Resource):
             taxon = get_sql_session().query(Taxon).filter(Taxon.id == plants_taxon_id).first()
             if not taxon:
                 logger.error(f"Can't find {plants_taxon_id} / {name_incl_addition} in database.")
-                return {'error': f"Can't find {plants_taxon_id} / {name_incl_addition} in database."}, 500
+                throw_exception(f"Can't find {plants_taxon_id} / {name_incl_addition} in database.")
 
         # taxon is already in database, but the user entered a custom name
         # that custom name might already exist in database as well
@@ -100,13 +100,10 @@ class TaxonToPlantAssignmentsResource(Resource):
         taxon_dict = object_as_dict(taxon)
         taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
 
-        msg = f'Assigned botanical name "{taxon.name}" to plant "{plant}".'
+        message = f'Assigned botanical name "{taxon.name}" to plant "{plant}".'
+        logger.info(message)
         return {'taxon_data': taxon_dict,
-                'toast': msg,
+                'toast': message,
                 'botanical_name': taxon.name,
-                'message':           {
-                    'type':           'Information',
-                    'message':        msg,
-                    'additionalText': None,
-                    'description':    f'Resource: {parse_resource_from_request(request)}'
-                    }}, 200
+                'message': get_message(message)
+                }, 200

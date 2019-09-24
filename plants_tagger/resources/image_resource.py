@@ -9,7 +9,7 @@ import plants_tagger.models.files
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data
-from plants_tagger.util.util import parse_resource_from_request
+from plants_tagger.util.json_helper import MessageType, get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,6 @@ class ImageResource(Resource):
                 duplicate_filenames.append(photo_upload.filename)
                 files.pop(i)
                 logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
-                # return {'error': f'File already uploaded: {photo_upload.filename}'}, 500
 
         if files:
             for photo_upload in files:
@@ -67,26 +66,16 @@ class ImageResource(Resource):
                 logger.warning('No instantiated photo directory found.')
 
         if files and not duplicate_filenames:
-            msg_type = 'Information'
-            msg_message = f'Successfully saved {len(files)} images.'
-            msg_additional_text = None
-            msg_description = f'Resource: {parse_resource_from_request(request)}'
+            msg = get_message(f'Successfully saved {len(files)} images.')
         else:
-            msg_type = 'Warning'
-            msg_message = f'Duplicates found when saving.'
-            msg_additional_text = 'click for details'
-            msg_description = f'Resource: {parse_resource_from_request(request)}\n' \
-                              f'Saved {[p.filename for p in files]}.' \
-                              f'\nSkipped {duplicate_filenames}.'
+            msg = get_message(f'Duplicates found when saving.',
+                              message_type=MessageType.WARNING,
+                              additional_text='click for details',
+                              description=f'Saved {[p.filename for p in files]}.'
+                                          f'\nSkipped {duplicate_filenames}.')
 
-        logger.info(msg_message)
-        return {'message':  {
-                    'type':           msg_type,
-                    'message':        msg_message,
-                    'additionalText': msg_additional_text,
-                    'description':    msg_description,
-                    }
-                }, 200
+        logger.info(msg['message'])
+        return {'message':  msg}, 200
 
     @staticmethod
     def delete():
@@ -94,7 +83,8 @@ class ImageResource(Resource):
         photo = request.get_json()
         old_path = photo['path_full_local']
         if not os.path.isfile(old_path):
-            return {'error': 'File not found'}, 500
+            logger.error(f"File selected to be deleted not found: {old_path}")
+            throw_exception(f"File selected to be deleted not found: {old_path}")
 
         filename = os.path.basename(old_path)
         new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
@@ -104,14 +94,8 @@ class ImageResource(Resource):
                        dst=new_path)  # silently overwrites if privileges are sufficient
         except OSError as e:
             logger.error(f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-            # return {'error': f'OSError when moving file {old_path} to {new_path}'}, 500
-            return({'message': {
-                            'type': 'Error',
-                            'message': f'OSError when moving file {old_path} to {new_path}',
-                            'additionalText': None,
-                            'description': f'Filename: {os.path.basename(old_path)}\nResource:'
-                                           f' {parse_resource_from_request(request)}'
-                            }}), 500
+            throw_exception(f'OSError when moving file {old_path} to {new_path}',
+                            description=f'Filename: {os.path.basename(old_path)}')
         logger.info(f'Moved file {old_path} to {new_path}')
 
         # remove from PhotoDirectory cache
@@ -120,12 +104,6 @@ class ImageResource(Resource):
                 plants_tagger.models.files.photo_directory.remove_image_from_directory(photo)
 
         # send the photo back to frontend; it will be removed from json model there
-        # return {'success': f'Successfully deleted image {os.path.basename(old_path)}', 'photo': photo}, 200
-        return {'message': {
-                            'type': 'Information',
-                            'message': f'Successfully deleted image',
-                            'additionalText': None,
-                            'description': f'Filename: {os.path.basename(old_path)}\nResource:'
-                                           f' {parse_resource_from_request(request)}'
-                            },
+        return {'message': get_message(f'Successfully deleted image',
+                                       description=f'Filename: {os.path.basename(old_path)}'),
                 'photo': photo}, 200
