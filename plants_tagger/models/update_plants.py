@@ -63,20 +63,21 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         record_update.last_update = datetime.datetime.now()
 
         # save tags
-        for tag in plant['tags']:
-            # new tag
-            if 'id' not in tag:
-                tag_object: Tag = Tag(text=tag['text'],
-                                      icon=tag['icon'],
-                                      state=tag['state'],
-                                      plant=record_update,
-                                      last_update=datetime.datetime.now())
-                new_list.append(tag_object)
-            else:
-                # update if modified (not implemented in frontend)
-                tag_object = get_sql_session().query(Tag).filter(Tag.id == tag['id']).first()
-                if tag_modified(tag_object, tag):
-                    update_tag(tag_object, tag)
+        if 'tags' in plant:
+            for tag in plant['tags']:
+                # new tag
+                if 'id' not in tag:
+                    tag_object: Tag = Tag(text=tag['text'],
+                                          icon=tag['icon'],
+                                          state=tag['state'],
+                                          plant=record_update,
+                                          last_update=datetime.datetime.now())
+                    new_list.append(tag_object)
+                else:
+                    # update if modified (not implemented in frontend)
+                    tag_object = get_sql_session().query(Tag).filter(Tag.id == tag['id']).first()
+                    if tag_modified(tag_object, tag):
+                        update_tag(tag_object, tag)
 
         # delete deleted tags from db
         tag_objects = get_sql_session().query(Tag).filter(Tag.plant == record_update).all()
