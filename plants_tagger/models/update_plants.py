@@ -61,7 +61,8 @@ def update_plants_from_list_of_dicts(plants: [dict]):
                 record_update.taxon = taxon
             else:
                 logger.error(f"Taxon with id {plant['taxon_id']} not found. Skipped taxon assignment.")
-            record_update.last_update = datetime.datetime.now()
+
+        record_update.last_update = datetime.datetime.now()
 
         # save tags
         if 'tags' in plant:
