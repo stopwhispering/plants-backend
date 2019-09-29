@@ -70,7 +70,7 @@ def throw_exception(message: str = None,
     if description:
         description_text = description + '\n' + description_text
     abort(status_code, message={
-                                'type':           message_type,
+                                'type':           message_type.value,
                                 'message':        message,
                                 'additionalText': additional_text,
                                 'description':    description_text
