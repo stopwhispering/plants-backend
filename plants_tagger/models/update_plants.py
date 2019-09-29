@@ -55,12 +55,13 @@ def update_plants_from_list_of_dicts(plants: [dict]):
             record_update.filename_previewimage = None
 
         # save taxon
-        taxon = get_sql_session().query(Taxon).filter(Taxon.id == plant['taxon_id']).first()
-        if taxon:
-            record_update.taxon = taxon
-        else:
-            logger.error(f"Taxon with id {plant['taxon_id']} not found. Skipped taxon assignment.")
-        record_update.last_update = datetime.datetime.now()
+        if 'taxon_id' in plant:  # empty for newly created plants
+            taxon = get_sql_session().query(Taxon).filter(Taxon.id == plant['taxon_id']).first()
+            if taxon:
+                record_update.taxon = taxon
+            else:
+                logger.error(f"Taxon with id {plant['taxon_id']} not found. Skipped taxon assignment.")
+            record_update.last_update = datetime.datetime.now()
 
         # save tags
         if 'tags' in plant:
