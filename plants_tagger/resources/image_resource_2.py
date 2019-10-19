@@ -5,7 +5,7 @@ import logging
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
 from plants_tagger.models.orm_tables import Plant
-from plants_tagger.util.json_helper import make_list_items_json_serializable, get_message
+from flask_2_ui5_py import make_list_items_json_serializable, get_message
 
 logger = logging.getLogger(__name__)
 

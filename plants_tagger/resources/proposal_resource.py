@@ -3,7 +3,7 @@ import logging
 
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Soil, SoilComponent, object_as_dict
-from plants_tagger.util.json_helper import throw_exception, get_message
+from flask_2_ui5_py import throw_exception, get_message
 
 logger = logging.getLogger(__name__)
 

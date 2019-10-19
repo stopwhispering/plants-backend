@@ -9,7 +9,7 @@ import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
 from plants_tagger.models.orm_tables import Plant, object_as_dict
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
-from plants_tagger.util.json_helper import make_list_items_json_serializable, get_message, throw_exception
+from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
 from plants_tagger import config
 
 logger = logging.getLogger(__name__)

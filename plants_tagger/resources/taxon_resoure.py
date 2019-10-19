@@ -5,7 +5,7 @@ from typing import List
 
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon
-from plants_tagger.util.json_helper import get_message, throw_exception
+from flask_2_ui5_py import get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 

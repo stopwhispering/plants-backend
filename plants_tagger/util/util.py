@@ -1,11 +1,5 @@
-from flask import request
-
-
-def parse_resource_from_request(req: request):
-    items = req.url.split('/')
-    index_start = items.index('backend') + 1
-    resource_name = '/'.join(items[index_start:])
-    if '?' in resource_name:
-        resource_name = resource_name[:resource_name.find('?')]
-
-    return resource_name
+def get_fake_headers():
+    # returns headers with fake user agent for requests
+    user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+    headers = {'User-Agent': user_agent}
+    return headers

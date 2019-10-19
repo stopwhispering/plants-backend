@@ -10,8 +10,7 @@ from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Taxon, object_as_dict
 from plants_tagger.models.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
 from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
-from plants_tagger.util.json_helper import throw_exception, get_message
-from plants_tagger.util.util import parse_resource_from_request
+from flask_2_ui5_py import throw_exception, get_message
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +46,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         return {'ResultsCollection': results,
                 'message': get_message('Received species search results',
                                        additional_text=f'Search term "{requested_name}"',
-                                       description=f'Count: {len(results)}\n'
-                                                   f'Resource: {parse_resource_from_request(request)}')
+                                       description=f'Count: {len(results)}')
                 }, 200
 
     @staticmethod

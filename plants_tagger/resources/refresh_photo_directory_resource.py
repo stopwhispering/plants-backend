@@ -4,7 +4,7 @@ from flask_restful import Resource
 import plants_tagger.config_local
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
 from plants_tagger.models.files import lock_photo_directory, PhotoDirectory
-from plants_tagger.util.json_helper import get_message
+from flask_2_ui5_py import get_message
 from plants_tagger.models import files
 
 logger = logging.getLogger(__name__)

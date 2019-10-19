@@ -3,10 +3,12 @@ import logging
 from flask import request
 from collections import defaultdict
 
+from flask_2_ui5_py import get_message, throw_exception, MessageType
+
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.orm_tables import Event, Plant, Pot, object_as_dict, Observation
 from plants_tagger.models.update_events import get_or_create_soil
-from plants_tagger.util.json_helper import throw_exception, get_message, MessageType
+# from plants_tagger.util.json_helper import throw_exception, MessageType
 
 logger = logging.getLogger(__name__)
 

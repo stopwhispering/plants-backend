@@ -9,7 +9,7 @@ import plants_tagger.models.files
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data
-from plants_tagger.util.json_helper import MessageType, get_message, throw_exception
+from flask_2_ui5_py import MessageType, get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 
