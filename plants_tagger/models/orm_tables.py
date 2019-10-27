@@ -15,6 +15,21 @@ def object_as_dict(obj):
             for c in inspect(obj).mapper.column_attrs}
 
 
+def objects_list_to_dict(obj_list) -> dict:
+    # converts a list of orm objects into a dict mapping id to dict
+    # does not include objects from relationships and _sa_instance_state
+    dict_main = {}
+    for obj in obj_list:
+        dict_sub = {c.key: getattr(obj, c.key)
+                    for c in inspect(obj).mapper.column_attrs}
+        # get primary key tuple; if only one element, set that as dict key, otherwise the tuple
+        primary_key_tuple = inspect(obj).mapper.primary_key_from_instance(obj)
+        primary_key = primary_key_tuple[0] if len(primary_key_tuple) == 1 else primary_key_tuple
+        dict_main[primary_key] = dict_sub
+
+    return dict_main
+
+
 class Plant(Base):
     """my plants"""
     __tablename__ = 'plants'

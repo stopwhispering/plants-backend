@@ -8,6 +8,7 @@ import functools
 import operator
 import threading
 import logging
+from typing import Set
 
 import plants_tagger.config_local
 import plants_tagger.models.os_paths
@@ -283,6 +284,20 @@ def get_exif_tags_for_folder():
         plants_data = get_plants_data(photo_directory.directory)
         plants_unique = photo_directory.get_all_plants()
     return plants_data, plants_unique
+
+
+def get_distinct_keywords_from_image_files() -> Set[str]:
+    """get set of all keywords from all the images in the directory"""
+    with lock_photo_directory:
+        global photo_directory
+        if not photo_directory:
+            photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
+            photo_directory.refresh_directory(PATH_BASE)
+
+        # get list of lists of strings, flatten that nested list and return the distinct keywords as set
+        keywords_nested_list = [file.get('tag_keywords') for file in photo_directory.directory]
+        keywords_list = functools.reduce(operator.concat, keywords_nested_list)
+        return set(keywords_list)
 
 
 def encode_keywords_tag(l: list):

@@ -2,6 +2,7 @@ from flask_restful import Resource
 import logging
 
 from plants_tagger.models import get_sql_session
+from plants_tagger.models.files import get_distinct_keywords_from_image_files
 from plants_tagger.models.orm_tables import Soil, SoilComponent, object_as_dict
 from flask_2_ui5_py import throw_exception, get_message
 
@@ -28,6 +29,12 @@ class ProposalResource(Resource):
             # soil components for new mixes
             components = get_sql_session().query(SoilComponent).all()
             results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
+
+        elif entity_id == 'KeywordProposals':
+            # return collection of all distinct keywords used in images
+            keywords_set = get_distinct_keywords_from_image_files()
+            keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
+            results = {'KeywordsCollection': keywords_collection}
 
         else:
             throw_exception(f'Proposal entity {entity_id} not expected.')
