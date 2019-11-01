@@ -26,7 +26,7 @@ class ImageResource(Resource):
             plants = []
 
         if 'keywords' in additional_data:
-            keywords = [{'key': k, 'text': k} for k in additional_data['keywords']]
+            keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']]
         else:
             keywords = []
 
