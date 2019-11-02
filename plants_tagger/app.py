@@ -37,6 +37,7 @@ def create_app():
     api.add_resource(EventResource, '/plants_tagger/backend/Event/<string:plant_name>',  # only get
                                     '/plants_tagger/backend/Event')  # only post
     api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
+    # api.add_resource(TraitResource, '/plants_tagger/backend/Trait')
     logger.info('Added REST Resources.')
 
     return app

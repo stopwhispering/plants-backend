@@ -4,7 +4,8 @@ import logging
 from sqlalchemy import inspect
 from sqlalchemy.orm import relationship
 
-from plants_tagger.models import init_sqlalchemy_engine
+from plants_tagger.config import TRAIT_CATEGORIES
+from plants_tagger.models import init_sqlalchemy_engine, get_sql_session
 from plants_tagger.models.orm_util import Base
 
 
@@ -138,6 +139,12 @@ class Taxon(Base):
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")
 
+    # 1:n relationship to the taxon/traits link table
+    traits = relationship(
+            "Trait",
+            secondary='taxon_to_trait_association'
+            )
+    taxon_to_trait_associations = relationship("TaxonToTraitAssociation", back_populates="taxon")
 
 # soil_to_component_association_table = Table('soil_to_component_association',
 #                                             Base.metadata,
@@ -243,5 +250,63 @@ class Event(Base):
     plant = relationship("Plant", back_populates="events")
 
 
+class TaxonToTraitAssociation(Base):
+    __tablename__ = 'taxon_to_trait_association'
+    taxon_id = Column(INTEGER, ForeignKey('taxon.id'), primary_key=True)
+    trait_id = Column(INTEGER, ForeignKey('trait.id'), primary_key=True)
+    observed = Column(BOOLEAN)
+
+    taxon = relationship('Taxon', back_populates='taxon_to_trait_associations')
+    trait = relationship('Trait', back_populates='taxon_to_trait_associations')
+    #
+    # soil_id = Column(INTEGER, ForeignKey('soil.id'), primary_key=True)
+    # soil_component_id = Column(INTEGER, ForeignKey('soil_component.id'), primary_key=True)
+    # portion = Column(CHAR(20))
+    #
+    # # #n:1 relationship to the soil table and to the soil component table
+    # soil = relationship('Soil', back_populates="soil_to_component_associations")
+    # soil_component = relationship('SoilComponent', back_populates="soil_to_component_associations")
+
+
+class Trait(Base):
+    """traits"""
+    __tablename__ = 'trait'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    trait = Column(CHAR(240))
+
+    # 1:n relationship to the taxon/traits link table
+    taxa = relationship(
+            "Taxon",
+            secondary='taxon_to_trait_association'
+            )
+    taxon_to_trait_associations = relationship("TaxonToTraitAssociation", back_populates="trait")
+
+    # trait to trait category: n:1
+    trait_category_id = Column(INTEGER, ForeignKey('trait_category.id'))
+    trait_category = relationship("TraitCategory", back_populates="traits")
+
+
+class TraitCategory(Base):
+    """trait categories"""
+    __tablename__ = 'trait_category'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    category_name = Column(CHAR(80))
+    sort_flag = Column(INTEGER)
+
+    # # n:1 self-relationship
+    # super_trait_category_id = Column(INTEGER, ForeignKey('trait_category.id'))
+    # super_trait_category = relationship("TraitCategory", remote_side=[id], backref='sub_trait_categories')
+
+    traits = relationship("Trait", back_populates="trait_category")
+
+
 logging.getLogger(__name__).info('Initializing SQLAlchemy Engine')
 init_sqlalchemy_engine()
+
+# add Trait Categories if not existing
+for t in TRAIT_CATEGORIES:
+    trait_category = get_sql_session().query(TraitCategory).filter(TraitCategory.category_name == t).first()
+    if not trait_category:
+        trait_category = TraitCategory(category_name=t)
+        get_sql_session().add(trait_category)
+get_sql_session().commit()

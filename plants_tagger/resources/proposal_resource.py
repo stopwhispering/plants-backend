@@ -1,9 +1,11 @@
 from flask_restful import Resource
 import logging
 
+from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.models import get_sql_session
 from plants_tagger.models.files import get_distinct_keywords_from_image_files
-from plants_tagger.models.orm_tables import Soil, SoilComponent, object_as_dict
+from plants_tagger.models.orm_tables import Soil, SoilComponent, object_as_dict, Trait, objects_list_to_dict, \
+    TraitCategory
 from flask_2_ui5_py import throw_exception, get_message
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,29 @@ class ProposalResource(Resource):
             keywords_set = get_distinct_keywords_from_image_files()
             keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
             results = {'KeywordsCollection': keywords_collection}
+
+        elif entity_id == 'TraitCategoryProposals':
+
+            # trait categories
+            trait_categories = []
+            t: Trait
+            for t in TRAIT_CATEGORIES:
+                # note: trait categories from config file are created in orm_tables.py if not existing upon start
+                trait_category_obj = get_sql_session().query(TraitCategory).filter(TraitCategory.category_name ==
+                                                                                   t).first()
+                trait_categories.append(object_as_dict(trait_category_obj))
+            results = {'TraitCategoriesCollection': trait_categories}
+
+            # traits
+            traits_obj = get_sql_session().query(Trait).all()
+            traits_obj = [t for t in traits_obj if t.trait_category.category_name in TRAIT_CATEGORIES]
+            traits = []
+            for t in traits_obj:
+                t_dict = object_as_dict(t)
+                t_dict['trait_category_id'] = t.trait_category_id
+                t_dict['trait_category'] = t.trait_category.category_name
+                traits.append(t_dict)
+            results['TraitsCollection'] = traits
 
         else:
             throw_exception(f'Proposal entity {entity_id} not expected.')

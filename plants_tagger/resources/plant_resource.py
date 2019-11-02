@@ -7,7 +7,7 @@ import datetime
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
-from plants_tagger.models.orm_tables import Plant, object_as_dict
+from plants_tagger.models.orm_tables import Plant, object_as_dict, Trait, TraitCategory
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
 from plants_tagger import config
