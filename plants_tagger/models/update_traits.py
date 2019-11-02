@@ -52,6 +52,7 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
 
             # altogether new trait
             else:
+                logger.info(f"Creating new trait in db for category {category_obj.category_name}: {trait_new.get('trait')}")
                 trait_obj = Trait(
                         trait=trait_new.get('trait'),
                         trait_category=category_obj
@@ -67,4 +68,5 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
     # remove deleted traits from taxon links
     for link in taxon.taxon_to_trait_associations:
         if link.trait not in new_trait_obj_list:
+            logger.info(f"Deleting trait for taxon {taxon.name}: {link.trait.trait}")
             get_sql_session().delete(link)

@@ -8,6 +8,8 @@ from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.models import init_sqlalchemy_engine, get_sql_session
 from plants_tagger.models.orm_util import Base
 
+logger = logging.getLogger(__name__)
+
 
 def object_as_dict(obj):
     # converts an orm object into a dict
@@ -307,6 +309,7 @@ init_sqlalchemy_engine()
 for t in TRAIT_CATEGORIES:
     trait_category = get_sql_session().query(TraitCategory).filter(TraitCategory.category_name == t).first()
     if not trait_category:
+        logger.info(f'Inserting missing trait category into db: {t}')
         trait_category = TraitCategory(category_name=t)
         get_sql_session().add(trait_category)
 get_sql_session().commit()
