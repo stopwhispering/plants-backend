@@ -94,5 +94,3 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         get_sql_session().add_all(new_list)
 
     get_sql_session().commit()  # saves changes in existing records, too
-
-

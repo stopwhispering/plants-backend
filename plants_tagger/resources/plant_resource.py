@@ -4,9 +4,13 @@ import json
 import logging
 import datetime
 
+from sqlalchemy.orm import make_transient
+from sqlalchemy_utils import get_referencing_foreign_keys, dependent_objects
+
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
-from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory
+from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
+    rename_plant_in_exif_tags
 from plants_tagger.models.orm_tables import Plant, object_as_dict, Trait, TraitCategory
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
@@ -100,4 +104,59 @@ class PlantResource(Resource):
         logger.info(message)
         return {'message':  get_message(message,
                                         description=f'Plant name: {plant_name}\nHide: True')
+                }, 200
+
+    @staticmethod
+    def put():
+        # we use the put method to rename a plant
+        # as (a) plant_name is primary key in the database table and (b) images are tagged with their current
+        # plant names in their exif tags, this is a quite complicated task
+        plant_name_old = request.get_json().get('OldPlantName')
+        plant_name_new = request.get_json().get('NewPlantName')
+
+        # some validations first
+        if not plant_name_old or not plant_name_new:
+            throw_exception(f'Bad plant names: {plant_name_old} / {plant_name_new}')
+
+        plant_obj = get_sql_session().query(Plant).filter(Plant.plant_name==plant_name_old).first()
+        if not plant_obj:
+            throw_exception(f"Can't find plant {plant_name_old}")
+
+        if get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_new).first():
+            throw_exception(f"Plant already exists: {plant_name_new}")
+
+        # get all usages of plant in other tables (we need to do that before expunging)
+        dependencies = list(dependent_objects(plant_obj, get_referencing_foreign_keys(plant_obj)))
+
+        # get old plant object out of session so we can work on the key column
+        get_sql_session().expunge(plant_obj)  # expunge the object from session
+        make_transient(plant_obj)  # http://docs.sqlalchemy.org/en/rel_1_1/orm/session_api.html#sqlalchemy.orm.session.make_transient
+
+        # rename plant name so we get a new table entry
+        plant_obj.plant_name = plant_name_new
+        plant_obj.last_update = datetime.datetime.now()
+        get_sql_session().add(plant_obj)
+
+        # redirect all usages of old plant to the new plant (e.g. in tags table)
+        for dep in dependencies:
+            plant_fk = getattr(dep, 'plant')
+            if not plant_fk:
+                throw_exception(f"Technical error. Found dependency without plant attribute. Canceled renaming.")
+            setattr(dep, 'plant', plant_obj)
+
+        # next, we need to change all image files where plant was tagged with the old plant name
+        # (images are not tagged in database but in the files' exif file extensions)
+        count_modified_images = rename_plant_in_exif_tags(plant_name_old, plant_name_new)
+
+        # after image modifications have gone well, we can commit changes to database
+        get_sql_session().commit()
+
+        # finally, set the old plant to hide (same thing as when deleting from the frontend)
+        plant_obj_obsolete = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_old).first()
+        plant_obj_obsolete.hide = True
+        get_sql_session().commit()
+
+        logger.info(f'Modified {count_modified_images} images.')
+        return {'message':  get_message(f'Renamed {plant_name_old} to {plant_name_new}',
+                                        description=f'Modified {count_modified_images} images.')
                 }, 200

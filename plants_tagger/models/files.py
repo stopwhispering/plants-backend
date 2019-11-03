@@ -361,7 +361,7 @@ def write_new_exif_tags(images_data):
             exif_dict['0th'][270] = tag_descriptions  # windows description/title tag
             exif_dict['0th'][40094] = tag_keywords  # Windows Keywords Tag
             # if tag_authors_plants:
-            exif_dict['0th'][315] = tag_authors_plants  # Windows Autoren Tag
+            exif_dict['0th'][315] = tag_authors_plants  # Windows Authors Tag
             # elif 315 in exif_dict['0th']:
             #     del exif_dict['0th'][315]
 
@@ -387,3 +387,52 @@ def write_new_exif_tags(images_data):
             global photo_directory
             if photo_directory:
                 photo_directory.update_image_data(data)
+
+
+def _get_images_by_plant_name(plant_name):
+    # returns all image entries from photo directory tagging supplied plant name
+    global photo_directory
+    if not photo_directory:
+        photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
+        photo_directory.refresh_directory(PATH_BASE)
+    images = [i for i in photo_directory.directory if
+              isinstance(i.get('tag_authors_plants'), list) and plant_name in i.get('tag_authors_plants')]
+    return images
+
+
+def rename_plant_in_exif_tags(plant_name_old: str, plant_name_new: str) -> int:
+    # in each image that has the old plant name tagged, switch tag to the new plant name
+
+    # get the relevant images from the photo directory cache
+    images = _get_images_by_plant_name(plant_name_old)
+    count_modified = 0
+    if not images:
+        logger.info(f'No image tag to change for {plant_name_old}.')
+
+    for image in images:
+        # double check
+        if plant_name_old in image['tag_authors_plants']:
+
+            # we want to preserve the file's last-change-date
+            logger.info(f"Switching plant tag in image file {image['path_full_local']}")
+            modified_time_seconds = modified_date(image['path_full_local'])  # seconds
+
+            # get a new list of plants for the image and convert it to exif tag syntax
+            image['tag_authors_plants'].remove(plant_name_old)
+            image['tag_authors_plants'].append(plant_name_new)
+            tag_authors_plants = ';'.join(image['tag_authors_plants']).encode('utf-8')
+
+            # load file's current exif tags and overwrite the authors tag used for saving plants
+            exif_dict = piexif.load(image['path_full_local'])
+            exif_dict['0th'][315] = tag_authors_plants  # Windows Authors Tag
+
+            # update the file's exif tags physically
+            exif_bytes = piexif.dump(exif_dict)
+            piexif.insert(exif_bytes, image['path_full_local'])
+
+            # reset file's last modified date to the previous date
+            set_modified_date(image['path_full_local'], modified_time_seconds)  # set access and modifide date
+            count_modified += 1
+
+    # note: there's no need to upload the cache as we did modify directly in the cache above
+    return count_modified

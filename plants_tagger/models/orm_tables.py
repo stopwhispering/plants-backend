@@ -36,7 +36,7 @@ def objects_list_to_dict(obj_list) -> dict:
 class Plant(Base):
     """my plants"""
     __tablename__ = 'plants'
-    plant_name = Column(CHAR(60), primary_key=True, nullable=False)
+    plant_name = Column(CHAR(60), primary_key=True, nullable=False)  # unique even if we switched to id's later
     # species = Column(CHAR(60), ForeignKey('botany.species'))
     species = Column(CHAR(60))
     count = Column(INTEGER)
