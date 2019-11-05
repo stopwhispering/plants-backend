@@ -15,7 +15,7 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
     # loop at new traits to update attributes and create new ones
     link: TaxonToTraitAssociation
     new_trait_obj_list = []
-    for category_new in trait_categories:
+    for category_new in trait_categories or []:  # might be None
         # get category object
         category_obj = get_sql_session().query(TraitCategory).filter(TraitCategory.id == category_new.get('id')).first()
         if not category_obj:

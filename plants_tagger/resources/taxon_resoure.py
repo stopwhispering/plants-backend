@@ -66,7 +66,7 @@ class TaxonResource(Resource):
                 throw_exception(f'Taxon not found: {taxon.name}. Saving canceled.')
 
             taxon.custom_notes = taxon_modified['custom_notes']
-            update_traits(taxon, taxon_modified['trait_categories'])
+            update_traits(taxon, taxon_modified.get('trait_categories'))
         get_sql_session().commit()
 
         logger.info(f'Updated {len(modified_taxa)} taxa in database.')
