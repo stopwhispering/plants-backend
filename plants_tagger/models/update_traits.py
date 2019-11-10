@@ -36,17 +36,17 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
                 if not trait_obj:
                     throw_exception(f"Can't find trait in db although it has an id: {trait_new.get('id')}")
 
-            # update existing trait's link to taxon (this is where the observed flag lies)
+            # update existing trait's link to taxon (this is where the status attribute lies)
             if trait_obj:
                 links_existing = [l for l in trait_obj.taxon_to_trait_associations if l.taxon == taxon]
                 if links_existing:
-                    links_existing[0].observed = trait_new.get('observed')
+                    links_existing[0].status = trait_new.get('status')
                 else:
                     # trait exists, but is not assigned the taxon; create that link
                     link = TaxonToTraitAssociation(
                             taxon=taxon,
                             trait=trait_obj,
-                            observed=trait_new.get('observed'))
+                            status=trait_new.get('status'))
                     get_sql_session().add(link)
                     # taxon.taxon_to_trait_associations.append(trait_obj)  # commit in calling method
 
@@ -59,7 +59,7 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
                         )
                 link = TaxonToTraitAssociation(taxon=taxon,
                                                trait=trait_obj,
-                                               observed=trait_new.get('observed'))
+                                               status=trait_new.get('status'))
                 get_sql_session().add_all([trait_obj, link])
 
             # collect traits themselves for identifying deleted links later

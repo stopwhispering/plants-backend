@@ -75,24 +75,6 @@ class Tag(Base):
     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'))
     plant = relationship("Plant", back_populates="tags")
 
-#
-# class Measurement(Base):
-#     """assessments"""
-#     __tablename__ = 'measurement'
-#     plant_name = Column(CHAR(60), primary_key=True, nullable=False)
-#     measurement_date = Column(DATE, primary_key=True, nullable=False)
-#     repot_rating = Column(INTEGER)  # 0 (no repotting required) to 5 (repotting urgently required)
-#     # stem_outset_diameter = Column(INTEGER)  # stem or caudex (outset) in mm
-#     stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
-#     height = Column(INTEGER)  # in mm
-#     pot_width_above = Column(INTEGER)  # in mm
-#     # pot_width_below = Column(INTEGER)  # in mm
-#     pot_circular = Column(BOOLEAN)  # false = quadratic
-#     # pot_height = Column(INTEGER)  # in mm
-#     pot_material = Column(CHAR(50))
-#     soil = Column(CHAR(200))
-#     notes = Column(TEXT)
-
 
 class Distribution(Base):
     """geographic distribution"""
@@ -256,18 +238,11 @@ class TaxonToTraitAssociation(Base):
     __tablename__ = 'taxon_to_trait_association'
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'), primary_key=True)
     trait_id = Column(INTEGER, ForeignKey('trait.id'), primary_key=True)
-    observed = Column(BOOLEAN)
+    # observed = Column(BOOLEAN)
+    status = Column(CHAR(20))
 
     taxon = relationship('Taxon', back_populates='taxon_to_trait_associations')
     trait = relationship('Trait', back_populates='taxon_to_trait_associations')
-    #
-    # soil_id = Column(INTEGER, ForeignKey('soil.id'), primary_key=True)
-    # soil_component_id = Column(INTEGER, ForeignKey('soil_component.id'), primary_key=True)
-    # portion = Column(CHAR(20))
-    #
-    # # #n:1 relationship to the soil table and to the soil component table
-    # soil = relationship('Soil', back_populates="soil_to_component_associations")
-    # soil_component = relationship('SoilComponent', back_populates="soil_to_component_associations")
 
 
 class Trait(Base):
@@ -294,10 +269,6 @@ class TraitCategory(Base):
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     category_name = Column(CHAR(80))
     sort_flag = Column(INTEGER)
-
-    # # n:1 self-relationship
-    # super_trait_category_id = Column(INTEGER, ForeignKey('trait_category.id'))
-    # super_trait_category = relationship("TraitCategory", remote_side=[id], backref='sub_trait_categories')
 
     traits = relationship("Trait", back_populates="trait_category")
 

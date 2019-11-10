@@ -41,7 +41,8 @@ class TaxonResource(Resource):
                     categories[link.trait.trait_category.id]['traits'].append({
                                 'id':       link.trait.id,
                                 'trait':    link.trait.trait,
-                                'observed': link.observed
+                                # 'observed': link.observed,
+                                'status': link.status
                                 })
 
                 # ui5 frontend requires a list for the json model
