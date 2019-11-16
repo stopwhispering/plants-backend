@@ -5,8 +5,10 @@ from collections import defaultdict
 
 from flask_2_ui5_py import get_message, throw_exception, MessageType
 
+from plants_tagger import config
 from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Event, Plant, Pot, object_as_dict, Observation
+from plants_tagger.models.files import _util_get_generated_filename, get_thumbnail_relative_path_for_relative_path
+from plants_tagger.models.orm_tables import Event, Plant, Pot, object_as_dict, Observation, Image
 from plants_tagger.models.update_events import get_or_create_soil
 # from plants_tagger.util.json_helper import throw_exception, MessageType
 
@@ -49,6 +51,15 @@ class EventResource(Resource):
                     event['soil']['components'] = [{'component_name': association.soil_component.component_name,
                                                     'portion':        association.portion} for association
                                                    in event_obj.soil.soil_to_component_associations]
+
+            if event_obj.images:
+                event['images'] = []
+                for image_obj in event_obj.images:
+                    path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
+                                                                               size=config.size_thumbnail_image)
+                    event['images'].append({'id': image_obj.id,
+                                            'url_small': path_small,
+                                            'url_original': image_obj.relative_path})
 
             results.append(event)
 
@@ -129,6 +140,37 @@ class EventResource(Resource):
                         # added in util method, but not commited, yet
                         event_obj.soil_event_type = event.get('soil_event_type')
                         event_obj.soil = get_or_create_soil(event['soil'], counts)
+
+                else:
+                    event_obj = get_sql_session().query(Event).filter(Event.id == event.get('id')).first()
+                    if not event_obj:
+                        logger.warning(f'Event not found: {event.get("id")}')
+                        continue
+
+                # changes to images attached to the event
+                # deleted images
+                url_originals_saved = [image.get('url_original') for image in event.get('images')] if event.get(
+                        'images') else []
+                for image_obj in event_obj.images:
+                    if image_obj.relative_path not in url_originals_saved:
+                        # don't delete image object, but only the association (image might be assigned to other events)
+                        get_sql_session().delete([link for link in event_obj.image_to_event_associations if
+                                                  link.image.relative_path == image_obj.relative_path][0])
+
+                # newly assigned images
+                if event.get('images'):
+                    for image in event.get('images'):
+                        image_obj = get_sql_session().query(Image).filter(Image.relative_path == image.get(
+                                'url_original')).first()
+
+                        # not assigned to any event, yet
+                        if not image_obj:
+                            image_obj = Image(relative_path=image.get('url_original'))
+                            new_list.append(image_obj)
+
+                        # not assigned to that specific event, yet
+                        if image_obj not in event_obj.images:
+                            event_obj.images.append(image_obj)
 
         if new_list:
             get_sql_session().add_all(new_list)

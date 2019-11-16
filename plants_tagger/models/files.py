@@ -106,6 +106,13 @@ def decode_keywords_tag(t: tuple):
     return keywords
 
 
+def get_thumbnail_relative_path_for_relative_path(path_relative: str, size: tuple):
+    filename = os.path.basename(path_relative)
+    filename_thumbnail = _util_get_generated_filename(filename, size)
+    path_relative_thumbnail = os.path.join(REL_PATH_PHOTOS_GENERATED, filename_thumbnail)
+    return path_relative_thumbnail
+
+
 def _util_get_generated_filename(filename_original: str, size: tuple):
     suffix = f'{size[0]}_{size[1]}'
     filename_list = filename_original.split('.')

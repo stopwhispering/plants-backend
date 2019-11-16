@@ -58,8 +58,8 @@ class PlantResource(Resource):
             soil_events = [e for e in p.events if e.soil]
             if soil_events:
                 soil_events.sort(key=lambda e: e.date, reverse=True)
-                plant['current_soil'] = {   'soil_name': soil_events[0].soil.soil_name,
-                                            'date': soil_events[0].date}
+                plant['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
+                                         'date': soil_events[0].date}
             else:
                 plant['current_soil'] = None
 

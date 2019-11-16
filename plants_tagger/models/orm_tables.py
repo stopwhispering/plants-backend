@@ -206,6 +206,34 @@ class Observation(Base):
     event = relationship("Event", back_populates="observation", uselist=False)
 
 
+class Image(Base):
+    # todo: implement in frontend and everything else
+    """image paths"""
+    # images themselves are stored in file system and their information in exif tags
+    # this table is only used to link events to images
+    # todo: helper method to find a missing image in other subdirectories (in case of moving files manually)
+    __tablename__ = 'image'
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name  # pseudo-key
+
+    # 1:n relationship to the image/event link table
+    events = relationship(
+            "Event",
+            secondary='image_to_event_association'
+            )
+    image_to_event_associations = relationship("ImageToEventAssociation", back_populates="image")
+
+
+class ImageToEventAssociation(Base):
+    # todo: implement in frontend and everything else
+    __tablename__ = 'image_to_event_association'
+    image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
+    event_id = Column(INTEGER, ForeignKey('event.id'), primary_key=True)
+
+    image = relationship('Image', back_populates='image_to_event_associations')
+    event = relationship('Event', back_populates='image_to_event_associations')
+
+
 class Event(Base):
     """events"""
     __tablename__ = 'event'
@@ -232,6 +260,13 @@ class Event(Base):
     # event to plant: n:1, bi-directional
     plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
     plant = relationship("Plant", back_populates="events")
+
+    # 1:n relationship to the image/event link table
+    images = relationship(
+            "Image",
+            secondary='image_to_event_association'
+            )
+    image_to_event_associations = relationship("ImageToEventAssociation", back_populates="event")
 
 
 class TaxonToTraitAssociation(Base):
