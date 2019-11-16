@@ -83,7 +83,8 @@ class EventResource(Resource):
         counts = defaultdict(int)
         new_list = []
         for plant_name, events in plants_events_dict.items():
-            logger.info(f'Updating {len(events)} events for plant {plant_name}')
+            events_ids = [e.get('id') for e in events]
+            logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
             plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
             if not plant_obj:
                 throw_exception(f'Plant not found: {plant_name}')
@@ -91,7 +92,7 @@ class EventResource(Resource):
             # loop at the current plant's database events to find deleted ones
             event_obj: Event
             for event_obj in plant_obj.events:
-                if event_obj.id not in [e.get('id') for e in events]:
+                if event_obj.id not in events_ids:
                     logger.info(f'Deleting event {event_obj.id}')
                     get_sql_session().delete(event_obj)
                     counts['Deleted Events'] += 1
