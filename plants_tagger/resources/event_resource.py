@@ -142,7 +142,9 @@ class EventResource(Resource):
                         event_obj.soil = get_or_create_soil(event['soil'], counts)
 
                 else:
+                    logger.warning(f'todo: trying to get event id {event.get("id")}')
                     event_obj = get_sql_session().query(Event).filter(Event.id == event.get('id')).first()
+                    logger.warning(f'todo: success')
                     if not event_obj:
                         logger.warning(f'Event not found: {event.get("id")}')
                         continue

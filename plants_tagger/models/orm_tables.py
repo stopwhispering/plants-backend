@@ -207,7 +207,6 @@ class Observation(Base):
 
 
 class Image(Base):
-    # todo: implement in frontend and everything else
     """image paths"""
     # images themselves are stored in file system and their information in exif tags
     # this table is only used to link events to images
@@ -225,7 +224,6 @@ class Image(Base):
 
 
 class ImageToEventAssociation(Base):
-    # todo: implement in frontend and everything else
     __tablename__ = 'image_to_event_association'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
     event_id = Column(INTEGER, ForeignKey('event.id'), primary_key=True)
