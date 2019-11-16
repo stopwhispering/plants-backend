@@ -86,6 +86,8 @@ class EventResource(Resource):
             events_ids = [e.get('id') for e in events]
             logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
             plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
+            logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events:'
+                        f' {[e.id for e in plant_obj.events]}')
             if not plant_obj:
                 throw_exception(f'Plant not found: {plant_name}')
 
