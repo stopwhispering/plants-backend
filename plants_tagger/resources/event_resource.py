@@ -86,21 +86,21 @@ class EventResource(Resource):
         for plant_name, events in plants_events_dict.items():
 
             plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
-            logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events:'
-                        f' {[e.id for e in plant_obj.events]}')
-
             if not plant_obj:
                 throw_exception(f'Plant not found: {plant_name}')
+            logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
+                        f' {[e.id for e in plant_obj.events]}')
 
             # event might have no id in browser but already in backend from earlier save
             # so try to get eventid  from plant name and date (pseudo-key) to avoid events being deleted
-            # todo: prohibit multiple events on same date in browser
+            # note: if we "replace" an event in the browser  (i.e. for a specific date, we delete an event and
+            # create a new one, then that event in database will be modified, not deleted and re-created
             for event in [e for e in events if not e.get('id')]:
                 event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_name == plant_name,
                                                                         Event.date == event.get('date')).scalar()
                 if event_obj_id is not None:
                     event['id'] = event_obj_id
-                    logger.info(f"Identified event as id {event['id']}")
+                    logger.info(f"Identified event without id from browser as id {event['id']}")
             events_ids = [e.get('id') for e in events]
             logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
 
@@ -109,15 +109,16 @@ class EventResource(Resource):
             for event_obj in plant_obj.events:
                 if event_obj.id not in events_ids:
                     logger.info(f'Deleting event {event_obj.id}')
+                    for link in event_obj.image_to_event_associations:
+                        get_sql_session().delete(link)
                     get_sql_session().delete(event_obj)
                     counts['Deleted Events'] += 1
 
-            # loop at the current plant's events from frontend to find new events
+            # loop at the current plant's events from frontend to find new events and modify existing ones
             for event in events:
 
                 # new events (note: only add and delete are implemented)
                 if not event.get('id'):
-
                     # create event record
                     logger.info('Creating event.')
                     event_obj = Event(date=event.get('date'),
@@ -125,54 +126,11 @@ class EventResource(Resource):
                                       plant=plant_obj
                                       )
                     get_sql_session().add(event_obj)
-                    get_sql_session().commit()
-                    # new_list.append(event_obj)
                     counts['Added Events'] += 1
-
-                    # create segment records if supplied (otherwise they were not checked in frontend)
-                    if 'observation' in event:
-                        observation_obj = Observation(diseases=event['observation'].get('diseases'),
-                                                      observation_notes=event['observation'].get('observation_notes')
-                                                      )
-                        if event['observation'].get('height'):
-                            observation_obj.height = event['observation'].get('height') * 10  # cm to mm
-                        if event['observation'].get('stem_max_diameter'):
-                            observation_obj.stem_max_diameter = event['observation'].get('stem_max_diameter') * 10
-
-                        event_obj.observation = observation_obj
-                        get_sql_session().add(observation_obj)
-                        get_sql_session().commit()
-                        # new_list.append(observation_obj)
-                        counts['Added Observations'] += 1
-
-                    if 'pot' in event:
-                        event_obj.pot_event_type = event.get('pot_event_type')
-
-                        pot_obj = Pot(material=event['pot'].get('material'),
-                                      shape_side=event['pot'].get('shape_side'),
-                                      shape_top=event['pot'].get('shape_top')
-                                      )
-                        if event['pot'].get('diameter_width'):
-                            pot_obj.diameter_width = event['pot'].get('diameter_width')*10
-                        event_obj.pot = pot_obj
-                        get_sql_session().add(pot_obj)
-                        get_sql_session().commit()
-                        # new_list.append(pot_obj)
-                        counts['Added Pots'] += 1
-
-                    if 'soil' in event:
-                        # added in util method, but not commited, yet
-                        event_obj.soil_event_type = event.get('soil_event_type')
-                        event_obj.soil = get_or_create_soil(event['soil'], counts)
-
                 else:
-                    # todo: error occurs if the browsre still has no id but there is an id from an earlier save
-                    # (should be solved by identifying by plant name and date above)
                     try:
                         logger.info(f'Getting event  {event.get("id")}.')
-                        q = get_sql_session().query(Event).filter(Event.id == event.get('id'))
-                        logger.info(f'todo {q.count()}')
-                        event_obj = q.first()
+                        event_obj = get_sql_session().query(Event).filter(Event.id == event.get('id')).first()
                         if not event_obj:
                             logger.warning(f'Event not found: {event.get("id")}')
                             continue
@@ -183,6 +141,48 @@ class EventResource(Resource):
                                      stack_info=True, exc_info=e)
                         throw_exception('Serious error occured at event resource (POST). Rollback. See log.')
 
+                # create segment records if supplied (otherwise they were not checked in frontend)
+                if 'observation' in event and not event_obj.observation:
+                    observation_obj = Observation()
+                    get_sql_session().add(observation_obj)
+                    event_obj.observation = observation_obj
+                    counts['Added Observations'] += 1
+                elif 'observation' not in event and event_obj.observation:
+                    # 1:1 relationship, so we can delete the observation directly
+                    get_sql_session().delete(event_obj.observation)
+                    event_obj.observation = None
+                if 'observation' in event and event_obj.observation:
+                    event_obj.observation.diseases = event['observation'].get('diseases')
+                    event_obj.observation.observation_notes = event['observation'].get('observation_notes')
+                    event_obj.observation.height = event['observation'].get('height') * 10 if event[
+                        'observation'].get('height') else None  # cm to mm
+                    event_obj.observation.stem_max_diameter = event['observation'].get('stem_max_diameter') * 10 if \
+                        event['observation'].get('stem_max_diameter') else None
+
+                if 'pot' in event and not event_obj.pot:
+                    pot_obj = Pot()
+                    get_sql_session().add(pot_obj)
+                    event_obj.pot = pot_obj
+                    counts['Added Pots'] += 1
+                elif 'pot' not in event and event_obj.pot:
+                    # event to pot is n:1 so we don't delete the pot object but only the assignment
+                    # get_sql_session().delete(event_obj.pot)
+                    event_obj.pot = None
+                if 'pot' in event and event_obj.pot:
+                    event_obj.pot_event_type = event.get('pot_event_type')
+                    event_obj.pot.material = event['pot'].get('material')
+                    event_obj.pot.shape_side = event['pot'].get('shape_side')
+                    event_obj.pot.shape_top = event['pot'].get('shape_top')
+                    event_obj.pot.diameter_width = event['pot'].get('diameter_width') * 10 if event['pot'].get(
+                            'diameter_width') else None
+
+                if 'soil' in event and not event_obj.soil:
+                    event_obj.soil_event_type = event.get('soil_event_type')
+                    # added in util method, but not commited there
+                    event_obj.soil = get_or_create_soil(event['soil'], counts)
+                elif 'soil' not in event and event_obj.soil:
+                    # event to soil is n:1 so we don't delete the soil object but only the assignment
+                    event_obj.soil = None
 
                 # changes to images attached to the event
                 # deleted images

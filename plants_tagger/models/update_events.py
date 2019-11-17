@@ -5,7 +5,7 @@ from plants_tagger.models.orm_tables import Soil, SoilComponent, SoilToComponent
 
 
 def get_or_create_soil(soil_dict: dict, counts: defaultdict):
-    """returns the soil described in dictionary; if not exists, genreates it with components included"""
+    """returns the soil described in dictionary; if not exists, generates it with components included"""
     # we don't rely on the id coming from the frontend (too much mess there), but use the soil_name
     soil_obj = get_sql_session().query(Soil).filter(Soil.soil_name == soil_dict['soil_name'].strip()).first()
     if soil_obj:
@@ -38,3 +38,5 @@ def get_or_create_soil(soil_dict: dict, counts: defaultdict):
         counts['Added Soil to Component Associations'] += 1
 
     return soil_obj
+
+
