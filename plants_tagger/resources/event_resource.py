@@ -4,6 +4,7 @@ from flask import request
 from collections import defaultdict
 
 from flask_2_ui5_py import get_message, throw_exception, MessageType
+from sqlalchemy.exc import InvalidRequestError
 
 from plants_tagger import config
 from plants_tagger.models import get_sql_session
@@ -83,13 +84,25 @@ class EventResource(Resource):
         counts = defaultdict(int)
         new_list = []
         for plant_name, events in plants_events_dict.items():
-            events_ids = [e.get('id') for e in events]
-            logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
+
             plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
             logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events:'
                         f' {[e.id for e in plant_obj.events]}')
+
             if not plant_obj:
                 throw_exception(f'Plant not found: {plant_name}')
+
+            # event might have no id in browser but already in backend from earlier save
+            # so try to get eventid  from plant name and date (pseudo-key) to avoid events being deleted
+            # todo: prohibit multiple events on same date in browser
+            for event in [e for e in events if not e.get('id')]:
+                event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_name == plant_name,
+                                                                        Event.date == event.get('date')).scalar()
+                if event_obj_id is not None:
+                    event['id'] = event_obj_id
+                    logger.info(f"Identified event as id {event['id']}")
+            events_ids = [e.get('id') for e in events]
+            logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
 
             # loop at the current plant's database events to find deleted ones
             event_obj: Event
@@ -111,7 +124,9 @@ class EventResource(Resource):
                                       event_notes=event.get('event_notes'),
                                       plant=plant_obj
                                       )
-                    new_list.append(event_obj)
+                    get_sql_session().add(event_obj)
+                    get_sql_session().commit()
+                    # new_list.append(event_obj)
                     counts['Added Events'] += 1
 
                     # create segment records if supplied (otherwise they were not checked in frontend)
@@ -125,7 +140,9 @@ class EventResource(Resource):
                             observation_obj.stem_max_diameter = event['observation'].get('stem_max_diameter') * 10
 
                         event_obj.observation = observation_obj
-                        new_list.append(observation_obj)
+                        get_sql_session().add(observation_obj)
+                        get_sql_session().commit()
+                        # new_list.append(observation_obj)
                         counts['Added Observations'] += 1
 
                     if 'pot' in event:
@@ -138,7 +155,9 @@ class EventResource(Resource):
                         if event['pot'].get('diameter_width'):
                             pot_obj.diameter_width = event['pot'].get('diameter_width')*10
                         event_obj.pot = pot_obj
-                        new_list.append(pot_obj)
+                        get_sql_session().add(pot_obj)
+                        get_sql_session().commit()
+                        # new_list.append(pot_obj)
                         counts['Added Pots'] += 1
 
                     if 'soil' in event:
@@ -147,14 +166,23 @@ class EventResource(Resource):
                         event_obj.soil = get_or_create_soil(event['soil'], counts)
 
                 else:
-                    logger.info(f'todoGetting event  {event.get("id")}.')
-                    q = get_sql_session().query(Event).filter(Event.id == event.get('id'))
-                    logger.info(f'todo {q.count()}')
-                    event_obj = q.first()
-                    logger.warning(f'todo: success')
-                    if not event_obj:
-                        logger.warning(f'Event not found: {event.get("id")}')
-                        continue
+                    # todo: error occurs if the browsre still has no id but there is an id from an earlier save
+                    # (should be solved by identifying by plant name and date above)
+                    try:
+                        logger.info(f'Getting event  {event.get("id")}.')
+                        q = get_sql_session().query(Event).filter(Event.id == event.get('id'))
+                        logger.info(f'todo {q.count()}')
+                        event_obj = q.first()
+                        if not event_obj:
+                            logger.warning(f'Event not found: {event.get("id")}')
+                            continue
+
+                    except InvalidRequestError as e:
+                        get_sql_session().rollback()
+                        logger.error('Serious error occured at event resource (POST). Rollback. See log.',
+                                     stack_info=True, exc_info=e)
+                        throw_exception('Serious error occured at event resource (POST). Rollback. See log.')
+
 
                 # changes to images attached to the event
                 # deleted images

@@ -14,6 +14,7 @@ def get_or_create_soil(soil_dict: dict, counts: defaultdict):
     # create soil in database
     soil_obj = Soil(soil_name=soil_dict.get('soil_name'))
     get_sql_session().add(soil_obj)
+    get_sql_session().commit()
     counts['Added Soils'] += 1
 
     # get or create the soil components in database
@@ -23,6 +24,7 @@ def get_or_create_soil(soil_dict: dict, counts: defaultdict):
         if not component_obj:
             component_obj = SoilComponent(component_name=component.get('component_name').strip())
             get_sql_session().add(component_obj)
+            get_sql_session().commit()
             counts['Added Soil Components'] += 1
 
         # connect soil with the component
@@ -32,6 +34,7 @@ def get_or_create_soil(soil_dict: dict, counts: defaultdict):
                                                  soil_component=component_obj,
                                                  portion=component.get('portion'))
         get_sql_session().add(association)
+        get_sql_session().commit()
         counts['Added Soil to Component Associations'] += 1
 
     return soil_obj
