@@ -138,6 +138,9 @@ class PhotoDirectory:
         """read all image files and create a list of dicts (one dict for each file)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
         paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
+        # can't embed exif tag in png files
+        # paths.extend(glob.glob(folder + '/**/*.PNG', recursive=True))
+        # paths.extend(glob.glob(folder + '/**/*.png', recursive=True))
         paths = list(set(paths))  # on windows, on the other hand, the extension would produce duplicates...
         logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
         self.directory = [{'path_full_local': path_full,
@@ -220,8 +223,11 @@ class PhotoDirectory:
         plant_image_dates = {}
         for image in self.directory:
             for p in image['tag_authors_plants']:
-                if p not in plant_image_dates or plant_image_dates[p] < image['record_date_time']:
-                    plant_image_dates[p] = image['record_date_time']
+                try:
+                    if p not in plant_image_dates or plant_image_dates[p] < image['record_date_time']:
+                        plant_image_dates[p] = image['record_date_time']
+                except TypeError as e:
+                    a = 1
 
         return plant_image_dates
 

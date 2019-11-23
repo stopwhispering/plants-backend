@@ -130,6 +130,13 @@ class Taxon(Base):
             )
     taxon_to_trait_associations = relationship("TaxonToTraitAssociation", back_populates="taxon")
 
+    # 1:n relationship to the image/taxon link table
+    images = relationship(
+            "Image",
+            secondary='image_to_taxon_association'
+            )
+    image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="taxon")
+
 # soil_to_component_association_table = Table('soil_to_component_association',
 #                                             Base.metadata,
 #                                             Column('soil_id', INTEGER, ForeignKey('soil.id')),
@@ -222,6 +229,13 @@ class Image(Base):
             )
     image_to_event_associations = relationship("ImageToEventAssociation", back_populates="image")
 
+    # 1:n relationship to the image/taxon link table
+    taxa = relationship(
+            "Taxon",
+            secondary='image_to_taxon_association'
+            )
+    image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="image")
+
 
 class ImageToEventAssociation(Base):
     __tablename__ = 'image_to_event_association'
@@ -230,6 +244,17 @@ class ImageToEventAssociation(Base):
 
     image = relationship('Image', back_populates='image_to_event_associations')
     event = relationship('Event', back_populates='image_to_event_associations')
+
+
+class ImageToTaxonAssociation(Base):
+    __tablename__ = 'image_to_taxon_association'
+    image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
+    taxon_id = Column(INTEGER, ForeignKey('taxon.id'), primary_key=True)
+
+    description = Column(TEXT)
+
+    image = relationship('Image', back_populates='image_to_taxon_associations')
+    taxon = relationship('Taxon', back_populates='image_to_taxon_associations')
 
 
 class Event(Base):
