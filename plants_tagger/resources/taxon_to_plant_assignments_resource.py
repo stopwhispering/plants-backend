@@ -1,4 +1,4 @@
-from json import JSONDecodeError
+from json.decoder import JSONDecodeError
 from flask_restful import Resource
 import logging
 from flask import request

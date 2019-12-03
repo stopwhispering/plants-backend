@@ -39,8 +39,10 @@ class PlantResource(Resource):
                 logger.debug('Filter hidden-flagged plants disabled.')
 
             # add botanical name to plants resource to facilitate usage in master view and elsewhere
+            # include authors as well
             if p.taxon:
                 plant['botanical_name'] = p.taxon.name
+                plant['taxon_authors'] = p.taxon.authors
 
             # add path to preview image
             if plant['filename_previewimage']:  # supply relative path of original image
