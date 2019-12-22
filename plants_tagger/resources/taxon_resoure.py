@@ -50,6 +50,7 @@ class TaxonResource(Resource):
                 # ui5 frontend requires a list for the json model
                 taxon_dict[taxon.id]['trait_categories'] = list(categories.values())
 
+            # images
             taxon_dict[taxon.id]['images'] = []
             if taxon.images:
                 for link_obj in taxon.image_to_taxon_associations:
@@ -60,6 +61,15 @@ class TaxonResource(Resource):
                                                            'url_small':    path_small,
                                                            'url_original': image_obj.relative_path,
                                                            'description':  link_obj.description})
+
+            # distribution codes according to WGSRPD (level 3)
+            taxon_dict[taxon.id]['distribution'] = {'native': [],
+                                                    'introduced': []}
+            for distribution_obj in taxon.distribution:
+                if distribution_obj.establishment == 'Native':
+                    taxon_dict[taxon.id]['distribution']['native'].append(distribution_obj.tdwg_code)
+                elif distribution_obj.establishment == 'Introduced':
+                    taxon_dict[taxon.id]['distribution']['introduced'].append(distribution_obj.tdwg_code)
 
         message = f'Received {len(taxon_dict)} taxa from database.'
         logger.info(message)
