@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import piexif
 import datetime
 import os
@@ -69,16 +69,7 @@ def generate_thumbnail(path_basic_folder: str,
 
     # noinspection PyProtectedMember
     exif_obj = im._getexif()
-    if exif_obj:  # the image might have no exif-tags
-        # noinspection PyProtectedMember
-        exif = dict(im._getexif().items())
-        if piexif.ImageIFD.Orientation in exif:
-            if exif[piexif.ImageIFD.Orientation] == 3:
-                im = im.rotate(180, expand=True)
-            elif exif[piexif.ImageIFD.Orientation] == 6:
-                im = im.rotate(270, expand=True)
-            elif exif[piexif.ImageIFD.Orientation] == 8:
-                im = im.rotate(90, expand=True)
+    _rotate_if_required(im, exif_obj)
 
     im.thumbnail(size)
     filename_image = os.path.basename(path_image)
@@ -95,6 +86,22 @@ def generate_thumbnail(path_basic_folder: str,
     # piexif.insert(exif_bytes, path_new)
 
     return path_save
+
+
+def _rotate_if_required(image, exif_obj):
+    """rotate image if exif file has a rotate directive"""
+    if exif_obj:  # the image might have no exif-tags
+        # noinspection PyProtectedMember
+        exif = dict(image._getexif().items())
+        if piexif.ImageIFD.Orientation in exif:
+            if exif[piexif.ImageIFD.Orientation] == 3:
+                im = image.rotate(180, expand=True)
+            elif exif[piexif.ImageIFD.Orientation] == 6:
+                im = image.rotate(270, expand=True)
+            elif exif[piexif.ImageIFD.Orientation] == 8:
+                im = image.rotate(90, expand=True)
+    return image
+
 
 
 def decode_keywords_tag(t: tuple):
@@ -333,6 +340,17 @@ def encode_keywords_tag(l: list):
     ord_list_final.append(0)
 
     return tuple(ord_list_final)
+
+
+def resize_image(file_path: str, size: Tuple[int, int], quality: int):
+    image = Image.open(file_path)
+    # exif = piexif.load(file_path)
+    # image = image.resize(size)
+    image.thumbnail(size)  # preserves aspect ratio
+    image.save(file_path,
+               quality=quality,
+               exif=image.info.get('exif'),
+               optimize=True)
 
 
 def write_new_exif_tags(images_data):

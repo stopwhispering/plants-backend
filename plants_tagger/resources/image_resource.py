@@ -8,10 +8,15 @@ import plants_tagger.models.files
 # from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
-from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data
+from plants_tagger import config
+from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data, \
+    resize_image
 from flask_2_ui5_py import MessageType, get_message, throw_exception
 
+from plants_tagger.util.util import with_suffix
+
 logger = logging.getLogger(__name__)
+RESIZE_SUFFIX = '_autoresized'
 
 
 class ImageResource(Resource):
@@ -35,16 +40,28 @@ class ImageResource(Resource):
         for i, photo_upload in enumerate(files[:]):  # need to loop on copy if we want to delete within loop
             path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
             logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
-            if os.path.isfile(path):  # todo: better check in all folders!
+            if os.path.isfile(path) or os.path.isfile(with_suffix(path, RESIZE_SUFFIX)):  # todo: better check in all
+                # folders!
+                files.pop(i-len(duplicate_filenames))
                 duplicate_filenames.append(photo_upload.filename)
-                files.pop(i)
                 logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
 
         if files:
             for photo_upload in files:
                 path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
-                logger.info(f'Saving {path}.')
-                photo_upload.save(path)
+
+                if not config.resizing_size:
+                    logger.info(f'Saving {path}.')
+                    photo_upload.save(path)
+
+                else:
+                    # add suffix to filename
+                    path = with_suffix(path, RESIZE_SUFFIX)
+                    logger.info(f'Saving {path}.')
+                    photo_upload.save(path)
+
+                    logger.info(f'Resizing {path}.')
+                    resize_image(path, size=config.resizing_size, quality=config.quality)
 
                 # add tagged plants (update/create exif tags)
                 if plants or keywords:
