@@ -342,12 +342,25 @@ def encode_keywords_tag(l: list):
     return tuple(ord_list_final)
 
 
-def resize_image(file_path: str, size: Tuple[int, int], quality: int):
-    image = Image.open(file_path)
+def resizing_required(file_obj, size):
+    image = Image.open(file_obj)
+    x, y = image.size
+    if x > size[0]:
+        y = int(max(y * size[0] / x, 1))
+        x = int(size[0])
+    if y > size[1]:
+        x = int(max(x * size[1] / y, 1))
+        y = int(size[1])
+    size = x, y
+    return size != image.size
+
+
+def resize_image(file_obj: str, save_to_path: str, size: Tuple[int, int], quality: int):
+    image = Image.open(file_obj)
     # exif = piexif.load(file_path)
     # image = image.resize(size)
     image.thumbnail(size)  # preserves aspect ratio
-    image.save(file_path,
+    image.save(save_to_path,
                quality=quality,
                exif=image.info.get('exif'),
                optimize=True)

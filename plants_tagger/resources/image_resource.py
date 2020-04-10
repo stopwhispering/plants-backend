@@ -10,7 +10,7 @@ from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
 from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data, \
-    resize_image
+    resize_image, resizing_required
 from flask_2_ui5_py import MessageType, get_message, throw_exception
 
 from plants_tagger.util.util import with_suffix
@@ -54,14 +54,16 @@ class ImageResource(Resource):
                     logger.info(f'Saving {path}.')
                     photo_upload.save(path)
 
+                elif not resizing_required(photo_upload, config.resizing_size):
+                    logger.info(f'No resizing required. Saving {path}.')
+                    photo_upload.save(path)
+
                 else:
                     # add suffix to filename
                     path = with_suffix(path, RESIZE_SUFFIX)
-                    logger.info(f'Saving {path}.')
-                    photo_upload.save(path)
-
-                    logger.info(f'Resizing {path}.')
-                    resize_image(path, size=config.resizing_size, quality=config.quality)
+                    logger.info(f'Saving and resizing {path}.')
+                    # photo_upload.save(path)
+                    resize_image(photo_upload, save_to_path=path, size=config.resizing_size, quality=config.quality)
 
                 # add tagged plants (update/create exif tags)
                 if plants or keywords:
