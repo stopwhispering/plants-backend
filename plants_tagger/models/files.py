@@ -10,6 +10,8 @@ import threading
 import logging
 from typing import Set
 
+from piexif import InvalidImageDataError
+
 import plants_tagger.config_local
 import plants_tagger.models.os_paths
 from plants_tagger import config
@@ -243,7 +245,15 @@ def read_exif_tags(file):
     """reads exif info for supplied file and parses information from it (plants list etc.);
     data is directly written into the file dictionary parameter that requires at least the
     'path_full_local' key"""
-    exif_dict = piexif.load(file['path_full_local'])
+    try:
+        exif_dict = piexif.load(file['path_full_local'])
+    except InvalidImageDataError:
+        logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {file["path_full_local"]}.')
+        file.update({'tag_description': '',
+                     'tag_keywords': [],
+                     'tag_authors_plants': [],
+                     'record_date_time': None})
+        return
     # logger.debug(file['path_full_local'])
 
     auto_rotate_jpeg(file['path_full_local'], exif_dict)
@@ -342,9 +352,10 @@ def encode_keywords_tag(l: list):
     return tuple(ord_list_final)
 
 
-def resizing_required(file_obj, size):
-    image = Image.open(file_obj)
-    x, y = image.size
+def resizing_required(path, size):
+    with Image.open(path) as image:  # only works with path, not file object
+        # image = Image.open(file_obj)
+        x, y = image.size
     if x > size[0]:
         y = int(max(y * size[0] / x, 1))
         x = int(size[0])
@@ -355,15 +366,18 @@ def resizing_required(file_obj, size):
     return size != image.size
 
 
-def resize_image(file_obj: str, save_to_path: str, size: Tuple[int, int], quality: int):
-    image = Image.open(file_obj)
-    # exif = piexif.load(file_path)
-    # image = image.resize(size)
-    image.thumbnail(size)  # preserves aspect ratio
-    image.save(save_to_path,
-               quality=quality,
-               exif=image.info.get('exif'),
-               optimize=True)
+def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: int):
+    with Image.open(path) as image:
+        # image = Image.open(path)
+        # exif = piexif.load(file_path)
+        # image = image.resize(size)
+        image.thumbnail(size)  # preserves aspect ratio
+        image.save(save_to_path,
+                   quality=quality,
+                   exif=image.info.get('exif'),
+                   optimize=True)
+    if path != save_to_path:
+        os.remove(path)
 
 
 def write_new_exif_tags(images_data):

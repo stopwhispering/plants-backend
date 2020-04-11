@@ -49,21 +49,25 @@ class ImageResource(Resource):
         if files:
             for photo_upload in files:
                 path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
+                logger.info(f'Saving {path}.')
+                photo_upload.save(path)  # we can't use object first and then save as this alters file object
 
                 if not config.resizing_size:
-                    logger.info(f'Saving {path}.')
-                    photo_upload.save(path)
+                    pass
+                    # photo_upload.save(path)
 
-                elif not resizing_required(photo_upload, config.resizing_size):
-                    logger.info(f'No resizing required. Saving {path}.')
-                    photo_upload.save(path)
+                elif not resizing_required(path, config.resizing_size):
+                    logger.info(f'No resizing required.')
+                    # photo_upload.save(path)
 
                 else:
-                    # add suffix to filename
-                    path = with_suffix(path, RESIZE_SUFFIX)
                     logger.info(f'Saving and resizing {path}.')
-                    # photo_upload.save(path)
-                    resize_image(photo_upload, save_to_path=path, size=config.resizing_size, quality=config.quality)
+                    # add suffix to filename and resize image
+                    resize_image(path=path,
+                                 save_to_path=with_suffix(path, RESIZE_SUFFIX),
+                                 size=config.resizing_size,
+                                 quality=config.quality)
+                    path = with_suffix(path, RESIZE_SUFFIX)
 
                 # add tagged plants (update/create exif tags)
                 if plants or keywords:
