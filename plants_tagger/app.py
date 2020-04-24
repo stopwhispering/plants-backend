@@ -28,7 +28,8 @@ def create_app():
             response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
             return response
 
-    api.add_resource(PlantResource, '/plants_tagger/backend/Plant')
+    api.add_resource(PlantResource, '/plants_tagger/backend/Plant/<string:plant_name>',
+                                    '/plants_tagger/backend/Plant')
     api.add_resource(ImageResource2, '/plants_tagger/backend/Image2')
     api.add_resource(ImageResource, '/plants_tagger/backend/Image')
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')

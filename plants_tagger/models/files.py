@@ -25,7 +25,7 @@ from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modi
 lock_photo_directory = threading.RLock()
 photo_directory = None
 logger = logging.getLogger(__name__)
-
+NULL_DATE = datetime.date(1900, 1, 1)
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
@@ -132,6 +132,7 @@ def _util_get_generated_filename(filename_original: str, size: tuple):
 
 class PhotoDirectory:
     directory = None
+    latest_image_dates = {}
 
     def __init__(self, root_folder: str = PATH_ORIGINAL_PHOTOS):
         self.root_folder = root_folder
@@ -142,6 +143,7 @@ class PhotoDirectory:
         self._get_files_already_generated(PATH_GENERATED_THUMBNAILS)
         self._read_exif_tags_all_images()
         self._generate_images(path_basic_folder)
+        self._read_latest_image_dates()
 
     def _scan_files(self, folder):
         """read all image files and create a list of dicts (one dict for each file)"""
@@ -224,21 +226,24 @@ class PhotoDirectory:
         self.directory.remove(directory_entries[0])
         logger.info(f'Removed deleted image from PhotoDirectory Cache.')
 
-    def get_latest_date_per_plant(self):
-        """called by plants resource! returns latest image record date per plant; contains only plants that have
-        at least one image
-        :rtype: dict
-        """
-        plant_image_dates = {}
+    def _read_latest_image_dates(self):
+        """called when refreshing photo directory; reads latest image date for all plants; contains
+        only plants that have at least one image"""
+        self.latest_image_dates = {}
+
         for image in self.directory:
             for p in image['tag_authors_plants']:
                 try:
-                    if p not in plant_image_dates or plant_image_dates[p] < image['record_date_time']:
-                        plant_image_dates[p] = image['record_date_time']
+                    if p not in self.latest_image_dates or self.latest_image_dates[p] < image['record_date_time']:
+                        self.latest_image_dates[p] = image['record_date_time']
                 except TypeError as e:
-                    a = 1
+                    pass
 
-        return plant_image_dates
+    def get_latest_date_per_plant(self, plant_name: str):
+        """called by plants resource. returns latest image record date for supplied plant_name"""
+        # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
+        # (in ui5 formatter, we will format the null_date as an empty string)
+        return self.latest_image_dates.get(plant_name, NULL_DATE)
 
 
 def read_exif_tags(file):

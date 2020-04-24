@@ -99,7 +99,10 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
             result['synonym'] = powo_lookup.get('synonym')
             result['author'] = powo_lookup.get('authors')  # overwrite as powo author has more information
             if powo_lookup.get('synonym'):
-                result['synonyms_concat'] = get_synonym_label_if_only_a_synonym(powo_lookup['accepted']['name'])
+                try:
+                    result['synonyms_concat'] = get_synonym_label_if_only_a_synonym(powo_lookup['accepted']['name'])
+                except KeyError:
+                    result['synonyms_concat'] = 'Accepted: unknown'
             else:
                 result['synonyms_concat'] = get_synonyms_concat(powo_lookup)
 
