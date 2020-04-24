@@ -7,14 +7,14 @@ import datetime
 from sqlalchemy.orm import make_transient
 from sqlalchemy_utils import get_referencing_foreign_keys, dependent_objects
 
-from package_flask_2_ui5_py.flask_2_ui5_py import make_dict_values_json_serializable
 from plants_tagger.models import get_sql_session
 import plants_tagger.models.files
 from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
     rename_plant_in_exif_tags
 from plants_tagger.models.orm_tables import Plant, object_as_dict, Trait, TraitCategory
 from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
-from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
+from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception, \
+    make_dict_values_json_serializable
 from plants_tagger import config
 
 logger = logging.getLogger(__name__)
