@@ -3,13 +3,15 @@ import logging
 import json
 from flask import request
 
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.properties import get_properties_for_plant_by_category, get_properties_for_taxon_by_category
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.services.properties import get_properties_for_plant_by_category, get_properties_for_taxon_by_category
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception, \
-    make_dict_values_json_serializable, MessageType
+    MessageType
 
-from plants_tagger.models.orm_tables import object_as_dict, Plant, PropertyName, Taxon, TraitCategory, \
-    PropertyValuePlant, PropertyValueTaxon
+from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.models.plant_models import Plant
+from plants_tagger.models.trait_models import TraitCategory
+from plants_tagger.models.property_models import PropertyName, PropertyValueTaxon, PropertyValuePlant
 
 logger = logging.getLogger(__name__)
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from flask_restful import Resource
 import logging
 from flask import request
@@ -7,11 +9,13 @@ from flask_2_ui5_py import get_message, throw_exception, MessageType
 from sqlalchemy.exc import InvalidRequestError
 
 from plants_tagger import config
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.files import _util_get_generated_filename, get_thumbnail_relative_path_for_relative_path
-from plants_tagger.models.orm_tables import Event, Plant, Pot, object_as_dict, Observation, Image
-from plants_tagger.models.update_events import get_or_create_soil
-# from plants_tagger.util.json_helper import throw_exception, MessageType
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
+from plants_tagger.util.rest import object_as_dict
+from plants_tagger.models.plant_models import Plant
+from plants_tagger.models.image_models import Image
+from plants_tagger.models.event_models import Pot, Observation, Event
+from plants_tagger.services.update_events import get_or_create_soil
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +107,7 @@ class EventResource(Resource):
             logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
 
             # loop at the current plant's database events to find deleted ones
-            event_obj: Event
+            event_obj: Optional[Event] = None
             for event_obj in plant_obj.events:
                 if event_obj.id not in events_ids:
                     logger.info(f'Deleting event {event_obj.id}')

@@ -4,12 +4,14 @@ from flask import request
 from typing import List
 
 from plants_tagger import config
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.files import get_thumbnail_relative_path_for_relative_path
-from plants_tagger.models.orm_tables import Taxon, object_as_dict, Image, ImageToTaxonAssociation
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
+from plants_tagger.util.rest import object_as_dict
+from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.models.image_models import Image, ImageToTaxonAssociation
 from flask_2_ui5_py import get_message, throw_exception
 
-from plants_tagger.models.update_traits import update_traits
+from plants_tagger.services.update_traits import update_traits
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +21,6 @@ class TaxonResource(Resource):
     def get():
         """returns taxa from taxon database table"""
         taxa: List[Taxon] = get_sql_session().query(Taxon).all()
-
-        # taxon_dict = {t.id: t.__dict__.copy() for t in taxa}
-        # _ = [t.pop('_sa_instance_state') for t in taxon_dict.values()]
-        # _ = [t.update({'ipni_id_short': t['fq_id'][24:]}) for t in taxon_dict.values() if 'fq_id' in t]
         taxon_dict = {}
         for taxon in taxa:
             taxon_dict[taxon.id] = object_as_dict(taxon)
@@ -79,7 +77,7 @@ class TaxonResource(Resource):
 
     @staticmethod
     def post():
-        """two things can be changed in the taxon model, and these are modified in db here:
+        """two things can be changed in the taxon model, and these are modified in extensions here:
             - modified custom fields
             - traits"""
         modified_taxa = request.get_json(force=True).get('ModifiedTaxaCollection')

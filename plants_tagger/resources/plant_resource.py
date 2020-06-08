@@ -7,12 +7,13 @@ import datetime
 from sqlalchemy.orm import make_transient
 from sqlalchemy_utils import get_referencing_foreign_keys, dependent_objects
 
-from plants_tagger.models import get_sql_session
-import plants_tagger.models.files
-from plants_tagger.models.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
+from plants_tagger.extensions.orm import get_sql_session
+import plants_tagger.services.files
+from plants_tagger.services.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
     rename_plant_in_exif_tags
-from plants_tagger.models.orm_tables import Plant, object_as_dict, Trait, TraitCategory
-from plants_tagger.models.update_plants import update_plants_from_list_of_dicts
+from plants_tagger.util.rest import object_as_dict
+from plants_tagger.models.plant_models import Plant
+from plants_tagger.services.update_plants import update_plants_from_list_of_dicts
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception, \
     make_dict_values_json_serializable
 from plants_tagger import config
@@ -70,10 +71,10 @@ class PlantResource(Resource):
 
         # get latest photo record date per plant
         with lock_photo_directory:
-            if not plants_tagger.models.files.photo_directory:
-                plants_tagger.models.files.photo_directory = PhotoDirectory()
-                plants_tagger.models.files.photo_directory.refresh_directory()
-            plant['latest_image_record_date'] = plants_tagger.models.files.photo_directory\
+            if not plants_tagger.services.files.photo_directory:
+                plants_tagger.services.files.photo_directory = PhotoDirectory()
+                plants_tagger.services.files.photo_directory.refresh_directory()
+            plant['latest_image_record_date'] = plants_tagger.services.files.photo_directory\
                 .get_latest_date_per_plant(plant['plant_name'])
 
         return plant

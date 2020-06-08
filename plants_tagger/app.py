@@ -2,6 +2,8 @@ from flask import Flask
 from flask_restful import Api
 import logging
 
+from plants_tagger.extensions.orm import init_sqlalchemy_engine
+from plants_tagger.models.event_models import insert_categories
 from plants_tagger.resources.event_resource import EventResource
 from plants_tagger.resources.image_resource import ImageResource
 from plants_tagger.resources.image_resource_2 import ImageResource2
@@ -16,9 +18,12 @@ from plants_tagger.config_local import ALLOW_CORS
 logger = logging.getLogger(__name__)
 
 
+# factory
 def create_app():
     app = Flask(__name__)
     api = Api(app)
+
+    init_sqlalchemy_engine([insert_categories])
 
     # allow cors only for testing purposes
     if ALLOW_CORS:
@@ -41,9 +46,7 @@ def create_app():
     api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
     # api.add_resource(TraitResource, '/plants_tagger/backend/Trait')
 
-    api.add_resource(PropertyResource, '/plants_tagger/backend/Property'
-                     # '/plants_tagger/backend/Property/<string:plant_name>'
-                                       )
+    api.add_resource(PropertyResource, '/plants_tagger/backend/Property')
 
     logger.info('Added REST Resources.')
 

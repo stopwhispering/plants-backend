@@ -5,7 +5,7 @@ import datetime
 import logging
 
 # from collections import Set
-from plants_tagger.util.exif_helper import decode_record_date_time, encode_record_date_time
+from plants_tagger.util.exif import decode_record_date_time, encode_record_date_time
 
 # path = r'C:\temp\DCIM\takeout-2016\Takeout'
 # path = r'C:\IDEs\sap-webide-personal-edition-1.53.5-trial\serverworkspace\my\myuser\OrionContent\tempMyFrontend\webapp\localService\original\DCIM\Google Takeouts 2016'

@@ -6,9 +6,9 @@ import pickle
 from flask_2_ui5_py import get_message
 
 import plants_tagger.config_local
-from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS
-from plants_tagger.models.files import lock_photo_directory, PhotoDirectory
-from plants_tagger.models import files
+from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS
+from plants_tagger.services.files import lock_photo_directory, PhotoDirectory
+from plants_tagger.services import files
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,8 @@ from typing import Optional
 
 from plants_tagger.constants import SOURCE_PLANTS, SOURCE_KEW
 from plants_tagger.exceptions import TooManyResultsError
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Taxon, Distribution
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.taxon_models import Distribution, Taxon
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
         # build additional results from kew data
         result = {'source':              SOURCE_KEW,
                   'id':                  None,  # determined upon saving by database
-                  'count':               None,  # count of plants assigned the taxon in local db
+                  'count':               None,  # count of plants assigned the taxon in local extensions
                   'is_custom':           False,
                   'authors':             item.get('authors'),
                   'family':              item.get('family'),
@@ -114,7 +114,7 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
 
 
 def get_synonym_label_if_only_a_synonym(accepted_name: str):
-    """little method just to make sure the same is stored in local db as is displayed in frontend from powo"""
+    """little method just to make sure the same is stored in local extensions as is displayed in frontend from powo"""
     return 'Accepted: ' + accepted_name
 
 
@@ -148,16 +148,16 @@ def copy_taxon_from_kew(fq_id: str,
                         has_custom_name: bool,
                         name_incl_addition: str):
     """try to find fqId in taxon table and return if existing;
-    otherwise retrieve information from kew databases and create new db entry"""
+    otherwise retrieve information from kew databases and create new extensions entry"""
     # make sure the entry really does not exist, yet
     # in case of custom name, the (conceptual) key consists of name + is_custom==True
     if has_custom_name:
         taxon = get_sql_session().query(Taxon).filter(Taxon.name == name_incl_addition,
-                                                      Taxon.is_custom).first()
+                                                      Taxon.is_custom == True).first()
     # otherwise, the (conceptual) key consists of the fqId + is_custom==False
     else:
         taxon = get_sql_session().query(Taxon).filter(Taxon.fq_id == fq_id,
-                                                      not Taxon.is_custom).first()
+                                                      Taxon.is_custom == False).first()
     if taxon:
         logger.warning('Taxon unexpectedly found in database.')
         return taxon

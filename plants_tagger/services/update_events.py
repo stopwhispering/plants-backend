@@ -1,7 +1,7 @@
 from collections import defaultdict
 
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Soil, SoilComponent, SoilToComponentAssociation
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.event_models import Soil, SoilComponent, SoilToComponentAssociation
 
 
 def get_or_create_soil(soil_dict: dict, counts: defaultdict):

@@ -4,13 +4,15 @@ import logging
 from flask import request
 import json
 
+from flask_2_ui5_py import throw_exception, get_message
 from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Taxon, object_as_dict
-from plants_tagger.models.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
-from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
-from flask_2_ui5_py import throw_exception, get_message
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.services.taxon2_service import copy_taxon_from_kew2
+from plants_tagger.util.rest import object_as_dict
+from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.services.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
+from plants_tagger.services.taxon_id_mapper import get_gbif_id_from_ipni_id
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         need to create it and retrieve the required information from the kew databases"""
         # parse arguments
         fq_id = request.form.get('fqId')
-        has_custom_name = json.loads(request.form.get('hasCustomName'))  # plant has an addon not found in kew db
+        has_custom_name = json.loads(request.form.get('hasCustomName'))  # plant has an addon not found in kew extensions
         name_incl_addition = request.form.get('nameInclAddition').strip()  # name incl. custom addition
         source = request.form.get('source')  # either kew database or plants database
         plants_taxon_id = request.form.get('id')  # None if source is kew database, otherwise database
@@ -82,9 +84,13 @@ class TaxonToPlantAssignmentsResource(Resource):
             taxon = copy_taxon_from_kew(fq_id,
                                         has_custom_name,
                                         name_incl_addition)
+        # taxon2 = copy_taxon_from_kew2(fq_id,
+        #                               has_custom_name,
+        #                               name_incl_addition)
 
         # The (meta-)database Global Biodiversity Information Facility (gbif) has distribution information,
         # a well-documented API and contains entries from dozens of databases; get an id for it and save it, too
+        # todo: use that data... especially distribution information is far better than what is curr. used
         if taxon.fq_id:
             gbif_id = get_gbif_id_from_ipni_id(taxon.fq_id)
             if gbif_id:

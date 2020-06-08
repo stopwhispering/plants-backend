@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from requests.compat import urljoin
 
 from plants_tagger.util.logger import configure_root_logger
-from plants_tagger.util.util import get_fake_headers
+from plants_tagger.util.rest import get_fake_headers
 
 GARDEN_SEARCH = r'https://garden.org/search/index.php?q={}'
 

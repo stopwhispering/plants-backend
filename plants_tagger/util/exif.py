@@ -8,16 +8,6 @@ import piexif
 logger = logging.getLogger(__name__)
 
 
-def exif_dict_has_all_relevant_tags(exif_dict: dict):
-    try:
-        _ = exif_dict['0th'][270]  # description
-        _ = exif_dict['0th'][40094]  # keywords
-        _ = exif_dict['0th'][315]  # authors (used for plants)
-    except KeyError:
-        return False
-    return True
-
-
 def modified_date(path_to_file):
     """
     Try to get the date that a file was modified (in seconds)

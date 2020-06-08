@@ -2,15 +2,15 @@ import socket
 import sys
 import pykew.powo as powo
 
-from plants_tagger.models.taxon_id_mapper import get_gbif_id_from_ipni_id
+from plants_tagger.services.taxon_id_mapper import get_gbif_id_from_ipni_id
 
 ip = socket.gethostbyname(socket.gethostname())
 if ip.startswith('80.241'):
     print('Server 80.241... detected. Adding path to sys path')
     sys.path.append('/projects/plants/plants_backend')
 
-from plants_tagger.models.orm_tables import Taxon, Distribution
-from plants_tagger.models.orm_util import get_sql_session, init_sqlalchemy_engine
+from plants_tagger.models.taxon_models import Distribution, Taxon
+from plants_tagger.extensions.orm import get_sql_session, init_sqlalchemy_engine
 
 init_sqlalchemy_engine()
 

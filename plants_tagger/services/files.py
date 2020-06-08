@@ -13,13 +13,13 @@ from typing import Set
 from piexif import InvalidImageDataError
 
 import plants_tagger.config_local
-import plants_tagger.models.os_paths
+import plants_tagger.services.os_paths
 from plants_tagger import config
 from plants_tagger.config_local import PATH_BASE
-from plants_tagger.models.os_paths import REL_PATH_PHOTOS_ORIGINAL, REL_PATH_PHOTOS_GENERATED, \
+from plants_tagger.services.os_paths import REL_PATH_PHOTOS_ORIGINAL, REL_PATH_PHOTOS_GENERATED, \
     PATH_GENERATED_THUMBNAILS, PATH_ORIGINAL_PHOTOS
 
-from plants_tagger.util.exif_helper import exif_dict_has_all_relevant_tags, modified_date, set_modified_date, \
+from plants_tagger.util.exif import modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, auto_rotate_jpeg
 
 lock_photo_directory = threading.RLock()
@@ -40,7 +40,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     filename_generated = _util_get_generated_filename(filename_original,
                                                       size=config.size_preview_image)
 
-    path_full = os.path.join(plants_tagger.models.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
+    path_full = os.path.join(plants_tagger.services.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
     path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
     if not os.path.isfile(path_generated):
         logger.info('Preview Image: Generating the not-yet-existing preview image.')
@@ -48,7 +48,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
                            path_image=path_full,
                            size=config.size_preview_image)
 
-    rel_path = os.path.join(plants_tagger.models.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
+    rel_path = os.path.join(plants_tagger.services.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
     return rel_path
 
 
@@ -103,7 +103,6 @@ def _rotate_if_required(image, exif_obj):
             elif exif[piexif.ImageIFD.Orientation] == 8:
                 im = image.rotate(90, expand=True)
     return image
-
 
 
 def decode_keywords_tag(t: tuple):
@@ -499,3 +498,13 @@ def rename_plant_in_exif_tags(plant_name_old: str, plant_name_new: str) -> int:
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
     return count_modified
+
+
+def exif_dict_has_all_relevant_tags(exif_dict: dict):
+    try:
+        _ = exif_dict['0th'][270]  # description
+        _ = exif_dict['0th'][40094]  # keywords
+        _ = exif_dict['0th'][315]  # authors (used for plants)
+    except KeyError:
+        return False
+    return True

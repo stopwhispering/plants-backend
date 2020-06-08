@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from plants_tagger.models.orm_tables import Tag
+from plants_tagger.models.plant_models import Tag
 
 
 def tag_modified(tag_obj: Tag, tag_dict: dict):

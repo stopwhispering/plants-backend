@@ -4,16 +4,16 @@ import os
 import json
 import logging
 
-import plants_tagger.models.files
+import plants_tagger.services.files
 # from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
-from plants_tagger.models.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
+from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
-from plants_tagger.models.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data, \
+from plants_tagger.services.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data, \
     resize_image, resizing_required
 from flask_2_ui5_py import MessageType, get_message, throw_exception
 
-from plants_tagger.util.util import with_suffix
+from plants_tagger.util.file import with_suffix
 
 logger = logging.getLogger(__name__)
 RESIZE_SUFFIX = '_autoresized'
@@ -83,8 +83,8 @@ class ImageResource(Resource):
                     write_new_exif_tags(plants_data)
 
             # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
-            if plants_tagger.models.files.photo_directory:
-                plants_tagger.models.files.photo_directory.refresh_directory(PATH_BASE)
+            if plants_tagger.services.files.photo_directory:
+                plants_tagger.services.files.photo_directory.refresh_directory(PATH_BASE)
             else:
                 logger.warning('No instantiated photo directory found.')
 
@@ -123,8 +123,8 @@ class ImageResource(Resource):
 
         # remove from PhotoDirectory cache
         with lock_photo_directory:
-            if plants_tagger.models.files.photo_directory:
-                plants_tagger.models.files.photo_directory.remove_image_from_directory(photo)
+            if plants_tagger.services.files.photo_directory:
+                plants_tagger.services.files.photo_directory.remove_image_from_directory(photo)
 
         # send the photo back to frontend; it will be removed from json model there
         return {'message': get_message(f'Successfully deleted image',

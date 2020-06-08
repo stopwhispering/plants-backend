@@ -2,9 +2,9 @@ from flask_restful import Resource
 from flask import request
 import logging
 
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.files import get_exif_tags_for_folder, write_new_exif_tags
-from plants_tagger.models.orm_tables import Plant
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.services.files import get_exif_tags_for_folder, write_new_exif_tags
+from plants_tagger.models.plant_models import Plant
 from flask_2_ui5_py import make_list_items_json_serializable, get_message
 
 logger = logging.getLogger(__name__)

@@ -1,11 +1,12 @@
 import datetime
 import logging
 
-from plants_tagger.models.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Plant, Taxon, Tag
-from plants_tagger.util.exif_helper import decode_record_date_time
-from plants_tagger.util.tag_util import tag_modified, update_tag
+from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.models.plant_models import Plant, Tag
+from plants_tagger.util.exif import decode_record_date_time
+from plants_tagger.services.tag import tag_modified, update_tag
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,14 @@ def update_plants_from_list_of_dicts(plants: [dict]):
 
         # catch key errors (new entries don't have all keys in the dict)
         record_update.plant_name = plant['plant_name']   # key is always supplied
-        record_update.species = plant['species'] if 'species' in plant else None
+        # record_update.species = plant['species'] if 'species' in plant else None
         record_update.count = plant['count'] if 'count' in plant else None
+
+        record_update.field_number = plant.get('field_number')
+        record_update.geographic_origin = plant.get('geographic_origin')
+        record_update.nursery_source = plant.get('nursery_source')
+        record_update.propagation_type = plant.get('propagation_type')
+
         record_update.active = plant['active'] if 'active' in plant else None
         # record_update.dead = plant['dead'] if 'dead' in plant else None
         if 'generation_date' not in plant or not plant['generation_date']:
@@ -81,7 +88,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
                     if tag_modified(tag_object, tag):
                         update_tag(tag_object, tag)
 
-        # delete deleted tags from db
+        # delete deleted tags from extensions
         tag_objects = get_sql_session().query(Tag).filter(Tag.plant == record_update).all()
         for tag_object in tag_objects:
             if not [t for t in plant['tags'] if t.get('id') == tag_object.id] and tag_object not in new_list:

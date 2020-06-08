@@ -2,9 +2,9 @@ import logging
 from typing import List
 from flask_2_ui5_py import throw_exception
 
-from plants_tagger.models import get_sql_session
-from plants_tagger.models.orm_tables import Trait, Taxon, \
-    TaxonToTraitAssociation, TraitCategory
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.models.trait_models import TaxonToTraitAssociation, Trait, TraitCategory
 
 logger = logging.getLogger(__name__)
 
