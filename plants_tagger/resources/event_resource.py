@@ -29,7 +29,11 @@ class EventResource(Resource):
             throw_exception('Plant name required for GET requests')
         # get events which have references to observations, pots, and soils
         results = []
-        events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
+        plant_id = get_sql_session().query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
+        if not plant_id:
+            throw_exception(f"Can't find plant id for plant {plant_name}")
+        # events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
+        events_obj = get_sql_session().query(Event).filter(Event.plant_id == plant_id).all()
 
         event_obj: Event
         for event_obj in events_obj:
@@ -98,7 +102,9 @@ class EventResource(Resource):
             # note: if we "replace" an event in the browser  (i.e. for a specific date, we delete an event and
             # create a new one, then that event in database will be modified, not deleted and re-created
             for event in [e for e in events if not e.get('id')]:
-                event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_name == plant_name,
+
+                # event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_name == plant_name,
+                event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_id == plant_obj.id,
                                                                         Event.date == event.get('date')).scalar()
                 if event_obj_id is not None:
                     event['id'] = event_obj_id

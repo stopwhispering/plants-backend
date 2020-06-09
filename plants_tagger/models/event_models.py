@@ -79,6 +79,42 @@ class Observation(Base):
     event = relationship("Event", back_populates="observation", uselist=False)
 
 
+# class Event_tmp(Base):
+#     """events"""
+#     __tablename__ = 'event_tmp'
+#     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+#     date = Column(CHAR(12), nullable=False)  # e.g. 201912241645 or 201903
+#     # action = Column(CHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
+#     icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+#     event_notes = Column(TEXT)
+#
+#     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
+#     observation_id = Column(INTEGER, ForeignKey('observation.id'))
+#     # observation = relationship("Observation", back_populates="event")
+#
+#     # n:1 relationship to pot, bi-directional
+#     pot_id = Column(INTEGER, ForeignKey('pot.id'))
+#     pot_event_type = Column(CHAR(15))  # Repotting, Status
+#     # pot = relationship("Pot", back_populates="events")
+#
+#     # n:1 relationship to soil, bi-directional
+#     soil_id = Column(INTEGER, ForeignKey('soil.id'))
+#     soil_event_type = Column(CHAR(15))  # Changing Soil, Status
+#     # soil = relationship("Soil", back_populates="events")
+#
+#     # event to plant: n:1, bi-directional
+#     # plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+#     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
+#     # plant = relationship("Plant", back_populates="events")
+#
+#     # 1:n relationship to the image/event link table
+#     # images = relationship(
+#     #         "Image",
+#     #         secondary='image_to_event_association'
+#     #         )
+#     # image_to_event_associations = relationship("ImageToEventAssociation", back_populates="event")
+
+
 class Event(Base):
     """events"""
     __tablename__ = 'event'
@@ -103,7 +139,8 @@ class Event(Base):
     soil = relationship("Soil", back_populates="events")
 
     # event to plant: n:1, bi-directional
-    plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+    # plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+    plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
 
     # 1:n relationship to the image/event link table

@@ -45,5 +45,5 @@ class PropertyValuePlant(Base):
     property_name = relationship("PropertyName")
     property_value = Column(CHAR(240))  # e.g. "tuberculate/asperulous"
 
-    plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+    plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="property_values_plant")

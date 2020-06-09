@@ -11,6 +11,7 @@ from plants_tagger.extensions.orm import get_sql_session
 import plants_tagger.services.files
 from plants_tagger.services.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
     rename_plant_in_exif_tags
+from plants_tagger.services.history import create_history_entry
 from plants_tagger.util.rest import object_as_dict
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.update_plants import update_plants_from_list_of_dicts
@@ -31,7 +32,7 @@ class PlantResource(Resource):
         plant = self._assemble_plant(plant_obj)
 
         make_dict_values_json_serializable(plant)
-        return {'Plant': plant,
+        return {'Plant':   plant,
                 'message': get_message(f"Loaded plant {plant_name} from database.")}, 200
 
     @staticmethod
@@ -41,6 +42,10 @@ class PlantResource(Resource):
             del plant['_sa_instance_state']
         else:
             logger.debug('Filter hidden-flagged plants disabled.')
+
+        # add mother plant plant_name
+        plant['mother_plant'] = get_sql_session().query(Plant.plant_name).filter(Plant.id ==
+             plant['mother_plant_id']).scalar() if plant['mother_plant_id'] else None
 
         # add botanical name to plants resource to facilitate usage in master view and elsewhere
         # include authors as well
@@ -74,7 +79,7 @@ class PlantResource(Resource):
             if not plants_tagger.services.files.photo_directory:
                 plants_tagger.services.files.photo_directory = PhotoDirectory()
                 plants_tagger.services.files.photo_directory.refresh_directory()
-            plant['latest_image_record_date'] = plants_tagger.services.files.photo_directory\
+            plant['latest_image_record_date'] = plants_tagger.services.files.photo_directory \
                 .get_latest_date_per_plant(plant['plant_name'])
 
         return plant
@@ -96,7 +101,7 @@ class PlantResource(Resource):
         make_list_items_json_serializable(plants_list)
 
         return {'PlantsCollection': plants_list,
-                'message': get_message(f"Loaded {len(plants_list)} plants from database.")}, 200
+                'message':          get_message(f"Loaded {len(plants_list)} plants from database.")}, 200
 
     def get(self, plant_name: str = None):
         if plant_name:
@@ -114,9 +119,9 @@ class PlantResource(Resource):
 
         message = f"Saved updates for {len(kwargs['PlantsCollection'])} plants."
         logger.info(message)
-        return {'action': 'Saved',
+        return {'action':   'Saved',
                 'resource': 'PlantResource',
-                'message': get_message(message)
+                'message':  get_message(message)
                 }, 200
 
     @staticmethod
@@ -132,8 +137,8 @@ class PlantResource(Resource):
 
         message = f'Deleted plant {plant_name}'
         logger.info(message)
-        return {'message':  get_message(message,
-                                        description=f'Plant name: {plant_name}\nHide: True')
+        return {'message': get_message(message,
+                                       description=f'Plant name: {plant_name}\nHide: True')
                 }, 200
 
     @staticmethod
@@ -155,24 +160,24 @@ class PlantResource(Resource):
         if get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_new).first():
             throw_exception(f"Plant already exists: {plant_name_new}")
 
-        # get all usages of plant in other tables (we need to do that before expunging)
-        dependencies = list(dependent_objects(plant_obj, get_referencing_foreign_keys(plant_obj)))
+        ## get all usages of plant in other tables (we need to do that before expunging)
+        # dependencies = list(dependent_objects(plant_obj, get_referencing_foreign_keys(plant_obj)))
 
-        # get old plant object out of session so we can work on the key column
-        get_sql_session().expunge(plant_obj)  # expunge the object from session
-        make_transient(plant_obj)  # http://docs.sqlalchemy.org/en/rel_1_1/orm/session_api.html#sqlalchemy.orm.session.make_transient
+        # # get old plant object out of session so we can work on the key column
+        # get_sql_session().expunge(plant_obj)  # expunge the object from session
+        # make_transient(plant_obj)  # http://docs.sqlalchemy.org/en/rel_1_1/orm/session_api.html#sqlalchemy.orm.session.make_transient
 
         # rename plant name so we get a new table entry
         plant_obj.plant_name = plant_name_new
         plant_obj.last_update = datetime.datetime.now()
-        get_sql_session().add(plant_obj)
+        # get_sql_session().add(plant_obj)
 
-        # redirect all usages of old plant to the new plant (e.g. in tags table)
-        for dep in dependencies:
-            plant_fk = getattr(dep, 'plant')
-            if not plant_fk:
-                throw_exception(f"Technical error. Found dependency without plant attribute. Canceled renaming.")
-            setattr(dep, 'plant', plant_obj)
+        # # redirect all usages of old plant to the new plant (e.g. in tags table)
+        # for dep in dependencies:
+        #     plant_fk = getattr(dep, 'plant')
+        #     if not plant_fk:
+        #         throw_exception(f"Technical error. Found dependency without plant attribute. Canceled renaming.")
+        #     setattr(dep, 'plant', plant_obj)
 
         # next, we need to change all image files where plant was tagged with the old plant name
         # (images are not tagged in database but in the files' exif file extensions)
@@ -181,12 +186,17 @@ class PlantResource(Resource):
         # after image modifications have gone well, we can commit changes to database
         get_sql_session().commit()
 
-        # finally, set the old plant to hide (same thing as when deleting from the frontend)
-        plant_obj_obsolete = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_old).first()
-        plant_obj_obsolete.hide = True
-        get_sql_session().commit()
+        # # finally, set the old plant to hide (same thing as when deleting from the frontend)
+        # plant_obj_obsolete = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_old).first()
+        # plant_obj_obsolete.hide = True
+        # get_sql_session().commit()
+
+        create_history_entry(description=f"Renamed to {plant_name_new}",
+                             plant_id=plant_obj.id,
+                             plant_name=plant_name_old,
+                             commit=False)
 
         logger.info(f'Modified {count_modified_images} images.')
-        return {'message':  get_message(f'Renamed {plant_name_old} to {plant_name_new}',
-                                        description=f'Modified {count_modified_images} images.')
+        return {'message': get_message(f'Renamed {plant_name_old} to {plant_name_new}',
+                                       description=f'Modified {count_modified_images} images.')
                 }, 200
