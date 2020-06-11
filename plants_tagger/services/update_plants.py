@@ -19,16 +19,16 @@ def update_plants_from_list_of_dicts(plants: [dict]):
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
 
-        plant_id = get_sql_session().query(Plant.id).filter(Plant.plant_name == plant['plant_name']).scalar()
-        if not plant_id:
-            throw_exception(f"Can't find plant id for plant {plant['plant_name']}")
-
         record_update = get_sql_session().query(Plant).filter_by(plant_name=plant['plant_name']).first()
         boo_new = False if record_update else True
 
+        # plant_id = get_sql_session().query(Plant.id).filter(Plant.plant_name == plant['plant_name']).scalar()
+        # if not plant_id:
+        #     throw_exception(f"Can't find plant id for plant {plant['plant_name']}")
+
         if boo_new:
-            # if [r for r in new_list if r.plant_name == plant['plant_name']]:
-            if [r for r in new_list if r.plant_id == plant_id]:
+            if [r for r in new_list if r.plant_name == plant['plant_name']]:
+            # if [r for r in new_list if r.plant_id == plant_id]:
                 continue  # same plant in multiple new records
             # create new record (as object) & add to list later)
             record_update = Plant(plant_name=plant['plant_name'])

@@ -23,54 +23,54 @@ logger = logging.getLogger(__name__)
 class EventResource(Resource):
     @staticmethod
     def get(plant_name):
-        """returns events from event database table"""
+        """returns events from event database table; supply plant_name not id as new plants don't have an id, yet"""
 
         if not plant_name:
             throw_exception('Plant name required for GET requests')
         # get events which have references to observations, pots, and soils
         results = []
         plant_id = get_sql_session().query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
-        if not plant_id:
-            throw_exception(f"Can't find plant id for plant {plant_name}")
-        # events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
-        events_obj = get_sql_session().query(Event).filter(Event.plant_id == plant_id).all()
+        # might be a newly created plant with no existing events, yet
+        if plant_id:
+            # events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
+            events_obj = get_sql_session().query(Event).filter(Event.plant_id == plant_id).all()
 
-        event_obj: Event
-        for event_obj in events_obj:
-            event = object_as_dict(event_obj)
+            event_obj: Event
+            for event_obj in events_obj:
+                event = object_as_dict(event_obj)
 
-            # read segments from their respective linked tables
-            if event_obj.observation:
-                event['observation'] = object_as_dict(event_obj.observation)
-                if 'height' in event['observation'] and event['observation']['height']:
-                    event['observation']['height'] = event['observation']['height'] / 10  # mm to cm
-                if 'stem_max_diameter' in event['observation'] and event['observation']['stem_max_diameter']:
-                    event['observation']['stem_max_diameter'] = event['observation']['stem_max_diameter'] / 10
+                # read segments from their respective linked tables
+                if event_obj.observation:
+                    event['observation'] = object_as_dict(event_obj.observation)
+                    if 'height' in event['observation'] and event['observation']['height']:
+                        event['observation']['height'] = event['observation']['height'] / 10  # mm to cm
+                    if 'stem_max_diameter' in event['observation'] and event['observation']['stem_max_diameter']:
+                        event['observation']['stem_max_diameter'] = event['observation']['stem_max_diameter'] / 10
 
-            if event_obj.pot:
-                event['pot'] = object_as_dict(event_obj.pot)
-                if 'diameter_width' in event['pot'] and event['pot']['diameter_width']:
-                    event['pot']['diameter_width'] = event['pot']['diameter_width'] / 10
+                if event_obj.pot:
+                    event['pot'] = object_as_dict(event_obj.pot)
+                    if 'diameter_width' in event['pot'] and event['pot']['diameter_width']:
+                        event['pot']['diameter_width'] = event['pot']['diameter_width'] / 10
 
-            if event_obj.soil:
-                event['soil'] = object_as_dict(event_obj.soil)
+                if event_obj.soil:
+                    event['soil'] = object_as_dict(event_obj.soil)
 
-                if event_obj.soil.soil_to_component_associations:  # components:
+                    if event_obj.soil.soil_to_component_associations:  # components:
 
-                    event['soil']['components'] = [{'component_name': association.soil_component.component_name,
-                                                    'portion':        association.portion} for association
-                                                   in event_obj.soil.soil_to_component_associations]
+                        event['soil']['components'] = [{'component_name': association.soil_component.component_name,
+                                                        'portion':        association.portion} for association
+                                                       in event_obj.soil.soil_to_component_associations]
 
-            if event_obj.images:
-                event['images'] = []
-                for image_obj in event_obj.images:
-                    path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
-                                                                               size=config.size_thumbnail_image)
-                    event['images'].append({'id': image_obj.id,
-                                            'url_small': path_small,
-                                            'url_original': image_obj.relative_path})
+                if event_obj.images:
+                    event['images'] = []
+                    for image_obj in event_obj.images:
+                        path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
+                                                                                   size=config.size_thumbnail_image)
+                        event['images'].append({'id': image_obj.id,
+                                                'url_small': path_small,
+                                                'url_original': image_obj.relative_path})
 
-            results.append(event)
+                results.append(event)
 
         logger.info(f'Returning {len(results)} events for {plant_name}.')
         return {'events':  results,
