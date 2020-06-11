@@ -1,7 +1,8 @@
+from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, BOOLEAN, TEXT
 from sqlalchemy.orm import relationship
 
-from plants_tagger.extensions.orm import Base
+from plants_tagger.extensions.orm import Base, get_sql_session
 
 
 class Distribution(Base):
@@ -67,3 +68,10 @@ class Taxon(Base):
 
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValueTaxon", back_populates="taxon")
+
+    @staticmethod
+    def get_taxon_by_taxon_id(taxon_id: int, raise_exception: bool = False) -> object:
+        taxon = get_sql_session().query(Taxon).filter(Taxon.id == taxon_id).first()
+        if not taxon and raise_exception:
+            throw_exception(f'Taxon not found in database: {taxon_id}')
+        return taxon

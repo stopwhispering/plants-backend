@@ -9,7 +9,7 @@ from plants_tagger.models.plant_models import Tag, Plant
 def tag_modified(tag_obj: Tag, tag_dict: dict):
     """returns true if dict values are different from orm object properties"""
     for key, value in tag_dict.items():
-        if value != tag_obj.__dict__[key]:
+        if value != tag_obj.__dict__[key] and key != 'last_update':
             return True
     return False
 
