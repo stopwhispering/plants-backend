@@ -14,8 +14,9 @@ def update_plants_from_list_of_dicts(plants: [dict]):
     new_list = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
-
+        logger.error('TEMP1: ' + plant)
         record_update = get_sql_session().query(Plant).filter_by(plant_name=plant['plant_name']).first()
+        logger.error('TEMP2: ' + record_update)
         boo_new = False if record_update else True
 
         if boo_new:
@@ -23,6 +24,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
                 continue  # same plant in multiple new records
             # create new record (as object) & add to list later)
             record_update = Plant(plant_name=plant['plant_name'])
+            logger.error('TEMP3: ' + record_update)
             logger.info(f'Saving new plant {plant["plant_name"]}')
 
         # catch key errors (new entries don't have all keys in the dict)
@@ -49,6 +51,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         record_update.set_last_update()
 
         # create new, update existing and remove deleted tags
+        logger.error('TEMP4: ' + plant.get('tags'))
         new_tags = _update_tags(record_update, plant.get('tags'))
         new_list.extend(new_tags)
 
@@ -80,6 +83,7 @@ def _update_tags(plant_obj: Plant, tags: List[dict]):
                 if tag_modified(tag_object, tag):
                     update_tag(tag_object, tag)
 
+    logger.error('TEMP5: ' + plant_obj)
     tag_objects = get_sql_session().query(Tag).filter(Tag.plant == plant_obj).all()
     for tag_object in tag_objects:
         if not [t for t in tags if t.get('id') == tag_object.id] and tag_object not in new_list:
