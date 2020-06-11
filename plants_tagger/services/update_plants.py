@@ -83,7 +83,9 @@ def _update_tags(plant_obj: Plant, tags: List[dict]):
                 if tag_modified(tag_object, tag):
                     update_tag(tag_object, tag)
 
-    logger.error('TEMP5: ' + str(plant_obj))
+    logger.error('TEMP5: ' + str(plant_obj.id))
+    # we need to flush here to get plant_obj an id if new
+
     tag_objects = get_sql_session().query(Tag).filter(Tag.plant == plant_obj).all()
     for tag_object in tag_objects:
         if not [t for t in tags if t.get('id') == tag_object.id] and tag_object not in new_list:
