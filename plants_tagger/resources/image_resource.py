@@ -4,15 +4,15 @@ import os
 import json
 import logging
 
+from flask_2_ui5_py import MessageType, get_message, throw_exception, make_list_items_json_serializable
 import plants_tagger.services.files
-# from plants_tagger.models.files import photo_directory
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
+from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
 from plants_tagger.services.files import lock_photo_directory, read_exif_tags, write_new_exif_tags, get_plants_data, \
-    resize_image, resizing_required
-from flask_2_ui5_py import MessageType, get_message, throw_exception
-
+    resize_image, resizing_required, get_exif_tags_for_folder
 from plants_tagger.util.file import with_suffix
 
 logger = logging.getLogger(__name__)
@@ -21,19 +21,55 @@ RESIZE_SUFFIX = '_autoresized'
 
 class ImageResource(Resource):
     @staticmethod
+    def get():
+        """read image information from images and their exif tags"""
+        files_data, _ = get_exif_tags_for_folder()
+        i = len(files_data)
+
+        # get plants whose images are configured to be hidden (hide-flag is set in plants table, i.e. deleted in
+        # web frontend)
+        plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
+        plants_to_hide_names = [p.plant_name for p in plants_to_hide]
+        logger.debug(f'Hiding images that have only hidden plants tagged: {plants_to_hide_names}')
+        files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
+        logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
+
+        for image in files_data:
+            if image['plants']:
+                image['plants'] = [{'key': p, 'text': p} for p in image['plants']]
+            if image['keywords']:
+                image['keywords'] = [{'keyword': p} for p in image['keywords']]
+
+        make_list_items_json_serializable(files_data)
+
+        logger.info(f'Returned {len(files_data)} images.')
+        return {'ImagesCollection': files_data,
+                'message': get_message('Loaded images from backend.',
+                                       description=f'Count: {len(files_data)}')
+                }, 200
+
+    @staticmethod
+    def put(**kwargs):
+        """modify existing image's exif tags"""
+        if not kwargs:
+            kwargs = request.get_json(force=True)
+        logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
+        write_new_exif_tags(kwargs['ImagesCollection'])
+        return {'action':   'Saved',
+                'resource': 'ImageResource',
+                'message': get_message(f"Saved updates for {len(kwargs['ImagesCollection'])} images.")
+                }, 200
+
+    @staticmethod
     def post():
+        """upload new image(s)"""
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
         additional_data = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else {}
-        if 'plants' in additional_data:
-            plants = [{'key': p, 'text': p} for p in additional_data['plants']]
-        else:
-            plants = []
 
-        if 'keywords' in additional_data:
-            keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']]
-        else:
-            keywords = []
+        plants = [{'key': p, 'text': p} for p in additional_data['plants']] if 'plants' in additional_data else []
+        keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']] \
+            if 'keywords' in additional_data else []
 
         # remove duplicates (already saved)
         duplicate_filenames = []
@@ -54,11 +90,9 @@ class ImageResource(Resource):
 
                 if not config.resizing_size:
                     pass
-                    # photo_upload.save(path)
 
                 elif not resizing_required(path, config.resizing_size):
                     logger.info(f'No resizing required.')
-                    # photo_upload.save(path)
 
                 else:
                     logger.info(f'Saving and resizing {path}.')
@@ -102,12 +136,12 @@ class ImageResource(Resource):
 
     @staticmethod
     def delete():
-        """move the file that should be deleted to another folder (not actually deleted"""
+        """move the file that should be deleted to another folder (not actually deleted, currently)"""
         photo = request.get_json()
         old_path = photo['path_full_local']
         if not os.path.isfile(old_path):
-            logger.error(f"File selected to be deleted not found: {old_path}")
-            throw_exception(f"File selected to be deleted not found: {old_path}")
+            logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
+            throw_exception(err_msg)
 
         filename = os.path.basename(old_path)
         new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
@@ -116,9 +150,8 @@ class ImageResource(Resource):
             os.replace(src=old_path,
                        dst=new_path)  # silently overwrites if privileges are sufficient
         except OSError as e:
-            logger.error(f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-            throw_exception(f'OSError when moving file {old_path} to {new_path}',
-                            description=f'Filename: {os.path.basename(old_path)}')
+            logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
+            throw_exception(err_msg, description=f'Filename: {os.path.basename(old_path)}')
         logger.info(f'Moved file {old_path} to {new_path}')
 
         # remove from PhotoDirectory cache

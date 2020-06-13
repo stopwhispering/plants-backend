@@ -1,3 +1,7 @@
+from __future__ import annotations
+from typing import List
+from plants_tagger import config
+from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, TEXT
 from sqlalchemy.orm import relationship
 import logging
@@ -6,12 +10,13 @@ from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.trait_models import TraitCategory
 from plants_tagger.extensions.orm import Base
-
+from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
+from plants_tagger.util.OrmUtilMixin import OrmUtil
 
 logger = logging.getLogger(__name__)
 
 
-class Soil(Base):
+class Soil(Base, OrmUtil):
     __tablename__ = "soil"
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     soil_name = Column(CHAR(100))
@@ -51,7 +56,7 @@ class SoilToComponentAssociation(Base):
     soil_component = relationship('SoilComponent', back_populates="soil_to_component_associations")
 
 
-class Pot(Base):
+class Pot(Base, OrmUtil):
     __tablename__ = "pot"
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     material = Column(CHAR(50))
@@ -64,7 +69,7 @@ class Pot(Base):
     events = relationship("Event", back_populates="pot")
 
 
-class Observation(Base):
+class Observation(Base, OrmUtil):
     """formerly: Measurement"""
     __tablename__ = 'observation'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
@@ -79,43 +84,7 @@ class Observation(Base):
     event = relationship("Event", back_populates="observation", uselist=False)
 
 
-# class Event_tmp(Base):
-#     """events"""
-#     __tablename__ = 'event_tmp'
-#     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-#     date = Column(CHAR(12), nullable=False)  # e.g. 201912241645 or 201903
-#     # action = Column(CHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
-#     icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
-#     event_notes = Column(TEXT)
-#
-#     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
-#     observation_id = Column(INTEGER, ForeignKey('observation.id'))
-#     # observation = relationship("Observation", back_populates="event")
-#
-#     # n:1 relationship to pot, bi-directional
-#     pot_id = Column(INTEGER, ForeignKey('pot.id'))
-#     pot_event_type = Column(CHAR(15))  # Repotting, Status
-#     # pot = relationship("Pot", back_populates="events")
-#
-#     # n:1 relationship to soil, bi-directional
-#     soil_id = Column(INTEGER, ForeignKey('soil.id'))
-#     soil_event_type = Column(CHAR(15))  # Changing Soil, Status
-#     # soil = relationship("Soil", back_populates="events")
-#
-#     # event to plant: n:1, bi-directional
-#     # plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
-#     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
-#     # plant = relationship("Plant", back_populates="events")
-#
-#     # 1:n relationship to the image/event link table
-#     # images = relationship(
-#     #         "Image",
-#     #         secondary='image_to_event_association'
-#     #         )
-#     # image_to_event_associations = relationship("ImageToEventAssociation", back_populates="event")
-
-
-class Event(Base):
+class Event(Base, OrmUtil):
     """events"""
     __tablename__ = 'event'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
@@ -149,6 +118,56 @@ class Event(Base):
             secondary='image_to_event_association'
             )
     image_to_event_associations = relationship("ImageToEventAssociation", back_populates="event")
+
+    def as_dict(self):
+        """add some additional fields to mixin's as_dict, especially from relationships"""
+        as_dict = super(Event, self).as_dict()
+
+        # read segments from their respective linked tables
+        if self.observation:
+            as_dict['observation'] = self.observation.as_dict()
+            if as_dict['observation'].get('height'):
+                as_dict['observation']['height'] = as_dict['observation']['height'] / 10  # mm to cm
+            if as_dict['observation'].get('stem_max_diameter'):
+                as_dict['observation']['stem_max_diameter'] = as_dict['observation']['stem_max_diameter'] / 10
+
+        if self.pot:
+            as_dict['pot'] = self.pot.as_dict()
+            if as_dict['pot'].get('diameter_width'):
+                as_dict['pot']['diameter_width'] = as_dict['pot']['diameter_width'] / 10
+
+        if self.soil:
+            as_dict['soil'] = self.soil.as_dict()
+            if self.soil.soil_to_component_associations:
+                as_dict['soil']['components'] = [{'component_name': association.soil_component.component_name,
+                                                  'portion':        association.portion} for association
+                                                 in self.soil.soil_to_component_associations]
+
+        if self.images:
+            as_dict['images'] = []
+            for image_obj in self.images:
+                path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
+                                                                           size=config.size_thumbnail_image)
+                as_dict['images'].append({'id':           image_obj.id,
+                                          'url_small':    path_small,
+                                          'url_original': image_obj.relative_path})
+
+        return as_dict
+
+    # static query methods
+    @staticmethod
+    def get_events_by_plant_id(plant_id: int, raise_exception: bool = False) -> List[Event]:
+        events = get_sql_session().query(Event).filter(Event.plant_id == plant_id).all()
+        if not events and raise_exception:
+            throw_exception(f'No events in db for plant: {plant_id}')
+        return events
+
+    @staticmethod
+    def get_event_by_event_id(event_id: int, raise_exception: bool = False) -> Event:
+        event = get_sql_session().query(Event).filter(Event.id == event_id).first()
+        if not event and raise_exception:
+            throw_exception(f'Event not found in db: {event_id}')
+            return event
 
 
 def insert_categories():

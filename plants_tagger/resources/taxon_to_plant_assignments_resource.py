@@ -8,7 +8,6 @@ from flask_2_ui5_py import throw_exception, get_message
 from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.services.taxon2_service import copy_taxon_from_kew2
 from plants_tagger.util.rest import object_as_dict
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
@@ -57,7 +56,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         need to create it and retrieve the required information from the kew databases"""
         # parse arguments
         fq_id = request.form.get('fqId')
-        has_custom_name = json.loads(request.form.get('hasCustomName'))  # plant has an addon not found in kew extensions
+        has_custom_name = json.loads(request.form.get('hasCustomName'))  # plant has an addon not found in kew ext.
         name_incl_addition = request.form.get('nameInclAddition').strip()  # name incl. custom addition
         source = request.form.get('source')  # either kew database or plants database
         plants_taxon_id = request.form.get('id')  # None if source is kew database, otherwise database

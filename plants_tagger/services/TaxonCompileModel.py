@@ -163,12 +163,8 @@ class TaxonCompileModel:
                                           )
                     records.append(record)
                     add_list.append(record)
-                    # taxon.distribution.append(record)
                 taxon.distribution = records
                 # todo in case of modification, new areas are created and old ones remain orphaned in db
-                # todo add_all required here?
-
-            # todo: gbif
 
                 logger.info(f'Found {len(dist)} areas for {taxon.name}.')
         return taxon, add_list

@@ -32,7 +32,8 @@ class PzaScraper:
         sites.extend([urljoin(url, u) for u in other_pages_urls])
         return sites
 
-    def _get_plant_urls(self, search_result_urls, plant):
+    @staticmethod
+    def _get_plant_urls(search_result_urls, plant):
         plant_urls = []
         for url in search_result_urls:
             page = requests.get(url)
@@ -43,13 +44,13 @@ class PzaScraper:
         # filter out other plant results
         return [p for p in plant_urls if p.find(plant.lower()) >= 0]
 
-
     def search_plant_urls(self, plant: str = 'Gasteria'):
         search_result_urls = self._get_search_result_urls(plant)
         plant_urls = self._get_plant_urls(search_result_urls, plant)
         return plant_urls
 
-    def _scrape_plant_url(self, url):
+    @staticmethod
+    def _scrape_plant_url(url):
         # logger.info('Scraping: ' + url)
         plant = {'url': url}
         page = requests.get(url)
@@ -87,8 +88,8 @@ class PzaScraper:
                 text2 = text.get_text().strip()
                 plant['texts'][header2] = text2
 
-        credits = soup.find('div', {'class': 'field-credits'})
-        credits2 = credits.find_all('strong')
+        credits_ = soup.find('div', {'class': 'field-credits'})
+        credits2 = credits_.find_all('strong')
         if credits2 and len(credits2) > 1:
             credits11 = credits2[0].find('em')
             if credits11:
@@ -122,7 +123,7 @@ class PzaScraper:
                     date = credits7[4].strip()
                 logger.warning('Author/Date correct (Case 1)? ' + author + ' --- ' + date)
         else:
-            credits3 = credits.find('i')
+            credits3 = credits_.find('i')
             if credits3:
                 credits4 = list(credits3.children)
                 if len(credits4) > 1:
@@ -130,12 +131,12 @@ class PzaScraper:
                     date = credits4[4].strip()
                     logger.warning('Author/Date correct?  (Case 2) '+author+' --- '+date)
                 else:
-                    credits8 = credits.find_all('i')
+                    credits8 = credits_.find_all('i')
                     author = credits8[0].get_text().strip()
                     date = credits8[2].get_text().strip()
                     logger.warning('Author/Date correct?  (Case 4) ' + author + ' --- ' + date)
             else:
-                credits9 = credits.find('em')
+                credits9 = credits_.find('em')
                 author = list(credits9.children)[0].strip()
                 date = list(credits9.children)[4].strip()
                 logger.warning('Author/Date correct?  (Case 5) ' + author + ' --- ' + date)
@@ -153,7 +154,8 @@ class PzaScraper:
             plants.append(plant)
         return plants
 
-    def flatten_plants_info(self, plants: [dict]):
+    @staticmethod
+    def flatten_plants_info(plants: [dict]):
         results_all = []
         for plant in plants:
             results = {}

@@ -9,7 +9,6 @@ import operator
 import threading
 import logging
 from typing import Set
-
 from piexif import InvalidImageDataError
 
 import plants_tagger.config_local
@@ -18,7 +17,6 @@ from plants_tagger import config
 from plants_tagger.config_local import PATH_BASE
 from plants_tagger.services.os_paths import REL_PATH_PHOTOS_ORIGINAL, REL_PATH_PHOTOS_GENERATED, \
     PATH_GENERATED_THUMBNAILS, PATH_ORIGINAL_PHOTOS
-
 from plants_tagger.util.exif import modified_date, set_modified_date, \
     decode_record_date_time, encode_record_date_time, dicts_to_strings, auto_rotate_jpeg
 
@@ -26,6 +24,7 @@ lock_photo_directory = threading.RLock()
 photo_directory = None
 logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
+
 
 def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
@@ -97,11 +96,11 @@ def _rotate_if_required(image, exif_obj):
         exif = dict(image._getexif().items())
         if piexif.ImageIFD.Orientation in exif:
             if exif[piexif.ImageIFD.Orientation] == 3:
-                im = image.rotate(180, expand=True)
+                _ = image.rotate(180, expand=True)
             elif exif[piexif.ImageIFD.Orientation] == 6:
-                im = image.rotate(270, expand=True)
+                _ = image.rotate(270, expand=True)
             elif exif[piexif.ImageIFD.Orientation] == 8:
-                im = image.rotate(90, expand=True)
+                _ = image.rotate(90, expand=True)
     return image
 
 
@@ -235,7 +234,7 @@ class PhotoDirectory:
                 try:
                     if p not in self.latest_image_dates or self.latest_image_dates[p] < image['record_date_time']:
                         self.latest_image_dates[p] = image['record_date_time']
-                except TypeError as e:
+                except TypeError:
                     pass
 
     def get_latest_date_per_plant(self, plant_name: str):
@@ -292,11 +291,11 @@ def get_plants_data(directory):
     """extracts information from the directory that is relevant for the frontend;
     returns list of dicts (just like directory)"""
     plants_data = [
-        {"url_small": file['path_thumb'] if 'path_thumb' in file else '',
-         "url_original": file['path_original'] if 'path_original' in file else '',
+        {"url_small": file.get('path_thumb') or '',
+         "url_original": file.get('path_original') or '',
          "keywords": file['tag_keywords'],
          "plants": file['tag_authors_plants'],
-         "description": file['tag_description'] if 'tag_description' in file else '',
+         "description": file.get('tag_description') or '',
          "filename": file['filename'] if 'filename' in file else '',
          "path_full_local": file['path_full_local'],
          "record_date_time": file['record_date_time']
@@ -312,9 +311,6 @@ def get_exif_tags_for_folder():
         if not photo_directory:
             photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
             photo_directory.refresh_directory(PATH_BASE)
-            # photo_directory._read_exif_tags()
-            # photo_directory._generate_images(path_basic_folder)
-        # plants_data = photo_directory.get_plants_data(photo_directory.directory)
         plants_data = get_plants_data(photo_directory.directory)
         plants_unique = photo_directory.get_all_plants()
     return plants_data, plants_unique
@@ -330,15 +326,15 @@ def get_distinct_keywords_from_image_files() -> Set[str]:
 
         # get list of lists of strings, flatten that nested list and return the distinct keywords as set
         keywords_nested_list = [file.get('tag_keywords') for file in photo_directory.directory]
-        keywords_nested_list = [l for l in keywords_nested_list if l]  # remove None's
+        keywords_nested_list = [li for li in keywords_nested_list if li]  # remove None's
         keywords_list = functools.reduce(operator.concat, keywords_nested_list)
         return set(keywords_list)
 
 
-def encode_keywords_tag(l: list):
+def encode_keywords_tag(keywords: list):
     """reverse decode_keywords_tag function"""
     ord_list = []
-    for keyword in l:
+    for keyword in keywords:
         ord_list_new = [ord(t) for t in keyword]
         if ord_list:
             ord_list = ord_list + [59] + ord_list_new  # add ; as separator
@@ -387,17 +383,10 @@ def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: i
 def write_new_exif_tags(images_data):
     for data in images_data:
         tag_descriptions = data['description'].encode('utf-8')
-        # if temp:
-        # from list of dicts to list of str
         list_keywords = [k['keyword'] for k in data['keywords']]
-        # list_keywords = dicts_to_strings(data['keywords'])
-        list_plants = dicts_to_strings(data['plants'])
-        # else:
-        #     list_keywords = data['keywords']
-        #     list_plants = data['plants']
-        #
         tag_keywords = encode_keywords_tag(list_keywords)
-        if list_plants:
+
+        if list_plants := dicts_to_strings(data['plants']):
             tag_authors_plants = ';'.join(list_plants).encode('utf-8')
         else:
             tag_authors_plants = b''
@@ -413,19 +402,11 @@ def write_new_exif_tags(images_data):
             modified = True if exif_dict['0th'][270] != tag_descriptions \
                         or exif_dict['0th'][40094] != tag_keywords \
                         or exif_dict['0th'][315] != tag_authors_plants else False
-            # if exif_dict['0th'][270] != tag_descriptions\
-            #     or exif_dict['0th'][40094] != tag_keywords\
-            #         or ((315 in exif_dict['0th'] and exif_dict['0th'][315] != tag_authors_plants and tag_authors_
-            #         plants)
-            #             or (315 in exif_dict['0th'] and not tag_authors_plants)
-            #             or (315 not in exif_dict['0th'] and tag_authors_plants)):
+
         if modified:
             exif_dict['0th'][270] = tag_descriptions  # windows description/title tag
             exif_dict['0th'][40094] = tag_keywords  # Windows Keywords Tag
-            # if tag_authors_plants:
             exif_dict['0th'][315] = tag_authors_plants  # Windows Authors Tag
-            # elif 315 in exif_dict['0th']:
-            #     del exif_dict['0th'][315]
 
             # we want to preserve the file's last-change-date
             # additionally, if image does not have a record time in exif tag,
@@ -463,8 +444,7 @@ def _get_images_by_plant_name(plant_name):
 
 
 def rename_plant_in_exif_tags(plant_name_old: str, plant_name_new: str) -> int:
-    # in each image that has the old plant name tagged, switch tag to the new plant name
-
+    """in each image that has the old plant name tagged, switch tag to the new plant name"""
     # get the relevant images from the photo directory cache
     images = _get_images_by_plant_name(plant_name_old)
     count_modified = 0

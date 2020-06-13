@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-
 from flask_restful import Resource
 import pickle
 from flask_2_ui5_py import get_message

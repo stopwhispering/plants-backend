@@ -1,7 +1,7 @@
 import logging
 
 
-def configure_root_logger(log_severity_console = logging.DEBUG, log_severity_file = logging.INFO):
+def configure_root_logger(log_severity_console=logging.DEBUG, log_severity_file=logging.INFO):
     """configure the root logger; each module's default (__name__) logger will inherit these settings"""
     logger = logging.getLogger()  # no name returns the root loggre
     logger.setLevel(logging.DEBUG)  # global min. level

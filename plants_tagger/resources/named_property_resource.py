@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 class PropertyResource(Resource):
 
-    def post(self):
+    @staticmethod
+    def post():
         if not request.get_data():
             throw_exception('Bad request..')
         modified = json.loads(request.get_data()).get('propertiesModified')
@@ -33,7 +34,7 @@ class PropertyResource(Resource):
                 cat_obj = get_sql_session().query(TraitCategory).filter(
                         TraitCategory.category_name == mod.get('category')).first()
                 if not cat_obj:
-                    cat_obj = TraitCategory(category_name = mod['category'])
+                    cat_obj = TraitCategory(category_name=mod['category'])
                     new_list.append(cat_obj)
 
             name_obj = get_sql_session().query(PropertyName).filter(PropertyName.id == mod.get('nameId')).first()
@@ -51,8 +52,8 @@ class PropertyResource(Resource):
                         PropertyValuePlant.property_name == name_obj,
                         PropertyValuePlant.plant == plant_obj).first()
                 if not value_obj:
-                    value_obj = PropertyValuePlant(property_name = name_obj,
-                                                   plant = plant_obj)
+                    value_obj = PropertyValuePlant(property_name=name_obj,
+                                                   plant=plant_obj)
                     new_list.append(value_obj)
                 value_obj.property_value = mod.get('value')
             elif mod.get('taxonId'):
@@ -75,8 +76,8 @@ class PropertyResource(Resource):
         # todo: delete values if empty
         # todo: return success
 
-    # def get(self, plant_name: str = None):
-    def get(self):
+    @staticmethod
+    def get():
         property_requests_s = request.args.get('propertiesToRequest')
         if not property_requests_s:
             throw_exception(f'No plant or taxon requested.', MessageType.ERROR)

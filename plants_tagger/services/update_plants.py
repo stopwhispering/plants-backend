@@ -3,7 +3,8 @@ import logging
 from typing import List
 
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.models.plant_models import Plant, Tag
+from plants_tagger.models.plant_models import Plant
+from plants_tagger.models.tag_models import Tag
 from plants_tagger.services.tag import tag_modified, update_tag
 
 logger = logging.getLogger(__name__)
@@ -14,10 +15,9 @@ def update_plants_from_list_of_dicts(plants: [dict]):
     new_list = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
-        record_update = get_sql_session().query(Plant).filter_by(plant_name=plant['plant_name']).first()
-        boo_new = False if record_update else True
+        record_update = Plant.get_plant_by_plant_name(plant['plant_name'])
 
-        if boo_new:
+        if boo_new := False if record_update else True:
             if [r for r in new_list if r.plant_name == plant['plant_name']]:
                 continue  # same plant in multiple new records
             # create new record (as object) & add to list later)
@@ -75,7 +75,7 @@ def _update_tags(plant_obj: Plant, tags: List[dict]):
                 new_list.append(tag_object)
             else:
                 # update if modified (not implemented in frontend)
-                tag_object = get_sql_session().query(Tag).filter(Tag.id == tag['id']).first()
+                tag_object = Tag.get_tag_by_tag_id(tag['id'], raise_exception=True)
                 if tag_modified(tag_object, tag):
                     update_tag(tag_object, tag)
 

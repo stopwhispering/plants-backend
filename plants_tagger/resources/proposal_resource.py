@@ -3,6 +3,7 @@ import logging
 
 from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.files import get_distinct_keywords_from_image_files
 from plants_tagger.util.rest import object_as_dict
 from plants_tagger.models.trait_models import Trait, TraitCategory
@@ -33,6 +34,17 @@ class ProposalResource(Resource):
             components = get_sql_session().query(SoilComponent).all()
             results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
 
+        elif entity_id == 'NurserySourceProposals':
+            # get distinct nurseries/sources, sorted by last update
+            nurseries_tuples = get_sql_session().query(Plant.nursery_source) \
+                .order_by(Plant.last_update.desc()) \
+                .distinct(Plant.nursery_source)\
+                .filter(Plant.nursery_source.isnot(None)).all()
+            if not nurseries_tuples:
+                results = {'NurseriesSourcesCollection': []}
+            else:
+                results = {'NurseriesSourcesCollection': [{'name': n[0]} for n in nurseries_tuples]}
+
         elif entity_id == 'KeywordProposals':
             # return collection of all distinct keywords used in images
             keywords_set = get_distinct_keywords_from_image_files()
@@ -40,7 +52,6 @@ class ProposalResource(Resource):
             results = {'KeywordsCollection': keywords_collection}
 
         elif entity_id == 'TraitCategoryProposals':
-
             # trait categories
             trait_categories = []
             t: Trait

@@ -6,9 +6,6 @@ from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.property_models import PropertyName
 
-# logger = logging.getLogger(__name__)
-# RANKS = ['family', 'genus', 'subgen', 'species', 'subsp', 'taxon_id']
-
 
 def get_or_add_property_name(property_name: str, category_id: int):
     name = get_sql_session().query(PropertyName).filter(

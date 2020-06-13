@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from typing import List, Callable, Optional
+from typing import List, Callable
 import logging
 
 from plants_tagger.config_local import connection_string
@@ -18,6 +18,7 @@ def get_sql_session() -> ScopedSession:
     return ScopedSession()
 
 
+# noinspection PyUnresolvedReferences
 def init_sqlalchemy_engine(followup_funcs: List[Callable] = None):
     """connect to extensions via sqlalchemy and create engine
     optionally supply list of functions w/o further arguments for table initialization, e.g. inserting
@@ -38,6 +39,7 @@ def init_sqlalchemy_engine(followup_funcs: List[Callable] = None):
     import plants_tagger.models.trait_models
     import plants_tagger.models.taxon2
     import plants_tagger.models.history_model
+    import plants_tagger.models.tag_models
 
     # create extensions tables if not existing
     Base.metadata.create_all(engine)

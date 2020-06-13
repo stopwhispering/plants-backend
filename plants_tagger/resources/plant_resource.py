@@ -1,18 +1,11 @@
 from flask_restful import Resource
 from flask import request
-import json
 import logging
 import datetime
 
-from sqlalchemy.orm import make_transient
-from sqlalchemy_utils import get_referencing_foreign_keys, dependent_objects
-
 from plants_tagger.extensions.orm import get_sql_session
-import plants_tagger.services.files
-from plants_tagger.services.files import generate_previewimage_get_rel_path, lock_photo_directory, PhotoDirectory, \
-    rename_plant_in_exif_tags
+from plants_tagger.services.files import rename_plant_in_exif_tags
 from plants_tagger.services.history import create_history_entry
-from plants_tagger.util.rest import object_as_dict
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.update_plants import update_plants_from_list_of_dicts
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception, \
@@ -24,67 +17,20 @@ NULL_DATE = datetime.date(1900, 1, 1)
 
 
 class PlantResource(Resource):
-    def _get_single(self, plant_name):
+    @staticmethod
+    def _get_single(plant_name):
         plant_obj = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
         if not plant_obj:
             logger.error(f'Plant not found: {plant_name}.')
             throw_exception(f'Plant not found: {plant_name}.')
-        plant = self._assemble_plant(plant_obj)
+        plant = plant_obj.as_dict()
 
         make_dict_values_json_serializable(plant)
         return {'Plant':   plant,
                 'message': get_message(f"Loaded plant {plant_name} from database.")}, 200
 
     @staticmethod
-    def _assemble_plant(plant_obj: Plant) -> dict:
-        plant = plant_obj.__dict__.copy()
-        if '_sa_instance_state' in plant:
-            del plant['_sa_instance_state']
-        else:
-            logger.debug('Filter hidden-flagged plants disabled.')
-
-        # add mother plant plant_name
-        plant['mother_plant'] = get_sql_session().query(Plant.plant_name).filter(Plant.id ==
-             plant['mother_plant_id']).scalar() if plant['mother_plant_id'] else None
-
-        # add botanical name to plants resource to facilitate usage in master view and elsewhere
-        # include authors as well
-        if plant_obj.taxon:
-            plant['botanical_name'] = plant_obj.taxon.name
-            plant['taxon_authors'] = plant_obj.taxon.authors
-
-        # add path to preview image
-        if plant['filename_previewimage']:  # supply relative path of original image
-            rel_path_gen = generate_previewimage_get_rel_path(plant['filename_previewimage'])
-            # there is a huge problem with the slashes
-            plant['url_preview'] = json.dumps(rel_path_gen)[1:-1]
-        else:
-            plant['url_preview'] = None
-
-        # add tags
-        if plant_obj.tags:
-            plant['tags'] = [object_as_dict(t) for t in plant_obj.tags]
-
-        # add current soil
-        soil_events = [e for e in plant_obj.events if e.soil]
-        if soil_events:
-            soil_events.sort(key=lambda e: e.date, reverse=True)
-            plant['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
-                                     'date':      soil_events[0].date}
-        else:
-            plant['current_soil'] = None
-
-        # get latest photo record date per plant
-        with lock_photo_directory:
-            if not plants_tagger.services.files.photo_directory:
-                plants_tagger.services.files.photo_directory = PhotoDirectory()
-                plants_tagger.services.files.photo_directory.refresh_directory()
-            plant['latest_image_record_date'] = plants_tagger.services.files.photo_directory \
-                .get_latest_date_per_plant(plant['plant_name'])
-
-        return plant
-
-    def _get_all(self):
+    def _get_all():
         # select plants from databaes
         # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
         query = get_sql_session().query(Plant)
@@ -95,7 +41,7 @@ class PlantResource(Resource):
         plants_obj = query.all()
         plants_list = []
         for p in plants_obj:
-            plant = self._assemble_plant(p)
+            plant = p.as_dict()
             plants_list.append(plant)
 
         make_list_items_json_serializable(plants_list)
@@ -104,6 +50,7 @@ class PlantResource(Resource):
                 'message':          get_message(f"Loaded {len(plants_list)} plants from database.")}, 200
 
     def get(self, plant_name: str = None):
+        """read plant(s) information from db"""
         if plant_name:
             return self._get_single(plant_name)
         else:
@@ -111,6 +58,7 @@ class PlantResource(Resource):
 
     @staticmethod
     def post(**kwargs):
+        """update existing plant"""
         if not kwargs:
             kwargs = request.get_json(force=True)
 
@@ -126,7 +74,7 @@ class PlantResource(Resource):
 
     @staticmethod
     def delete():
-        # tag deleted plant as 'hide' in database
+        """tag deleted plant as 'hide' in database"""
         plant_name = request.get_json()['plant']
         record_update: Plant = get_sql_session().query(Plant).filter_by(plant_name=plant_name).first()
         if not record_update:
@@ -143,9 +91,7 @@ class PlantResource(Resource):
 
     @staticmethod
     def put():
-        # we use the put method to rename a plant
-        # as (a) plant_name is primary key in the database table and (b) images are tagged with their current
-        # plant names in their exif tags, this is a quite complicated task
+        """we use the put method to rename a plant"""
         plant_name_old = request.get_json().get('OldPlantName')
         plant_name_new = request.get_json().get('NewPlantName')
 
@@ -160,36 +106,16 @@ class PlantResource(Resource):
         if get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_new).first():
             throw_exception(f"Plant already exists: {plant_name_new}")
 
-        ## get all usages of plant in other tables (we need to do that before expunging)
-        # dependencies = list(dependent_objects(plant_obj, get_referencing_foreign_keys(plant_obj)))
-
-        # # get old plant object out of session so we can work on the key column
-        # get_sql_session().expunge(plant_obj)  # expunge the object from session
-        # make_transient(plant_obj)  # http://docs.sqlalchemy.org/en/rel_1_1/orm/session_api.html#sqlalchemy.orm.session.make_transient
-
-        # rename plant name so we get a new table entry
+        # rename plant name
         plant_obj.plant_name = plant_name_new
         plant_obj.last_update = datetime.datetime.now()
-        # get_sql_session().add(plant_obj)
 
-        # # redirect all usages of old plant to the new plant (e.g. in tags table)
-        # for dep in dependencies:
-        #     plant_fk = getattr(dep, 'plant')
-        #     if not plant_fk:
-        #         throw_exception(f"Technical error. Found dependency without plant attribute. Canceled renaming.")
-        #     setattr(dep, 'plant', plant_obj)
-
-        # next, we need to change all image files where plant was tagged with the old plant name
-        # (images are not tagged in database but in the files' exif file extensions)
+        # most difficult task: exif tags use plant name not id; we need to change each plant name occurence
+        # in images' exif tags
         count_modified_images = rename_plant_in_exif_tags(plant_name_old, plant_name_new)
 
-        # after image modifications have gone well, we can commit changes to database
+        # only after image modifications have gone well, we can commit changes to database
         get_sql_session().commit()
-
-        # # finally, set the old plant to hide (same thing as when deleting from the frontend)
-        # plant_obj_obsolete = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name_old).first()
-        # plant_obj_obsolete.hide = True
-        # get_sql_session().commit()
 
         create_history_entry(description=f"Renamed to {plant_name_new}",
                              plant_id=plant_obj.id,

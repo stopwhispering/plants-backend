@@ -1,17 +1,12 @@
 from typing import Optional
-
 from flask_restful import Resource
 import logging
 from flask import request
 from collections import defaultdict
-
-from flask_2_ui5_py import get_message, throw_exception, MessageType
 from sqlalchemy.exc import InvalidRequestError
+from flask_2_ui5_py import get_message, throw_exception, MessageType
 
-from plants_tagger import config
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
-from plants_tagger.util.rest import object_as_dict
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.image_models import Image
 from plants_tagger.models.event_models import Pot, Observation, Event
@@ -27,50 +22,13 @@ class EventResource(Resource):
 
         if not plant_name:
             throw_exception('Plant name required for GET requests')
-        # get events which have references to observations, pots, and soils
+
         results = []
-        plant_id = get_sql_session().query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
         # might be a newly created plant with no existing events, yet
-        if plant_id:
-            # events_obj = get_sql_session().query(Event).filter(Event.plant_name == plant_name).all()
-            events_obj = get_sql_session().query(Event).filter(Event.plant_id == plant_id).all()
-
-            event_obj: Event
-            for event_obj in events_obj:
-                event = object_as_dict(event_obj)
-
-                # read segments from their respective linked tables
-                if event_obj.observation:
-                    event['observation'] = object_as_dict(event_obj.observation)
-                    if 'height' in event['observation'] and event['observation']['height']:
-                        event['observation']['height'] = event['observation']['height'] / 10  # mm to cm
-                    if 'stem_max_diameter' in event['observation'] and event['observation']['stem_max_diameter']:
-                        event['observation']['stem_max_diameter'] = event['observation']['stem_max_diameter'] / 10
-
-                if event_obj.pot:
-                    event['pot'] = object_as_dict(event_obj.pot)
-                    if 'diameter_width' in event['pot'] and event['pot']['diameter_width']:
-                        event['pot']['diameter_width'] = event['pot']['diameter_width'] / 10
-
-                if event_obj.soil:
-                    event['soil'] = object_as_dict(event_obj.soil)
-
-                    if event_obj.soil.soil_to_component_associations:  # components:
-
-                        event['soil']['components'] = [{'component_name': association.soil_component.component_name,
-                                                        'portion':        association.portion} for association
-                                                       in event_obj.soil.soil_to_component_associations]
-
-                if event_obj.images:
-                    event['images'] = []
-                    for image_obj in event_obj.images:
-                        path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
-                                                                                   size=config.size_thumbnail_image)
-                        event['images'].append({'id': image_obj.id,
-                                                'url_small': path_small,
-                                                'url_original': image_obj.relative_path})
-
-                results.append(event)
+        if plant_id := Plant.get_plant_id_by_plant_name(plant_name):
+            event_objs = Event.get_events_by_plant_id(plant_id)
+            for event_obj in event_objs:
+                results.append(event_obj.as_dict())
 
         logger.info(f'Returning {len(results)} events for {plant_name}.')
         return {'events':  results,
@@ -82,8 +40,7 @@ class EventResource(Resource):
         """save n events for n plants in database (add, modify, delete)"""
         # frontend submits a dict with events for those plants where at least one event has been changed, added, or
         # deleted. it does, however, always submit all these plants' events
-        plants_events_dict = request.get_json()['ModifiedEventsDict']
-        if not plants_events_dict:
+        if not (plants_events_dict := request.get_json()['ModifiedEventsDict']):
             throw_exception('No plants and events supplied to save.')
 
         # loop at the plants and their events
@@ -91,9 +48,7 @@ class EventResource(Resource):
         new_list = []
         for plant_name, events in plants_events_dict.items():
 
-            plant_obj: Plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
-            if not plant_obj:
-                throw_exception(f'Plant not found: {plant_name}')
+            plant_obj = Plant.get_plant_by_plant_name(plant_name, raise_exception=True)
             logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
                         f' {[e.id for e in plant_obj.events]}')
 
@@ -103,19 +58,18 @@ class EventResource(Resource):
             # create a new one, then that event in database will be modified, not deleted and re-created
             for event in [e for e in events if not e.get('id')]:
 
-                # event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_name == plant_name,
                 event_obj_id = get_sql_session().query(Event.id).filter(Event.plant_id == plant_obj.id,
                                                                         Event.date == event.get('date')).scalar()
                 if event_obj_id is not None:
                     event['id'] = event_obj_id
                     logger.info(f"Identified event without id from browser as id {event['id']}")
-            events_ids = [e.get('id') for e in events]
-            logger.info(f'Updating {len(events)} events ({events_ids})for plant {plant_name}')
+            event_ids = [e.get('id') for e in events]
+            logger.info(f'Updating {len(events)} events ({event_ids})for plant {plant_name}')
 
             # loop at the current plant's database events to find deleted ones
             event_obj: Optional[Event] = None
             for event_obj in plant_obj.events:
-                if event_obj.id not in events_ids:
+                if event_obj.id not in event_ids:
                     logger.info(f'Deleting event {event_obj.id}')
                     for link in event_obj.image_to_event_associations:
                         get_sql_session().delete(link)
@@ -124,7 +78,6 @@ class EventResource(Resource):
 
             # loop at the current plant's events from frontend to find new events and modify existing ones
             for event in events:
-
                 # new event
                 if not event.get('id'):
                     # create event record
@@ -140,12 +93,12 @@ class EventResource(Resource):
                 else:
                     try:
                         logger.info(f'Getting event  {event.get("id")}.')
-                        event_obj = get_sql_session().query(Event).filter(Event.id == event.get('id')).first()
-                        event_obj.event_notes = event.get('event_notes')
-                        event_obj.date = event.get('date')
+                        event_obj = Event.get_event_by_event_id(event.get('id'))
                         if not event_obj:
                             logger.warning(f'Event not found: {event.get("id")}')
                             continue
+                        event_obj.event_notes = event.get('event_notes')
+                        event_obj.date = event.get('date')
 
                     except InvalidRequestError as e:
                         get_sql_session().rollback()
@@ -173,10 +126,9 @@ class EventResource(Resource):
 
                 if 'pot' not in event:
                     event_obj.pot_event_type = None
-                    # remove existing pot
                     event_obj.pot = None
 
-                if 'pot' in event:
+                else:
                     event_obj.pot_event_type = event.get('pot_event_type')
                     # add empty if not existing
                     if not event_obj.pot:
@@ -199,7 +151,7 @@ class EventResource(Resource):
                     if event_obj.soil:
                         event_obj.soil = None
 
-                if 'soil' in event:
+                else:
                     event_obj.soil_event_type = event.get('soil_event_type')
                     # add soil to event or change it
                     if not event_obj.soil or (event.get('soil') and event['soil'].get('id') != event_obj.soil.id):
@@ -234,8 +186,7 @@ class EventResource(Resource):
             get_sql_session().add_all(new_list)
         get_sql_session().commit()
 
-        description = ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])
-        logger.info(' Saving Events: ' + description)
+        logger.info(' Saving Events: ' + (description := ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])))
         return {'resource': 'EventResource',
                 'message': get_message(f'Updated events in database.',
                                        description=description)

@@ -38,7 +38,7 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
 
             # update existing trait's link to taxon (this is where the status attribute lies)
             if trait_obj:
-                links_existing = [l for l in trait_obj.taxon_to_trait_associations if l.taxon == taxon]
+                links_existing = [li for li in trait_obj.taxon_to_trait_associations if li.taxon == taxon]
                 if links_existing:
                     links_existing[0].status = trait_new.get('status')
                 else:
@@ -52,7 +52,8 @@ def update_traits(taxon: Taxon, trait_categories: List[dict]):
 
             # altogether new trait
             else:
-                logger.info(f"Creating new trait in db for category {category_obj.category_name}: {trait_new.get('trait')}")
+                logger.info(f"Creating new trait in db for category "
+                            f"{category_obj.category_name}: {trait_new.get('trait')}")
                 trait_obj = Trait(
                         trait=trait_new.get('trait'),
                         trait_category=category_obj

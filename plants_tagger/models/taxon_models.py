@@ -3,6 +3,7 @@ from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, BOOLEAN, TEXT
 from sqlalchemy.orm import relationship
 
 from plants_tagger.extensions.orm import Base, get_sql_session
+from plants_tagger.util.OrmUtilMixin import OrmUtil
 
 
 class Distribution(Base):
@@ -20,7 +21,7 @@ class Distribution(Base):
     taxon = relationship("Taxon", back_populates="distribution")
 
 
-class Taxon(Base):
+class Taxon(Base, OrmUtil):
     """botanical details"""
     __tablename__ = 'taxon'
 
