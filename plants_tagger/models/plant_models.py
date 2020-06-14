@@ -58,8 +58,8 @@ class Plant(Base, OrmUtil):
     # plant to event: 1:n
     events = relationship("Event", back_populates="plant")
 
-    # plant to plant property values: 1:n
-    property_values_plant = relationship("PropertyValuePlant", back_populates="plant")
+    # # plant to plant property values: 1:n
+    # property_values_plant = relationship("PropertyValuePlant", back_populates="plant")
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
