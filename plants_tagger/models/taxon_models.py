@@ -67,8 +67,8 @@ class Taxon(Base, OrmUtil):
             )
     image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="taxon")
 
-    # taxon to taxon property values: 1:n
-    property_values_taxon = relationship("PropertyValueTaxon", back_populates="taxon")
+    # # taxon to taxon property values: 1:n
+    # property_values_taxon = relationship("PropertyValueTaxon", back_populates="taxon")
 
     @staticmethod
     def get_taxon_by_taxon_id(taxon_id: int, raise_exception: bool = False) -> object:
