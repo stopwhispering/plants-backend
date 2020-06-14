@@ -6,7 +6,6 @@ from typing import List
 from plants_tagger import config
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.services.image_services import get_thumbnail_relative_path_for_relative_path
-from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.models.image_models import Image, ImageToTaxonAssociation
 from flask_2_ui5_py import get_message, throw_exception
@@ -23,7 +22,7 @@ class TaxonResource(Resource):
         taxa: List[Taxon] = get_sql_session().query(Taxon).all()
         taxon_dict = {}
         for taxon in taxa:
-            taxon_dict[taxon.id] = object_as_dict(taxon)
+            taxon_dict[taxon.id] = taxon.as_dict()
             if taxon.fq_id:
                 taxon_dict[taxon.id]['ipni_id_short'] = taxon.fq_id[24:]
             if taxon.taxon_to_trait_associations:

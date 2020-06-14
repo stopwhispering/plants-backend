@@ -8,7 +8,6 @@ from flask_2_ui5_py import throw_exception, get_message
 from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database,\
     get_taxa_from_kew_databases
@@ -100,7 +99,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         # we will return the taxon's data to be directly added to the model in the frontend
         # only upon saving in the frontend, the assignment is persisted
         # the data returned should be the same as in TaxonResource's get method (which returns all the taxa)
-        taxon_dict = object_as_dict(taxon)
+        taxon_dict = taxon.as_dict()
         taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
 
         message = f'Assigned botanical name "{taxon.name}" to plant "{plant}".'

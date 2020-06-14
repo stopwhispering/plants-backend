@@ -14,7 +14,6 @@ from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.image_services import generate_previewimage_get_rel_path
 from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.util.OrmUtilMixin import OrmUtil
-from plants_tagger.util.orm_utils import object_as_dict
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ class Plant(Base, OrmUtil):
 
         # add tags
         if self.tags:
-            as_dict['tags'] = [object_as_dict(t) for t in self.tags]
+            as_dict['tags'] = [t.as_dict() for t in self.tags]
 
         # add current soil
         if soil_events := [e for e in self.events if e.soil]:

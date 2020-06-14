@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, ForeignKey, CHAR
 from sqlalchemy.orm import relationship
 
-from plants_tagger.extensions.orm import Base
+from plants_tagger.extensions.orm import Base, get_sql_session
 from plants_tagger.util.OrmUtilMixin import OrmUtil
 
 
@@ -33,7 +36,7 @@ class Trait(Base, OrmUtil):
     trait_category = relationship("TraitCategory", back_populates="traits")
 
 
-class TraitCategory(Base):
+class TraitCategory(Base, OrmUtil):
     """trait categories"""
     __tablename__ = 'trait_category'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
@@ -42,3 +45,11 @@ class TraitCategory(Base):
 
     traits = relationship("Trait", back_populates="trait_category")
     # property_names = relationship("PropertyName", back_populates="property_category")
+
+    # static query methods
+    @staticmethod
+    def get_cat_by_name(category_name: str, raise_exception: bool = False) -> TraitCategory:
+        cat = get_sql_session().query(TraitCategory).filter(TraitCategory.category_name == category_name).first()
+        if not cat and raise_exception:
+            throw_exception(f'Trait Category not found in database: {category_name}')
+        return cat

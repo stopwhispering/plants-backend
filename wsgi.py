@@ -10,4 +10,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=False)
-    logging.getLogger(__name__).info('Starting App serving UWSGI.')
+    logging.getLogger(__name__).info('Starting App.')

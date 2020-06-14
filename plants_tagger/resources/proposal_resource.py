@@ -1,3 +1,5 @@
+from typing import List
+
 from flask_restful import Resource
 import logging
 
@@ -5,7 +7,6 @@ from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.image_services import get_distinct_keywords_from_image_files
-from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.trait_models import Trait, TraitCategory
 from plants_tagger.models.event_models import Soil, SoilComponent
 from flask_2_ui5_py import throw_exception, get_message
@@ -24,7 +25,7 @@ class ProposalResource(Resource):
             # soil mixes
             soils = get_sql_session().query(Soil).all()
             for soil in soils:
-                soil_dict = object_as_dict(soil)
+                soil_dict = soil.as_dict()
                 soil_dict['components'] = [{'component_name': c.soil_component.component_name,
                                             'portion': c.portion} for c in soil.soil_to_component_associations]
 
@@ -57,17 +58,16 @@ class ProposalResource(Resource):
             t: Trait
             for t in TRAIT_CATEGORIES:
                 # note: trait categories from config file are created in orm_tables.py if not existing upon start
-                trait_category_obj = get_sql_session().query(TraitCategory).filter(TraitCategory.category_name ==
-                                                                                   t).first()
-                trait_categories.append(object_as_dict(trait_category_obj))
+                trait_category_obj = TraitCategory.get_cat_by_name(t, raise_exception=True)
+                trait_categories.append(trait_category_obj.as_dict())
             results = {'TraitCategoriesCollection': trait_categories}
 
             # traits
-            traits_obj = get_sql_session().query(Trait).all()
-            traits_obj = [t for t in traits_obj if t.trait_category.category_name in TRAIT_CATEGORIES]
+            trait_objs: List[Trait] = get_sql_session().query(Trait).all()
+            trait_objs = [t for t in trait_objs if t.trait_category.category_name in TRAIT_CATEGORIES]
             traits = []
-            for t in traits_obj:
-                t_dict = object_as_dict(t)
+            for t in trait_objs:
+                t_dict = t.as_dict()
                 t_dict['trait_category_id'] = t.trait_category_id
                 t_dict['trait_category'] = t.trait_category.category_name
                 traits.append(t_dict)
