@@ -4,8 +4,8 @@ import logging
 from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
-from plants_tagger.services.files import get_distinct_keywords_from_image_files
-from plants_tagger.util.rest import object_as_dict
+from plants_tagger.services.image_services import get_distinct_keywords_from_image_files
+from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.trait_models import Trait, TraitCategory
 from plants_tagger.models.event_models import Soil, SoilComponent
 from flask_2_ui5_py import throw_exception, get_message

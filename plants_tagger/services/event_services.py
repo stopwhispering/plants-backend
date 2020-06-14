@@ -38,5 +38,3 @@ def get_or_create_soil(soil_dict: dict, counts: defaultdict):
         counts['Added Soil to Component Associations'] += 1
 
     return soil_obj
-
-

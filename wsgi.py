@@ -1,7 +1,7 @@
 import logging
 
 from plants_tagger.app import create_app
-from plants_tagger.util.logger import configure_root_logger
+from plants_tagger.util.logger_utils import configure_root_logger
 
 
 configure_root_logger()

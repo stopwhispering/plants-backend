@@ -5,7 +5,7 @@ from typing import List
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.tag_models import Tag
-from plants_tagger.services.tag import tag_modified, update_tag
+from plants_tagger.services.tag_services import tag_modified, update_tag
 
 logger = logging.getLogger(__name__)
 

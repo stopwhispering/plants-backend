@@ -4,10 +4,10 @@ import logging
 import datetime
 
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.services.files import rename_plant_in_exif_tags
-from plants_tagger.services.history import create_history_entry
+from plants_tagger.services.image_services import rename_plant_in_image_files
+from plants_tagger.services.history_services import create_history_entry
 from plants_tagger.models.plant_models import Plant
-from plants_tagger.services.update_plants import update_plants_from_list_of_dicts
+from plants_tagger.services.plants_services import update_plants_from_list_of_dicts
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception, \
     make_dict_values_json_serializable
 from plants_tagger import config
@@ -112,7 +112,7 @@ class PlantResource(Resource):
 
         # most difficult task: exif tags use plant name not id; we need to change each plant name occurence
         # in images' exif tags
-        count_modified_images = rename_plant_in_exif_tags(plant_name_old, plant_name_new)
+        count_modified_images = rename_plant_in_image_files(plant_name_old, plant_name_new)
 
         # only after image modifications have gone well, we can commit changes to database
         get_sql_session().commit()

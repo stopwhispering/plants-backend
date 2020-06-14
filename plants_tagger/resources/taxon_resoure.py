@@ -5,13 +5,13 @@ from typing import List
 
 from plants_tagger import config
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
-from plants_tagger.util.rest import object_as_dict
+from plants_tagger.services.image_services import get_thumbnail_relative_path_for_relative_path
+from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.models.image_models import Image, ImageToTaxonAssociation
 from flask_2_ui5_py import get_message, throw_exception
 
-from plants_tagger.services.update_traits import update_traits
+from plants_tagger.services.trait_services import update_traits
 
 logger = logging.getLogger(__name__)
 

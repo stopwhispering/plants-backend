@@ -8,10 +8,11 @@ from flask_2_ui5_py import throw_exception, get_message
 from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.util.rest import object_as_dict
+from plants_tagger.util.orm_utils import object_as_dict
 from plants_tagger.models.taxon_models import Taxon
-from plants_tagger.services.taxon import copy_taxon_from_kew, get_taxa_from_local_database, get_taxa_from_kew_databases
-from plants_tagger.services.taxon_id_mapper import get_gbif_id_from_ipni_id
+from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database,\
+    get_taxa_from_kew_databases
+from plants_tagger.services.scrape_taxon_id import get_gbif_id_from_ipni_id
 
 logger = logging.getLogger(__name__)
 

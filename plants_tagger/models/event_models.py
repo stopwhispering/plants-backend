@@ -10,7 +10,7 @@ from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.trait_models import TraitCategory
 from plants_tagger.extensions.orm import Base
-from plants_tagger.services.files import get_thumbnail_relative_path_for_relative_path
+from plants_tagger.services.image_services import get_thumbnail_relative_path_for_relative_path
 from plants_tagger.util.OrmUtilMixin import OrmUtil
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.image_models import Image
 from plants_tagger.models.event_models import Pot, Observation, Event
-from plants_tagger.services.update_events import get_or_create_soil
+from plants_tagger.services.event_services import get_or_create_soil
 
 logger = logging.getLogger(__name__)
 

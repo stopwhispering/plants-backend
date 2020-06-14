@@ -7,18 +7,19 @@ import logging
 import datetime
 import json
 
-import plants_tagger.services.files
-from plants_tagger.services.files import lock_photo_directory, PhotoDirectory
+import plants_tagger.services.image_services
+from plants_tagger.services.image_services import lock_photo_directory
+from plants_tagger.services.PhotoDirectory import PhotoDirectory
 from plants_tagger.models.taxon_models import Taxon
-from plants_tagger.services.files import generate_previewimage_get_rel_path
+from plants_tagger.services.image_services import generate_previewimage_get_rel_path
 from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.util.OrmUtilMixin import OrmUtil
-from plants_tagger.util.rest import object_as_dict
+from plants_tagger.util.orm_utils import object_as_dict
 
 logger = logging.getLogger(__name__)
 
 from plants_tagger.extensions.orm import Base, get_sql_session
-from plants_tagger.util.exif import decode_record_date_time
+from plants_tagger.util.exif_utils import decode_record_date_time
 
 
 class Plant(Base, OrmUtil):
@@ -93,10 +94,10 @@ class Plant(Base, OrmUtil):
 
         # get latest photo record date per plant
         with lock_photo_directory:
-            if not plants_tagger.services.files.photo_directory:
-                plants_tagger.services.files.photo_directory = PhotoDirectory()
-                plants_tagger.services.files.photo_directory.refresh_directory()
-            as_dict['latest_image_record_date'] = plants_tagger.services.files.photo_directory \
+            if not plants_tagger.services.image_services.photo_directory:
+                plants_tagger.services.image_services.photo_directory = PhotoDirectory()
+                plants_tagger.services.image_services.photo_directory.refresh_directory()
+            as_dict['latest_image_record_date'] = plants_tagger.services.image_services.photo_directory \
                 .get_latest_date_per_plant(self.plant_name)
 
         return as_dict
