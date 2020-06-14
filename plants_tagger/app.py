@@ -6,7 +6,7 @@ from plants_tagger.extensions.orm import init_sqlalchemy_engine
 from plants_tagger.models.event_models import insert_categories
 from plants_tagger.resources.event_resource import EventResource
 from plants_tagger.resources.image_resource import ImageResource
-from plants_tagger.resources.named_property_resource import PropertyResource
+# from plants_tagger.resources.named_property_resource import PropertyResource
 from plants_tagger.resources.plant_resource import PlantResource
 from plants_tagger.resources.proposal_resource import ProposalResource
 from plants_tagger.resources.refresh_photo_dir_resource import RefreshPhotoDirectoryResource
@@ -43,7 +43,7 @@ def create_app():
                                     '/plants_tagger/backend/Event')  # only post
     api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
 
-    api.add_resource(PropertyResource, '/plants_tagger/backend/Property')
+    # api.add_resource(PropertyResource, '/plants_tagger/backend/Property')
 
     logger.info('Added REST Resources.')
 
