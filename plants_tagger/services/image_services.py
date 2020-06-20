@@ -10,7 +10,7 @@ from typing import Set
 import plants_tagger.config_local
 import plants_tagger.services.os_paths
 from plants_tagger import config
-from plants_tagger.config_local import PATH_BASE
+from plants_tagger.config_local import PATH_BASE, LOG_IS_DEV
 from plants_tagger.services.PhotoDirectory import PhotoDirectory
 from plants_tagger.services.exif_services import rename_plant_in_exif_tags
 from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, \
@@ -39,7 +39,8 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     path_full = os.path.join(plants_tagger.services.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
     path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
     if not os.path.isfile(path_generated):
-        logger.info('Preview Image: Generating the not-yet-existing preview image.')
+        if not LOG_IS_DEV:
+            logger.info('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(path_image=path_full,
                            size=config.size_preview_image,
                            path_thumbnail=os.path.join(plants_tagger.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))

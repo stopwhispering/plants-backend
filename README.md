@@ -8,6 +8,7 @@ A OpenUI5-based web frontend is yet to be uploaded into separate repository.
 The sample architecture uses NGINX and uWSGI as middleware. uWSGI can use the flask app returned by
 the factory method in *app.py*. On local system one can use the Flask development server
 instead (*python wsgi.py*).
+
 ![Architecture](static/architecture.png?raw=true "Architecture")
 
 ## Configuration
@@ -32,5 +33,7 @@ IDs are determined.
 - requests
 
 ## Still to be Done...
-- install with PyPi
-- dockerize
+- [ ] some instructions on installation
+- [ ] install with PyPi
+- [ ] dockerize
+- [ ] still some todo's in sources

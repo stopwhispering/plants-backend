@@ -3,6 +3,8 @@ import piexif
 from PIL import Image
 import logging
 
+from plants_tagger.config_local import LOG_IS_DEV
+
 logger = logging.getLogger(__name__)
 
 
@@ -10,10 +12,12 @@ def generate_thumbnail(path_image: str,
                        size: tuple = (100, 100),
                        path_thumbnail: str = ''):
     """ generates a resized variant of an image; returns the full local path"""
-    logger.debug(f'generating resized image of {path_image} in size {size}.')
+    if not LOG_IS_DEV:
+        logger.debug(f'generating resized image of {path_image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
     if not os.path.isfile(path_image):
-        logger.error(f"Original Image of default image does not exist. Can't generate thumbnail. {path_image}")
+        if not LOG_IS_DEV:
+            logger.error(f"Original Image of default image does not exist. Can't generate thumbnail. {path_image}")
         return
     im = Image.open(path_image)
 
