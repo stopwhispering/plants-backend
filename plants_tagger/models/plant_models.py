@@ -25,7 +25,7 @@ class Plant(Base, OrmUtil):
     """my plants"""
     __tablename__ = 'plants'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    plant_name = Column(CHAR(60), unique=True, nullable=False)
+    plant_name = Column(CHAR(100), unique=True, nullable=False)
 
     field_number = Column(CHAR(20))
     geographic_origin = Column(CHAR(100))

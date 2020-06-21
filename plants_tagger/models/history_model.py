@@ -11,5 +11,5 @@ class History(Base):
 
     timestamp = Column(DATETIME)
     plant_id = Column(INTEGER)
-    plant_name = Column(CHAR(60))
+    plant_name = Column(CHAR(100))
     description = Column(TEXT)
