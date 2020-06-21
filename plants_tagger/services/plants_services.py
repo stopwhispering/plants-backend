@@ -18,7 +18,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         record_update = Plant.get_plant_by_plant_name(plant['plant_name'])
 
         if boo_new := False if record_update else True:
-            if [r for r in new_list if r.plant_name == plant['plant_name']]:
+            if [r for r in new_list if isinstance(r, Plant) and r.plant_name == plant['plant_name']]:
                 continue  # same plant in multiple new records
             # create new record (as object) & add to list later)
             record_update = Plant(plant_name=plant['plant_name'])
