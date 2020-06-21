@@ -71,6 +71,10 @@ class Plant(Base, OrmUtil):
             as_dict['botanical_name'] = self.taxon.name
             as_dict['taxon_authors'] = self.taxon.authors
 
+        # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
+        if self.propagation_type is None:
+            as_dict['propagation_type'] = ''
+
         # add path to preview image
         if self.filename_previewimage:  # supply relative path of original image
             rel_path_gen = generate_previewimage_get_rel_path(self.filename_previewimage)
