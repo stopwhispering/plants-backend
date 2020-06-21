@@ -30,7 +30,7 @@ class Plant(Base, OrmUtil):
     field_number = Column(CHAR(20))
     geographic_origin = Column(CHAR(100))
     nursery_source = Column(CHAR(100))
-    propagation_type = Column(Enum("vegetative", "generative", "unknown", name="propagation_type_enum"))
+    propagation_type = Column(CHAR(30))
 
     count = Column(INTEGER)
     active = Column(BOOLEAN)
