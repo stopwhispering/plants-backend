@@ -42,7 +42,7 @@ class Plant(Base, OrmUtil):
     mother_plant = relationship("Plant", remote_side=[id])
     children_plants = relationship("Plant")
 
-    generation_origin = Column(CHAR(60))
+    # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(CHAR(240))  # original filename of the image that is set as preview image
     hide = Column(BOOLEAN)
@@ -141,8 +141,8 @@ class Plant(Base, OrmUtil):
         else:
             self.mother_plant_id = None
         
-    def set_generation_origin(self, generation_origin=None, plant: dict = None):
-        self.generation_origin = plant.get('generation_origin') if plant else generation_origin
+    # def set_generation_origin(self, generation_origin=None, plant: dict = None):
+    #     self.generation_origin = plant.get('generation_origin') if plant else generation_origin
         
     def set_plant_notes(self, plant_notes=None, plant: dict = None):
         self.plant_notes = plant.get('plant_notes') if plant else plant_notes

@@ -37,7 +37,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         record_update.set_generation_date(plant=plant)
         record_update.set_generation_type(plant=plant)
         record_update.set_generation_notes(plant=plant)
-        record_update.set_generation_origin(plant=plant)
+        # record_update.set_generation_origin(plant=plant)
         record_update.set_plant_notes(plant=plant)
 
         # mother_plant_id is still the old one if changed; but mother_plant the new mother plant
