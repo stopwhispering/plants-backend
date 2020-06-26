@@ -41,6 +41,10 @@ class ImageResource(Resource):
             if image['keywords']:
                 image['keywords'] = [{'keyword': p} for p in image['keywords']]
 
+            # get rid of annoying camera default image description
+            if image.get('description').strip() == 'SONY DSC':
+                image['description'] = ''
+
         make_list_items_json_serializable(files_data)
 
         logger.info(f'Returned {len(files_data)} images.')
