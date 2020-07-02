@@ -120,10 +120,17 @@ def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: i
         # exif = piexif.load(file_path)
         # image = image.resize(size)
         image.thumbnail(size)  # preserves aspect ratio
-        image.save(save_to_path,
-                   quality=quality,
-                   exif=image.info.get('exif'),
-                   optimize=True)
+        if image.info.get('exif'):
+            image.save(save_to_path,
+                       quality=quality,
+                       exif=image.info.get('exif'),
+                       optimize=True)
+        else:  # fix some bug with ebay images that apparently have no exif part
+            image.save(save_to_path,
+                       quality=quality,
+                       # exif=image.info.get('exif'),
+                       optimize=True)
+
     if path != save_to_path:
         os.remove(path)
 
