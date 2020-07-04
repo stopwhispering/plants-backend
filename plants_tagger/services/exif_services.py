@@ -131,6 +131,9 @@ def write_new_exif_tags(images_data):
                 b_dt = encode_record_date_time(dt)
                 exif_dict['Exif'][36867] = b_dt
 
+            # fix some problem with windows photo editor writing exif tag in wrong format
+            if exif_dict.get('GPS') and type(exif_dict['GPS'].get(11)) is bytes:
+                del exif_dict['GPS'][11]
             exif_bytes = piexif.dump(exif_dict)
             # save using pillow...
             # im = Image.open(path)

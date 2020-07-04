@@ -126,6 +126,7 @@ def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: i
                        exif=image.info.get('exif'),
                        optimize=True)
         else:  # fix some bug with ebay images that apparently have no exif part
+            logger.info("Saving w/o exif.")
             image.save(save_to_path,
                        quality=quality,
                        # exif=image.info.get('exif'),
