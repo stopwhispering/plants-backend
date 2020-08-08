@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, BOOLEAN, TEXT
 from sqlalchemy.orm import relationship
@@ -67,11 +69,11 @@ class Taxon(Base, OrmUtil):
             )
     image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="taxon")
 
-    # # taxon to taxon property values: 1:n
-    # property_values_taxon = relationship("PropertyValueTaxon", back_populates="taxon")
+    # taxon to taxon property values: 1:n
+    property_values_taxon = relationship("PropertyValue", back_populates="taxon")
 
     @staticmethod
-    def get_taxon_by_taxon_id(taxon_id: int, raise_exception: bool = False) -> object:
+    def get_taxon_by_taxon_id(taxon_id: int, raise_exception: bool = False) -> Taxon:
         taxon = get_sql_session().query(Taxon).filter(Taxon.id == taxon_id).first()
         if not taxon and raise_exception:
             throw_exception(f'Taxon not found in database: {taxon_id}')

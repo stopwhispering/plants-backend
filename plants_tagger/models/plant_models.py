@@ -58,8 +58,8 @@ class Plant(Base, OrmUtil):
     # plant to event: 1:n
     events = relationship("Event", back_populates="plant")
 
-    # # plant to plant property values: 1:n
-    # property_values_plant = relationship("PropertyValuePlant", back_populates="plant")
+    # plant to plant property values: 1:n
+    property_values_plant = relationship("PropertyValue", back_populates="plant")
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
@@ -175,6 +175,13 @@ class Plant(Base, OrmUtil):
         plant = get_sql_session().query(Plant).filter(Plant.plant_name == plant_name).first()
         if not plant and raise_exception:
             throw_exception(f'Plant not found in database: {plant_name}')
+        return plant
+
+    @staticmethod
+    def get_plant_by_plant_id(plant_id: int, raise_exception: bool = False) -> Plant:
+        plant = get_sql_session().query(Plant).filter(Plant.id == plant_id).first()
+        if not plant and raise_exception:
+            throw_exception(f'Plant ID not found in database: {plant_id}')
         return plant
 
     @staticmethod

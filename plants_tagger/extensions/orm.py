@@ -40,6 +40,7 @@ def init_sqlalchemy_engine(followup_funcs: List[Callable] = None):
     # import plants_tagger.models.taxon2
     import plants_tagger.models.history_model
     import plants_tagger.models.tag_models
+    import plants_tagger.models.property_models
 
     # create extensions tables if not existing
     Base.metadata.create_all(engine)

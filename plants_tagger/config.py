@@ -7,3 +7,4 @@ quality = 82
 
 filter_hidden = True
 TRAIT_CATEGORIES = ['Plant', 'Leaves', 'Flowers', 'Care', 'Habitat', 'Trivia', 'Taxonomy', 'Others']
+PROPERTY_CATEGORIES = ['Plant', 'Leaves', 'Flowers', 'Care', 'Habitat', 'Trivia', 'Taxonomy', 'Others']

@@ -44,7 +44,7 @@ class TraitCategory(Base, OrmUtil):
     sort_flag = Column(INTEGER)
 
     traits = relationship("Trait", back_populates="trait_category")
-    # property_names = relationship("PropertyName", back_populates="property_category")
+    # property_names = relationship("PropertyName", back_populates="property_category")   # todo del if removing prop
 
     # static query methods
     @staticmethod
