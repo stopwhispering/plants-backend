@@ -7,9 +7,6 @@ import logging
 import datetime
 import json
 
-import plants_tagger.extensions.photodirectory
-import plants_tagger.services.PhotoDirectory
-import plants_tagger.services.image_services
 from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.image_services import generate_previewimage_get_rel_path

@@ -7,7 +7,6 @@ import logging
 from typing import Set
 
 import plants_tagger.config_local
-import plants_tagger.extensions.photodirectory
 import plants_tagger.services.PhotoDirectory
 import plants_tagger.services.os_paths
 from plants_tagger import config
