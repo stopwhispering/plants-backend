@@ -4,10 +4,12 @@ import operator
 import os
 import logging
 import datetime
+import threading
+from typing import Optional
 
 from plants_tagger import config
 from plants_tagger.config_local import PATH_BASE
-from plants_tagger.services.exif_services import read_exif_tags
+from plants_tagger.util.exif_utils import read_exif_tags
 from plants_tagger.util.filename_utils import get_generated_filename
 from plants_tagger.util.image_utils import generate_thumbnail
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS, \
@@ -31,6 +33,7 @@ class PhotoDirectory:
         self._read_exif_tags_all_images()
         self._generate_images(path_basic_folder)
         self._read_latest_image_dates()
+        return self
 
     def _scan_files(self, folder):
         """read all image files and create a list of dicts (one dict for each file)"""
@@ -131,3 +134,14 @@ class PhotoDirectory:
         # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
         # (in ui5 formatter, we will format the null_date as an empty string)
         return self.latest_image_dates.get(plant_name, NULL_DATE)
+
+
+lock_photo_directory = threading.RLock()
+photo_directory: Optional[PhotoDirectory] = None
+
+
+def get_photo_directory(instantiate=True) -> PhotoDirectory:
+    global photo_directory
+    if not photo_directory and instantiate:
+        photo_directory = PhotoDirectory().refresh_directory()
+    return photo_directory

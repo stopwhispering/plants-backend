@@ -7,9 +7,10 @@ import logging
 import datetime
 import json
 
+import plants_tagger.extensions.photodirectory
+import plants_tagger.services.PhotoDirectory
 import plants_tagger.services.image_services
-from plants_tagger.services.image_services import lock_photo_directory
-from plants_tagger.services.PhotoDirectory import PhotoDirectory
+from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.image_services import generate_previewimage_get_rel_path
 from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
@@ -97,11 +98,11 @@ class Plant(Base, OrmUtil):
 
         # get latest photo record date per plant
         with lock_photo_directory:
-            if not plants_tagger.services.image_services.photo_directory:
-                plants_tagger.services.image_services.photo_directory = PhotoDirectory()
-                plants_tagger.services.image_services.photo_directory.refresh_directory()
-            as_dict['latest_image_record_date'] = plants_tagger.services.image_services.photo_directory \
-                .get_latest_date_per_plant(self.plant_name)
+            photo_directory = get_photo_directory()
+            # if not plants_tagger.services.PhotoDirectory.photo_directory:
+            #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory()
+            #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory()
+            as_dict['latest_image_record_date'] = photo_directory.get_latest_date_per_plant(self.plant_name)
 
         return as_dict
 

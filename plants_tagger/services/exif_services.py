@@ -1,66 +1,13 @@
 import datetime
-from typing import List
 import piexif
-from piexif import InvalidImageDataError
 import logging
 
-from plants_tagger.util.exif_utils import auto_rotate_jpeg, decode_record_date_time, dicts_to_strings, modified_date, \
+from plants_tagger.util.exif_utils import dicts_to_strings, modified_date, \
     encode_record_date_time, set_modified_date
+from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 
-photo_directory = None
+# photo_directory = None
 logger = logging.getLogger(__name__)
-
-
-def read_exif_tags(file: dict):
-    """reads exif info for supplied file and parses information from it (plants list etc.);
-    data is directly written into the file dictionary parameter that requires at least the
-    'path_full_local' key"""
-    try:
-        exif_dict = piexif.load(file['path_full_local'])
-    except InvalidImageDataError:
-        logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {file["path_full_local"]}.')
-        file.update({'tag_description': '',
-                     'tag_keywords': [],
-                     'tag_authors_plants': [],
-                     'record_date_time': None})
-        return
-    # logger.debug(file['path_full_local'])
-
-    auto_rotate_jpeg(file['path_full_local'], exif_dict)
-
-    try:  # description
-        file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
-    except KeyError:
-        file['tag_description'] = ''
-
-    try:  # keywords
-        file['tag_keywords'] = _decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
-        if not file['tag_keywords'][0]:  # ''
-            file['tag_keywords'] = []
-    except KeyError:
-        file['tag_keywords'] = []
-
-    try:  # plants (list); read from authors exif tag
-        # if 315 in exif_dict['0th']:
-        file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
-        if not file['tag_authors_plants'][0]:  # ''
-            file['tag_authors_plants'] = []
-    except KeyError:
-        file['tag_authors_plants'] = []
-
-    try:  # record date+time
-        file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
-    except KeyError:
-        file['record_date_time'] = None
-
-
-def _decode_keywords_tag(t: tuple):
-    """decode a tuple of unicode byte integers (0..255) to a list of strings"""
-    char_list = list(map(chr, t))
-    chars = ''.join(char_list)
-    chars = chars.replace('\x00', '')  # remove null bytes after each character
-    keywords: List[str] = chars.split(';')
-    return keywords
 
 
 def encode_keywords_tag(keywords: list):
@@ -144,9 +91,10 @@ def write_new_exif_tags(images_data):
             set_modified_date(path, modified_time_seconds)  # set access and modifide date
 
             # update cache in PhotoDirectory
-            global photo_directory
-            if photo_directory:
-                photo_directory.update_image_data(data)
+            # global photo_directory
+            with lock_photo_directory:
+                if p := get_photo_directory(instantiate=False):
+                    p.update_image_data(data)
 
 
 def rename_plant_in_exif_tags(image: dict, plant_name_old: str, plant_name_new: str):

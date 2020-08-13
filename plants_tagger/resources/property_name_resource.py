@@ -1,13 +1,10 @@
 from flask_restful import Resource
 import logging
-import json
-from flask import request
 
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
 
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.models.property_models import PropertyName, PropertyCategory
-from plants_tagger.services.property_services import SaveProperties, LoadProperties
+from plants_tagger.models.property_models import PropertyCategory
 
 logger = logging.getLogger(__name__)
 

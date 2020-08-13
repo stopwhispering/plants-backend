@@ -3,23 +3,21 @@ import os
 from PIL import Image
 import functools
 import operator
-import threading
 import logging
 from typing import Set
 
 import plants_tagger.config_local
+import plants_tagger.extensions.photodirectory
+import plants_tagger.services.PhotoDirectory
 import plants_tagger.services.os_paths
 from plants_tagger import config
-from plants_tagger.config_local import PATH_BASE, LOG_IS_DEV
-from plants_tagger.services.PhotoDirectory import PhotoDirectory
+from plants_tagger.config_local import LOG_IS_DEV
+from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants_tagger.services.exif_services import rename_plant_in_exif_tags
-from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, \
-    PATH_GENERATED_THUMBNAILS, PATH_ORIGINAL_PHOTOS
+from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS
 from plants_tagger.util.filename_utils import get_generated_filename
 from plants_tagger.util.image_utils import generate_thumbnail
 
-lock_photo_directory = threading.RLock()
-photo_directory = None
 logger = logging.getLogger(__name__)
 
 
@@ -76,10 +74,10 @@ def get_exif_tags_for_folder():
     """get list of image dicts; uses global photo directory object, initialized only
     at first time after server (re-)start"""
     with lock_photo_directory:
-        global photo_directory
-        if not photo_directory:
-            photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-            photo_directory.refresh_directory(PATH_BASE)
+        photo_directory = get_photo_directory()
+        # if not plants_tagger.services.PhotoDirectory.photo_directory:
+        #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
+        #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory(PATH_BASE)
         plants_data = get_plants_data(photo_directory.directory)
         plants_unique = photo_directory.get_all_plants()
     return plants_data, plants_unique
@@ -88,10 +86,7 @@ def get_exif_tags_for_folder():
 def get_distinct_keywords_from_image_files() -> Set[str]:
     """get set of all keywords from all the images in the directory"""
     with lock_photo_directory:
-        global photo_directory
-        if not photo_directory:
-            photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-            photo_directory.refresh_directory(PATH_BASE)
+        photo_directory = get_photo_directory()
 
         # get list of lists of strings, flatten that nested list and return the distinct keywords as set
         keywords_nested_list = [file.get('tag_keywords') for file in photo_directory.directory]
@@ -138,12 +133,14 @@ def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: i
 
 def _get_images_by_plant_name(plant_name):
     # returns all image entries from photo directory tagging supplied plant name
-    global photo_directory
-    if not photo_directory:
-        photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-        photo_directory.refresh_directory(PATH_BASE)
-    images = [i for i in photo_directory.directory if
-              isinstance(i.get('tag_authors_plants'), list) and plant_name in i.get('tag_authors_plants')]
+    with lock_photo_directory:
+        photo_directory = get_photo_directory()
+
+    # if not plants_tagger.services.PhotoDirectory.photo_directory:
+    #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
+    #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory(PATH_BASE)
+        images = [i for i in photo_directory.directory if
+                  isinstance(i.get('tag_authors_plants'), list) and plant_name in i.get('tag_authors_plants')]
     return images
 
 

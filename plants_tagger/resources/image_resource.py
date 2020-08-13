@@ -5,15 +5,17 @@ import json
 import logging
 
 from flask_2_ui5_py import MessageType, get_message, throw_exception, make_list_items_json_serializable
-import plants_tagger.services.image_services
+
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
-from plants_tagger.services.image_services import lock_photo_directory, get_plants_data, \
+from plants_tagger.services.image_services import get_plants_data, \
     resize_image, resizing_required, get_exif_tags_for_folder
-from plants_tagger.services.exif_services import read_exif_tags, write_new_exif_tags
+from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
+from plants_tagger.services.exif_services import write_new_exif_tags
+from plants_tagger.util.exif_utils import read_exif_tags
 from plants_tagger.util.filename_utils import with_suffix
 
 logger = logging.getLogger(__name__)
@@ -121,11 +123,18 @@ class ImageResource(Resource):
                         plants_data[0]['keywords'] = keywords
                     write_new_exif_tags(plants_data)
 
+            # with lock_photo_directory:
+            #     if not image_services.photo_directory:
+            #         image_services.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
+            #     image_services.photo_directory.refresh_directory(plants_tagger.config_local.PATH_BASE)
+
             # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
-            if plants_tagger.services.image_services.photo_directory:
-                plants_tagger.services.image_services.photo_directory.refresh_directory(PATH_BASE)
-            else:
-                logger.warning('No instantiated photo directory found.')
+            with lock_photo_directory:
+                photo_directory = get_photo_directory(instantiate=False)
+                if photo_directory:
+                    photo_directory.refresh_directory(PATH_BASE)
+                else:
+                    logger.debug('No instantiated photo directory found.')
 
         if files and not duplicate_filenames:
             msg = get_message(f'Successfully saved {len(files)} images.')
@@ -161,8 +170,9 @@ class ImageResource(Resource):
 
         # remove from PhotoDirectory cache
         with lock_photo_directory:
-            if plants_tagger.services.image_services.photo_directory:
-                plants_tagger.services.image_services.photo_directory.remove_image_from_directory(photo)
+            photo_directory = get_photo_directory(instantiate=False)
+            if photo_directory:
+                photo_directory.remove_image_from_directory(photo)
 
         # send the photo back to frontend; it will be removed from json model there
         return {'message': get_message(f'Successfully deleted image',
