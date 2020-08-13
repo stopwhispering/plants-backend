@@ -46,7 +46,7 @@ class LoadProperties:
                                            'properties':    []}
 
     def get_properties_for_plant(self, plant_id: int) -> List:
-        property_objects = PropertyValue.get_by_plant_id(plant_id, raise_exception=False)
+        property_objects = PropertyValue.get_by_plant_id(plant_id, raise_exception=False) if plant_id else []
         property_dicts = [p.as_dict() for p in property_objects]
 
         # build category / property hierarchy

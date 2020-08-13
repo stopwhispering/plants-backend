@@ -69,8 +69,6 @@ class PropertyValue(Base, OrmUtil):
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="property_values_taxon")
 
-
-
     # static query methods
     @staticmethod
     def get_by_id(property_value_id: int, raise_exception: bool = False) -> PropertyValue:

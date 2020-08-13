@@ -45,6 +45,8 @@ class PropertyResource(Resource):
         """reads a plant's property values from db; plus it's taxon's property values"""
         if not plant_id:
             throw_exception('Plant id required for Property GET requests')
+        if plant_id == 'undefined':
+            plant_id = None
 
         load_properties = LoadProperties()
         categories = load_properties.get_properties_for_plant(plant_id)
