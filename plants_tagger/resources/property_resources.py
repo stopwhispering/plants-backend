@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class PropertyTaxaResource(Resource):
-    """saving taxon properties; note: there's no get method for taxon properties; they are read with the plant's
+    """taxon properties; note: there's no get method for taxon properties; they are read with the plant's
     properties"""
     @staticmethod
     def post():
+        """save taxon properties"""
         if not request.get_data():
             throw_exception('Bad request..')
-        # modified_properties_plants = json.loads(request.get_data()).get('modifiedPropertiesPlants')
         modified_properties_taxa = json.loads(request.get_data()).get('modifiedPropertiesTaxa')
         SavePropertiesTaxa().save_properties(properties_modified=modified_properties_taxa)
         return {'resource': 'PropertyTaxaResource',
@@ -25,13 +25,13 @@ class PropertyTaxaResource(Resource):
 
 
 class PropertyResource(Resource):
-
+    """plant properties"""
     @staticmethod
     def post():
+        """save plant properties"""
         if not request.get_data():
             throw_exception('Bad request..')
         modified_properties_plants = json.loads(request.get_data()).get('modifiedPropertiesPlants')
-        # modified_properties_taxa = json.loads(request.get_data()).get('modifiedPropertiesTaxa')
         if not modified_properties_plants:
             throw_exception('No property supplied to modify.')
 

@@ -13,6 +13,7 @@ from plants_tagger.resources.property_resources import PropertyResource, Propert
 from plants_tagger.resources.plant_resource import PlantResource
 from plants_tagger.resources.proposal_resource import ProposalResource
 from plants_tagger.resources.refresh_photo_dir_resource import RefreshPhotoDirectoryResource
+from plants_tagger.resources.selection_resource import SelectionResource
 from plants_tagger.resources.taxon_resoure import TaxonResource
 from plants_tagger.resources.taxon_to_plant_assignments_resource import TaxonToPlantAssignmentsResource
 from plants_tagger.config_local import ALLOW_CORS
@@ -52,6 +53,9 @@ def create_app():
 
     api.add_resource(PropertyNameResource, '/plants_tagger/backend/PropertyName')
 
+    api.add_resource(SelectionResource, '/plants_tagger/backend/Selection')
+
     logger.info('Added REST Resources.')
+
 
     return app
