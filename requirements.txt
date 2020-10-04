@@ -1,0 +1,32 @@
+pygbif
+# Click
+Flask
+Flask-RESTful
+IPTCInfo3
+# Jinja2
+MarkupSafe
+Pillow
+PyYAML
+SQLAlchemy
+Werkzeug
+BeautifulSoup4
+aniso8601
+argh
+itsdangerous
+numpy
+pandas
+pathtools
+piexif
+pip
+python-dateutil
+pytz
+setuptools
+six
+xlrd
+pykew
+unidecode
+requests
+# beautifulsoup4
+Wikidata
+flask-2-ui5-py
+# matplotlib
