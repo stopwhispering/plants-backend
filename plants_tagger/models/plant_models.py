@@ -1,13 +1,13 @@
 from __future__ import annotations
 from flask_2_ui5_py import throw_exception
-from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, Enum
+from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP
 from sqlalchemy.dialects.sqlite import DATE
 from sqlalchemy.orm import relationship
 import logging
 import datetime
 import json
 
-from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
+from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory, NULL_DATE
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.image_services import generate_previewimage_get_rel_path
 from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
@@ -96,10 +96,14 @@ class Plant(Base, OrmUtil):
         # get latest photo record date per plant
         with lock_photo_directory:
             photo_directory = get_photo_directory()
-            # if not plants_tagger.services.PhotoDirectory.photo_directory:
-            #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory()
-            #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory()
-            as_dict['latest_image_record_date'] = photo_directory.get_latest_date_per_plant(self.plant_name)
+
+            if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
+                as_dict['latest_image'] = {'path': latest_image.path,
+                                           'path_thumb': latest_image.path_thumb,
+                                           'date': latest_image.date}
+            else:
+                as_dict['latest_image_record_date'] = NULL_DATE
+                as_dict['latest_image'] = None
 
         return as_dict
 

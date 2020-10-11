@@ -7,7 +7,6 @@ from plants_tagger.models.event_models import insert_categories
 from plants_tagger.models.property_models import insert_property_categories
 from plants_tagger.resources.event_resource import EventResource
 from plants_tagger.resources.image_resource import ImageResource
-# from plants_tagger.resources.named_property_resource import PropertyResource
 from plants_tagger.resources.property_name_resource import PropertyNameResource
 from plants_tagger.resources.property_resources import PropertyResource, PropertyTaxaResource
 from plants_tagger.resources.plant_resource import PlantResource
@@ -19,6 +18,24 @@ from plants_tagger.resources.taxon_to_plant_assignments_resource import TaxonToP
 from plants_tagger.config_local import ALLOW_CORS
 
 logger = logging.getLogger(__name__)
+
+
+def _add_resources(api: Api):
+    api.add_resource(PlantResource, '/plants_tagger/backend/Plant/<string:plant_name>',
+                                    '/plants_tagger/backend/Plant')
+    api.add_resource(ImageResource, '/plants_tagger/backend/Image')
+    api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
+    api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
+    api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
+    api.add_resource(EventResource, '/plants_tagger/backend/Event/<string:plant_name>',  # only get
+                                    '/plants_tagger/backend/Event')  # only post
+    api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
+    api.add_resource(PropertyResource, '/plants_tagger/backend/Property/<string:plant_id>',
+                                       '/plants_tagger/backend/Property')  # only post)
+    api.add_resource(PropertyTaxaResource, '/plants_tagger/backend/PropertyTaxon')  # only post
+    api.add_resource(PropertyNameResource, '/plants_tagger/backend/PropertyName')
+    api.add_resource(SelectionResource, '/plants_tagger/backend/Selection')
+    logger.info('Added REST Resources.')
 
 
 # factory
@@ -37,25 +54,5 @@ def create_app():
             response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
             return response
 
-    api.add_resource(PlantResource, '/plants_tagger/backend/Plant/<string:plant_name>',
-                                    '/plants_tagger/backend/Plant')
-    api.add_resource(ImageResource, '/plants_tagger/backend/Image')
-    api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
-    api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
-    api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
-    api.add_resource(EventResource, '/plants_tagger/backend/Event/<string:plant_name>',  # only get
-                                    '/plants_tagger/backend/Event')  # only post
-    api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
-
-    api.add_resource(PropertyResource, '/plants_tagger/backend/Property/<string:plant_id>',
-                                       '/plants_tagger/backend/Property')  # only post)
-    api.add_resource(PropertyTaxaResource, '/plants_tagger/backend/PropertyTaxon')  # only post
-
-    api.add_resource(PropertyNameResource, '/plants_tagger/backend/PropertyName')
-
-    api.add_resource(SelectionResource, '/plants_tagger/backend/Selection')
-
-    logger.info('Added REST Resources.')
-
-
+    _add_resources(api)
     return app
