@@ -49,8 +49,6 @@ def build_taxon_tree() -> List:
             new_genus = False
 
         # create species leaf
-        if not t[2]:
-            a = 1
         current_species = t[2] or '[Custom]'
         if (current_species != previous_species) or new_genus:
             species_leaf = {'key': current_species,

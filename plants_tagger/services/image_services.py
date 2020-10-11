@@ -90,7 +90,7 @@ def get_distinct_keywords_from_image_files() -> Set[str]:
         # get list of lists of strings, flatten that nested list and return the distinct keywords as set
         keywords_nested_list = [file.get('tag_keywords') for file in photo_directory.directory]
         keywords_nested_list = [li for li in keywords_nested_list if li]  # remove None's
-        keywords_list = functools.reduce(operator.concat, keywords_nested_list)
+        keywords_list = functools.reduce(operator.concat, keywords_nested_list) if keywords_nested_list else []
         return set(keywords_list)
 
 

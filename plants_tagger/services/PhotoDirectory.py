@@ -5,10 +5,11 @@ import os
 import logging
 import datetime
 import threading
-from typing import Optional
+from typing import Optional, Dict
 
 from plants_tagger import config
 from plants_tagger.config_local import PATH_BASE
+from plants_tagger.models.entities import ImageInfo
 from plants_tagger.util.exif_utils import read_exif_tags
 from plants_tagger.util.filename_utils import get_generated_filename
 from plants_tagger.util.image_utils import generate_thumbnail
@@ -21,7 +22,7 @@ NULL_DATE = datetime.date(1900, 1, 1)
 
 class PhotoDirectory:
     directory = None
-    latest_image_dates = {}
+    latest_image_dates: Dict[str, ImageInfo] = {}
 
     def __init__(self, root_folder: str = PATH_ORIGINAL_PHOTOS):
         self.root_folder = root_folder
@@ -124,16 +125,18 @@ class PhotoDirectory:
         for image in self.directory:
             for p in image['tag_authors_plants']:
                 try:
-                    if p not in self.latest_image_dates or self.latest_image_dates[p] < image['record_date_time']:
-                        self.latest_image_dates[p] = image['record_date_time']
+                    if p not in self.latest_image_dates or self.latest_image_dates[p].date < image['record_date_time']:
+                        self.latest_image_dates[p] = ImageInfo(date=image['record_date_time'],
+                                                               path=image['path_original'],
+                                                               path_thumb=image['path_thumb'])
                 except TypeError:
                     pass
 
-    def get_latest_date_per_plant(self, plant_name: str):
+    def get_latest_date_per_plant(self, plant_name: str) -> ImageInfo:
         """called by plants resource. returns latest image record date for supplied plant_name"""
         # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
         # (in ui5 formatter, we will format the null_date as an empty string)
-        return self.latest_image_dates.get(plant_name, NULL_DATE)
+        return self.latest_image_dates.get(plant_name)
 
 
 lock_photo_directory = threading.RLock()
