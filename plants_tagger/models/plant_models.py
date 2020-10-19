@@ -36,9 +36,14 @@ class Plant(Base, OrmUtil):
     generation_type = Column(CHAR(60))
     generation_notes = Column(CHAR(120))
 
-    mother_plant_id = Column(INTEGER, ForeignKey('plants.id'))
-    mother_plant = relationship("Plant", remote_side=[id])
-    children_plants = relationship("Plant")
+    parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))
+    parent_plant = relationship("Plant", primaryjoin='Plant.parent_plant_id==Plant.id', remote_side=[id])
+    # parent_plant = relationship("Plant", remote_side="Plant.id")
+    # children_plants = relationship("Plant")  # todo remove?
+
+    parent_plant_pollen_id = Column(INTEGER, ForeignKey('plants.id'))
+    parent_plant_pollen = relationship("Plant", primaryjoin='Plant.parent_plant_pollen_id==Plant.id', remote_side=[id])
+    # parent_plant_pollen_name = relationship("Plant", remote_side="Plant.id")
 
     # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
@@ -62,7 +67,8 @@ class Plant(Base, OrmUtil):
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
         as_dict = super(Plant, self).as_dict()
-        as_dict['mother_plant'] = self.mother_plant.plant_name if self.mother_plant else None
+        as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
+        as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
 
         # add botanical name and author
         if self.taxon:
@@ -137,12 +143,18 @@ class Plant(Base, OrmUtil):
     def set_generation_notes(self, generation_notes=None, plant: dict = None):
         self.generation_notes = plant.get('generation_notes') if plant else generation_notes
 
-    def set_mother_plant(self, mother_plant_name: str = None):
-        if mother_plant_name:
-            self.mother_plant_id = self.get_plant_id_by_plant_name(mother_plant_name)
+    def set_parent_plant(self, parent_plant_name: str = None):
+        if parent_plant_name:
+            self.parent_plant_id = self.get_plant_id_by_plant_name(parent_plant_name)
         else:
-            self.mother_plant_id = None
-        
+            self.parent_plant_id = None
+
+    def set_parent_plant_pollen(self, parent_plant_pollen_name: str = None):
+        if parent_plant_pollen_name:
+            self.parent_plant_pollen_id = self.get_plant_id_by_plant_name(parent_plant_pollen_name)
+        else:
+            self.parent_plant_pollen_id = None
+
     # def set_generation_origin(self, generation_origin=None, plant: dict = None):
     #     self.generation_origin = plant.get('generation_origin') if plant else generation_origin
         

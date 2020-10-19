@@ -40,9 +40,10 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         # record_update.set_generation_origin(plant=plant)
         record_update.set_plant_notes(plant=plant)
 
-        # mother_plant_id is still the old one if changed; but mother_plant the new mother plant
-        # in db, we only persist the mother plant id
-        record_update.set_mother_plant(mother_plant_name=plant.get('mother_plant'))
+        # parent_plant_id is still the old one if changed; but parent_plant the new parent plant
+        # in db, we only persist the parent plant id
+        record_update.set_parent_plant(parent_plant_name=plant.get('parent_plant'))
+        record_update.set_parent_plant_pollen(parent_plant_pollen_name=plant.get('parent_plant_pollen'))
         record_update.set_filename_previewimage(plant=plant)
         record_update.set_taxon(plant=plant)
         record_update.set_last_update()
