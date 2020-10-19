@@ -37,12 +37,22 @@ class Plant(Base, OrmUtil):
     generation_notes = Column(CHAR(120))
 
     parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))
-    parent_plant = relationship("Plant", primaryjoin='Plant.parent_plant_id==Plant.id', remote_side=[id])
-    # parent_plant = relationship("Plant", remote_side="Plant.id")
-    # children_plants = relationship("Plant")  # todo remove?
+    parent_plant = relationship("Plant",
+                                primaryjoin='Plant.parent_plant_id==Plant.id',
+                                remote_side=[id],
+                                back_populates="descendant_plants")
+    descendant_plants = relationship("Plant",
+                                     primaryjoin="Plant.parent_plant_id==Plant.id",
+                                     back_populates="parent_plant")
 
     parent_plant_pollen_id = Column(INTEGER, ForeignKey('plants.id'))
-    parent_plant_pollen = relationship("Plant", primaryjoin='Plant.parent_plant_pollen_id==Plant.id', remote_side=[id])
+    parent_plant_pollen = relationship("Plant",
+                                       primaryjoin='Plant.parent_plant_pollen_id==Plant.id',
+                                       remote_side=[id],
+                                       back_populates="descendant_plants_pollen")
+    descendant_plants_pollen = relationship("Plant",
+                                            primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
+                                            back_populates="parent_plant_pollen")
     # parent_plant_pollen_name = relationship("Plant", remote_side="Plant.id")
 
     # generation_origin = Column(CHAR(60))
@@ -69,6 +79,10 @@ class Plant(Base, OrmUtil):
         as_dict = super(Plant, self).as_dict()
         as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
         as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
+        as_dict['descendant_plants'] = [{
+                'plant_name': p.plant_name,
+                'id': p.id
+                  } for p in (self.descendant_plants + self.descendant_plants_pollen)]
 
         # add botanical name and author
         if self.taxon:
@@ -104,9 +118,9 @@ class Plant(Base, OrmUtil):
             photo_directory = get_photo_directory()
 
             if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
-                as_dict['latest_image'] = {'path': latest_image.path,
+                as_dict['latest_image'] = {'path':       latest_image.path,
                                            'path_thumb': latest_image.path_thumb,
-                                           'date': latest_image.date}
+                                           'date':       latest_image.date}
             else:
                 as_dict['latest_image_record_date'] = NULL_DATE
                 as_dict['latest_image'] = None
@@ -116,30 +130,30 @@ class Plant(Base, OrmUtil):
     # setters
     def set_count(self, count=None, plant: dict = None):
         self.count = plant.get('count') if plant else count
-        
+
     def set_field_number(self, field_number=None, plant: dict = None):
         self.field_number = plant.get('field_number') if plant else field_number
-    
+
     def set_geographic_origin(self, geographic_origin=None, plant: dict = None):
         self.geographic_origin = plant.get('geographic_origin') if plant else geographic_origin
 
     def set_nursery_source(self, nursery_source=None, plant: dict = None):
         self.nursery_source = plant.get('nursery_source') if plant else nursery_source
-        
+
     def set_propagation_type(self, propagation_type=None, plant: dict = None):
         self.propagation_type = plant.get('propagation_type') if plant else propagation_type
-        
+
     def set_active(self, active=None, plant: dict = None):
         self.active = plant.get('active') if plant else active
-        
+
     def set_generation_date(self, generation_date=None, plant: dict = None):
         generation_date_tmp = plant.get('generation_date') if plant else generation_date
         if generation_date_tmp:
             self.generation_date = decode_record_date_time(generation_date_tmp) if generation_date_tmp else None
-        
+
     def set_generation_type(self, generation_type=None, plant: dict = None):
         self.generation_type = plant.get('generation_type') if plant else generation_type
-        
+
     def set_generation_notes(self, generation_notes=None, plant: dict = None):
         self.generation_notes = plant.get('generation_notes') if plant else generation_notes
 
@@ -157,10 +171,10 @@ class Plant(Base, OrmUtil):
 
     # def set_generation_origin(self, generation_origin=None, plant: dict = None):
     #     self.generation_origin = plant.get('generation_origin') if plant else generation_origin
-        
+
     def set_plant_notes(self, plant_notes=None, plant: dict = None):
         self.plant_notes = plant.get('plant_notes') if plant else plant_notes
-        
+
     def set_filename_previewimage(self, filename_previewimage=None, plant: dict = None):
         filename_tmp = plant.get('filename_previewimage') if plant else filename_previewimage
         if not filename_tmp:
