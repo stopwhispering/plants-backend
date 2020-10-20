@@ -2,7 +2,7 @@
 Flask-based RESTful Database Application for Tracking Plants
 
 ## Frontend
-A OpenUI5-based web frontend is yet to be uploaded into separate repository.
+Open UI5-based web frontend, see [plants-frontend](https://github.com/stopwhispering/plants-frontend).
 
 ## Webserver / Reverse Proxy
 The sample architecture uses NGINX and uWSGI as middleware. uWSGI can use the flask app returned by
