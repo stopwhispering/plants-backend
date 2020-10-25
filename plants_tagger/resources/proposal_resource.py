@@ -76,5 +76,5 @@ class ProposalResource(Resource):
         else:
             throw_exception(f'Proposal entity {entity_id} not expected.')
 
-        results['message'] = get_message(f'Loaded proposal values for entity {entity_id} from backend.')
+        results['message'] = get_message(f'Receiving proposal values for entity {entity_id} from backend.')
         return results, 200

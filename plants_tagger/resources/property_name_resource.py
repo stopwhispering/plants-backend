@@ -25,5 +25,5 @@ class PropertyNameResource(Resource):
 
         return {
             'propertiesAvailablePerCategory': results,
-            'message':             get_message(f"Loaded Property Names from database.")
+            'message':             get_message(f"Receiving Property Names from database.")
             }, 200

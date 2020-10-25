@@ -17,22 +17,22 @@ logger = logging.getLogger(__name__)
 
 class EventResource(Resource):
     @staticmethod
-    def get(plant_name):
+    def get(plant_id):
         """returns events from event database table; supply plant_name not id as new plants don't have an id, yet"""
 
-        if not plant_name:
-            throw_exception('Plant name required for GET requests')
+        if not plant_id:
+            throw_exception('Plant ID required for GET requests')
 
         results = []
         # might be a newly created plant with no existing events, yet
-        if plant_id := Plant.get_plant_id_by_plant_name(plant_name):
-            event_objs = Event.get_events_by_plant_id(plant_id)
-            for event_obj in event_objs:
-                results.append(event_obj.as_dict())
+        # if plant_id := Plant.get_plant_id_by_plant_name(plant_name):
+        event_objs = Event.get_events_by_plant_id(plant_id)
+        for event_obj in event_objs:
+            results.append(event_obj.as_dict())
 
-        logger.info(f'Returning {len(results)} events for {plant_name}.')
+        logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id)}.')
         return {'events':  results,
-                'message':  get_message(f'Returning {len(results)} events for {plant_name}.',
+                'message':  get_message(m,
                                         message_type=MessageType.DEBUG)}
 
     @staticmethod

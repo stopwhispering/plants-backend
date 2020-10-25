@@ -12,8 +12,6 @@ class RefreshPhotoDirectoryResource(Resource):
     def post():
         """recreates the photo directory, i.e. re-reads directory, creates missing thumbnails etc."""
         with lock_photo_directory:
-            # if not photo_directory:
-            #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory()
             get_photo_directory().refresh_directory()
 
         # # upon manually refreshing image data, we pickle the image tags directory

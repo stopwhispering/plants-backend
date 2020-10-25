@@ -62,5 +62,5 @@ class PropertyResource(Resource):
                    'plant_id': plant_id,
                    'propertyCollectionsTaxon': {"categories": categories_taxon},
                    'taxon_id': request.args.get('taxon_id'),
-                   'message':                  get_message(f"Loaded properties from database.")
+                   'message':                  get_message(f"Receiving properties for {plant_id} from database.")
                    }, 200

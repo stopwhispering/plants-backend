@@ -3,6 +3,7 @@ from flask import request
 import logging
 import datetime
 
+from plants_tagger.config_local import DEMO_MODE_RESTRICT_TO_N_PLANTS
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.services.image_services import rename_plant_in_image_files
 from plants_tagger.services.history_services import create_history_entry
@@ -37,6 +38,9 @@ class PlantResource(Resource):
         if config.filter_hidden:
             # noinspection PyComparisonWithNone
             query = query.filter((Plant.hide == False) | (Plant.hide == None))
+
+        if DEMO_MODE_RESTRICT_TO_N_PLANTS:
+            query = query.limit(DEMO_MODE_RESTRICT_TO_N_PLANTS)
 
         plants_obj = query.all()
         plants_list = []
