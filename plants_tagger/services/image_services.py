@@ -74,9 +74,6 @@ def get_exif_tags_for_folder():
     at first time after server (re-)start"""
     with lock_photo_directory:
         photo_directory = get_photo_directory()
-        # if not plants_tagger.services.PhotoDirectory.photo_directory:
-        #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-        #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory(PATH_BASE)
         plants_data = get_plants_data(photo_directory.directory)
         plants_unique = photo_directory.get_all_plants()
     return plants_data, plants_unique

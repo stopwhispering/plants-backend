@@ -27,7 +27,7 @@ def _add_resources(api: Api):
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
     api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
     api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
-    api.add_resource(EventResource, '/plants_tagger/backend/Event/<string:plant_name>',  # only get
+    api.add_resource(EventResource, '/plants_tagger/backend/Event/<int:plant_id>',  # only get
                                     '/plants_tagger/backend/Event')  # only post
     api.add_resource(ProposalResource, '/plants_tagger/backend/Proposal/<string:entity_id>')
     api.add_resource(PropertyResource, '/plants_tagger/backend/Property/<string:plant_id>',
