@@ -10,13 +10,13 @@ from plants_tagger.services.tag_services import tag_modified, update_tag
 logger = logging.getLogger(__name__)
 
 
-def update_plants_from_list_of_dicts(plants: [dict]):
+def update_plants_from_list_of_dicts(plants: [dict]) -> List[Plant]:
 
     new_list = []
+    plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
         record_update = Plant.get_plant_by_plant_name(plant['plant_name'])
-
         if boo_new := False if record_update else True:
             if [r for r in new_list if isinstance(r, Plant) and r.plant_name == plant['plant_name']]:
                 continue  # same plant in multiple new records
@@ -52,6 +52,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         new_tags = _update_tags(record_update, plant.get('tags'))
         new_list.extend(new_tags)
 
+        plants_saved.append(record_update)
         if boo_new:
             new_list.append(record_update)
 
@@ -59,6 +60,7 @@ def update_plants_from_list_of_dicts(plants: [dict]):
         get_sql_session().add_all(new_list)
 
     get_sql_session().commit()  # saves changes in existing records, too
+    return plants_saved
 
 
 def _update_tags(plant_obj: Plant, tags: List[dict]):

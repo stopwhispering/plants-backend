@@ -43,10 +43,11 @@ class PlantResource(Resource):
             query = query.limit(DEMO_MODE_RESTRICT_TO_N_PLANTS)
 
         plants_obj = query.all()
-        plants_list = []
-        for p in plants_obj:
-            plant = p.as_dict()
-            plants_list.append(plant)
+        plants_list = [p.as_dict() for p in plants_obj]
+        # plants_list = []
+        # for p in plants_obj:
+        #     plant = p.as_dict()
+        #     plants_list.append(plant)
 
         make_list_items_json_serializable(plants_list)
 
@@ -62,17 +63,22 @@ class PlantResource(Resource):
 
     @staticmethod
     def post(**kwargs):
-        """update existing plant"""
+        """update existing plants"""
         if not kwargs:
             kwargs = request.get_json(force=True)
 
         # update plants
-        update_plants_from_list_of_dicts(kwargs['PlantsCollection'])
+        plants_saved = update_plants_from_list_of_dicts(kwargs['PlantsCollection'])
+
+        # serialize updated/created plants to refresh data in frontend
+        plants_list = [p.as_dict() for p in plants_saved]
+        make_list_items_json_serializable(plants_list)
 
         message = f"Saved updates for {len(kwargs['PlantsCollection'])} plants."
         logger.info(message)
         return {'action':   'Saved',
                 'resource': 'PlantResource',
+                'plants': plants_list,  # return the updated/created plants
                 'message':  get_message(message)
                 }, 200
 
