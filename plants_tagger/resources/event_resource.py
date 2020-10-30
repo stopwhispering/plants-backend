@@ -9,7 +9,7 @@ from flask_2_ui5_py import get_message, throw_exception, MessageType
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.image_models import Image
-from plants_tagger.models.event_models import Pot, Observation, Event
+from plants_tagger.models.event_models import Pot, Observation, Event, PResultsEventResource
 from plants_tagger.services.event_services import get_or_create_soil
 
 logger = logging.getLogger(__name__)
@@ -17,8 +17,11 @@ logger = logging.getLogger(__name__)
 
 class EventResource(Resource):
     @staticmethod
-    def get(plant_id):
-        """returns events from event database table; supply plant_name not id as new plants don't have an id, yet"""
+    def get(plant_id: int):
+        """returns events from event database table
+        imports: plant_id
+        exports: see PResultsEventResource
+        """
 
         if not plant_id:
             throw_exception('Plant ID required for GET requests')
@@ -31,9 +34,10 @@ class EventResource(Resource):
             results.append(event_obj.as_dict())
 
         logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id)}.')
-        return {'events':  results,
-                'message':  get_message(m,
-                                        message_type=MessageType.DEBUG)}
+        results = {'events':  results,
+                   'message':  get_message(m,
+                                           message_type=MessageType.DEBUG)}
+        return PResultsEventResource(**results).dict()
 
     @staticmethod
     def post():
