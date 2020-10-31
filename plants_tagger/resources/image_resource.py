@@ -5,10 +5,14 @@ import json
 import logging
 
 from flask_2_ui5_py import MessageType, get_message, throw_exception, make_list_items_json_serializable
+from pydantic.error_wrappers import ValidationError
 
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
+from plants_tagger.models.validation.image_validation import PResultsImageResource, PImageUpdated, \
+    PImageUploadedMetadata, PImage, PResultsImageDeleted
+from plants_tagger.models.validation.message_validation import PConfirmation
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
 from plants_tagger.services.image_services import get_plants_data, \
@@ -48,24 +52,46 @@ class ImageResource(Resource):
                 image['description'] = ''
 
         make_list_items_json_serializable(files_data)
-
         logger.info(f'Returned {len(files_data)} images.')
-        return {'ImagesCollection': files_data,
-                'message': get_message('Loaded images from backend.',
-                                       description=f'Count: {len(files_data)}')
-                }, 200
+        results = {'ImagesCollection': files_data,
+                   'message':          get_message('Loaded images from backend.',
+                                                   description=f'Count: {len(files_data)}')
+                   }
+        # valitdate
+        try:
+            PResultsImageResource(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def put(**kwargs):
         """modify existing image's exif tags"""
         if not kwargs:
             kwargs = request.get_json(force=True)
+
+        # evaluate input
+        try:
+            PImageUpdated(**kwargs)
+        except ValidationError as err:
+            throw_exception(str(err))
+
         logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
         write_new_exif_tags(kwargs['ImagesCollection'])
-        return {'action':   'Saved',
-                'resource': 'ImageResource',
-                'message': get_message(f"Saved updates for {len(kwargs['ImagesCollection'])} images.")
-                }, 200
+
+        results = {'action':   'Saved',
+                   'resource': 'ImageResource',
+                   'message':  get_message(f"Saved updates for {len(kwargs['ImagesCollection'])} images.")
+                   }
+
+        # evaluate output
+        try:
+            PConfirmation(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def post():
@@ -73,6 +99,12 @@ class ImageResource(Resource):
         # check if any of the files already exists locally
         files = request.files.getlist('photoUpload[]')
         additional_data = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else {}
+
+        # evaluate input
+        try:
+            PImageUploadedMetadata(**additional_data)
+        except ValidationError as err:
+            throw_exception(str(err))
 
         plants = [{'key': p, 'text': p} for p in additional_data['plants']] if 'plants' in additional_data else []
         keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']] \
@@ -85,7 +117,7 @@ class ImageResource(Resource):
             logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
             if os.path.isfile(path) or os.path.isfile(with_suffix(path, RESIZE_SUFFIX)):  # todo: better check in all
                 # folders!
-                files.pop(i-len(duplicate_filenames))
+                files.pop(i - len(duplicate_filenames))
                 duplicate_filenames.append(photo_upload.filename)
                 logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
 
@@ -144,14 +176,31 @@ class ImageResource(Resource):
                               additional_text='click for details',
                               description=f'Saved {[p.filename for p in files]}.'
                                           f'\nSkipped {duplicate_filenames}.')
-
         logger.info(msg['message'])
-        return {'message':  msg}, 200
+        results = {'action':   'Uploaded',
+                   'resource': 'ImageResource',
+                   'message':  msg
+                   }
+
+        # evaluate output
+        try:
+            PConfirmation(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def delete():
         """move the file that should be deleted to another folder (not actually deleted, currently)"""
         photo = request.get_json()
+
+        # evaluate input
+        try:
+            PImage(**photo)
+        except ValidationError as err:
+            throw_exception(str(err))
+
         old_path = photo['path_full_local']
         if not os.path.isfile(old_path):
             logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
@@ -174,7 +223,17 @@ class ImageResource(Resource):
             if photo_directory:
                 photo_directory.remove_image_from_directory(photo)
 
+        results = {'action':   'Deleted',
+                   'resource': 'ImageResource',
+                   'message':  get_message(f'Successfully deleted image',
+                                           description=f'Filename: {os.path.basename(old_path)}'),
+                   'photo':    photo}
+
+        # evaluate output
+        try:
+            PResultsImageDeleted(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
         # send the photo back to frontend; it will be removed from json model there
-        return {'message': get_message(f'Successfully deleted image',
-                                       description=f'Filename: {os.path.basename(old_path)}'),
-                'photo': photo}, 200
+        return results, 200

@@ -1,7 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional
-
-from pydantic.main import BaseModel
+from typing import List
 
 from plants_tagger import config
 from flask_2_ui5_py import throw_exception
@@ -11,7 +9,6 @@ import logging
 
 from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
-from plants_tagger.models.message_models import PMessage
 from plants_tagger.models.trait_models import TraitCategory
 from plants_tagger.extensions.orm import Base
 from plants_tagger.services.image_services import get_thumbnail_relative_path_for_relative_path
@@ -183,79 +180,3 @@ def insert_categories():
             trait_category = TraitCategory(category_name=t)
             get_sql_session().add(trait_category)
     get_sql_session().commit()
-
-
-class PObservation(BaseModel):
-    id: int
-    diseases: Optional[str]
-    stem_max_diameter: Optional[float]  # todo remove?
-    height: Optional[float]  # todo remove?
-    observation_notes: Optional[str]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PPot(BaseModel):
-    id: int
-    material: str
-    shape_top: str
-    shape_side: Optional[str]  # todo enforce
-    diameter_width: float
-
-    class Config:
-        extra = 'forbid'
-
-
-class PSoilComponent(BaseModel):
-    component_name: str
-    portion: int
-
-    class Config:
-        extra = 'forbid'
-
-
-class PSoil(BaseModel):
-    id: int
-    soil_name: str
-    components: List[PSoilComponent]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PImage(BaseModel):
-    id: int
-    url_small: str
-    url_original: str
-
-    class Config:
-        extra = 'forbid'
-
-
-class PEvent(BaseModel):
-    id: int
-    date: str
-    # icon':            None,
-    event_notes: Optional[str]
-    observation_id: Optional[int]
-    observation: Optional[PObservation]
-    pot_id: Optional[int]
-    pot_event_type: Optional[str]
-    soil_id: Optional[int]
-    soil: Optional[PSoil]
-    soil_event_type: Optional[str]
-    plant_id: int
-    pot: Optional[PPot]
-    images: Optional[List[PImage]]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PResultsEventResource(BaseModel):
-    events: List[PEvent]
-    message: PMessage
-
-    class Config:
-        extra = 'forbid'

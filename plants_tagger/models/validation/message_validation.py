@@ -12,3 +12,12 @@ class PMessage(BaseModel):
 
     class Config:
         extra = 'forbid'
+
+
+class PConfirmation(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+
+    class Config:
+        extra = 'forbid'
