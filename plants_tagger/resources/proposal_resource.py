@@ -3,9 +3,12 @@ from typing import List
 from flask_restful import Resource
 import logging
 
+from pydantic.error_wrappers import ValidationError
+
 from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
+from plants_tagger.validation.proposal_validation import ProposalEntity, PEntityName, PResultsProposals
 from plants_tagger.services.image_services import get_distinct_keywords_from_image_files
 from plants_tagger.models.trait_models import Trait, TraitCategory
 from plants_tagger.models.event_models import Soil, SoilComponent
@@ -18,8 +21,15 @@ class ProposalResource(Resource):
     @staticmethod
     def get(entity_id):
         """returns proposals for selection tables"""
-        results = []
-        if entity_id == 'SoilProposals':
+
+        # evaluate arguments
+        try:
+            PEntityName.parse_obj(entity_id)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        results = {}
+        if entity_id == ProposalEntity.SOIL:
             results = {'SoilsCollection': [],
                        'ComponentsCollection': []}
             # soil mixes
@@ -35,7 +45,7 @@ class ProposalResource(Resource):
             components = get_sql_session().query(SoilComponent).all()
             results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
 
-        elif entity_id == 'NurserySourceProposals':
+        elif entity_id == ProposalEntity.NURSERY:
             # get distinct nurseries/sources, sorted by last update
             nurseries_tuples = get_sql_session().query(Plant.nursery_source) \
                 .order_by(Plant.last_update.desc()) \
@@ -46,13 +56,13 @@ class ProposalResource(Resource):
             else:
                 results = {'NurseriesSourcesCollection': [{'name': n[0]} for n in nurseries_tuples]}
 
-        elif entity_id == 'KeywordProposals':
+        elif entity_id == ProposalEntity.KEYWORD:
             # return collection of all distinct keywords used in images
             keywords_set = get_distinct_keywords_from_image_files()
             keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
             results = {'KeywordsCollection': keywords_collection}
 
-        elif entity_id == 'TraitCategoryProposals':
+        elif entity_id == ProposalEntity.TRAIT_CATEGORY:
             # trait categories
             trait_categories = []
             t: Trait
@@ -76,5 +86,14 @@ class ProposalResource(Resource):
         else:
             throw_exception(f'Proposal entity {entity_id} not expected.')
 
-        results['message'] = get_message(f'Receiving proposal values for entity {entity_id} from backend.')
+        results.update({'action': 'Get',
+                        'resource': 'ProposalResource',
+                        'message': get_message(f'Receiving proposal values for entity {entity_id} from backend.')})
+
+        # evaluate output
+        try:
+            PResultsProposals(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
         return results, 200

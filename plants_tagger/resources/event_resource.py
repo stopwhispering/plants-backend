@@ -3,6 +3,8 @@ from flask_restful import Resource
 import logging
 from flask import request
 from collections import defaultdict
+
+from pydantic.error_wrappers import ValidationError
 from sqlalchemy.exc import InvalidRequestError
 from flask_2_ui5_py import get_message, throw_exception, MessageType
 
@@ -10,6 +12,9 @@ from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
 from plants_tagger.models.image_models import Image
 from plants_tagger.models.event_models import Pot, Observation, Event
+from plants_tagger.validation.event_validation import PResultsEventResource, EventsUpdatedByPlantName
+from plants_tagger.validation.message_validation import PConfirmation
+from plants_tagger.validation.plant_validation import PPlantId
 from plants_tagger.services.event_services import get_or_create_soil
 
 logger = logging.getLogger(__name__)
@@ -17,10 +22,15 @@ logger = logging.getLogger(__name__)
 
 class EventResource(Resource):
     @staticmethod
-    def get(plant_id):
-        """returns events from event database table; supply plant_name not id as new plants don't have an id, yet"""
-
-        if not plant_id:
+    def get(plant_id: int):
+        """returns events from event database table
+        imports: plant_id
+        exports: see PResultsEventResource
+        """
+        # evaluate arguments
+        try:
+            PPlantId.parse_obj(plant_id)
+        except ValidationError:
             throw_exception('Plant ID required for GET requests')
 
         results = []
@@ -31,9 +41,17 @@ class EventResource(Resource):
             results.append(event_obj.as_dict())
 
         logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id)}.')
-        return {'events':  results,
-                'message':  get_message(m,
-                                        message_type=MessageType.DEBUG)}
+        results = {'events':  results,
+                   'message': get_message(m,
+                                          message_type=MessageType.DEBUG)}
+
+        # evaluate output
+        try:
+            PResultsEventResource(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def post():
@@ -42,6 +60,12 @@ class EventResource(Resource):
         # deleted. it does, however, always submit all these plants' events
         if not (plants_events_dict := request.get_json()['ModifiedEventsDict']):
             throw_exception('No plants and events supplied to save.')
+
+        # validate arguments
+        try:
+            EventsUpdatedByPlantName.parse_obj(plants_events_dict)
+        except ValidationError as err:
+            throw_exception(str(err))
 
         # loop at the plants and their events
         counts = defaultdict(int)
@@ -187,7 +211,15 @@ class EventResource(Resource):
         get_sql_session().commit()
 
         logger.info(' Saving Events: ' + (description := ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])))
-        return {'resource': 'EventResource',
-                'message': get_message(f'Updated events in database.',
-                                       description=description)
-                }, 200  # required for closing busy dialog when saving
+        results = {'action':   'Saved events',
+                   'resource': 'EventResource',
+                   'message':  get_message(f'Updated events in database.',
+                                           description=description)}
+
+        # evaluate output
+        try:
+            PConfirmation(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200  # required for closing busy dialog when saving

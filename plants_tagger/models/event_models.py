@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List
+
 from plants_tagger import config
 from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, TEXT
@@ -90,7 +91,7 @@ class Event(Base, OrmUtil):
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     date = Column(CHAR(12), nullable=False)  # e.g. 201912241645 or 201903
     # action = Column(CHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
-    icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    # icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
     event_notes = Column(TEXT)
 
     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)

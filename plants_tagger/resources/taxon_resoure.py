@@ -3,8 +3,12 @@ import logging
 from flask import request
 from typing import List
 
+from pydantic.error_wrappers import ValidationError
+
 from plants_tagger import config
 from plants_tagger.extensions.orm import get_sql_session
+from plants_tagger.validation.message_validation import PConfirmation
+from plants_tagger.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa
 from plants_tagger.services.image_services import get_thumbnail_relative_path_for_relative_path
 from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.models.image_models import Image, ImageToTaxonAssociation
@@ -32,17 +36,17 @@ class TaxonResource(Resource):
                 for link in taxon.taxon_to_trait_associations:
                     if link.trait.trait_category.id not in categories:
                         categories[link.trait.trait_category.id] = {
-                            'id': link.trait.trait_category.id,
+                            'id':            link.trait.trait_category.id,
                             'category_name': link.trait.trait_category.category_name,
-                            'sort_flag': link.trait.trait_category.sort_flag,
-                            'traits': []
+                            'sort_flag':     link.trait.trait_category.sort_flag,
+                            'traits':        []
                             }
                     categories[link.trait.trait_category.id]['traits'].append({
-                                'id':       link.trait.id,
-                                'trait':    link.trait.trait,
-                                # 'observed': link.observed,
-                                'status': link.status
-                                })
+                        'id':     link.trait.id,
+                        'trait':  link.trait.trait,
+                        # 'observed': link.observed,
+                        'status': link.status
+                        })
 
                 # ui5 frontend requires a list for the json model
                 taxon_dict[taxon.id]['trait_categories'] = list(categories.values())
@@ -60,7 +64,7 @@ class TaxonResource(Resource):
                                                            'description':  link_obj.description})
 
             # distribution codes according to WGSRPD (level 3)
-            taxon_dict[taxon.id]['distribution'] = {'native': [],
+            taxon_dict[taxon.id]['distribution'] = {'native':     [],
                                                     'introduced': []}
             for distribution_obj in taxon.distribution:
                 if distribution_obj.establishment == 'Native':
@@ -68,11 +72,19 @@ class TaxonResource(Resource):
                 elif distribution_obj.establishment == 'Introduced':
                     taxon_dict[taxon.id]['distribution']['introduced'].append(distribution_obj.tdwg_code)
 
-        message = f'Received {len(taxon_dict)} taxa from database.'
-        logger.info(message)
-        return {'TaxaDict': taxon_dict,
-                'message': get_message(message)
-                }, 200
+        logger.info(message := f'Received {len(taxon_dict)} taxa from database.')
+        results = {'action':   'Get taxa',
+                   'resource': 'TaxonResource',
+                   'message':  get_message(message),
+                   'TaxaDict': taxon_dict}
+
+        # evaluate output
+        try:
+            PResultsGetTaxa(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def post():
@@ -80,6 +92,13 @@ class TaxonResource(Resource):
             - modified custom fields
             - traits"""
         modified_taxa = request.get_json(force=True).get('ModifiedTaxaCollection')
+
+        # evaluate arguments
+        try:
+            PModifiedTaxa(**request.get_json(force=True))
+        except ValidationError as err:
+            throw_exception(str(err))
+
         for taxon_modified in modified_taxa:
             taxon: Taxon = get_sql_session().query(Taxon).filter(Taxon.id == taxon_modified['id']).first()
             if not taxon:
@@ -130,7 +149,15 @@ class TaxonResource(Resource):
 
         get_sql_session().commit()
 
+        results = {'action':   'Save taxa',
+                   'resource': 'TaxonResource',
+                   'message':  get_message(f'Updated {len(modified_taxa)} taxa in database.')}
+
+        # evaluate output
+        try:
+            PConfirmation(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
         logger.info(f'Updated {len(modified_taxa)} taxa in database.')
-        return {'resource': 'TaxonResource',
-                'message': get_message(f'Updated {len(modified_taxa)} taxa in database.')
-                }, 200
+        return results, 200
