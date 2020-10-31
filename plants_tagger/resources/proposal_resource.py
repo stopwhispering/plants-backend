@@ -8,7 +8,7 @@ from pydantic.error_wrappers import ValidationError
 from plants_tagger.config import TRAIT_CATEGORIES
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
-from plants_tagger.models.validation.proposal_validation import ProposalEntity, PEntityName, PResultsProposals
+from plants_tagger.validation.proposal_validation import ProposalEntity, PEntityName, PResultsProposals
 from plants_tagger.services.image_services import get_distinct_keywords_from_image_files
 from plants_tagger.models.trait_models import Trait, TraitCategory
 from plants_tagger.models.event_models import Soil, SoilComponent
@@ -22,7 +22,7 @@ class ProposalResource(Resource):
     def get(entity_id):
         """returns proposals for selection tables"""
 
-        # evaluate input
+        # evaluate arguments
         try:
             PEntityName.parse_obj(entity_id)
         except ValidationError as err:

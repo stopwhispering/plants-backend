@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional
 from pydantic.main import BaseModel
 
-from plants_tagger.models.validation.message_validation import PMessage
-from plants_tagger.models.validation.plant_validation import PPlantId
-from plants_tagger.models.validation.taxon_validation import PTaxonId
+from plants_tagger.validation.message_validation import PMessage
+from plants_tagger.validation.plant_validation import PPlantId
+from plants_tagger.validation.taxon_validation import PTaxonId
 
 
 class PCategoryId(BaseModel):
@@ -41,7 +41,7 @@ class PropertyValue(BaseModel):
 # todo make all this flatter and easier
 class Property(BaseModel):
     property_name: str
-    property_name_id: int
+    property_name_id: Optional[int]  # empty if new
     property_values: List[PropertyValue]
 
     class Config:
@@ -53,6 +53,7 @@ class PropertiesInCategory(BaseModel):
     category_id: PCategoryId
     sort: Optional[int]  # todo remove?
     properties: List[Property]
+    property_value: Optional[str]  # used in some request to add new property to category
 
     class Config:
         extra = 'forbid'
@@ -80,7 +81,7 @@ class PResultsPropertiesForPlant(BaseModel):
     propertyCollections: PPropertyCollectionPlant
     plant_id: PPlantId
     propertyCollectionsTaxon: PPropertyCollectionTaxon
-    taxon_id: PTaxonId
+    taxon_id: Optional[PTaxonId]
 
     class Config:
         extra = 'forbid'
@@ -89,6 +90,12 @@ class PResultsPropertiesForPlant(BaseModel):
 class PPropertiesModifiedPlant(BaseModel):
     modifiedPropertiesPlants: Dict[int, PPropertyCollectionPlant]
 
+    class Config:
+        extra = 'forbid'
+
 
 class PPropertiesModifiedTaxon(BaseModel):
     modifiedPropertiesTaxa: Dict[int, Dict[int, PropertiesInCategory]]
+
+    class Config:
+        extra = 'forbid'

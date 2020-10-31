@@ -10,9 +10,9 @@ from pydantic.error_wrappers import ValidationError
 from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
-from plants_tagger.models.validation.image_validation import PResultsImageResource, PImageUpdated, \
+from plants_tagger.validation.image_validation import PResultsImageResource, PImageUpdated, \
     PImageUploadedMetadata, PImage, PResultsImageDeleted
-from plants_tagger.models.validation.message_validation import PConfirmation
+from plants_tagger.validation.message_validation import PConfirmation
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
 from plants_tagger.services.image_services import get_plants_data, \
@@ -71,7 +71,7 @@ class ImageResource(Resource):
         if not kwargs:
             kwargs = request.get_json(force=True)
 
-        # evaluate input
+        # evaluate arguments
         try:
             PImageUpdated(**kwargs)
         except ValidationError as err:
@@ -100,7 +100,7 @@ class ImageResource(Resource):
         files = request.files.getlist('photoUpload[]')
         additional_data = json.loads(request.form['photoUpload-data']) if request.form['photoUpload-data'] else {}
 
-        # evaluate input
+        # evaluate arguments
         try:
             PImageUploadedMetadata(**additional_data)
         except ValidationError as err:
@@ -195,7 +195,7 @@ class ImageResource(Resource):
         """move the file that should be deleted to another folder (not actually deleted, currently)"""
         photo = request.get_json()
 
-        # evaluate input
+        # evaluate arguments
         try:
             PImage(**photo)
         except ValidationError as err:

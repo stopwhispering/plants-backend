@@ -2,7 +2,7 @@ from typing import Optional, List, Dict
 
 from pydantic.main import BaseModel
 
-from plants_tagger.models.validation.message_validation import PMessage
+from plants_tagger.validation.message_validation import PMessage
 
 
 class PObservation(BaseModel):

@@ -2,14 +2,17 @@ from json.decoder import JSONDecodeError
 from flask_restful import Resource
 import logging
 from flask import request
-import json
 
 from flask_2_ui5_py import throw_exception, get_message
+from pydantic import ValidationError
+
 from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.taxon_models import Taxon
-from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database,\
+from plants_tagger.validation.taxon_validation import PTaxonInfoRequest, PResultsTaxonInfoRequest, \
+    PSaveTaxonRequest, PResultsSaveTaxonRequest
+from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database, \
     get_taxa_from_kew_databases
 from plants_tagger.services.scrape_taxon_id import get_gbif_id_from_ipni_id
 
@@ -19,19 +22,22 @@ logger = logging.getLogger(__name__)
 class TaxonToPlantAssignmentsResource(Resource):
     @staticmethod
     def get():
-        include_kew: bool = json.loads(request.args['includeKew'])
-        search_for_genus: bool = json.loads(request.args['searchForGenus'])
-        requested_name = request.args['species'].strip()
-        if not requested_name:
-            throw_exception('No search name supplied.')
+        # evaluate arguments
+        args = None
+        try:
+            args = PTaxonInfoRequest(**request.args)
+            args.species = args.species.strip()
+        except ValidationError as err:
+            throw_exception(str(err))
 
         # search for supplied species in local database
-        results = get_taxa_from_local_database(requested_name+'%', search_for_genus)
+        results = get_taxa_from_local_database(plant_name_pattern=args.species + '%',
+                                               search_for_genus=args.searchForGenus)
 
         # optionally search in kew's plants of the world database (powo, online via api)
-        if include_kew:
+        if args.includeKew:
             try:
-                kew_results = get_taxa_from_kew_databases(requested_name+'*', results, search_for_genus)
+                kew_results = get_taxa_from_kew_databases(args.species + '*', results, args.searchForGenus)
                 results.extend(kew_results)
             except TooManyResultsError as e:
                 logger.error('Exception catched.', exc_info=e)
@@ -41,51 +47,60 @@ class TaxonToPlantAssignmentsResource(Resource):
                 throw_exception('ipni.search method raised an Exception.')
 
         if not results:
-            logger.info(f'No search result for search term "{requested_name}".')
-            throw_exception(f'No search result for search term "{requested_name}".')
+            logger.info(f'No search result for search term "{args.species}".')
+            throw_exception(f'No search result for search term "{args.species}".')
 
-        return {'ResultsCollection': results,
-                'message': get_message('Received species search results',
-                                       additional_text=f'Search term "{requested_name}"',
-                                       description=f'Count: {len(results)}')
-                }, 200
+        results = {'action':            'Get Taxa',
+                   'resource':          'TaxonToPlantAssignmentsResource',
+                   'ResultsCollection': results,
+                   'message':           get_message('Received species search results',
+                                                    additional_text=f'Search term "{args.species}"',
+                                                    description=f'Count: {len(results)}')}
+
+        # evaluate output
+        try:
+            PResultsTaxonInfoRequest(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200
 
     @staticmethod
     def post():
         """assign the taxon selected on frontend to the plant; the taxon may either already exist in database or we
-        need to create it and retrieve the required information from the kew databases"""
-        # parse arguments
-        fq_id = request.form.get('fqId')
-        has_custom_name = json.loads(request.form.get('hasCustomName'))  # plant has an addon not found in kew ext.
-        name_incl_addition = request.form.get('nameInclAddition').strip()  # name incl. custom addition
-        source = request.form.get('source')  # either kew database or plants database
-        plants_taxon_id = request.form.get('id')  # None if source is kew database, otherwise database
-        plant = request.form.get('plant')
+        need to create it and retrieve the required information from the kew databases
+        Note: The actual assignment is persisted to the database when the plant is saved"""
+        # evaluate & parse arguments
+        args = None
+        try:
+            args = PSaveTaxonRequest(**request.form)
+            args.nameInclAddition = args.nameInclAddition.strip()
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        plants_taxon_id = args.id  # None if source is kew database, otherwise database
         taxon = None
 
         # easy case: taxon is already in database and no custom taxon is to be created
-        if source == SOURCE_PLANTS and not has_custom_name:
+        if args.source == SOURCE_PLANTS and not args.hasCustomName:
             taxon = get_sql_session().query(Taxon).filter(Taxon.id == plants_taxon_id).first()
             if not taxon:
-                logger.error(f"Can't find {plants_taxon_id} / {name_incl_addition} in database.")
-                throw_exception(f"Can't find {plants_taxon_id} / {name_incl_addition} in database.")
+                logger.error(f"Can't find {plants_taxon_id} / {args.nameInclAddition} in database.")
+                throw_exception(f"Can't find {plants_taxon_id} / {args.nameInclAddition} in database.")
 
         # taxon is already in database, but the user entered a custom name
         # that custom name might already exist in database as well
-        elif source == SOURCE_PLANTS and has_custom_name:
-            taxon = get_sql_session().query(Taxon).filter(Taxon.name == name_incl_addition,
+        elif args.source == SOURCE_PLANTS and args.hasCustomName:
+            taxon = get_sql_session().query(Taxon).filter(Taxon.name == args.nameInclAddition,
                                                           Taxon.is_custom).first()
             if taxon:
-                logger.info(f'Found custom name in database: {name_incl_addition}')
+                logger.info(f'Found custom name in database: {args.nameInclAddition}')
 
         # remaining cases: no database record, yet; we need to create it
         if not taxon:
-            taxon = copy_taxon_from_kew(fq_id,
-                                        has_custom_name,
-                                        name_incl_addition)
-        # taxon2 = copy_taxon_from_kew2(fq_id,
-        #                               has_custom_name,
-        #                               name_incl_addition)
+            taxon = copy_taxon_from_kew(args.fqId,
+                                        args.hasCustomName,
+                                        args.nameInclAddition)
 
         # The (meta-)database Global Biodiversity Information Facility (gbif) has distribution information,
         # a well-documented API and contains entries from dozens of databases; get an id for it and save it, too
@@ -102,10 +117,19 @@ class TaxonToPlantAssignmentsResource(Resource):
         taxon_dict = taxon.as_dict()
         taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
 
-        message = f'Assigned botanical name "{taxon.name}" to plant "{plant}".'
+        message = f'Assigned botanical name "{taxon.name}" to plant "{args.plant}".'
         logger.info(message)
-        return {'taxon_data': taxon_dict,
-                'toast': message,
-                'botanical_name': taxon.name,
-                'message': get_message(message)
-                }, 200
+
+        results = {'action':         'Save Taxon',
+                   'resource':       'TaxonToPlantAssignmentsResource',
+                   'message':        get_message(message),
+                   'botanical_name': taxon.name,
+                   'taxon_data':     taxon_dict}
+
+        # evaluate output
+        try:
+            PResultsSaveTaxonRequest(**results)
+        except ValidationError as err:
+            throw_exception(str(err))
+
+        return results, 200

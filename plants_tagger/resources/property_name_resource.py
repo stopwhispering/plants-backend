@@ -6,7 +6,7 @@ from pydantic.error_wrappers import ValidationError
 
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.property_models import PropertyCategory
-from plants_tagger.models.validation.property_validation import PResultsPropertyNames
+from plants_tagger.validation.property_validation import PResultsPropertyNames
 
 logger = logging.getLogger(__name__)
 

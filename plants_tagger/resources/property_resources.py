@@ -6,9 +6,9 @@ from flask import request
 from flask_2_ui5_py import make_list_items_json_serializable, get_message, throw_exception
 from pydantic.error_wrappers import ValidationError
 
-from plants_tagger.models.validation.message_validation import PConfirmation
-from plants_tagger.models.validation.plant_validation import PPlantIdOptional
-from plants_tagger.models.validation.property_validation import PResultsPropertiesForPlant, PPropertiesModifiedPlant, \
+from plants_tagger.validation.message_validation import PConfirmation
+from plants_tagger.validation.plant_validation import PPlantIdOptional
+from plants_tagger.validation.property_validation import PResultsPropertiesForPlant, PPropertiesModifiedPlant, \
     PPropertiesModifiedTaxon
 from plants_tagger.services.property_services import SaveProperties, LoadProperties, SavePropertiesTaxa
 
@@ -24,7 +24,7 @@ class PropertyTaxaResource(Resource):
         """save taxon properties"""
         data = json.loads(request.get_data())
 
-        # evaluate input
+        # evaluate arguments
         try:
             PPropertiesModifiedTaxon(**data)
         except ValidationError as err:
@@ -53,7 +53,7 @@ class PropertyResource(Resource):
         """save plant properties"""
         data = json.loads(request.get_data())
 
-        # evaluate input
+        # evaluate arguments
         try:
             PPropertiesModifiedPlant(**data)
         except ValidationError as err:
@@ -81,7 +81,7 @@ class PropertyResource(Resource):
         if plant_id == 'undefined':
             plant_id = None
 
-        # evaluate input
+        # evaluate arguments
         try:
             PPlantIdOptional.parse_obj(plant_id)
         except ValidationError as err:

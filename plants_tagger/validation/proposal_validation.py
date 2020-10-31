@@ -3,9 +3,9 @@ from enum import Enum
 from pydantic.main import BaseModel
 from typing import List, Optional
 
-from plants_tagger.models.validation.event_validation import PSoil
-from plants_tagger.models.validation.message_validation import PMessage
-from plants_tagger.models.validation.trait_validation import PTraitCategory, PTrait
+from plants_tagger.validation.event_validation import PSoil
+from plants_tagger.validation.message_validation import PMessage
+from plants_tagger.validation.trait_validation import PTraitCategory, PTrait
 
 
 class ProposalEntity(str, Enum):

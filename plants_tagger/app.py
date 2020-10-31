@@ -34,8 +34,8 @@ def _add_resources(api: Api):
                                        '/plants_tagger/backend/Property')  # only post)
     api.add_resource(PropertyTaxaResource, '/plants_tagger/backend/PropertyTaxon')  # only post
     api.add_resource(PropertyNameResource, '/plants_tagger/backend/PropertyName')
-    api.add_resource(SelectionResource, '/plants_tagger/backend/Selection')
     logger.info('Added REST Resources.')
+    api.add_resource(SelectionResource, '/plants_tagger/backend/Selection')
 
 
 # factory

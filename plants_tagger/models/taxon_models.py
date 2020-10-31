@@ -78,3 +78,10 @@ class Taxon(Base, OrmUtil):
         if not taxon and raise_exception:
             throw_exception(f'Taxon not found in database: {taxon_id}')
         return taxon
+
+    def as_dict(self):
+        """add some additional fields to mixin's as_dict, especially from relationships"""
+        as_dict = super(Taxon, self).as_dict()
+        if not as_dict['synonym']:  # overwrite None with False
+            as_dict['synonym'] = False
+        return as_dict
