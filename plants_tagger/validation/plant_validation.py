@@ -39,7 +39,8 @@ class PPlantCurrentSoil(BaseModel):
 
 
 class PPlantTag(BaseModel):
-    id: int
+    id: Optional[int]  # empty if new
+    plant_name: Optional[int]  # supplied if new
     text: str
     icon: str  # todo redundant?
     state: str  # todo enum?
