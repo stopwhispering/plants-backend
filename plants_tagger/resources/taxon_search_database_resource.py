@@ -19,7 +19,7 @@ from plants_tagger.services.scrape_taxon_id import get_gbif_id_from_ipni_id
 logger = logging.getLogger(__name__)
 
 
-class TaxonToPlantAssignmentsResource(Resource):
+class TaxonSearchDatabaseResource(Resource):
     @staticmethod
     def get():
         # evaluate arguments
@@ -51,7 +51,7 @@ class TaxonToPlantAssignmentsResource(Resource):
             throw_exception(f'No search result for search term "{args.species}".')
 
         results = {'action':            'Get Taxa',
-                   'resource':          'TaxonToPlantAssignmentsResource',
+                   'resource':          'TaxonSearchDatabaseResource',
                    'ResultsCollection': results,
                    'message':           get_message('Received species search results',
                                                     additional_text=f'Search term "{args.species}"',
@@ -121,7 +121,7 @@ class TaxonToPlantAssignmentsResource(Resource):
         logger.info(message)
 
         results = {'action':         'Save Taxon',
-                   'resource':       'TaxonToPlantAssignmentsResource',
+                   'resource':       'TaxonSearchDatabaseResource',
                    'message':        get_message(message),
                    'botanical_name': taxon.name,
                    'taxon_data':     taxon_dict}

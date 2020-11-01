@@ -14,7 +14,7 @@ from plants_tagger.resources.proposal_resource import ProposalResource
 from plants_tagger.resources.refresh_photo_dir_resource import RefreshPhotoDirectoryResource
 from plants_tagger.resources.selection_resource import SelectionResource
 from plants_tagger.resources.taxon_resoure import TaxonResource
-from plants_tagger.resources.taxon_to_plant_assignments_resource import TaxonToPlantAssignmentsResource
+from plants_tagger.resources.taxon_search_database_resource import TaxonSearchDatabaseResource
 from plants_tagger.config_local import ALLOW_CORS
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def _add_resources(api: Api):
                                     '/plants_tagger/backend/Plant')
     api.add_resource(ImageResource, '/plants_tagger/backend/Image')
     api.add_resource(RefreshPhotoDirectoryResource, '/plants_tagger/backend/RefreshPhotoDirectory')
-    api.add_resource(TaxonToPlantAssignmentsResource, '/plants_tagger/backend/SpeciesDatabase')
+    api.add_resource(TaxonSearchDatabaseResource, '/plants_tagger/backend/SpeciesDatabase')
     api.add_resource(TaxonResource, '/plants_tagger/backend/Taxon')
     api.add_resource(EventResource, '/plants_tagger/backend/Event/<int:plant_id>',  # only get
                                     '/plants_tagger/backend/Event')  # only post

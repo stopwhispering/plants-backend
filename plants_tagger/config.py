@@ -1,4 +1,5 @@
 size_preview_image = (300, 300)
+size_tumbnail_image_taxon = (300, 300)
 size_thumbnail_image = (350, 350)
 
 # set resizing_size to none to disable resizing and reencoding quality

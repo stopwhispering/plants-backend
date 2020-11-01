@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict
-
+import datetime
 from pydantic.main import BaseModel
 
 from plants_tagger.validation.message_validation import PMessage
@@ -116,3 +116,24 @@ class PResultsGetTaxa(BaseModel):
 
 class PModifiedTaxa(BaseModel):
     ModifiedTaxaCollection: List[PTaxon]
+
+    class Config:
+        extra = 'forbid'
+
+
+class PTaxonOccurrenceImage(BaseModel):
+    occurrence_id: int
+    img_no: int
+    gbif_id: int
+    scientific_name: str
+    basis_of_record: str
+    verbatim_locality: Optional[str]
+    date: datetime.datetime
+    creator_identifier: str
+    publisher_dataset: Optional[str]
+    references: Optional[str]
+    href: str
+    filename_thumbnail: str
+
+    class Config:
+        extra = 'forbid'
