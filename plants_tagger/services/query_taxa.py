@@ -24,7 +24,8 @@ def get_taxa_from_local_database(plant_name_pattern: str, search_for_genus: bool
         for query in query_all:
             result = {'source':              SOURCE_PLANTS,
                       'id':                  query.id,
-                      'count':               len(query.plants),
+                      'count':               len([p for p in query.plants if p.active]),
+                      'count_inactive':      len([p for p in query.plants if not p.active]),
                       'is_custom':           query.is_custom,
                       'synonym':             query.synonym,
                       'authors':             query.authors,
@@ -37,9 +38,10 @@ def get_taxa_from_local_database(plant_name_pattern: str, search_for_genus: bool
                       'species':             query.species,
                       'namePublishedInYear': query.name_published_in_year,
                       'phylum':              query.phylum,
-                      'synonyms_concat':     query.synonyms_concat,
-                      'distribution_concat': query.distribution_concat
-                      }
+                      'synonyms_concat':     query.synonyms_concat}
+            # if query.distribution_concat and len(query.distribution_concat) >= 150:
+            #     result['distribution_concat'] = query.distribution_concat[:147] + '...'
+
             results.append(result)
         logger.info(f'Found query term in plants taxon database.')
     return results

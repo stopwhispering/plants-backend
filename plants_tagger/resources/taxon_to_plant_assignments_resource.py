@@ -31,7 +31,7 @@ class TaxonToPlantAssignmentsResource(Resource):
             throw_exception(str(err))
 
         # search for supplied species in local database
-        results = get_taxa_from_local_database(plant_name_pattern=args.species + '%',
+        results = get_taxa_from_local_database(plant_name_pattern=f'%{args.species}%',
                                                search_for_genus=args.searchForGenus)
 
         # optionally search in kew's plants of the world database (powo, online via api)

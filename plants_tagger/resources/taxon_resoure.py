@@ -27,8 +27,8 @@ class TaxonResource(Resource):
         taxon_dict = {}
         for taxon in taxa:
             taxon_dict[taxon.id] = taxon.as_dict()
-            if taxon.fq_id:
-                taxon_dict[taxon.id]['ipni_id_short'] = taxon.fq_id[24:]
+            # if taxon.fq_id:
+            #     taxon_dict[taxon.id]['ipni_id_short'] = taxon.fq_id[24:]
             if taxon.taxon_to_trait_associations:
 
                 # build a dict of trait categories

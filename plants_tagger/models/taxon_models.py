@@ -84,4 +84,7 @@ class Taxon(Base, OrmUtil):
         as_dict = super(Taxon, self).as_dict()
         if not as_dict['synonym']:  # overwrite None with False
             as_dict['synonym'] = False
+
+        as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
+
         return as_dict
