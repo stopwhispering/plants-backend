@@ -38,7 +38,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
     if not os.path.isfile(path_generated):
         if not LOG_IS_DEV:
             logger.info('Preview Image: Generating the not-yet-existing preview image.')
-        generate_thumbnail(path_image=path_full,
+        generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
                            path_thumbnail=os.path.join(plants_tagger.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))
 
