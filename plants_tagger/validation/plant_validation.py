@@ -40,12 +40,12 @@ class PPlantCurrentSoil(BaseModel):
 
 class PPlantTag(BaseModel):
     id: Optional[int]  # empty if new
-    plant_name: Optional[int]  # supplied if new
+    plant_name: Optional[str]  # supplied if new
     text: str
     icon: str  # todo redundant?
     state: str  # todo enum?
-    last_update: datetime
-    plant_id: int
+    last_update: Optional[datetime]  # empty if new
+    plant_id: Optional[int]  # not always supplied -> todo redundant?
 
     class Config:
         extra = 'forbid'
