@@ -11,7 +11,7 @@ class PTaxonId(BaseModel):
 
 
 class PTaxonInfoRequest(BaseModel):
-    sspecies: str
+    species: str
     includeKew: bool
     searchForGenus: bool
 
