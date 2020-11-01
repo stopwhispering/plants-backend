@@ -6,7 +6,7 @@ from plants_tagger.validation.message_validation import PMessage
 
 
 class PObservation(BaseModel):
-    id: int
+    id: Optional[int]  # empty if new
     diseases: Optional[str]
     stem_max_diameter: Optional[float]  # todo remove?
     height: Optional[float]  # todo remove?

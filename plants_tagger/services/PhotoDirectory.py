@@ -77,7 +77,7 @@ class PhotoDirectory:
             # generate a thumbnail...
             file['filename_thumb'] = get_generated_filename(file['filename'], size=config.size_thumbnail_image)
             if not self._generated_file_exists(file['filename_thumb']):
-                _ = generate_thumbnail(path_image=file['path_full_local'],
+                _ = generate_thumbnail(image=file['path_full_local'],
                                        size=config.size_thumbnail_image,
                                        path_thumbnail=os.path.join(path_basic_folder, REL_PATH_PHOTOS_GENERATED))
 
