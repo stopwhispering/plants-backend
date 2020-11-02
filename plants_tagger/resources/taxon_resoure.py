@@ -2,7 +2,6 @@ from flask_restful import Resource
 import logging
 from flask import request
 from typing import List
-
 from pydantic.error_wrappers import ValidationError
 
 from plants_tagger import config
@@ -72,6 +71,9 @@ class TaxonResource(Resource):
                 elif distribution_obj.establishment == 'Introduced':
                     taxon_dict[taxon.id]['distribution']['introduced'].append(distribution_obj.tdwg_code)
 
+            # occurence images
+            taxon_dict[taxon.id]['occurrenceImages'] = [o.as_dict() for o in taxon.occurence_images]
+
         logger.info(message := f'Received {len(taxon_dict)} taxa from database.')
         results = {'action':   'Get taxa',
                    'resource': 'TaxonResource',
@@ -80,7 +82,8 @@ class TaxonResource(Resource):
 
         # evaluate output
         try:
-            PResultsGetTaxa(**results)
+            # snake_case is converted to camelCase and date is converted to isoformat
+            results = PResultsGetTaxa(**results).dict(by_alias=True)
         except ValidationError as err:
             throw_exception(str(err))
 

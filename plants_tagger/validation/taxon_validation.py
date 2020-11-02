@@ -1,7 +1,12 @@
 from typing import List, Optional, Dict
 import datetime
-from pydantic.main import BaseModel
 
+from pydantic import validator
+from pydantic.fields import Field
+from pydantic.main import BaseModel
+import humps
+
+from plants_tagger.services.image_services import get_path_for_taxon_thumbnail
 from plants_tagger.validation.message_validation import PMessage
 from plants_tagger.validation.trait_validation import PTraitCategoryWithTraits
 
@@ -50,13 +55,43 @@ class PDistribution(BaseModel):
 
 
 class PTaxonImage(BaseModel):
-    id: int
+    id: Optional[int]  # empty if initially assigned to taxon
     url_small: str
     url_original: str
     description: Optional[str]
 
     class Config:
         extra = 'forbid'
+
+
+class PTaxonOccurrenceImage(BaseModel):
+    occurrence_id: int
+    img_no: int
+    gbif_id: int
+    scientific_name: str
+    basis_of_record: str
+    verbatim_locality: Optional[str]
+    date: datetime.datetime
+    creator_identifier: str
+    publisher_dataset: Optional[str]
+    references: Optional[str]
+    href: str
+    filename_thumbnail: str = Field(alias='path_thumbnail')
+
+    class Config:
+        extra = 'forbid'
+        anystr_strip_whitespace = True
+        alias_generator = humps.camelize
+        allow_population_by_field_name = True  # populate model by both alias (default) and field name
+
+    @validator("date")
+    def datetime_to_string(cls, v):
+        # return v.isoformat()
+        return v.strftime("%Y-%m-%d")
+
+    @validator("filename_thumbnail")
+    def get_path(cls, v):
+        return get_path_for_taxon_thumbnail(v)
 
 
 class PTaxon(BaseModel):
@@ -88,6 +123,7 @@ class PTaxon(BaseModel):
     distribution: Optional[PDistribution]  # not filled for each request
     images: Optional[List[PTaxonImage]]  # not filled for each request
     trait_categories: Optional[List[PTraitCategoryWithTraits]]  # not filled for each request
+    occurrenceImages: List[PTaxonOccurrenceImage]
 
     class Config:
         extra = 'forbid'
@@ -116,24 +152,6 @@ class PResultsGetTaxa(BaseModel):
 
 class PModifiedTaxa(BaseModel):
     ModifiedTaxaCollection: List[PTaxon]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PTaxonOccurrenceImage(BaseModel):
-    occurrence_id: int
-    img_no: int
-    gbif_id: int
-    scientific_name: str
-    basis_of_record: str
-    verbatim_locality: Optional[str]
-    date: datetime.datetime
-    creator_identifier: str
-    publisher_dataset: Optional[str]
-    references: Optional[str]
-    href: str
-    filename_thumbnail: str
 
     class Config:
         extra = 'forbid'

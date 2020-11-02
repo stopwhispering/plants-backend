@@ -1,4 +1,5 @@
 pygbif
+pyhumps
 # Click
 Flask
 Flask-RESTful
