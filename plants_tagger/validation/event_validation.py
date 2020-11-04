@@ -45,7 +45,7 @@ class PSoil(BaseModel):
 
 
 class PImage(BaseModel):
-    id: int
+    id: Optional[int]  # empty if new
     url_small: str
     url_original: str
 
