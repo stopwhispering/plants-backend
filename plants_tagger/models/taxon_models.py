@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask_2_ui5_py import throw_exception
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, BOOLEAN, TEXT
+from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.orm import relationship
 
 from plants_tagger.extensions.orm import Base, get_sql_session
@@ -69,6 +70,9 @@ class Taxon(Base, OrmUtil):
             )
     image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="taxon")
 
+    # taxon to occurence images (n:m)
+    occurence_images = relationship("TaxonOccurrenceImage", back_populates="taxa")
+
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")
 
@@ -88,3 +92,24 @@ class Taxon(Base, OrmUtil):
         as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
 
         return as_dict
+
+
+class TaxonOccurrenceImage(Base, OrmUtil):
+    """botanical details"""
+    __tablename__ = 'taxon_ocurrence_image'
+
+    occurrence_id = Column(INTEGER, primary_key=True, nullable=False)
+    img_no = Column(INTEGER, primary_key=True, nullable=False)
+    gbif_id = Column(INTEGER, ForeignKey('taxon.gbif_id'), primary_key=True, nullable=False)
+    scientific_name = Column(CHAR(100))
+    basis_of_record = Column(CHAR(25))
+    verbatim_locality = Column(CHAR(120))
+    date = Column(DATETIME)
+    creator_identifier = Column(CHAR(100))
+    publisher_dataset = Column(CHAR(100))
+    references = Column(CHAR(120))
+    href = Column(CHAR(120))
+    filename_thumbnail = Column(CHAR(120))
+
+    # relationship to taxa (m:n) via gbif_id
+    taxa = relationship("Taxon", back_populates="occurence_images")

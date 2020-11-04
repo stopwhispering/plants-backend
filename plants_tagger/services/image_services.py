@@ -13,7 +13,8 @@ from plants_tagger import config
 from plants_tagger.config_local import LOG_IS_DEV
 from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants_tagger.services.exif_services import rename_plant_in_exif_tags
-from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS
+from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS, \
+    PATH_GENERATED_THUMBNAILS_TAXON, REL_PATH_PHOTOS_GENERATED_TAXON
 from plants_tagger.util.filename_utils import get_generated_filename
 from plants_tagger.util.image_utils import generate_thumbnail
 
@@ -51,6 +52,10 @@ def get_thumbnail_relative_path_for_relative_path(path_relative: str, size: tupl
     filename_thumbnail = get_generated_filename(filename, size)
     path_relative_thumbnail = os.path.join(REL_PATH_PHOTOS_GENERATED, filename_thumbnail)
     return path_relative_thumbnail
+
+
+def get_path_for_taxon_thumbnail(filename: str):
+    return os.path.join(REL_PATH_PHOTOS_GENERATED_TAXON, filename)
 
 
 def get_plants_data(directory):
