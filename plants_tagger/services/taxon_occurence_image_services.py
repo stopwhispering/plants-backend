@@ -160,7 +160,6 @@ class TaxonOccurencesLoader:
                 logger.error(str(err))
                 print(err)
 
-
     def scrape_occurrences_for_taxon(self, gbif_id: int) -> List:
         occ_search = occ_api.search(taxonKey=gbif_id, mediaType='StillImage')
         if not occ_search['results']:
@@ -175,6 +174,7 @@ class TaxonOccurencesLoader:
         image_dicts = self._treat_occurences(occurrences, gbif_id)
 
         # save information to database
+        logger.info(f'Saving/Updating {len(image_dicts)} occurrence images to database.')
         self._save_to_db(image_dicts, gbif_id)
 
         return image_dicts

@@ -2,7 +2,7 @@ from json.decoder import JSONDecodeError
 from flask_restful import Resource
 import logging
 from flask import request
-
+from threading import Thread
 from flask_2_ui5_py import throw_exception, get_message
 from pydantic import ValidationError
 
@@ -10,6 +10,7 @@ from plants_tagger.constants import SOURCE_PLANTS
 from plants_tagger.exceptions import TooManyResultsError
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.taxon_models import Taxon
+from plants_tagger.services.taxon_occurence_image_services import TaxonOccurencesLoader
 from plants_tagger.validation.taxon_validation import PTaxonInfoRequest, PResultsTaxonInfoRequest, \
     PSaveTaxonRequest, PResultsSaveTaxonRequest
 from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database, \
@@ -110,6 +111,12 @@ class TaxonSearchDatabaseResource(Resource):
             if gbif_id:
                 taxon.gbif_id = gbif_id
                 get_sql_session().commit()
+
+                # lookup ocurrences & images at gbif and generate thumbnails
+                loader = TaxonOccurencesLoader()
+                thread = Thread(target=loader.scrape_occurrences_for_taxon, args=(gbif_id,))
+                logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
+                thread.start()
 
         # we will return the taxon's data to be directly added to the model in the frontend
         # only upon saving in the frontend, the assignment is persisted

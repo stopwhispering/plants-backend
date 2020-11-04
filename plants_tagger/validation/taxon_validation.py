@@ -123,7 +123,7 @@ class PTaxon(BaseModel):
     distribution: Optional[PDistribution]  # not filled for each request
     images: Optional[List[PTaxonImage]]  # not filled for each request
     trait_categories: Optional[List[PTraitCategoryWithTraits]]  # not filled for each request
-    occurrenceImages: List[PTaxonOccurrenceImage]
+    occurrenceImages: Optional[List[PTaxonOccurrenceImage]]
 
     class Config:
         extra = 'forbid'
