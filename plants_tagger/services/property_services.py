@@ -169,6 +169,9 @@ class SaveProperties(MixinShared):
                 continue
             for property_modified in category_modified['properties']:
                 if self._is_newly_used_for_plant(property_modified, properties_current):
+                    # skip if empty value
+                    if not property_modified.get('property_value'):
+                        continue
                     # maybe the property name is new, too
                     if not property_modified.get('property_name_id'):
                         property_modified['property_name_id'] = self.create_new_property_name(
@@ -238,6 +241,9 @@ class SavePropertiesTaxa(MixinShared):
             # property_names = [item for sublist in property_names_nested for item in sublist]
             #     properties = [self._flatten_property(p) for p in property_names]
             #     properties = [p for p in properties if p is not None]
+
+                # filter out empty values
+                properties = [p for p in properties if p['property_value']]
 
                 # deleted properties
                 del_list.extend(self._get_deleted_property_values(properties, property_values_current))
