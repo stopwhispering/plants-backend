@@ -4,16 +4,36 @@ import logging
 from bs4 import BeautifulSoup
 from typing import Optional
 from wikidata.client import Client
+from pygbif import species
 
 URL_PATTERN_WIKIDATA_SEARCH = r'https://www.wikidata.org/w/index.php?search={}'
 WIKIDATA_IPNI_PROPERTY_ID = 'P961'
 WIKIDATA_GBIF_PROPERTY_ID = 'P846'
 WIKIDATA_POWO_PROPERTY_ID = 'P5037'
 
+IPNI_DATASET_KEY = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
+
 logger = logging.getLogger(__name__)
 
 
-def get_gbif_id_from_ipni_id(ipni_id: Optional[int]) -> object:
+def gbif_id_from_gbif_api(botanical_name: str, ipni_id: str) -> Optional[int]:
+    """the gbif api does not allow searching by other database's taxonId; therefore, we search by
+    botanical name and ipni dataset key, then we compare the (external) taxonId"; if we have a match, we
+    can return the gbif taxon id"""
+    lookup = species.name_lookup(q=botanical_name, datasetKey=IPNI_DATASET_KEY)
+    if not lookup.get('results'):
+        return None
+
+    results_compared = [r for r in lookup['results'] if r.get('taxonID') == ipni_id]
+    if not results_compared:
+        return None
+
+    # nub is the name of the internal gbif database
+    gbif_id = results_compared[0].get('nubKey') or None
+    return gbif_id
+
+
+def get_gbif_id_from_wikidata(ipni_id: str) -> Optional[int]:
     """get mapping from ipni id to gbif id from wikidata; unfortunately, the wikidata api is defect, thus we parse
     using beautifulsoup4"""
     # fulltext-search wikidata for ipni id

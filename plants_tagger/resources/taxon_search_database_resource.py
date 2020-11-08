@@ -15,7 +15,7 @@ from plants_tagger.validation.taxon_validation import PTaxonInfoRequest, PResult
     PSaveTaxonRequest, PResultsSaveTaxonRequest
 from plants_tagger.services.query_taxa import copy_taxon_from_kew, get_taxa_from_local_database, \
     get_taxa_from_kew_databases
-from plants_tagger.services.scrape_taxon_id import get_gbif_id_from_ipni_id
+from plants_tagger.services.scrape_taxon_id import get_gbif_id_from_wikidata, gbif_id_from_gbif_api
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class TaxonSearchDatabaseResource(Resource):
         # a well-documented API and contains entries from dozens of databases; get an id for it and save it, too
         # todo: use that data... especially distribution information is far better than what is curr. used
         if taxon.fq_id:
-            gbif_id = get_gbif_id_from_ipni_id(taxon.fq_id)
+            gbif_id = gbif_id_from_gbif_api(taxon.name, taxon.fq_id) or get_gbif_id_from_wikidata(taxon.fq_id)
             if gbif_id:
                 taxon.gbif_id = gbif_id
                 get_sql_session().commit()
