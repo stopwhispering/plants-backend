@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Dict
 import datetime
 
 from pydantic import validator
@@ -71,7 +71,7 @@ class PTaxonOccurrenceImage(BaseModel):
     scientific_name: str
     basis_of_record: str
     verbatim_locality: Optional[str]
-    date: Union[datetime.datetime, str]
+    date: datetime.datetime
     creator_identifier: str
     publisher_dataset: Optional[str]
     references: Optional[str]
