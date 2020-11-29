@@ -81,7 +81,14 @@ def write_new_exif_tags(images_data):
             # fix some problem with windows photo editor writing exif tag in wrong format
             if exif_dict.get('GPS') and type(exif_dict['GPS'].get(11)) is bytes:
                 del exif_dict['GPS'][11]
-            exif_bytes = piexif.dump(exif_dict)
+            try:
+                exif_bytes = piexif.dump(exif_dict)
+            except ValueError as e:
+                logger.warning(f'Catched exception when modifying exif: {str(e)}. Trying again after deleting '
+                               'embedded thumbnail.')
+                del exif_dict['thumbnail']
+                exif_bytes = piexif.dump(exif_dict)
+
             # save using pillow...
             # im = Image.open(path)
             # im.save(path, "jpeg", exif=exif_bytes)
