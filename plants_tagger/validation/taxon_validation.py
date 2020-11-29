@@ -71,7 +71,7 @@ class PTaxonOccurrenceImage(BaseModel):
     scientific_name: str
     basis_of_record: str
     verbatim_locality: Optional[str]
-    date: datetime.datetime
+    date: Optional[datetime.datetime]
     creator_identifier: str
     publisher_dataset: Optional[str]
     references: Optional[str]
