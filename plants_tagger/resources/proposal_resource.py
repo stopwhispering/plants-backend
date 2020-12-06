@@ -73,10 +73,10 @@ class ProposalResource(Resource):
             results = {'TraitCategoriesCollection': trait_categories}
 
             # traits
-            trait_objs: List[Trait] = get_sql_session().query(Trait).all()
-            trait_objs = [t for t in trait_objs if t.trait_category.category_name in TRAIT_CATEGORIES]
+            traits_query: List[Trait] = get_sql_session().query(Trait).filter(Trait.trait_category.has(
+                    TraitCategory.category_name.in_(TRAIT_CATEGORIES)))
             traits = []
-            for t in trait_objs:
+            for t in traits_query:
                 t_dict = t.as_dict()
                 t_dict['trait_category_id'] = t.trait_category_id
                 t_dict['trait_category'] = t.trait_category.category_name

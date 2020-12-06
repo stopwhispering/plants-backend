@@ -21,8 +21,8 @@ class PPlantTag(BaseModel):
 
 
 class PImage(BaseModel):
-    url_small: str  # not a FilePath as full url is concatenated in frontend
-    url_original: str  # not a FilePath as full url is concatenated in frontend
+    path_thumb: str  # not a FilePath as full url is concatenated in frontend
+    path_original: str  # not a FilePath as full url is concatenated in frontend
     keywords: List[PKeyword]
     plants: List[PPlantTag]
     description: str

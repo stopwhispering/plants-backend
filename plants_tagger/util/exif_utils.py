@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from PIL import Image
 import logging
@@ -6,68 +6,62 @@ import os
 import platform
 import datetime
 import piexif
-from piexif import InvalidImageDataError
 
 logger = logging.getLogger(__name__)
 
 
-def modified_date(path_to_file):
+def modified_date(path_to_file: str) -> float:
     """
-    Try to get the date that a file was modified (in seconds)
-    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    tries to get the file's last modified date (in seconds)
+    see http://stackoverflow.com/a/39501288/1709587 for explanation.
     """
     if platform.system() == 'Windows':
         return os.path.getmtime(path_to_file)
     else:
         stat = os.stat(path_to_file)
-        return stat.st_mtime  # st_mtime_ns
+        return stat.st_mtime
 
 
-def set_modified_date(path_to_file, modified_time_seconds):
-    # set access and modified time
+def set_modified_date(path_to_file: str, modified_time_seconds: float) -> None:
+    """
+    set file's last access and modified time
+    """
     os.utime(path_to_file, (modified_time_seconds, modified_time_seconds))
 
 
-def decode_record_date_time(date_time_bin: bytes):
-    # from b"YYYY:MM:DD HH:MM:SS" to datetime object
+def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
+    """
+    decode exif tag datetime to regular datetime object
+    from b"YYYY:MM:DD HH:MM:SS" to datetime object
+    """
     try:
         s_dt = date_time_bin.decode('utf-8')
         s_format = '%Y:%m:%d %H:%M:%S'
     except AttributeError:  # manually entered string 
         s_dt = date_time_bin
         s_format = '%Y-%m-%d'
-    dt = datetime.datetime.strptime(s_dt, s_format)
-    return dt
+    return datetime.datetime.strptime(s_dt, s_format)
 
 
 def encode_record_date_time(dt: datetime.datetime):
-    # from datetime object to b"YYYY:MM:DD HH:MM:SS"
+    """
+    encode datetime into format required by exif tag
+    from datetime object to b"YYYY:MM:DD HH:MM:SS"
+    """
     s_format = '%Y:%m:%d %H:%M:%S'
     s_dt = dt.strftime(s_format)
-    b_dt = s_dt.encode('utf-8')
-    return b_dt
+    return s_dt.encode('utf-8')
 
 
-def dicts_to_strings(list_of_dicts: [dict]):
-    results = []
-    for d in list_of_dicts:
-        results.append(d['key'])
-    return results
-
-
-def copy_exif(path_from: str, path_to: str):
-    exif_dict = piexif.load(path_from)
-    exif_bytes = piexif.dump(exif_dict)
-    piexif.insert(exif_bytes, path_to)
-
-
-def auto_rotate_jpeg(path_image, exif_dict):
-    """auto-rotates images according to exif tag; required as chrome does not display them correctly otherwise;
-    applies a recompression with high quality; re-attaches the original exif files to the new file (but without the
-    orientation tag)"""
-    if not exif_dict \
-            or piexif.ImageIFD.Orientation not in exif_dict["0th"] \
-            or exif_dict["0th"][piexif.ImageIFD.Orientation] == 1:
+def auto_rotate_jpeg(path_image: str, exif_dict: dict) -> None:
+    """
+    auto-rotates images according to exif tag; required as chrome does not display them correctly otherwise;
+    applies a recompression with high quality; re-attaches the original exif files to the new file but without the
+    orientation tag
+    """
+    if (not exif_dict
+            or piexif.ImageIFD.Orientation not in exif_dict["0th"]
+            or exif_dict["0th"][piexif.ImageIFD.Orientation] == 1):
         return
 
     img = Image.open(path_image)
@@ -100,53 +94,49 @@ def auto_rotate_jpeg(path_image, exif_dict):
     img.save(path_image, exif=exif_bytes, quality=90)
 
 
-def read_exif_tags(file: dict):
-    """reads exif info for supplied file and parses information from it (plants list etc.);
-    data is directly written into the file dictionary parameter that requires at least the
-    'path_full_local' key"""
-    try:
-        exif_dict = piexif.load(file['path_full_local'])
-    except InvalidImageDataError:
-        logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {file["path_full_local"]}.')
-        file.update({'tag_description': '',
-                     'tag_keywords': [],
-                     'tag_authors_plants': [],
-                     'record_date_time': None})
-        return
-    # logger.debug(file['path_full_local'])
-
-    auto_rotate_jpeg(file['path_full_local'], exif_dict)
-
-    try:  # description
-        file['tag_description'] = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
-    except KeyError:
-        file['tag_description'] = ''
-
-    try:  # keywords
-        file['tag_keywords'] = _decode_keywords_tag(exif_dict['0th'][40094])  # Windows Keywords Tag
-        if not file['tag_keywords'][0]:  # ''
-            file['tag_keywords'] = []
-    except KeyError:
-        file['tag_keywords'] = []
-
-    try:  # plants (list); read from authors exif tag
-        # if 315 in exif_dict['0th']:
-        file['tag_authors_plants'] = exif_dict['0th'][315].decode('utf-8').split(';')  # Windows Authors Tag
-        if not file['tag_authors_plants'][0]:  # ''
-            file['tag_authors_plants'] = []
-    except KeyError:
-        file['tag_authors_plants'] = []
-
-    try:  # record date+time
-        file['record_date_time'] = decode_record_date_time(exif_dict["Exif"][36867])
-    except KeyError:
-        file['record_date_time'] = None
-
-
-def _decode_keywords_tag(t: tuple):
-    """decode a tuple of unicode byte integers (0..255) to a list of strings"""
-    char_list = list(map(chr, t))
-    chars = ''.join(char_list)
+def decode_keywords_tag(t: tuple) -> List[str]:
+    """
+    decode a tuple of unicode byte integers (0..255) to a list of strings; required to get keywords into a regular
+    format coming from exif tags
+    """
+    chars_iter = map(chr, t)
+    chars = ''.join(chars_iter)
     chars = chars.replace('\x00', '')  # remove null bytes after each character
-    keywords: List[str] = chars.split(';')
-    return keywords
+    return chars.split(';')
+
+
+def encode_keywords_tag(keywords: list) -> Tuple:
+    """
+    reverse decode_keywords_tag function
+    """
+    ord_list = []
+    for keyword in keywords:
+        ord_list_new = [ord(t) for t in keyword]
+        if ord_list:
+            ord_list = ord_list + [59] + ord_list_new  # add ; as separator
+        else:
+            ord_list = ord_list_new
+
+    # add \x00 (0) after each element
+    ord_list_final = []
+    for item in ord_list:
+        ord_list_final.append(item)
+        ord_list_final.append(0)
+    ord_list_final.append(0)
+    ord_list_final.append(0)
+
+    return tuple(ord_list_final)
+
+
+def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
+    """
+    the application uses most of all three exif tags to store information; returns whether all of them
+    are extant in supplied exif dict
+    """
+    try:
+        _ = exif_dict['0th'][270]  # description
+        _ = exif_dict['0th'][40094]  # keywords
+        _ = exif_dict['0th'][315]  # authors (used for plants)
+    except KeyError:
+        return False
+    return True

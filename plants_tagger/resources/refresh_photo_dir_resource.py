@@ -16,10 +16,6 @@ class RefreshPhotoDirectoryResource(Resource):
         with lock_photo_directory:
             get_photo_directory().refresh_directory()
 
-        # # upon manually refreshing image data, temporarily pickle the image tags directory
-        # filename = 'photodir_' + datetime.now().strftime("%Y%m%d_%H%M%S") + '.pickle'
-        # pickle.dump(image_services.photo_directory, open(filename, "wb"))
-
         logger.info(message := f'Refreshed photo directory')
         results = {'action':   'Function refresh Photo Directory',
                    'resource': 'RefreshPhotoDirectoryResource',

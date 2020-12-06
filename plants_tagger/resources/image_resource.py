@@ -3,23 +3,20 @@ from flask import request
 import os
 import json
 import logging
-
 from flask_2_ui5_py import MessageType, get_message, throw_exception, make_list_items_json_serializable
 from pydantic.error_wrappers import ValidationError
 
-from plants_tagger.config_local import PATH_BASE, PATH_DELETED_PHOTOS
+from plants_tagger.config_local import PATH_DELETED_PHOTOS
 from plants_tagger.extensions.orm import get_sql_session
 from plants_tagger.models.plant_models import Plant
-from plants_tagger.validation.image_validation import PResultsImageResource, PImageUpdated, \
-    PImageUploadedMetadata, PImage, PResultsImageDeleted
+from plants_tagger.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata,
+                                                       PImage, PResultsImageDeleted)
 from plants_tagger.validation.message_validation import PConfirmation
 from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants_tagger import config
-from plants_tagger.services.image_services import get_plants_data, \
-    resize_image, resizing_required, get_exif_tags_for_folder
+from plants_tagger.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
 from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
-from plants_tagger.services.exif_services import write_new_exif_tags
-from plants_tagger.util.exif_utils import read_exif_tags
+from plants_tagger.services.Photo import Photo
 from plants_tagger.util.filename_utils import with_suffix
 
 logger = logging.getLogger(__name__)
@@ -29,35 +26,27 @@ RESIZE_SUFFIX = '_autoresized'
 class ImageResource(Resource):
     @staticmethod
     def get():
-        """read image information from images and their exif tags"""
-        files_data, _ = get_exif_tags_for_folder()
-        i = len(files_data)
+        """
+        get image information from images and their exif tags including plants and keywords
+        """
+        # instantiate photo directory if required, get photos in external format from files exif data
+        with lock_photo_directory:
+            photo_files_all = get_photo_directory().get_photo_files_ext()
 
-        # get plants whose images are configured to be hidden (hide-flag is set in plants table, i.e. deleted in
-        # web frontend)
-        plants_to_hide = get_sql_session().query(Plant).filter_by(hide=True).all()
-        plants_to_hide_names = [p.plant_name for p in plants_to_hide]
-        logger.debug(f'Hiding images that have only hidden plants tagged: {plants_to_hide_names}')
-        files_data = [f for f in files_data if not (len(f['plants']) == 1 and f['plants'][0] in plants_to_hide_names)]
-        logger.debug(f'Filter out {i - len(files_data)} images due to Hide flag of the only tagged plant.')
+        # filter out images whose only plants are configured to be inactive
+        inactive_plants = set(p.plant_name for p in get_sql_session().query(Plant.plant_name).filter_by(hide=True))
+        photo_files = [f for f in photo_files_all if len(f['plants']) != 1 or f['plants'][0]['key'] not in
+                       inactive_plants]
+        logger.debug(f'Filter out {len(photo_files_all) - len(photo_files)} images due to Hide flag of the only tagged '
+                     f'plant.')
 
-        for image in files_data:
-            if image['plants']:
-                image['plants'] = [{'key': p, 'text': p} for p in image['plants']]
-            if image['keywords']:
-                image['keywords'] = [{'keyword': p} for p in image['keywords']]
-
-            # get rid of annoying camera default image description
-            if image.get('description').strip() == 'SONY DSC':
-                image['description'] = ''
-
-        make_list_items_json_serializable(files_data)
-        logger.info(f'Returned {len(files_data)} images.')
-        results = {'ImagesCollection': files_data,
-                   'message':          get_message('Loaded images from backend.',
-                                                   description=f'Count: {len(files_data)}')
+        # make serializable anad validate
+        make_list_items_json_serializable(photo_files)
+        logger.info(f'Returned {len(photo_files)} images.')
+        results = {'ImagesCollection': photo_files,
+                   'message': get_message('Loaded images from backend.',
+                                          description=f'Count: {len(photo_files)}')
                    }
-        # valitdate
         try:
             PResultsImageResource(**results)
         except ValidationError as err:
@@ -73,12 +62,23 @@ class ImageResource(Resource):
 
         # evaluate arguments
         try:
-            PImageUpdated(**kwargs)
+            modified_ext = PImageUpdated(**kwargs)
         except ValidationError as err:
+            modified_ext = None
             throw_exception(str(err))
 
-        logger.info(f"Saving updates for {len(kwargs['ImagesCollection'])} images.")
-        write_new_exif_tags(kwargs['ImagesCollection'])
+        logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images.")
+        with lock_photo_directory:
+            directory = get_photo_directory()
+            for image_ext in modified_ext.ImagesCollection:
+                if not (photo := directory.get_photo(image_ext.path_full_local)):
+                    throw_exception(f"Can't find image file: {image_ext.path_full_local}")
+
+                logger.info(f'Updating changed image in PhotoDirectory Cache: {photo.path_full_local}')
+                photo.tag_keywords = [k.keyword for k in image_ext.keywords]
+                photo.tag_authors_plants = [p.key for p in image_ext.plants]
+                photo.tag_description = image_ext.description
+                photo.write_exif_tags()
 
         results = {'action':   'Saved',
                    'resource': 'ImageResource',
@@ -110,72 +110,48 @@ class ImageResource(Resource):
         keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']] \
             if 'keywords' in additional_data else []
 
-        # remove duplicates (already saved)
-        duplicate_filenames = []
-        for i, photo_upload in enumerate(files[:]):  # need to loop on copy if we want to delete within loop
+        # remove duplicates (filename already exists in file system)
+        duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
+
+        for photo_upload in files:
+            # save to file system
             path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
-            logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
-            if os.path.isfile(path) or os.path.isfile(with_suffix(path, RESIZE_SUFFIX)):  # todo: better check in all
-                # folders!
-                files.pop(i - len(duplicate_filenames))
-                duplicate_filenames.append(photo_upload.filename)
-                logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
+            logger.info(f'Saving {path}.')
+            photo_upload.save(path)  # we can't use object first and then save as this alters file object
 
-        if files:
-            for photo_upload in files:
-                path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
-                logger.info(f'Saving {path}.')
-                photo_upload.save(path)  # we can't use object first and then save as this alters file object
+            # resize file by lowering resolution if required
+            if not config.resizing_size:
+                pass
+            elif not resizing_required(path, config.resizing_size):
+                logger.info(f'No resizing required.')
+            else:
+                logger.info(f'Saving and resizing {path}.')
+                resize_image(path=path,
+                             save_to_path=with_suffix(path, RESIZE_SUFFIX),
+                             size=config.resizing_size,
+                             quality=config.quality)
+                path = with_suffix(path, RESIZE_SUFFIX)
 
-                if not config.resizing_size:
-                    pass
-
-                elif not resizing_required(path, config.resizing_size):
-                    logger.info(f'No resizing required.')
-
-                else:
-                    logger.info(f'Saving and resizing {path}.')
-                    # add suffix to filename and resize image
-                    resize_image(path=path,
-                                 save_to_path=with_suffix(path, RESIZE_SUFFIX),
-                                 size=config.resizing_size,
-                                 quality=config.quality)
-                    path = with_suffix(path, RESIZE_SUFFIX)
-
-                # add tagged plants (update/create exif tags)
-                if plants or keywords:
-                    image_metadata = {'path_full_local': path}
-                    read_exif_tags(image_metadata)
-                    plants_data = get_plants_data([image_metadata])
-                    if plants:
-                        logger.info(f'Tagging new image with plants: {additional_data["plants"]}')
-                        plants_data[0]['plants'] = plants
-                    if keywords:
-                        logger.info(f'Tagging new image with keywords: {additional_data["keywords"]}')
-                        plants_data[0]['keywords'] = keywords
-                    write_new_exif_tags(plants_data)
-
-            # with lock_photo_directory:
-            #     if not image_services.photo_directory:
-            #         image_services.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-            #     image_services.photo_directory.refresh_directory(plants_tagger.config_local.PATH_BASE)
-
-            # trigger re-reading exif tags (only required if already instantiated, otherwise data is re-read anyway)
+            # add to photo directory (cache) and add keywords and plant tags
+            # (all the same for each uploaded photo)
+            photo = Photo(path_full_local=path,
+                          filename=os.path.basename(path))
+            photo.tag_authors_plants = [p['key'] for p in plants]
+            photo.tag_keywords = [k['keyword'] for k in keywords]
             with lock_photo_directory:
-                photo_directory = get_photo_directory(instantiate=False)
-                if photo_directory:
-                    photo_directory.refresh_directory(PATH_BASE)
-                else:
-                    logger.debug('No instantiated photo directory found.')
+                if p := get_photo_directory(instantiate=False):
+                    if p in p.photos:
+                        throw_exception(f"Already found in PhotoDirectory cache: {photo.path_full_local}")
+                    p.photos.append(photo)
 
-        if files and not duplicate_filenames:
-            msg = get_message(f'Successfully saved {len(files)} images.')
-        else:
-            msg = get_message(f'Duplicates found when saving.',
-                              message_type=MessageType.WARNING,
-                              additional_text='click for details',
-                              description=f'Saved {[p.filename for p in files]}.'
-                                          f'\nSkipped {duplicate_filenames}.')
+            # generate thumbnail image for frontend display and update file's exif tags
+            photo.generate_thumbnails()
+            photo.write_exif_tags()
+
+        msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
+                          message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
+                          description=f'Saved: {[p.filename for p in files]}.'
+                                      f'\nSkipped Duplicates: {duplicate_filenames}.')
         logger.info(msg['message'])
         results = {'action':   'Uploaded',
                    'resource': 'ImageResource',
@@ -221,7 +197,8 @@ class ImageResource(Resource):
         with lock_photo_directory:
             photo_directory = get_photo_directory(instantiate=False)
             if photo_directory:
-                photo_directory.remove_image_from_directory(photo)
+                photo_obj = photo_directory.get_photo(photo['path_full_local'])
+                photo_directory.remove_image_from_directory(photo_obj)
 
         results = {'action':   'Deleted',
                    'resource': 'ImageResource',

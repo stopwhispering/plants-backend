@@ -46,8 +46,8 @@ class PSoil(BaseModel):
 
 class PImage(BaseModel):
     id: Optional[int]  # empty if new
-    url_small: str
-    url_original: str
+    path_thumb: str
+    path_original: str
 
     class Config:
         extra = 'forbid'

@@ -1,10 +1,10 @@
-from typing import Tuple
+from itertools import chain
+from typing import Tuple, List, Generator
 import os
 from PIL import Image
-import functools
-import operator
 import logging
 from typing import Set
+from werkzeug.datastructures import FileStorage
 
 import plants_tagger.config_local
 import plants_tagger.services.PhotoDirectory
@@ -12,24 +12,27 @@ import plants_tagger.services.os_paths
 from plants_tagger import config
 from plants_tagger.config_local import LOG_IS_DEV
 from plants_tagger.services.PhotoDirectory import lock_photo_directory, get_photo_directory
+from plants_tagger.services.Photo import Photo
 from plants_tagger.services.exif_services import rename_plant_in_exif_tags
-from plants_tagger.services.os_paths import REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS, \
-    PATH_GENERATED_THUMBNAILS_TAXON, REL_PATH_PHOTOS_GENERATED_TAXON
-from plants_tagger.util.filename_utils import get_generated_filename
+from plants_tagger.services.os_paths import (REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS,
+                                             REL_PATH_PHOTOS_GENERATED_TAXON, PATH_ORIGINAL_PHOTOS_UPLOADED)
+from plants_tagger.util.filename_utils import get_generated_filename, with_suffix
 from plants_tagger.util.image_utils import generate_thumbnail
 
 logger = logging.getLogger(__name__)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path_raw):
-    """generates a preview image for a plant's default image if not exists, yet; returns the relative path to it"""
-    # get filename of preview image and check if that file already exists
-
+def generate_previewimage_get_rel_path(original_image_rel_path_raw: str) -> str:
+    """
+    generates a preview image for a plant's default image if not exists, yet
+    returns the relative path to it
+    """
     if os.name == 'nt':  # handle forward- and backslash for linux/windows systems
         original_image_rel_path = original_image_rel_path_raw.replace('/', '\\')
     else:
         original_image_rel_path = original_image_rel_path_raw.replace('\\', '/')
 
+    # get filename of preview image and check if that file already exists
     filename_original = os.path.basename(original_image_rel_path)
     filename_generated = get_generated_filename(filename_original,
                                                 size=config.size_preview_image)
@@ -43,62 +46,39 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw):
                            size=config.size_preview_image,
                            path_thumbnail=os.path.join(plants_tagger.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))
 
-    rel_path = os.path.join(plants_tagger.services.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
-    return rel_path
+    return os.path.join(plants_tagger.services.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
 
 
-def get_thumbnail_relative_path_for_relative_path(path_relative: str, size: tuple):
+def get_thumbnail_relative_path_for_relative_path(path_relative: str, size: tuple) -> str:
+    """
+    returns relative path of the corresponding thumbnail for an image file's relative path
+    """
     filename = os.path.basename(path_relative)
     filename_thumbnail = get_generated_filename(filename, size)
-    path_relative_thumbnail = os.path.join(REL_PATH_PHOTOS_GENERATED, filename_thumbnail)
-    return path_relative_thumbnail
+    return os.path.join(REL_PATH_PHOTOS_GENERATED, filename_thumbnail)
 
 
 def get_path_for_taxon_thumbnail(filename: str):
     return os.path.join(REL_PATH_PHOTOS_GENERATED_TAXON, filename)
 
 
-def get_plants_data(directory):
-    """extracts information from the directory that is relevant for the frontend;
-    returns list of dicts (just like directory)"""
-    plants_data = [
-        {"url_small": file.get('path_thumb') or '',
-         "url_original": file.get('path_original') or '',
-         "keywords": file['tag_keywords'],
-         "plants": file['tag_authors_plants'],
-         "description": file.get('tag_description') or '',
-         "filename": file['filename'] if 'filename' in file else '',
-         "path_full_local": file['path_full_local'],
-         "record_date_time": file['record_date_time']
-         } for file in directory]
-    return plants_data
-
-
-def get_exif_tags_for_folder():
-    """get list of image dicts; uses global photo directory object, initialized only
-    at first time after server (re-)start"""
-    with lock_photo_directory:
-        photo_directory = get_photo_directory()
-        plants_data = get_plants_data(photo_directory.directory)
-        plants_unique = photo_directory.get_all_plants()
-    return plants_data, plants_unique
-
-
 def get_distinct_keywords_from_image_files() -> Set[str]:
-    """get set of all keywords from all the images in the directory"""
+    """
+    get set of all keywords from all the images in the directory
+    """
     with lock_photo_directory:
         photo_directory = get_photo_directory()
 
-        # get list of lists of strings, flatten that nested list and return the distinct keywords as set
-        keywords_nested_list = [file.get('tag_keywords') for file in photo_directory.directory]
-        keywords_nested_list = [li for li in keywords_nested_list if li]  # remove None's
-        keywords_list = functools.reduce(operator.concat, keywords_nested_list) if keywords_nested_list else []
-        return set(keywords_list)
+        # get flattening generator and create set of distinct keywords
+        keywords_nested_gen = (photo.tag_keywords for photo in photo_directory.photos if photo.tag_keywords)
+        return set(chain.from_iterable(keywords_nested_gen))
 
 
-def resizing_required(path, size):
+def resizing_required(path: str, size: Tuple[int, int]) -> bool:
+    """
+    checks size of image at supplied path and compares to supplied maximum size
+    """
     with Image.open(path) as image:  # only works with path, not file object
-        # image = Image.open(file_obj)
         x, y = image.size
     if x > size[0]:
         y = int(max(y * size[0] / x, 1))
@@ -110,11 +90,12 @@ def resizing_required(path, size):
     return size != image.size
 
 
-def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: int):
+def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: int) -> None:
+    """
+    load image at supplied path, save resized image to other path; observes size and quality params;
+    original file is finally <<deleted>>
+    """
     with Image.open(path) as image:
-        # image = Image.open(path)
-        # exif = piexif.load(file_path)
-        # image = image.resize(size)
         image.thumbnail(size)  # preserves aspect ratio
         if image.info.get('exif'):
             image.save(save_to_path,
@@ -125,28 +106,26 @@ def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: i
             logger.info("Saving w/o exif.")
             image.save(save_to_path,
                        quality=quality,
-                       # exif=image.info.get('exif'),
                        optimize=True)
 
     if path != save_to_path:
         os.remove(path)
 
 
-def _get_images_by_plant_name(plant_name):
-    # returns all image entries from photo directory tagging supplied plant name
+def _get_images_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
+    """
+    returns generator of image entries from photo directory tagging supplied plant name
+    """
     with lock_photo_directory:
         photo_directory = get_photo_directory()
-
-    # if not plants_tagger.services.PhotoDirectory.photo_directory:
-    #     plants_tagger.services.PhotoDirectory.photo_directory = PhotoDirectory(PATH_ORIGINAL_PHOTOS)
-    #     plants_tagger.services.PhotoDirectory.photo_directory.refresh_directory(PATH_BASE)
-        images = [i for i in photo_directory.directory if
-                  isinstance(i.get('tag_authors_plants'), list) and plant_name in i.get('tag_authors_plants')]
-    return images
+        return (p for p in photo_directory.photos if plant_name in p.tag_authors_plants)
+    # isinstance(p.tag_authors_plants, list) and plant_name in p.tag_authors_plants]
 
 
 def rename_plant_in_image_files(plant_name_old: str, plant_name_new: str) -> int:
-    """in each image that has the old plant name tagged, switch tag to the new plant name"""
+    """
+    in each image file that has the old plant name tagged in exif, switch tag to the new plant name
+    """
     # get the relevant images from the photo directory cache
     images = _get_images_by_plant_name(plant_name_old)
     count_modified = 0
@@ -155,10 +134,26 @@ def rename_plant_in_image_files(plant_name_old: str, plant_name_new: str) -> int
 
     for image in images:
         # double check
-        if plant_name_old in image['tag_authors_plants']:
-            logger.info(f"Switching plant tag in image file {image['path_full_local']}")
+        if plant_name_old in image.tag_authors_plants:
+            logger.info(f"Switching plant tag in image file {image.path_full_local}")
             rename_plant_in_exif_tags(image, plant_name_old, plant_name_new)
             count_modified += 1
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
     return count_modified
+
+
+def remove_files_already_existing(files: List[FileStorage], suffix: str) -> List[str]:
+    """
+    iterates over file objects, checks whether a file with that name already exists in filesystem; removes already
+    existing files from files list and returns a list of already existing file names
+    """
+    duplicate_filenames = []
+    for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
+        path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
+        logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
+        if os.path.isfile(path) or os.path.isfile(with_suffix(path, suffix)):  # todo: better check all folders!
+            files.remove(photo_upload)
+            duplicate_filenames.append(photo_upload.filename)
+            logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
+    return duplicate_filenames
