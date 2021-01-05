@@ -1,38 +1,35 @@
-import functools
 import glob
-import operator
 import os
 import logging
 import datetime
 import threading
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
-from plants_tagger import config
-from plants_tagger.config_local import PATH_BASE
-from plants_tagger.models.entities import ImageInfo
-from plants_tagger.util.exif_utils import read_exif_tags
-from plants_tagger.util.filename_utils import get_generated_filename
-from plants_tagger.util.image_utils import generate_thumbnail
-from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS, \
-    REL_PATH_PHOTOS_GENERATED, REL_PATH_PHOTOS_ORIGINAL
+from plants_tagger.models.entities import ImageInfo, PhotoFileExt, KeywordImageTagExt, PlantImageTagExt
+from plants_tagger.services.Photo import Photo
+from plants_tagger.services.os_paths import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS
 
 logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
 
 
 class PhotoDirectory:
-    directory = None
-    latest_image_dates: Dict[str, ImageInfo] = {}
+    """"cache for photo files metadata"""
 
     def __init__(self, root_folder: str = PATH_ORIGINAL_PHOTOS):
-        self.root_folder = root_folder
+        self.root_folder: str = root_folder
+        self.latest_image_dates: Dict[str, ImageInfo] = {}
+        self.photos: List[Photo] = []
 
-    def refresh_directory(self, path_basic_folder: str = PATH_BASE):
+    def refresh_directory(self):
+        """
+        refreshing photo files metadata from their exif tags
+        """
         logger.info('Re-reading exif files from Photos Folder.')
         self._scan_files(self.root_folder)
         self._get_files_already_generated(PATH_GENERATED_THUMBNAILS)
         self._read_exif_tags_all_images()
-        self._generate_images(path_basic_folder)
+        self._generate_images()
         self._read_latest_image_dates()
         return self
 
@@ -40,13 +37,10 @@ class PhotoDirectory:
         """read all image files and create a list of dicts (one dict for each file)"""
         paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
         paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
-        # can't embed exif tag in png files
-        # paths.extend(glob.glob(folder + '/**/*.PNG', recursive=True))
-        # paths.extend(glob.glob(folder + '/**/*.png', recursive=True))
-        paths = list(set(paths))  # on windows, on the other hand, the extension would produce duplicates...
+        paths = set(paths)  # on windows, on the other hand, the extension would produce duplicates...
         logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
-        self.directory = [{'path_full_local': path_full,
-                           'filename': os.path.basename(path_full)} for path_full in paths]
+        self.photos = [Photo(path_full_local=path_full,
+                             filename=os.path.basename(path_full)) for path_full in paths]
 
     def _get_files_already_generated(self, folder):
         """returns a list of already-generated file derivatives (thumbnails & resized)"""
@@ -55,88 +49,75 @@ class PhotoDirectory:
         paths = list(set(paths))
         self.files_already_generated = [os.path.basename(path_full) for path_full in paths]
 
-    def _generated_file_exists(self, filename_generated: str):
-        if filename_generated in self.files_already_generated:
-            return True
-        else:
-            return False
-
     def _read_exif_tags_all_images(self):
         """reads exif info for each original file and parses information from it (plants list etc.), adds these
         information to directory (i.e. to the list of dicts (one dict for each image file))"""
-        logger.info(f"Starting to parse EXIF Tags of {len(self.directory)} files")
-        for file in self.directory:
-            read_exif_tags(file)
+        logger.info(f"Starting to parse EXIF Tags of {len(self.photos)} files")
+        for photo in self.photos:
+            photo.parse_exif_tags()
 
-    def _generate_images(self, path_basic_folder: str):
+    def _generate_images(self):
         """generates image derivatives (resized & thumbnail) for each original image file if not already exists;
         adds relative paths to these generated images to directory (i.e. to the list of dicts (one dict for each
         image file))"""
-        for file in self.directory:
+        for photo in self.photos:
+            photo.generate_thumbnails(self.files_already_generated)
 
-            # generate a thumbnail...
-            file['filename_thumb'] = get_generated_filename(file['filename'], size=config.size_thumbnail_image)
-            if not self._generated_file_exists(file['filename_thumb']):
-                _ = generate_thumbnail(image=file['path_full_local'],
-                                       size=config.size_thumbnail_image,
-                                       path_thumbnail=os.path.join(path_basic_folder, REL_PATH_PHOTOS_GENERATED))
+    def get_photo(self, path_full_local: str) -> Optional[Photo]:
+        """
+        get photo instance by path_full_local
+        """
+        # find (first) object in photos directory without iterating through all or creating new list
+        return next((p for p in self.photos if p.path_full_local == path_full_local), None)
 
-            file['path_thumb'] = os.path.join(REL_PATH_PHOTOS_GENERATED, file['filename_thumb'])
-            file['path_original'] = file['path_full_local'][file['path_full_local'].find(REL_PATH_PHOTOS_ORIGINAL):]
+    def remove_image_from_directory(self, photo: Photo) -> None:
+        """
+        find the directory entry for the image and remove it; physical deletion of the file
+        is handled elsewhere; the full original path acts as key here
+        """
+        # find (first) object in photos directory without iterating through all or creating list
+        if photo not in self.photos:
+            logger.error(f"Can't delete from photo directory cache: Unique entry for deleted image not found.")
+        else:
+            self.photos.remove(photo)
+            logger.info(f'Removed deleted image from PhotoDirectory Cache.')
 
-    def get_all_plants(self):
-        """returns all the plants that are depicted in at least one image (i.e. at least one exif tag plant
-        list) in form of list of dicts"""
-        if not self.directory:
-            return []
-        plants_list_list = [file['tag_authors_plants'] for file in self.directory]
-        plants_list = functools.reduce(operator.add, plants_list_list)
-        plants = list(set(plants_list))
-        plants_dicts = [{'key': plant} for plant in plants]
-        return plants_dicts
-
-    def update_image_data(self, photo):
-        # find the directory entry for the changed image (the full original path acts as a kind of unique key here)
-        directory_entries = [x for x in self.directory if x['path_full_local'] == photo['path_full_local']]
-        if not directory_entries or len(directory_entries) != 1:
-            logger.error(f"Can't update photo directory cache: Unique entry for changed image not found: "
-                         f"{photo['path_full_local']}")
-            return
-        logger.info(f'Updating changed image in PhotoDirectory Cache: {photo["path_full_local"]}')
-        directory_entries[0]['tag_keywords'] = [k['keyword'] for k in photo['keywords']]
-        directory_entries[0]['tag_authors_plants'] = [p['key'] for p in photo['plants']]
-        directory_entries[0]['tag_description'] = photo['description']
-
-    def remove_image_from_directory(self, photo):
-        # find the directory entry for the deleted image (the full original path acts as a kind of unique key here)
-        directory_entries = [x for x in self.directory if x['path_full_local'] == photo['path_full_local']]
-        if not directory_entries or len(directory_entries) != 1:
-            logger.error(f"Can't delete photo directory cache: Unique entry for deleted image not found: "
-                         f"{photo['path_full_local']}")
-            return
-        self.directory.remove(directory_entries[0])
-        logger.info(f'Removed deleted image from PhotoDirectory Cache.')
-
-    def _read_latest_image_dates(self):
-        """called when refreshing photo directory; reads latest image date for all plants; contains
-        only plants that have at least one image"""
+    def _read_latest_image_dates(self) -> None:
+        """
+        called when refreshing photo directory; reads latest image date for all plants; contains
+        only plants that have at least one image
+        """
         self.latest_image_dates = {}
-
-        for image in self.directory:
-            for p in image['tag_authors_plants']:
+        for photo in self.photos:
+            for p in photo.tag_authors_plants:
                 try:
-                    if p not in self.latest_image_dates or self.latest_image_dates[p].date < image['record_date_time']:
-                        self.latest_image_dates[p] = ImageInfo(date=image['record_date_time'],
-                                                               path=image['path_original'],
-                                                               path_thumb=image['path_thumb'])
+                    if p not in self.latest_image_dates or self.latest_image_dates[p].date < photo.record_date_time:
+                        self.latest_image_dates[p] = ImageInfo(date=photo.record_date_time,
+                                                               path=photo.path_original,
+                                                               path_thumb=photo.path_thumb)
                 except TypeError:
                     pass
 
     def get_latest_date_per_plant(self, plant_name: str) -> ImageInfo:
         """called by plants resource. returns latest image record date for supplied plant_name"""
-        # if no image at all, use a very early date as null would sort them after late days in ui5 sorters
-        # (in ui5 formatter, we will format the null_date as an empty string)
         return self.latest_image_dates.get(plant_name)
+
+    def get_photo_files_ext(self) -> List[PhotoFileExt]:
+        """
+        extracts photo metadata and converts some keys as required in frontend
+        """
+        with lock_photo_directory:
+            return [PhotoFileExt(
+                    path_thumb=photo.path_thumb,
+                    path_original=photo.path_original,
+                    keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
+                    plants=[PlantImageTagExt(key=p, text=p) for p in photo.tag_authors_plants],
+                    # get rid of annoying camera default image description
+                    description='' if photo.tag_description.strip() == 'SONY DSC' else photo.tag_description,
+                    filename=photo.filename or '',
+                    path_full_local=photo.path_full_local,
+                    record_date_time=photo.record_date_time
+                    ) for photo in self.photos]
 
 
 lock_photo_directory = threading.RLock()

@@ -8,7 +8,6 @@ class Image(Base):
     """image paths"""
     # images themselves are stored in file system and their information in exif tags
     # this table is only used to link events to images
-    # todo: helper method to find a missing image in other subdirectories (in case of moving files manually)
     __tablename__ = 'image'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name  # pseudo-key

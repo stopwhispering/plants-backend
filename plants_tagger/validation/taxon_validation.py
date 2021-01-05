@@ -56,8 +56,8 @@ class PDistribution(BaseModel):
 
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
-    url_small: str
-    url_original: str
+    path_thumb: str
+    path_original: str
     description: Optional[str]
 
     class Config:
@@ -86,11 +86,13 @@ class PTaxonOccurrenceImage(BaseModel):
 
     @validator("date")
     def datetime_to_string(cls, v):
+        """validator decorator makes this a class method and enforces cls param"""
         # return v.isoformat()
         return v.strftime("%Y-%m-%d")
 
     @validator("filename_thumbnail")
     def get_path(cls, v):
+        """validator decorator makes this a class method and enforces cls param"""
         return get_path_for_taxon_thumbnail(v)
 
 

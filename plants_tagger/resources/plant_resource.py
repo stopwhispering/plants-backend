@@ -149,9 +149,6 @@ class PlantResource(Resource):
     @staticmethod
     def put():
         """we use the put method to rename a plant"""
-        # plant_name_old = request.get_json().get('OldPlantName')
-        # plant_name_new = request.get_json().get('NewPlantName')
-
         # parse & evaluate arguments
         args = None
         try:

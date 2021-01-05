@@ -31,3 +31,4 @@ requests
 Wikidata
 flask-2-ui5-py
 # matplotlib
+bs4

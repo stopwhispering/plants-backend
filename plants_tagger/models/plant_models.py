@@ -12,11 +12,10 @@ from plants_tagger.models.taxon_models import Taxon
 from plants_tagger.services.image_services import generate_previewimage_get_rel_path
 from plants_tagger.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants_tagger.util.OrmUtilMixin import OrmUtil
-
-logger = logging.getLogger(__name__)
-
 from plants_tagger.extensions.orm import Base, get_sql_session
 from plants_tagger.util.exif_utils import decode_record_date_time
+
+logger = logging.getLogger(__name__)
 
 
 class Plant(Base, OrmUtil):

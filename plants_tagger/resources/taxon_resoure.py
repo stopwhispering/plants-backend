@@ -58,8 +58,8 @@ class TaxonResource(Resource):
                     path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
                                                                                size=config.size_thumbnail_image)
                     taxon_dict[taxon.id]['images'].append({'id':           image_obj.id,
-                                                           'url_small':    path_small,
-                                                           'url_original': image_obj.relative_path,
+                                                           'path_thumb':    path_small,
+                                                           'path_original': image_obj.relative_path,
                                                            'description':  link_obj.description})
 
             # distribution codes according to WGSRPD (level 3)
@@ -113,10 +113,10 @@ class TaxonResource(Resource):
 
             # changes to images attached to the taxon
             # deleted images
-            url_originals_saved = [image.get('url_original') for image in taxon_modified.get('images')] if \
+            path_originals_saved = [image.get('path_original') for image in taxon_modified.get('images')] if \
                 taxon_modified.get('images') else []
             for image_obj in taxon.images:
-                if image_obj.relative_path not in url_originals_saved:
+                if image_obj.relative_path not in path_originals_saved:
                     # don't delete image object, but only the association (image might be assigned to other events)
                     get_sql_session().delete([link for link in taxon.image_to_taxon_associations if
                                               link.image.relative_path == image_obj.relative_path][0])
@@ -125,11 +125,11 @@ class TaxonResource(Resource):
             if taxon_modified.get('images'):
                 for image in taxon_modified.get('images'):
                     image_obj = get_sql_session().query(Image).filter(Image.relative_path == image.get(
-                            'url_original')).first()
+                            'path_original')).first()
 
                     # not assigned to any event, yet
                     if not image_obj:
-                        image_obj = Image(relative_path=image.get('url_original'))
+                        image_obj = Image(relative_path=image.get('path_original'))
                         get_sql_session().add(image_obj)
                         get_sql_session().flush()  # required to obtain id
 

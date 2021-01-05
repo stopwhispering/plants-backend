@@ -1,10 +1,10 @@
 import os
-from typing import Union
-
+from typing import Union, Optional
 import piexif
 from PIL import Image
 import logging
 from io import BytesIO
+from PIL.JpegImagePlugin import JpegImageFile
 
 from plants_tagger.config_local import LOG_IS_DEV
 
@@ -14,12 +14,14 @@ logger = logging.getLogger(__name__)
 def generate_thumbnail(image: Union[str, BytesIO],
                        size: tuple = (100, 100),
                        path_thumbnail: str = '',
-                       filename_thumb: str = ''):
-    """ generates a resized variant of an image; returns the full local path
+                       filename_thumb: str = '') -> Optional[str]:
+    """
+    generates a resized variant of an image; returns the full local path
     supply original image either as filename or i/o stream
-    if Image is supplied as BytesIO, a filename <<must>> be supplied"""
+    if Image is supplied as BytesIO, a filename <<must>> be supplied
+    """
     if not LOG_IS_DEV:
-        logger.debug(f'generating resized image of {image} in size {size}.')
+        logger.debug(f'Generating resized image of {image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
 
     if type(image) == str and not os.path.isfile(image):
@@ -46,19 +48,17 @@ def generate_thumbnail(image: Union[str, BytesIO],
     path_save = os.path.join(path_thumbnail, filename_thumb)
     im.save(path_save, "JPEG")
 
-    # thumbnails don't require any exif tags
-    # exif_dict = piexif.load(path)
-    # exif_bytes = piexif.dump(exif_dict)
-    # piexif.insert(exif_bytes, path_new)
-
     return path_save
 
 
-def _rotate_if_required(image, exif_obj):
-    """rotate image if exif file has a rotate directive"""
+def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
+    """
+    rotate image if exif file has a rotate directive
+    (solves chrome bug not respecting orientation exif tag)
+    """
     if exif_obj:  # the image might have no exif-tags
         # noinspection PyProtectedMember
-        exif = dict(image._getexif().items())
+        exif = dict(exif_obj.items())
         if piexif.ImageIFD.Orientation in exif:
             if exif[piexif.ImageIFD.Orientation] == 3:
                 _ = image.rotate(180, expand=True)

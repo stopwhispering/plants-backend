@@ -5,7 +5,7 @@ from plants_tagger.models.history_model import History
 from plants_tagger.models.plant_models import Plant
 
 
-def create_history_entry(description: str, plant_id: int = None, plant_name: str = None, commit: bool = True):
+def create_history_entry(description: str, plant_id: int = None, plant_name: str = None, commit: bool = True) -> None:
     if plant_id and not plant_name:
         plant_name = get_sql_session().query(Plant.plant_name).filter(Plant.id == plant_id).scalar()
     elif plant_name and not plant_id:

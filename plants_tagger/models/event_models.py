@@ -150,8 +150,8 @@ class Event(Base, OrmUtil):
                 path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
                                                                            size=config.size_thumbnail_image)
                 as_dict['images'].append({'id':           image_obj.id,
-                                          'url_small':    path_small,
-                                          'url_original': image_obj.relative_path})
+                                          'path_thumb':    path_small,
+                                          'path_original': image_obj.relative_path})
 
         return as_dict
 
