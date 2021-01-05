@@ -66,7 +66,16 @@ def auto_rotate_jpeg(path_image: str, exif_dict: dict) -> None:
 
     img = Image.open(path_image)
     orientation = exif_dict["0th"].pop(piexif.ImageIFD.Orientation)
-    exif_bytes = piexif.dump(exif_dict)
+
+    try:
+        exif_bytes = piexif.dump(exif_dict)
+    except ValueError as e:
+        # treat error "Given thumbnail is too large. max 64kB"
+        logger.warning(f'Catched exception when auto-rotating image file: {str(e)}. Trying again after deleting '
+                       'embedded thumbnail.')
+        del exif_dict['thumbnail']
+        exif_bytes = piexif.dump(exif_dict)
+
     filename = os.path.basename(path_image)
 
     if orientation == 2:
