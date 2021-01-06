@@ -45,7 +45,7 @@ def init_sqlalchemy_engine(followup_funcs: List[Callable] = None):
     # create extensions tables if not existing
     Base.metadata.create_all(engine)
     # get a session factory
-    session_factory = sessionmaker(bind=engine)
+    session_factory = sessionmaker(bind=engine, autoflush=False)
 
     # The ScopedSession object by default uses[threading.local()] as storage, so
     # that a single Session is maintained for all who
