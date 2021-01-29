@@ -34,7 +34,7 @@ def generate_thumbnail(image: Union[str, BytesIO],
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
     exif_obj = im._getexif()
-    _rotate_if_required(im, exif_obj)
+    im = _rotate_if_required(im, exif_obj)
 
     im.thumbnail(size)
 
@@ -55,15 +55,17 @@ def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
     """
     rotate image if exif file has a rotate directive
     (solves chrome bug not respecting orientation exif tag)
+    no exif tag manipulation required as this is not saved
+    to thumbnails anyway
     """
     if exif_obj:  # the image might have no exif-tags
         # noinspection PyProtectedMember
         exif = dict(exif_obj.items())
         if piexif.ImageIFD.Orientation in exif:
             if exif[piexif.ImageIFD.Orientation] == 3:
-                _ = image.rotate(180, expand=True)
+                image = image.rotate(180, expand=True)
             elif exif[piexif.ImageIFD.Orientation] == 6:
-                _ = image.rotate(270, expand=True)
+                image = image.rotate(270, expand=True)
             elif exif[piexif.ImageIFD.Orientation] == 8:
-                _ = image.rotate(90, expand=True)
+                image = image.rotate(90, expand=True)
     return image
