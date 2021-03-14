@@ -1,4 +1,0 @@
-from plants_tagger.util.logger_utils import configure_root_logger
-from plants_tagger.config_local import LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE
-
-configure_root_logger(LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE)
