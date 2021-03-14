@@ -1,15 +1,15 @@
 pygbif
 pyhumps
 # Click
-Flask
-Flask-RESTful
+# Flask
+# Flask-RESTful
 IPTCInfo3
 # Jinja2
 MarkupSafe
 Pillow
 PyYAML
 SQLAlchemy
-Werkzeug
+# Werkzeug
 BeautifulSoup4
 aniso8601
 argh
@@ -29,6 +29,9 @@ unidecode
 requests
 # beautifulsoup4
 Wikidata
-flask-2-ui5-py
+# flask-2-ui5-py
 # matplotlib
 bs4
+fastapi
+starlette
+uvicorn
