@@ -26,7 +26,7 @@ router = APIRouter(
         )
 
 
-@router.get("/{plant_id}")
+@router.get("/{plant_id}", response_model=PResultsEventResource)
 async def get_events(request: Request, plant_id: int, db: Session = Depends(get_db)):
     """returns events from event database table
     imports: plant_id
@@ -49,16 +49,10 @@ async def get_events(request: Request, plant_id: int, db: Session = Depends(get_
                'message': get_message(m,
                                       message_type=MessageType.DEBUG)}
 
-    # evaluate output
-    try:
-        PResultsEventResource(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.post("/")
+@router.post("/", response_model=PConfirmation)
 async def modify_events(request: Request,
                         # todo replace dict with ordinary pydantic schema (also on ui side)
                         plants_events_dict: Dict[str, List[PEventNew]] = Body(..., embed=True),
@@ -214,10 +208,4 @@ async def modify_events(request: Request,
                'message':  get_message(f'Updated events in database.',
                                        description=description)}
 
-    # evaluate output
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
-    return results  # required for closing busy dialog when saving
+    return results

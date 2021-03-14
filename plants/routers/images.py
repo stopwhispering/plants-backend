@@ -13,7 +13,6 @@ from plants.dependencies import get_db
 from plants.config_local import PATH_DELETED_PHOTOS
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata)
-from plants.validation.message_validation import PConfirmation
 from plants.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants import config
 from plants.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
@@ -22,6 +21,7 @@ from plants.services.Photo import Photo
 from plants.util.filename_utils import with_suffix
 from plants.validation.event_validation import PImageDelete
 from plants.validation.image_validation import PResultsImageDeleted
+from plants.validation.message_validation import PConfirmation
 
 RESIZE_SUFFIX = '_autoresized'
 
@@ -34,8 +34,8 @@ router = APIRouter(
         )
 
 
-@router.get("/")
-async def get_images(request: Request, db: Session = Depends(get_db)):
+@router.get("/", response_model=PResultsImageResource)
+async def get_images(db: Session = Depends(get_db)):
     """
     get image information from images and their exif tags including plants and keywords
     """
@@ -57,15 +57,11 @@ async def get_images(request: Request, db: Session = Depends(get_db)):
                'message':          get_message('Loaded images from backend.',
                                                description=f'Count: {len(photo_files)}')
                }
-    try:
-        PResultsImageResource(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     return results
 
 
-@router.put("/")
+@router.put("/", response_model=PConfirmation)
 async def update_images(request: Request, modified_ext: PImageUpdated):
     """modify existing image's exif tags"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images.")
@@ -86,16 +82,10 @@ async def update_images(request: Request, modified_ext: PImageUpdated):
                'message':  get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images.")
                }
 
-    # evaluate output
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.post("/")
+@router.post("/", response_model=PConfirmation)
 async def upload_images(request: Request):
     """upload new image(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
@@ -169,16 +159,10 @@ async def upload_images(request: Request):
                'message':  msg
                }
 
-    # evaluate output
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.delete("/")
+@router.delete("/", response_model=PResultsImageDeleted)
 async def delete_image(request: Request, photo: PImageDelete):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
 
@@ -210,12 +194,6 @@ async def delete_image(request: Request, photo: PImageDelete):
                'message':  get_message(f'Successfully deleted image',
                                        description=f'Filename: {os.path.basename(old_path)}'),
                'photo':    photo}
-
-    # evaluate output
-    try:
-        PResultsImageDeleted(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     # send the photo back to frontend; it will be removed from json model there
     return results

@@ -2,7 +2,6 @@ from json.decoder import JSONDecodeError
 from threading import Thread
 from fastapi import APIRouter, Depends
 import logging
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
@@ -27,7 +26,7 @@ router = APIRouter(
         )
 
 
-@router.post("/search_external_biodiversity")
+@router.post("/search_external_biodiversity", response_model=PResultsTaxonInfoRequest)
 async def search_external_biodiversity_databases(
         request: Request,
         args: PTaxonInfoRequest,
@@ -61,16 +60,10 @@ async def search_external_biodiversity_databases(
                                                 additional_text=f'Search term "{args.species}"',
                                                 description=f'Count: {len(results)}')}
 
-    # evaluate output
-    try:
-        PResultsTaxonInfoRequest(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.post("/assign_taxon_to_plant")
+@router.post("/assign_taxon_to_plant", response_model=PResultsSaveTaxonRequest)
 async def assign_taxon_to_plant(
         request: Request,
         args: PSaveTaxonRequest,
@@ -133,11 +126,5 @@ async def assign_taxon_to_plant(
                'message':        get_message(message),
                'botanical_name': taxon.name,
                'taxon_data':     taxon_dict}
-
-    # evaluate output
-    try:
-        PResultsSaveTaxonRequest(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     return results
