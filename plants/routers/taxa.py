@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 import logging
 from typing import List
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
@@ -24,8 +23,10 @@ router = APIRouter(
         )
 
 
-@router.get("/")
-async def get_taxa(request: Request, db: Session = Depends(get_db)):
+@router.get("/", response_model=PResultsGetTaxa)
+async def get_taxa(
+        db: Session = Depends(get_db)
+        ):
     """returns taxa from taxon database table"""
     taxa: List[Taxon] = db.query(Taxon).all()
     taxon_dict = {}
@@ -83,17 +84,12 @@ async def get_taxa(request: Request, db: Session = Depends(get_db)):
                'message':  get_message(message),
                'TaxaDict': taxon_dict}
 
-    # evaluate output
-    try:
-        # snake_case is converted to camelCase and date is converted to isoformat
-        results = PResultsGetTaxa(**results).dict(by_alias=True)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
+    # snake_case is converted to camelCase and date is converted to isoformat
+    # results = PResultsGetTaxa(**results).dict(by_alias=True)
     return results
 
 
-@router.put("/")
+@router.put("/", response_model=PConfirmation)
 async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Session = Depends(get_db)):
     """two things can be changed in the taxon model, and these are modified in extensions here:
         - modified custom fields
@@ -153,13 +149,6 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
                'resource': 'TaxonResource',
                'message':  get_message(f'Updated {len(modified_taxa)} taxa in database.')
                }
-
-    # evaluate output
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        pass
-        throw_exception(str(err), request=request)
 
     logger.info(f'Updated {len(modified_taxa)} taxa in database.')
     return results

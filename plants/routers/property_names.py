@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends
 import logging
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
-from starlette.requests import Request
 
-from plants.util.ui_utils import throw_exception, get_message
+from plants.util.ui_utils import get_message
 from plants.validation.property_validation import PResultsPropertyNames
 from plants.models.property_models import PropertyCategory
 from plants.dependencies import get_db
@@ -18,9 +16,8 @@ router = APIRouter(
         )
 
 
-@router.get("/")
-async def get_property_names(request: Request,
-                             db: Session = Depends(get_db)):
+@router.get("/", response_model=PResultsPropertyNames)
+async def get_property_names(db: Session = Depends(get_db)):
     category_obj = db.query(PropertyCategory).all()
     categories = {}
     for cat in category_obj:
@@ -35,11 +32,5 @@ async def get_property_names(request: Request,
         'propertiesAvailablePerCategory': categories,
         'message':                        get_message(f"Receiving Property Names from database.")
         }
-
-    # evaluate output
-    try:
-        PResultsPropertyNames(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     return results

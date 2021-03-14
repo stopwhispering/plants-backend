@@ -2,22 +2,21 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import logging
 import datetime
-from pydantic.error_wrappers import ValidationError
 from starlette.requests import Request
 
 from plants.util.ui_utils import (make_list_items_json_serializable, get_message, throw_exception,
                                   make_dict_values_json_serializable)
 from plants.dependencies import get_db
 from plants.config_local import DEMO_MODE_RESTRICT_TO_N_PLANTS
-from plants.validation.plant_validation import PResultsPlants, PPlant
+from plants.validation.plant_validation import PResultsPlants, PResponsePlant
 from plants.models.plant_models import Plant
 from plants import config
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts
 from plants.validation.message_validation import PConfirmation
-from plants.validation.plant_validation import PPlantsUpdateRequest, PResultsPlantsUpdate, PPlantsDeleteRequest, \
-    PPlantsRenameRequest
+from plants.validation.plant_validation import (PPlantsUpdateRequest, PResultsPlantsUpdate, PPlantsDeleteRequest,
+                                                PPlantsRenameRequest)
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +29,16 @@ router = APIRouter(
         )
 
 
-def _get_single(plant_name: str, db: Session, request: Request):
-    """currently unused"""
+@router.get("/{plant_name}", response_model=PResponsePlant)
+# todo switch to plant_id
+async def get_plant(request: Request,
+                    plant_name: str,
+                    db: Session = Depends(get_db)
+                    ):
+    """
+    read plant information from db
+    currently unused
+    """
     plant_obj = db.query(Plant).filter(Plant.plant_name == plant_name).first()
     if not plant_obj:
         logger.error(f'Plant not found: {plant_name}.')
@@ -42,22 +49,18 @@ def _get_single(plant_name: str, db: Session, request: Request):
     results = {'action':   'Get plant',
                'resource': 'PlantResource',
                'message':  get_message(f"Loaded plant {plant_name} from database."),
-               'Plant':    plant}
+               'plant':    plant}
 
-    # evaluate output
-    try:
-        PPlant(**plant)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
     return results
 
 
-def _get_all(db: Session, request: Request):
+@router.get("/", response_model=PResultsPlants)
+async def get_plants(db: Session = Depends(get_db)):
+    """read (almost unfiltered) plants information from db"""
     # select plants from database
     # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
     query = db.query(Plant)
     if config.filter_hidden:
-        # noinspection PyComparisonWithNone
         # sqlite does not like "is None" and pylint doesn't like "== None"
         query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
 
@@ -73,25 +76,11 @@ def _get_all(db: Session, request: Request):
                'message':          get_message(f"Loaded {len(plants_list)} plants from database."),
                'PlantsCollection': plants_list}
 
-    # evaluate output
-    try:
-        PResultsPlants(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
     return results
 
 
-@router.get("/")
-async def get_plants(request: Request, plant_name: str = None, db: Session = Depends(get_db)):
-    """read plant(s) information from db"""
-    if plant_name:
-        return _get_single(plant_name, db, request)
-    else:
-        return _get_all(db, request)
-
-
-@router.post("/")
-def modify_plants(request: Request, data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
+@router.post("/", response_model=PResultsPlantsUpdate)
+def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
     """update existing or create new plants"""
     plants_modified = data.PlantsCollection
 
@@ -108,16 +97,10 @@ def modify_plants(request: Request, data: PPlantsUpdateRequest, db: Session = De
                'message':  get_message(message),
                'plants':   plants_list}  # return the updated/created plants
 
-    # evaluate output
-    try:
-        PResultsPlantsUpdate(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.delete("/")
+@router.delete("/", response_model=PConfirmation)
 def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Depends(get_db)):
     """tag deleted plant as 'hide' in database"""
 
@@ -137,16 +120,10 @@ def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Dep
                                        description=f'Plant name: {args.plant}\nHide: True')
                }
 
-    # evaluate output  # todo
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
-
     return results
 
 
-@router.put("/")
+@router.put("/", response_model=PConfirmation)
 def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Depends(get_db)):
     """we use the put method to rename a plant"""
     args = data
@@ -180,10 +157,5 @@ def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Dep
                'resource': 'PlantResource',
                'message':  get_message(f'Renamed {args.OldPlantName} to {args.NewPlantName}',
                                        description=f'Modified {count_modified_images} images.')}
-    # evaluate output  # todo
-    try:
-        PConfirmation(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     return results

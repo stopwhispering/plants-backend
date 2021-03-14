@@ -24,7 +24,7 @@ router = APIRouter(
         )
 
 
-@router.get("/{entity_id}")
+@router.get("/{entity_id}", response_model=PResultsProposals)
 def get_proposals(request: Request, entity_id: str, db: Session = Depends(get_db)):
     """returns proposals for selection tables"""
 
@@ -95,11 +95,5 @@ def get_proposals(request: Request, entity_id: str, db: Session = Depends(get_db
     results.update({'action': 'Get',
                     'resource': 'ProposalResource',
                     'message': get_message(f'Receiving proposal values for entity {entity_id} from backend.')})
-
-    # evaluate output
-    try:
-        PResultsProposals(**results)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     return results
