@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Depends
 import logging
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
-from starlette.requests import Request
 
-from plants.util.ui_utils import get_message, make_list_items_json_serializable, throw_exception
-from plants.validation.plant_validation import PPlantIdOptional
+from plants.util.ui_utils import get_message, make_list_items_json_serializable
 from plants.validation.property_validation import (PResultsPropertiesForPlant, PPropertiesModifiedPlant,
                                                    PPropertiesModifiedTaxon)
 from plants.services.property_services import SaveProperties, SavePropertiesTaxa, LoadProperties
@@ -55,21 +52,10 @@ async def modify_plant_properties(
 
 @router.get("/plant_properties/{plant_id}", response_model=PResultsPropertiesForPlant)
 def get_plant_properties(
-        request: Request,
         plant_id: int,
         taxon_id: int = None,
         db: Session = Depends(get_db)):
     """reads a plant's property values from db; plus it's taxon's property values"""
-    if not plant_id:
-        throw_exception('Plant id required for Property GET requests', request=request)
-    if plant_id == 'undefined':
-        plant_id = None
-
-    # evaluate arguments
-    try:
-        PPlantIdOptional.parse_obj(plant_id)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     load_properties = LoadProperties()
     categories = load_properties.get_properties_for_plant(plant_id, db)

@@ -102,10 +102,6 @@ class PEvent(BaseModel):
         extra = 'forbid'
 
 
-# class EventsUpdatedByPlantName(BaseModel):
-#     __root__: Dict[str, List[PEventNew]]
-
-
 class PResultsEventResource(BaseModel):
     events: List[PEvent]
     message: PMessage

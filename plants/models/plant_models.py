@@ -32,8 +32,7 @@ class Plant(Base, OrmUtil):
 
     count = Column(INTEGER)
     active = Column(BOOLEAN)
-    # generation_date = Column(DATE)
-    # generation_type = Column(CHAR(60))
+    # reason_cancellation = Column(CHAR(60))  # only set if active == False  # todo finish implementation
     generation_notes = Column(CHAR(120))
 
     parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))

@@ -1,13 +1,12 @@
 from typing import List
 from fastapi import APIRouter, Depends
 import logging
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from plants.config import TRAIT_CATEGORIES
 from plants.models.plant_models import Plant
-from plants.validation.proposal_validation import ProposalEntity, PEntityName, PResultsProposals
+from plants.validation.proposal_validation import ProposalEntity, PResultsProposals
 from plants.services.image_services import get_distinct_keywords_from_image_files
 from plants.models.trait_models import Trait, TraitCategory
 from plants.models.event_models import Soil, SoilComponent
@@ -25,14 +24,8 @@ router = APIRouter(
 
 
 @router.get("/{entity_id}", response_model=PResultsProposals)
-def get_proposals(request: Request, entity_id: str, db: Session = Depends(get_db)):
+def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Depends(get_db)):
     """returns proposals for selection tables"""
-
-    # evaluate arguments
-    try:
-        PEntityName.parse_obj(entity_id)
-    except ValidationError as err:
-        throw_exception(str(err), request=request)
 
     results = {}
     if entity_id == ProposalEntity.SOIL:

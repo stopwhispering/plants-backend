@@ -3,7 +3,6 @@ from collections import defaultdict
 from sqlalchemy.exc import InvalidRequestError
 from fastapi import APIRouter, Depends, Body
 import logging
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
@@ -15,7 +14,6 @@ from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event
 from plants.validation.event_validation import PResultsEventResource, PEventNew
-from plants.validation.plant_validation import PPlantId
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +25,11 @@ router = APIRouter(
 
 
 @router.get("/{plant_id}", response_model=PResultsEventResource)
-async def get_events(request: Request, plant_id: int, db: Session = Depends(get_db)):
+async def get_events(plant_id: int, db: Session = Depends(get_db)):
     """returns events from event database table
     imports: plant_id
     exports: see PResultsEventResource
     """
-    # evaluate arguments
-    try:
-        PPlantId.parse_obj(plant_id)
-    except ValidationError:
-        throw_exception('Plant ID required for GET requests', request=request)
-
     results = []
     # might be a newly created plant with no existing events, yet
     event_objs = Event.get_events_by_plant_id(plant_id, db)

@@ -5,14 +5,6 @@ from pydantic.main import BaseModel
 from plants.validation.message_validation import PMessage
 
 
-class PPlantId(BaseModel):
-    __root__: int
-
-
-class PPlantIdOptional(BaseModel):
-    __root__: Optional[int]
-
-
 class PDescdendantPlant(BaseModel):
     plant_name: str
     id: int
@@ -58,17 +50,15 @@ class PPlant(BaseModel):
     geographic_origin: Optional[str]
     nursery_source: Optional[str]
     propagation_type: Optional[str]  # todo enum?
-    count: Optional[str]  # e.g. "3+"
+    count: Optional[str]  # e.g. "3+"  # todo remove
     active: Optional[bool]  # todo: enforce True/Force
-    tododelme: Optional[bool]
-    # generation_date: Optional[str]  # obsolete?
-    # generation_type: Optional[str]  # obsolete?
+    reason_cancellation: Optional[str]  # only set if active == False
     generation_notes: Optional[str]  # obsolete?
     parent_plant_id: Optional[int]
     parent_plant_pollen_id: Optional[int]
     plant_notes: Optional[str]
     filename_previewimage: Optional[str]
-    hide: Optional[bool]  # todo: enforce True/False
+    hide: Optional[bool]  # i.e. deleted  todo: enforce True/False
     last_update: Optional[datetime]  # empty if new
     taxon_id: Optional[int]
     parent_plant: Optional[str]

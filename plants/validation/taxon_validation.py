@@ -10,10 +10,6 @@ from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategoryWithTraits
 
 
-class PTaxonId(BaseModel):
-    __root__: int
-
-
 class PTaxonInfoRequest(BaseModel):
     species: str
     includeKew: bool

@@ -13,3 +13,4 @@ class History(Base):
     plant_id = Column(INTEGER)
     plant_name = Column(CHAR(100))
     description = Column(TEXT)
+    # type = Column(CHAR(40))  # Renaming, Plant Death, Gift  # implemented in plant model

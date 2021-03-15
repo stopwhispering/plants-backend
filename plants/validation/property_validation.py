@@ -2,12 +2,6 @@ from typing import Dict, List, Optional
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
-from plants.validation.plant_validation import PPlantId
-from plants.validation.taxon_validation import PTaxonId
-
-
-# class PCategoryId(BaseModel):
-#     __root__: int
 
 
 class PPropertyName(BaseModel):
@@ -81,9 +75,9 @@ class PResultsPropertiesForPlant(BaseModel):
     resource: str
     message: PMessage
     propertyCollections: PPropertyCollectionPlant
-    plant_id: PPlantId
+    plant_id: int
     propertyCollectionsTaxon: PPropertyCollectionTaxon
-    taxon_id: Optional[PTaxonId]
+    taxon_id: Optional[int]
 
     class Config:
         extra = 'forbid'

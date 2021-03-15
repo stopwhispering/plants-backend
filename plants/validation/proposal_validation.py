@@ -16,13 +16,6 @@ class ProposalEntity(str, Enum):
     TRAIT_CATEGORY = 'TraitCategoryProposals'
 
 
-class PEntityName(BaseModel):
-    __root__: ProposalEntity
-
-    class Config:
-        extra = 'forbid'
-
-
 class PComponentName(BaseModel):
     component_name: str
 
