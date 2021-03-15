@@ -6,9 +6,11 @@ from plants.routers import (taxa, plants, images, events, property_names, proper
                             functions, selection_data, api_biodiversity)
 from plants.util.logger_utils import configure_root_logger
 
+
 configure_root_logger()
 
-app = FastAPI()
+COMMON_PREFIX = '/plants_tagger/backend'
+app = FastAPI(docs_url=COMMON_PREFIX + "/docs", redoc_url=COMMON_PREFIX + "/redoc")
 
 # allow cors on dev  # todo really only on dev
 origins = [
@@ -25,7 +27,6 @@ app.add_middleware(
         allow_headers=["*"],
         )
 
-COMMON_PREFIX = '/plants_tagger/backend'
 app.include_router(taxa.router, prefix=COMMON_PREFIX)
 app.include_router(plants.router, prefix=COMMON_PREFIX)
 app.include_router(images.router, prefix=COMMON_PREFIX)
