@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP
+from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
 from sqlalchemy.orm import relationship, Session
 import logging
 import datetime
@@ -32,7 +32,9 @@ class Plant(Base, OrmUtil):
 
     count = Column(INTEGER)
     active = Column(BOOLEAN)
-    # reason_cancellation = Column(CHAR(60))  # only set if active == False  # todo finish implementation
+    cancellation_reason = Column(CHAR(60))  # only set if active == False  # todo finish implementation
+    cancellation_date = Column(DATETIME)
+
     generation_notes = Column(CHAR(120))
 
     parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))
