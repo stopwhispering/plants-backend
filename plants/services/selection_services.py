@@ -8,7 +8,8 @@ from plants.models.plant_models import Plant
 
 def build_taxon_tree(db: Session) -> List:
     # build up an exists filter that we're gonna reuse
-    exists_filter = Taxon.plants.any(and_(or_(Plant.hide.is_(None), Plant.hide is False), Plant.active is True))
+    # exists_filter = Taxon.plants.any(and_(or_(Plant.hide.is_(None), Plant.hide is False), Plant.active is True))
+    exists_filter = Taxon.plants.any(and_(or_(Plant.hide.is_(None), Plant.hide.is_(False)), Plant.active))
 
     # get distinct families, genus, and species (as list of four-element-tuples); sort
     dist_tuples = db.query(Taxon.family, Taxon.genus, Taxon.species, Taxon.id).filter(
