@@ -81,7 +81,9 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
                                       icon=tag.icon,
                                       state=tag.state,
                                       plant=plant_obj,
-                                      last_update=datetime.datetime.now())
+                                      # last_update=datetime.datetime.now()
+                                      last_update=datetime.now()
+                                      )
                 new_list.append(tag_object)
             else:
                 # update if modified (not implemented in frontend)
