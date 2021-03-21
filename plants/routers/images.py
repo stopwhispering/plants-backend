@@ -8,11 +8,12 @@ from pydantic.error_wrappers import ValidationError
 from fastapi import UploadFile
 from fastapi import APIRouter, Depends, Request
 
+from plants.models.entities import PhotoFileExt, KeywordImageTagExt, PlantImageTagExt
 from plants.util.ui_utils import MessageType, get_message, throw_exception, make_list_items_json_serializable
 from plants.dependencies import get_db
 from plants.config_local import PATH_DELETED_PHOTOS
 from plants.models.plant_models import Plant
-from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata)
+from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage)
 from plants.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants import config
 from plants.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
@@ -28,16 +29,47 @@ RESIZE_SUFFIX = '_autoresized'
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-        prefix="/images",
+        # prefix="/images",
         tags=["images"],
         responses={404: {"description": "Not found"}},
         )
 
 
-@router.get("/", response_model=PResultsImageResource)
+@router.get("/plants/{plant_id}/images/", response_model=List[PImage])
+async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
+    """
+    get image information for requested plant_id from images and their exif tags including plants and keywords
+    """
+    # instantiate photo directory if required, get photos in external format from files exif data
+    plant_name = Plant.get_plant_name_by_plant_id(plant_id, db=db, raise_exception=True)
+    with lock_photo_directory:
+        photo_files = get_photo_directory().get_photo_files(plant_name=plant_name)
+
+    # if a plant_name is tagged for an image file but is not in the plants database, we set plant_id to None
+    photo_files_ext = [PImage(
+                    path_thumb=photo.path_thumb,
+                    path_original=photo.path_original,
+                    keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
+                    plants=[PlantImageTagExt(
+                            key=p,
+                            text=p,
+                            plant_id=Plant.get_plant_id_by_plant_name(p, db=db, raise_exception=False)
+                            ) for p in photo.tag_authors_plants],
+                    description='' if photo.tag_description.strip() == 'SONY DSC' else photo.tag_description,
+                    filename=photo.filename or '',
+                    path_full_local=photo.path_full_local,
+                    record_date_time=photo.record_date_time,
+                    ) for photo in photo_files]
+
+    # make_list_items_json_serializable(photo_files_ext)
+    logger.info(f'Returned {len(photo_files_ext)} images for {plant_id} ({plant_name}).')
+    return photo_files_ext
+
+
+@router.get("/images/", response_model=PResultsImageResource)
 async def get_images(db: Session = Depends(get_db)):
     """
-    get image information from images and their exif tags including plants and keywords
+    get image information for all plants from images and their exif tags including plants and keywords
     """
     # instantiate photo directory if required, get photos in external format from files exif data
     with lock_photo_directory:
@@ -50,7 +82,7 @@ async def get_images(db: Session = Depends(get_db)):
     logger.debug(f'Filter out {len(photo_files_all) - len(photo_files)} images due to Hide flag of the only tagged '
                  f'plant.')
 
-    # make serializable anad validate
+    # make serializable
     make_list_items_json_serializable(photo_files)
     logger.info(f'Returned {len(photo_files)} images.')
     results = {'ImagesCollection': photo_files,
@@ -61,7 +93,7 @@ async def get_images(db: Session = Depends(get_db)):
     return results
 
 
-@router.put("/", response_model=PConfirmation)
+@router.put("/images/", response_model=PConfirmation)
 async def update_images(request: Request, modified_ext: PImageUpdated):
     """modify existing image's exif tags"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images.")
@@ -85,7 +117,7 @@ async def update_images(request: Request, modified_ext: PImageUpdated):
     return results
 
 
-@router.post("/", response_model=PConfirmation)
+@router.post("/images/", response_model=PConfirmation)
 async def upload_images(request: Request):
     """upload new image(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
@@ -162,7 +194,7 @@ async def upload_images(request: Request):
     return results
 
 
-@router.delete("/", response_model=PResultsImageDeleted)
+@router.delete("/images/", response_model=PResultsImageDeleted)
 async def delete_image(request: Request, photo: PImageDelete):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
 

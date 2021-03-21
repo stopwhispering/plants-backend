@@ -1,5 +1,5 @@
 import datetime
-from typing import NamedTuple, TypedDict, List
+from typing import NamedTuple, TypedDict, List, Optional
 
 
 class ImageInfo(NamedTuple):
@@ -9,16 +9,20 @@ class ImageInfo(NamedTuple):
 
 
 class PlantImageTagExt(TypedDict):
+    # tododelme
     key: str
     text: str
+    plant_id: Optional[int]
 
 
 class KeywordImageTagExt(TypedDict):
+    # todo delme
     keyword: str
 
 
 class PhotoFileExt(TypedDict):
     """
+    TODO DELME
     metadata on photo files from Exif Tags; used to submit to frontend
     """
     path_thumb: str

@@ -102,12 +102,20 @@ class PhotoDirectory:
         """called by plants resource. returns latest image record date for supplied plant_name"""
         return self.latest_image_dates.get(plant_name)
 
-    def get_photo_files_ext(self) -> List[PhotoFileExt]:
+    def get_photo_files(self, plant_name: str = None) -> List[Photo]:
         """
+        return photo file metadata, optionally filtered by plant_name
+        """
+        photo_files = self.photos if not plant_name else [p for p in self.photos if plant_name in p.tag_authors_plants]
+        return photo_files
+
+    def get_photo_files_ext(self, plant_name: str = None) -> List[PhotoFileExt]:
+        """
+        TODO DELME
         extracts photo metadata and converts some keys as required in frontend
         """
-        with lock_photo_directory:
-            return [PhotoFileExt(
+        def get_photo_file_ext(photo: Photo):
+            return PhotoFileExt(
                     path_thumb=photo.path_thumb,
                     path_original=photo.path_original,
                     keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
@@ -117,7 +125,22 @@ class PhotoDirectory:
                     filename=photo.filename or '',
                     path_full_local=photo.path_full_local,
                     record_date_time=photo.record_date_time
-                    ) for photo in self.photos]
+                    )
+        with lock_photo_directory:
+            photos = self.photos if not plant_name else [p for p in self.photos if plant_name in p.tag_authors_plants]
+        return [get_photo_file_ext(photo) for photo in photos]
+
+            # return [PhotoFileExt(
+            #         path_thumb=photo.path_thumb,
+            #         path_original=photo.path_original,
+            #         keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
+            #         plants=[PlantImageTagExt(key=p, text=p) for p in photo.tag_authors_plants],
+            #         # get rid of annoying camera default image description
+            #         description='' if photo.tag_description.strip() == 'SONY DSC' else photo.tag_description,
+            #         filename=photo.filename or '',
+            #         path_full_local=photo.path_full_local,
+            #         record_date_time=photo.record_date_time
+            #         ) for photo in photos]
 
 
 lock_photo_directory = threading.RLock()
