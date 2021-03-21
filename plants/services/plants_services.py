@@ -2,6 +2,7 @@ import datetime
 import logging
 from typing import List
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
@@ -28,6 +29,11 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
         # catch key errors (new entries don't have all keys in the dict)
         record_update.plant_name = plant.plant_name   # key is always supplied
         record_update.active = plant.active
+        record_update.cancellation_reason = plant.cancellation_reason
+        if type(plant.cancellation_date) == str:
+            record_update.cancellation_date = datetime.strptime(plant.cancellation_date, '%Y-%m-%d')
+        else:
+            record_update.cancellation_date = plant.cancellation_date
 
         # record_update.set_count(plant=plant.count)
         record_update.field_number = plant.field_number

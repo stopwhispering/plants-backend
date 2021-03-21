@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime, date
 from pydantic.main import BaseModel
 
@@ -52,7 +52,8 @@ class PPlant(BaseModel):
     propagation_type: Optional[str]  # todo enum?
     count: Optional[str]  # e.g. "3+"  # todo remove
     active: Optional[bool]  # todo: enforce True/Force
-    reason_cancellation: Optional[str]  # only set if active == False
+    cancellation_reason: Optional[str]  # only set if active == False  # todo enum
+    cancellation_date: Optional[Union[datetime, str]]  # only set if active == False
     generation_notes: Optional[str]  # obsolete?
     parent_plant_id: Optional[int]
     parent_plant_pollen_id: Optional[int]
