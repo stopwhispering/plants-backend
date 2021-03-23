@@ -109,6 +109,13 @@ class PhotoDirectory:
         photo_files = self.photos if not plant_name else [p for p in self.photos if plant_name in p.tag_authors_plants]
         return photo_files
 
+    def get_photo_files_untagged(self) -> List[Photo]:
+        """
+        return photo file metadata for photos that have no plants tagged, yet
+        """
+        photo_files = [p for p in self.photos if not p.tag_authors_plants]
+        return photo_files
+
     def get_photo_files_ext(self, plant_name: str = None) -> List[PhotoFileExt]:
         """
         TODO DELME
