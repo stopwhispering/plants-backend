@@ -13,7 +13,7 @@ from plants.dependencies import get_db
 from plants.config_local import PATH_DELETED_PHOTOS
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
-                                                PKeyword, PPlantTag)
+                                                PKeyword, PPlantTag, PResultsImagesUploadedToPlant)
 from plants.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants import config
 from plants.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
@@ -53,7 +53,7 @@ async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     return photo_files_ext
 
 
-@router.post("/plants/{plant_id}/images/")  # , response_model=List[PImage])
+@router.post("/plants/{plant_id}/images/", response_model=PResultsImagesUploadedToPlant)
 async def upload_images_plant(plant_id: int, request: Request, db: Session = Depends(get_db)):
     """
     upload images and directly assign them to supplied plant; no keywords included

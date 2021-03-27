@@ -50,6 +50,16 @@ class PResultsImageResource(BaseModel):
         extra = 'forbid'
 
 
+class PResultsImagesUploadedToPlant(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    images: List[PImage]
+
+    class Config:
+        extra = 'forbid'
+
+
 class PImageUploadedMetadata(BaseModel):
     plants: List[str]
     keywords: List[str]
