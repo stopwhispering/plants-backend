@@ -4,7 +4,6 @@ import os
 from PIL import Image
 import logging
 from typing import Set
-# from werkzeug.datastructures import FileStorage
 
 import plants.config_local
 import plants.services.PhotoDirectory

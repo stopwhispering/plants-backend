@@ -8,7 +8,7 @@ from plants.util.ui_utils import (make_list_items_json_serializable, get_message
                                   make_dict_values_json_serializable)
 from plants.dependencies import get_db
 from plants.config_local import DEMO_MODE_RESTRICT_TO_N_PLANTS
-from plants.validation.plant_validation import PResultsPlants, PResponsePlant
+from plants.validation.plant_validation import PResultsPlants, PPlant
 from plants.models.plant_models import Plant
 from plants import config
 from plants.services.history_services import create_history_entry
@@ -29,29 +29,22 @@ router = APIRouter(
         )
 
 
-@router.get("/{plant_name}", response_model=PResponsePlant)
-# todo switch to plant_id
+@router.get("/{plant_id}", response_model=PPlant)
 async def get_plant(request: Request,
-                    plant_name: str,
+                    plant_id: int,
                     db: Session = Depends(get_db)
                     ):
     """
     read plant information from db
     currently unused
     """
-    plant_obj = db.query(Plant).filter(Plant.plant_name == plant_name).first()
+    plant_obj = db.query(Plant).filter(Plant.id == plant_id).first()
     if not plant_obj:
-        logger.error(f'Plant not found: {plant_name}.')
-        throw_exception(f'Plant not found: {plant_name}.', request=request)
+        throw_exception(f'Plant not found: {plant_id}.', request=request)
     plant = plant_obj.as_dict()
 
     make_dict_values_json_serializable(plant)
-    results = {'action':   'Get plant',
-               'resource': 'PlantResource',
-               'message':  get_message(f"Loaded plant {plant_name} from database."),
-               'plant':    plant}
-
-    return results
+    return plant
 
 
 @router.get("/", response_model=PResultsPlants)

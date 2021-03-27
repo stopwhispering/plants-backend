@@ -77,11 +77,11 @@ class PPlant(BaseModel):
         extra = 'forbid'
 
 
-class PResponsePlant(BaseModel):
-    action: str
-    resource: str
-    message: PMessage
-    plant: PPlant
+# class PResponsePlant(BaseModel):
+#     action: str
+#     resource: str
+#     message: PMessage
+#     plant: PPlant
 
 
 class PResultsPlants(BaseModel):

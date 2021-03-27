@@ -13,6 +13,7 @@ class PKeyword(BaseModel):
 
 
 class PPlantTag(BaseModel):
+    plant_id: int = None
     key: str
     text: str
 
