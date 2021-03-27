@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Tuple
 import aiofiles
 import json
 from sqlalchemy.orm import Session
@@ -47,24 +47,47 @@ async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
 
     # if a plant_name is tagged for an image file but is not in the plants database, we set plant_id to None
     photo_files_ext = _get_pimages_from_photos(photo_files, db=db)
-    # photo_files_ext = [PImage(
-    #                 path_thumb=photo.path_thumb,
-    #                 path_original=photo.path_original,
-    #                 keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
-    #                 plants=[PlantImageTagExt(
-    #                         key=p,
-    #                         text=p,
-    #                         plant_id=Plant.get_plant_id_by_plant_name(p, db=db, raise_exception=False)
-    #                         ) for p in photo.tag_authors_plants],
-    #                 description='' if photo.tag_description.strip() == 'SONY DSC' else photo.tag_description,
-    #                 filename=photo.filename or '',
-    #                 path_full_local=photo.path_full_local,
-    #                 record_date_time=photo.record_date_time,
-    #                 ) for photo in photo_files]
 
     # make_list_items_json_serializable(photo_files_ext)
     logger.info(f'Returned {len(photo_files_ext)} images for {plant_id} ({plant_name}).')
     return photo_files_ext
+
+
+@router.post("/plants/{plant_id}/images/")  # , response_model=List[PImage])
+async def upload_images_plant(plant_id: int, request: Request, db: Session = Depends(get_db)):
+    """
+    upload images and directly assign them to supplied plant; no keywords included
+    # the ui5 uploader control does somehow not work with the expected form/multipart format expected
+    # via fastapi argument files = List[UploadFile] = File(...)
+    # therefore, we directly go on the starlette request object
+    """
+    form = await request.form()
+    # noinspection PyTypeChecker
+    files: List[UploadFile] = form.getlist('files[]')
+
+    # remove duplicates (filename already exists in file system)
+    duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
+
+    plant_name = Plant.get_plant_name_by_plant_id(plant_id, db, raise_exception=True)
+
+    photos: List[Photo] = await _save_image_files(files=files,
+                                                  request=request,
+                                                  plants=({'key': plant_name, 'text': plant_name},)
+                                                  )
+    photo_files_ext = _get_pimages_from_photos(photos, db=db)
+
+    msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
+                      message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
+                      description=f'Saved: {[p.filename for p in files]}.'
+                                  f'\nSkipped Duplicates: {duplicate_filenames}.')
+    logger.info(msg['message'])
+    results = {'action':   'Uploaded',
+               'resource': 'ImageResource',
+               'message':  msg,
+               'images': photo_files_ext
+               }
+
+    return results
 
 
 @router.get("/images/", response_model=PResultsImageResource)
@@ -128,7 +151,8 @@ async def update_images(request: Request, modified_ext: PImageUpdated):
 
 @router.post("/images/", response_model=PConfirmation)
 async def upload_images(request: Request):
-    """upload new image(s)"""
+    """upload new image(s)
+    todo: switch key in supplied plants list to id"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
@@ -143,52 +167,15 @@ async def upload_images(request: Request):
     except ValidationError as err:
         throw_exception(str(err), request=request)
 
-    plants = [{'key': p, 'text': p} for p in additional_data['plants']] if 'plants' in additional_data else []
-    keywords = [{'keyword': k, 'text': k} for k in additional_data['keywords']] \
-        if 'keywords' in additional_data else []
+    # todo: get rid of that key/text/keyword dict
+    plants = tuple({'key': p, 'text': p} for p in additional_data['plants'])  # if 'plants' in additional_data else []
+    keywords = tuple({'keyword': k, 'text': k} for k in additional_data['keywords'])
+    # if 'keywords' in additional_data else []
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
 
-    for photo_upload in files:
-        # save to file system
-        path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
-        logger.info(f'Saving {path}.')
-
-        async with aiofiles.open(path, 'wb') as out_file:
-            content = await photo_upload.read()  # async read
-            await out_file.write(content)  # async write
-
-        # photo_upload.save(path)  # we can't use object first and then save as this alters file object
-
-        # resize file by lowering resolution if required
-        if not config.resizing_size:
-            pass
-        elif not resizing_required(path, config.resizing_size):
-            logger.info(f'No resizing required.')
-        else:
-            logger.info(f'Saving and resizing {path}.')
-            resize_image(path=path,
-                         save_to_path=with_suffix(path, RESIZE_SUFFIX),
-                         size=config.resizing_size,
-                         quality=config.quality)
-            path = with_suffix(path, RESIZE_SUFFIX)
-
-        # add to photo directory (cache) and add keywords and plant tags
-        # (all the same for each uploaded photo)
-        photo = Photo(path_full_local=path,
-                      filename=os.path.basename(path))
-        photo.tag_authors_plants = [p['key'] for p in plants]
-        photo.tag_keywords = [k['keyword'] for k in keywords]
-        with lock_photo_directory:
-            if p := get_photo_directory(instantiate=False):
-                if p in p.photos:
-                    throw_exception(f"Already found in PhotoDirectory cache: {photo.path_full_local}", request=request)
-                p.photos.append(photo)
-
-        # generate thumbnail image for frontend display and update file's exif tags
-        photo.generate_thumbnails()
-        photo.write_exif_tags()
+    await _save_image_files(files=files, request=request, plants=plants, keywords=keywords)
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
                       message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
@@ -238,6 +225,57 @@ async def delete_image(request: Request, photo: PImageDelete):
 
     # send the photo back to frontend; it will be removed from json model there
     return results
+
+
+async def _save_image_files(files: List[UploadFile],
+                            request: Request,
+                            plants: Tuple = (),
+                            keywords: Tuple = (),
+                            ) -> List[Photo]:
+    """save the files supplied as starlette uploadfiles on os; assign plants and keywords"""
+    photos = []
+    for photo_upload in files:
+        # save to file system
+        path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
+        logger.info(f'Saving {path}.')
+
+        async with aiofiles.open(path, 'wb') as out_file:
+            content = await photo_upload.read()  # async read
+            await out_file.write(content)  # async write
+
+        # photo_upload.save(path)  # we can't use object first and then save as this alters file object
+
+        # resize file by lowering resolution if required
+        if not config.resizing_size:
+            pass
+        elif not resizing_required(path, config.resizing_size):
+            logger.info(f'No resizing required.')
+        else:
+            logger.info(f'Saving and resizing {path}.')
+            resize_image(path=path,
+                         save_to_path=with_suffix(path, RESIZE_SUFFIX),
+                         size=config.resizing_size,
+                         quality=config.quality)
+            path = with_suffix(path, RESIZE_SUFFIX)
+
+        # add to photo directory (cache) and add keywords and plant tags
+        # (all the same for each uploaded photo)
+        photo = Photo(path_full_local=path,
+                      filename=os.path.basename(path))
+        photo.tag_authors_plants = [p['key'] for p in plants]
+        photo.tag_keywords = [k['keyword'] for k in keywords]
+        with lock_photo_directory:
+            if p := get_photo_directory(instantiate=False):
+                if p in p.photos:
+                    throw_exception(f"Already found in PhotoDirectory cache: {photo.path_full_local}", request=request)
+                p.photos.append(photo)
+
+        # generate thumbnail image for frontend display and update file's exif tags
+        photo.generate_thumbnails()
+        photo.write_exif_tags()
+        photos.append(photo)
+
+    return photos
 
 
 def _get_pimages_from_photos(photo_files: List[Photo], db: Session):
