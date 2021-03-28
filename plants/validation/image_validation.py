@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from pydantic.main import BaseModel
 
@@ -29,7 +29,7 @@ class PImage(BaseModel):
     description: str
     filename: str
     path_full_local: str  # not a FilePath as existence check would cause performance problems
-    record_date_time: datetime  # 2019-11-21T11:51:13
+    record_date_time: Optional[datetime]  # 2019-11-21T11:51:13  # todo really optional? seems initial after upload
 
     class Config:
         extra = 'forbid'
@@ -45,6 +45,16 @@ class PImageUpdated(BaseModel):
 class PResultsImageResource(BaseModel):
     ImagesCollection: List[PImage]
     message: PMessage
+
+    class Config:
+        extra = 'forbid'
+
+
+class PResultsImagesUploadedToPlant(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    images: List[PImage]
 
     class Config:
         extra = 'forbid'
