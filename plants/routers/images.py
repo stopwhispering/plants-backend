@@ -13,7 +13,7 @@ from plants.dependencies import get_db
 from plants.config_local import PATH_DELETED_PHOTOS
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
-                                                PKeyword, PPlantTag, PResultsImagesUploadedToPlant)
+                                                PKeyword, PPlantTag, PResultsImagesUploaded)
 from plants.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants import config
 from plants.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
@@ -53,7 +53,7 @@ async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     return photo_files_ext
 
 
-@router.post("/plants/{plant_id}/images/", response_model=PResultsImagesUploadedToPlant)
+@router.post("/plants/{plant_id}/images/", response_model=PResultsImagesUploaded)
 async def upload_images_plant(plant_id: int, request: Request, db: Session = Depends(get_db)):
     """
     upload images and directly assign them to supplied plant; no keywords included
@@ -149,8 +149,8 @@ async def update_images(request: Request, modified_ext: PImageUpdated):
     return results
 
 
-@router.post("/images/", response_model=PConfirmation)
-async def upload_images(request: Request):
+@router.post("/images/", response_model=PResultsImagesUploaded)
+async def upload_images(request: Request, db: Session = Depends(get_db)):
     """upload new image(s)
     todo: switch key in supplied plants list to id"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
@@ -175,7 +175,8 @@ async def upload_images(request: Request):
     # remove duplicates (filename already exists in file system)
     duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
 
-    await _save_image_files(files=files, request=request, plants=plants, keywords=keywords)
+    photos: List[Photo] = await _save_image_files(files=files, request=request, plants=plants, keywords=keywords)
+    photo_files_ext = _get_pimages_from_photos(photos, db=db)
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
                       message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
@@ -184,7 +185,8 @@ async def upload_images(request: Request):
     logger.info(msg['message'])
     results = {'action':   'Uploaded',
                'resource': 'ImageResource',
-               'message':  msg
+               'message':  msg,
+               'images': photo_files_ext
                }
 
     return results

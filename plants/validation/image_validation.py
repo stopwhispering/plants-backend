@@ -50,7 +50,7 @@ class PResultsImageResource(BaseModel):
         extra = 'forbid'
 
 
-class PResultsImagesUploadedToPlant(BaseModel):
+class PResultsImagesUploaded(BaseModel):
     action: str
     resource: str
     message: PMessage
