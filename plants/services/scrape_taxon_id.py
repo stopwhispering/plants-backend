@@ -20,6 +20,7 @@ def gbif_id_from_gbif_api(botanical_name: str, ipni_id: str) -> Optional[int]:
     """the gbif api does not allow searching by other database's taxonId; therefore, we search by
     botanical name and ipni dataset key, then we compare the (external) taxonId"; if we have a match, we
     can return the gbif taxon id"""
+    logger.info(f'Searching IPNI Dataset for {botanical_name} to get GBIF ID.')
     lookup = species.name_lookup(q=botanical_name, datasetKey=IPNI_DATASET_KEY)
     if not lookup.get('results'):
         return None
