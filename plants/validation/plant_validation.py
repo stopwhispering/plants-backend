@@ -71,7 +71,7 @@ class PPlant(BaseModel):
     latest_image: Optional[PPlantLatestImage]
     botanical_name: Optional[str]
     taxon_authors: Optional[str]
-    tags: Optional[List[PPlantTag]]
+    tags: List[PPlantTag] = []
 
     class Config:
         extra = 'forbid'
