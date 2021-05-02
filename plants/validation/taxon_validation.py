@@ -29,8 +29,8 @@ class PResultsTaxonInfoRequest(BaseModel):
         extra = 'forbid'
 
 
-class PSaveTaxonRequest(BaseModel):
-    fqId: str
+class PAssignTaxonRequest(BaseModel):
+    fqId: Optional[str]
     hasCustomName: bool
     nameInclAddition: str
     source: str

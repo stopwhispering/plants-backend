@@ -11,7 +11,7 @@ from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxon_occurence_image_services import TaxonOccurencesLoader
 from plants.validation.taxon_validation import (PTaxonInfoRequest, PResultsTaxonInfoRequest,
-                                                PSaveTaxonRequest, PResultsSaveTaxonRequest)
+                                                PAssignTaxonRequest, PResultsSaveTaxonRequest)
 from plants.services.query_taxa import (copy_taxon_from_kew, get_taxa_from_local_database,
                                         get_taxa_from_kew_databases)
 from plants.services.scrape_taxon_id import get_gbif_id_from_wikidata, gbif_id_from_gbif_api
@@ -66,7 +66,7 @@ async def search_external_biodiversity_databases(
 @router.post("/assign_taxon_to_plant", response_model=PResultsSaveTaxonRequest)
 async def assign_taxon_to_plant(
         request: Request,
-        args: PSaveTaxonRequest,
+        args: PAssignTaxonRequest,
         db: Session = Depends(get_db)):
     """assign the taxon selected on frontend to the plant; the taxon may either already exist in database or we
     need to create it and retrieve the required information from the kew databases

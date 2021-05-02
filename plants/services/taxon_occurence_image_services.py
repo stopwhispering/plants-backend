@@ -159,6 +159,7 @@ class TaxonOccurencesLoader:
                 print(err)
 
     def scrape_occurrences_for_taxon(self, gbif_id: int, db: Session) -> List:
+        logger.info(f'Searching occurrence immages for  {gbif_id}.')
         occ_search = occ_api.search(taxonKey=gbif_id, mediaType='StillImage')
         if not occ_search['results']:
             logger.info(f'nothing found for {gbif_id}')

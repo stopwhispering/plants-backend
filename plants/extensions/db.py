@@ -5,7 +5,10 @@ from sqlalchemy.orm import sessionmaker, Session
 from plants.config_local import connection_string
 
 Base = declarative_base()
-engine = create_engine(connection_string, connect_args={'check_same_thread': False})
+engine = create_engine(connection_string,
+                       connect_args={'check_same_thread': False,
+                                     # 'connect_timeout': 10
+                                     })
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
