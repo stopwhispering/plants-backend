@@ -1,9 +1,10 @@
 import datetime
 import logging
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 
+from plants.extensions.db import Base
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
 from plants.services.tag_services import tag_modified, update_tag
@@ -68,6 +69,57 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
 
     db.commit()  # saves changes in existing records, too
     return plants_saved
+
+
+def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
+    """
+    generate a transient clone of sqlalchemy instance; supply primary key
+    as dict
+    """
+    # get data of non-primary-key columns; exclude relationships
+    table = model_instance.__table__
+    non_pk_columns = [k for k in table.columns.keys() if k not in table.primary_key]
+    data = {c: getattr(model_instance, c) for c in non_pk_columns}
+    if clone_attrs:
+        data.update(clone_attrs)
+    return model_instance.__class__(**data)
+
+
+def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
+    """
+    clone supplied plant
+    includes duplication of events, image-to-event assignments, properties, tags
+    excludes descendant plants
+    assignments to same instances of parent plants, parent plants pollen (nothing to do here)
+    """
+    cloned = []
+
+    plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,
+                                                         'last_update': datetime.now()})
+    plant_clone.set_last_update()
+    cloned.append(plant_clone)
+
+    for tag in plant_original.tags:
+        tag_clone = _clone_instance(tag, {'last_update': datetime.now()})
+        tag_clone.plant = plant_clone
+        cloned.append(tag_clone)
+
+    for event in plant_original.events:
+        event_clone = _clone_instance(event)
+        event_clone.plant = plant_clone
+        cloned.append(event_clone)
+
+        # image-to-event associations via image instances (no need to update these explicitly)
+        for image in event.images:
+            image.events.append(event_clone)
+
+    for property_value in plant_original.property_values_plant:
+        property_value_clone = _clone_instance(property_value)
+        property_value_clone.plant = plant_clone
+        cloned.append(property_value_clone)
+
+    db.add_all(cloned)
+    db.commit()  # saves changes in existing records, too
 
 
 def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):

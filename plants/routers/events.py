@@ -58,6 +58,7 @@ async def modify_events(request: Request,
     new_list = []
     for plant_id, events in plants_events_dict.items():
 
+        # plant_obj = Plant.get_plant_by_plant_name(plant_name, db, raise_exception=True)
         plant_obj = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
         logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
                     f' {[e.id for e in plant_obj.events]}')
@@ -74,7 +75,7 @@ async def modify_events(request: Request,
                 event.id = event_obj_id
                 logger.info(f"Identified event without id from browser as id {event.id}")
         event_ids = [e.id for e in events]
-        logger.info(f'Updating {len(events)} events ({event_ids})for plant {plant_obj.plant_name}')
+        logger.info(f'Updating {len(events)} events ({event_ids})for plant {plant_id}')
 
         # loop at the current plant's database events to find deleted ones
         event_obj: Optional[Event] = None
