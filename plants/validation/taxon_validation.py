@@ -35,7 +35,8 @@ class PAssignTaxonRequest(BaseModel):
     nameInclAddition: str
     source: str
     id: Optional[int]  # taxon id
-    plant: str
+    # plant: str
+    plant_id: int
 
     class Config:
         extra = 'forbid'

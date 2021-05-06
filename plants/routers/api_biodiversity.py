@@ -118,7 +118,7 @@ async def assign_taxon_to_plant(
     taxon_dict = taxon.as_dict()
     taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
 
-    message = f'Assigned botanical name "{taxon.name}" to plant "{args.plant}".'
+    message = f'Assigned botanical name "{taxon.name}" to plant id {args.plant_id}.'
     logger.info(message)
 
     results = {'action':         'Save Taxon',
