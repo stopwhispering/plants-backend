@@ -110,7 +110,11 @@ def clone_plant(
 
 @router.post("/", response_model=PResultsPlantsUpdate)
 def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
-    """update existing or create new plants"""
+    """
+    update existing or create new plants
+    if no id is supplied, a new plant is created having the supplied attributes (only
+    plant_name is mandatory, others may be provided)
+    """
     plants_modified = data.PlantsCollection
 
     # update plants
