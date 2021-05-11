@@ -20,30 +20,30 @@ def get_taxa_from_local_database(plant_name_pattern: str, search_for_genus: bool
     else:
         query_all = db.query(Taxon).filter(Taxon.name.like(plant_name_pattern)).all()
     results = []
-    if query_all:
-        for query in query_all:
-            result = {'source':              SOURCE_PLANTS,
-                      'id':                  query.id,
-                      'count':               len([p for p in query.plants if p.active]),
-                      'count_inactive':      len([p for p in query.plants if not p.active]),
-                      'is_custom':           query.is_custom,
-                      'synonym':             query.synonym,
-                      'authors':             query.authors,
-                      'family':              query.family,
-                      'name':                query.name,
-                      'rank':                query.rank,
-                      'fqId':                query.fq_id if not query.is_custom else None,
-                      'powo_id':             query.powo_id,
-                      'genus':               query.genus,
-                      'species':             query.species,
-                      'namePublishedInYear': query.name_published_in_year,
-                      'phylum':              query.phylum,
-                      'synonyms_concat':     query.synonyms_concat}
-            # if query.distribution_concat and len(query.distribution_concat) >= 150:
-            #     result['distribution_concat'] = query.distribution_concat[:147] + '...'
+    for query in query_all:
+        result = {'source':              SOURCE_PLANTS,
+                  'id':                  query.id,
+                  'count':               len([p for p in query.plants if p.active]),
+                  'count_inactive':      len([p for p in query.plants if not p.active]),
+                  'is_custom':           query.is_custom,
+                  'synonym':             query.synonym,
+                  'authors':             query.authors,
+                  'family':              query.family,
+                  'name':                query.name,
+                  'rank':                query.rank,
+                  'fqId':                query.fq_id if not query.is_custom else None,
+                  'powo_id':             query.powo_id,
+                  'genus':               query.genus,
+                  'species':             query.species,
+                  'namePublishedInYear': query.name_published_in_year,
+                  'phylum':              query.phylum,
+                  'synonyms_concat':     query.synonyms_concat}
+        # if query.distribution_concat and len(query.distribution_concat) >= 150:
+        #     result['distribution_concat'] = query.distribution_concat[:147] + '...'
 
-            results.append(result)
-        logger.info(f'Found query term in plants taxon database.')
+        results.append(result)
+    logger.info(f'Found query term in plants taxon database.' if results else f'Query term not found in plants taxon '
+                                                                              f'database.')
     return results
 
 

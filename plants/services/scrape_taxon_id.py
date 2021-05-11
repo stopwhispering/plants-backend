@@ -1,10 +1,10 @@
-import requests
 import urllib.parse
 import logging
 from bs4 import BeautifulSoup
 from typing import Optional
 from wikidata.client import Client
 from pygbif import species
+import requests
 
 URL_PATTERN_WIKIDATA_SEARCH = r'https://www.wikidata.org/w/index.php?search={}'
 WIKIDATA_IPNI_PROPERTY_ID = 'P961'
@@ -12,14 +12,32 @@ WIKIDATA_GBIF_PROPERTY_ID = 'P846'
 WIKIDATA_POWO_PROPERTY_ID = 'P5037'
 
 IPNI_DATASET_KEY = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
+GBIF_REST_API_RELATED_NAME_USAGES = "https://api.gbif.org/v1/species/{nubKey}/related?datasetKey={datasetKey}"
 
 logger = logging.getLogger(__name__)
 
 
+def gbif_id_from_rest_api(nub_key: int, ipni_id: str) -> Optional[int]:
+    url = GBIF_REST_API_RELATED_NAME_USAGES.format(nubKey=nub_key, datasetKey=IPNI_DATASET_KEY)
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        logger.error(f'Error at GET request for GBIF REST API: {resp.status_code}')
+        return
+    if resp.json().get('results'):
+        # find our plant's record in ipni dataset at gbif
+        ipni_record = next((r for r in resp.json().get('results') if r.get('taxonID') == ipni_id), {})
+        # ... and make sure it has the correct identifier; if it has, we know we have the correct gbif id (=nubKey)
+        if ipni_record.get('taxonID') == ipni_id:
+            return nub_key
+
+
 def gbif_id_from_gbif_api(botanical_name: str, ipni_id: str) -> Optional[int]:
     """the gbif api does not allow searching by other database's taxonId; therefore, we search by
-    botanical name and ipni dataset key, then we compare the (external) taxonId"; if we have a match, we
-    can return the gbif taxon id"""
+       botanical name and ipni dataset key, then we compare the (external) taxonId"; if we have a match, we
+       can return the gbif taxon id
+       unfortunately, the attribute taxon id (= kew identifier) is not included in the results, sometimes (e.g.
+       Aloiampelos ciliaris, nubKey 9527904, although the website and the REST API has it; therefore we use
+       the latter if not found to verify the Gbif record."""
     logger.info(f'Searching IPNI Dataset at GBIF for {botanical_name} to get GBIF ID.')
     lookup = species.name_lookup(q=botanical_name, datasetKey=IPNI_DATASET_KEY)
     if not lookup.get('results'):
@@ -27,14 +45,20 @@ def gbif_id_from_gbif_api(botanical_name: str, ipni_id: str) -> Optional[int]:
         return None
 
     results_compared = [r for r in lookup['results'] if r.get('taxonID') == ipni_id]
-    if not results_compared:
-        logger.info(f"No results on IPNI Dataset at GBIF matching IPNI ID.")
-        return None
+    if results_compared:
+        # nub is the name of the internal gbif database
+        gbif_id = results_compared[0].get('nubKey') or None
+        logger.info(f"Found GBIF ID in IPNI Dataset at GBIF: {gbif_id}.")
+        return gbif_id
 
-    # nub is the name of the internal gbif database
-    gbif_id = results_compared[0].get('nubKey') or None
-    logger.info(f"Found GBIF ID in IPNI Dataset at GBIF: {gbif_id}.")
-    return gbif_id
+    # didn't find via PyGbif; try REST API directly
+    logger.info(f"No results on IPNI Dataset at GBIF matching IPNI ID via PyGbif. Trying REST API.")
+    for r in (r for r in lookup['results'] if r.get('nubKey')):
+        gbif_id = gbif_id_from_rest_api(nub_key=r.get('nubKey'), ipni_id=ipni_id)
+        if gbif_id:
+            return gbif_id
+
+    return None
 
 
 def get_gbif_id_from_wikidata(ipni_id: str) -> Optional[int]:

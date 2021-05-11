@@ -31,6 +31,9 @@ async def search_external_biodiversity_databases(
         request: Request,
         args: PTaxonInfoRequest,
         db: Session = Depends(get_db)):
+    """
+    searches taxon pattern in local database and in kew databases (powo and ipni)
+    """
 
     # search for supplied species in local database
     results = get_taxa_from_local_database(plant_name_pattern=f'%{args.species}%',
