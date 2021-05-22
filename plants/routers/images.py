@@ -70,6 +70,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
 
     plant_name = Plant.get_plant_name_by_plant_id(plant_id, db, raise_exception=True)
 
+    # todo get rid of that key/text thing
     photos: List[Photo] = await _save_image_files(files=files,
                                                   request=request,
                                                   plants=({'key': plant_name, 'text': plant_name},)
@@ -168,14 +169,18 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
         throw_exception(str(err), request=request)
 
     # todo: get rid of that key/text/keyword dict
-    plants = tuple({'key': p, 'text': p} for p in additional_data['plants'])  # if 'plants' in additional_data else []
+    plant_names = (Plant.get_plant_name_by_plant_id(p, db) for p in additional_data['plants'])
+    plants = tuple({'key': p, 'text': p} for p in plant_names)  # if 'plants' in additional_data else []
     keywords = tuple({'keyword': k, 'text': k} for k in additional_data['keywords'])
     # if 'keywords' in additional_data else []
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
 
-    photos: List[Photo] = await _save_image_files(files=files, request=request, plants=plants, keywords=keywords)
+    photos: List[Photo] = await _save_image_files(files=files,
+                                                  request=request,
+                                                  plants=plants,
+                                                  keywords=keywords)
     photo_files_ext = _get_pimages_from_photos(photos, db=db)
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),

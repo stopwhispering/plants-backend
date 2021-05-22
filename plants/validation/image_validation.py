@@ -61,7 +61,7 @@ class PResultsImagesUploaded(BaseModel):
 
 
 class PImageUploadedMetadata(BaseModel):
-    plants: List[str]
+    plants: List[int]
     keywords: List[str]
 
     class Config:
