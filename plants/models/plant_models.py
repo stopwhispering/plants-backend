@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
 from sqlalchemy.orm import relationship, Session
 import logging
 import datetime
 import json
 
+from plants.models.event_models import Event
+from plants.models.property_models import PropertyValue
+from plants.models.tag_models import Tag
 from plants.util.ui_utils import throw_exception
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory, NULL_DATE
 from plants.models.taxon_models import Taxon
@@ -67,13 +70,13 @@ class Plant(Base, OrmUtil):
     taxon = relationship("Taxon", back_populates="plants")
 
     # plant to tag: 1:n
-    tags = relationship("Tag", back_populates="plant")
+    tags: List[Tag] = relationship("Tag", back_populates="plant")
 
     # plant to event: 1:n
-    events = relationship("Event", back_populates="plant")
+    events: List[Event] = relationship("Event", back_populates="plant")
 
     # plant to plant property values: 1:n
-    property_values_plant = relationship("PropertyValue", back_populates="plant")
+    property_values_plant: List[PropertyValue] = relationship("PropertyValue", back_populates="plant")
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
@@ -128,36 +131,6 @@ class Plant(Base, OrmUtil):
 
         return as_dict
 
-    # setters
-    # def set_count(self, count: int):
-    #     self.count = count
-
-    # def set_field_number(self, field_number=None, plant: Optional[PPlant] = None):
-    #     self.field_number = plant.field_number if plant else field_number
-
-    # def set_geographic_origin(self, geographic_origin=None, plant: Optional[PPlant] = None):
-    #     self.geographic_origin = plant.geographic_origin if plant else geographic_origin
-
-    # def set_nursery_source(self, nursery_source=None, plant: Optional[PPlant] = None):
-    #     self.nursery_source = plant.nursery_source if plant else nursery_source
-
-    # def set_propagation_type(self, propagation_type=None, plant: Optional[PPlant] = None):
-    #     self.propagation_type = plant.propagation_type if plant else propagation_type
-
-    # def set_active(self, active=None, plant: Optional[PPlant] = None):
-    #     self.active = plant.active if plant else active
-
-    # def set_generation_date(self, generation_date=bytes, plant: Optional[PPlant] = None):
-    #     generation_date_tmp = plant.generation_date if plant else generation_date
-    #     if generation_date_tmp:
-    #         self.generation_date = decode_record_date_time(generation_date_tmp) if generation_date_tmp else None
-    #
-    # def set_generation_type(self, generation_type=None, plant: Optional[PPlant] = None):
-    #     self.generation_type = plant.generation_type if plant else generation_type
-
-    # def set_generation_notes(self, generation_notes=None, plant: Optional[PPlant] = None):
-    #     self.generation_notes = plant.generation_notes if plant else generation_notes
-
     def set_parent_plant(self, db: Session, parent_plant_name: str = None):
         if parent_plant_name:
             self.parent_plant_id = self.get_plant_id_by_plant_name(parent_plant_name, db)
@@ -169,12 +142,6 @@ class Plant(Base, OrmUtil):
             self.parent_plant_pollen_id = self.get_plant_id_by_plant_name(parent_plant_pollen_name, db)
         else:
             self.parent_plant_pollen_id = None
-
-    # def set_generation_origin(self, generation_origin=None, plant: dict = None):
-    #     self.generation_origin = plant.get('generation_origin') if plant else generation_origin
-
-    # def set_plant_notes(self, plant_notes=None, plant: Optional[PPlant] = None):
-    #     self.plant_notes = plant.plant_notes if plant else plant_notes
 
     def set_filename_previewimage(self, filename_previewimage=None, plant: Optional[PPlant] = None):
         filename_tmp = plant.filename_previewimage if plant else filename_previewimage

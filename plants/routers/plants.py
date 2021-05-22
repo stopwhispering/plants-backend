@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 import logging
 import datetime
@@ -13,7 +13,7 @@ from plants.models.plant_models import Plant
 from plants import config
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
-from plants.services.plants_services import update_plants_from_list_of_dicts
+from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
 from plants.validation.message_validation import PConfirmation
 from plants.validation.plant_validation import (PPlantsUpdateRequest, PResultsPlantsUpdate, PPlantsDeleteRequest,
                                                 PPlantsRenameRequest)
@@ -58,7 +58,7 @@ async def get_plants(db: Session = Depends(get_db)):
         query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
 
     if DEMO_MODE_RESTRICT_TO_N_PLANTS:
-        query = query.limit(DEMO_MODE_RESTRICT_TO_N_PLANTS)
+        query = query.order_by(Plant.plant_name).limit(DEMO_MODE_RESTRICT_TO_N_PLANTS)
 
     plants_obj = query.all()
     plants_list = [p.as_dict() for p in plants_obj]
@@ -72,9 +72,49 @@ async def get_plants(db: Session = Depends(get_db)):
     return results
 
 
+@router.post("/{plant_id}/clone", response_model=PResultsPlantsUpdate)
+def clone_plant(
+        request: Request,
+        plant_id: int,
+        plant_name_clone: str,
+        db: Session = Depends(get_db),
+        ):
+    """
+    clone plant with supplied plant_id; include duplication of events, image assignments, and
+    properties
+    todo copy image assignments in exif tags
+    """
+    plant_original = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
+
+    if not plant_name_clone or Plant.get_plant_by_plant_name(plant_name_clone, db):
+        throw_exception(f'Cloned Plant Name may not exist, yet: {plant_name_clone}.', request=request)
+
+    deep_clone_plant(plant_original, plant_name_clone, db)
+
+    plant_clone = Plant.get_plant_by_plant_name(plant_name_clone, db, raise_exception=True)
+    create_history_entry(description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
+                         db=db,
+                         plant_id=plant_clone.id,
+                         plant_name=plant_clone.plant_name,
+                         commit=True)
+
+    logger.info(msg := f"Cloned {plant_original.plant_name} ({plant_original.id}) "
+                       f"into {plant_clone.plant_name} ({plant_clone.id})")
+    results = {'action':   'Renamed plant',
+               'resource': 'PlantResource',
+               'message':  get_message(msg, description=msg),
+               'plants':   [plant_clone.as_dict()]}
+
+    return results
+
+
 @router.post("/", response_model=PResultsPlantsUpdate)
 def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
-    """update existing or create new plants"""
+    """
+    update existing or create new plants
+    if no id is supplied, a new plant is created having the supplied attributes (only
+    plant_name is mandatory, others may be provided)
+    """
     plants_modified = data.PlantsCollection
 
     # update plants

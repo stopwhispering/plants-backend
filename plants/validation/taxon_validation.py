@@ -29,13 +29,14 @@ class PResultsTaxonInfoRequest(BaseModel):
         extra = 'forbid'
 
 
-class PSaveTaxonRequest(BaseModel):
-    fqId: str
+class PAssignTaxonRequest(BaseModel):
+    fqId: Optional[str]
     hasCustomName: bool
     nameInclAddition: str
     source: str
     id: Optional[int]  # taxon id
-    plant: str
+    # plant: str
+    plant_id: int
 
     class Config:
         extra = 'forbid'

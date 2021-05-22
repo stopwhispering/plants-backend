@@ -11,7 +11,7 @@ from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxon_occurence_image_services import TaxonOccurencesLoader
 from plants.validation.taxon_validation import (PTaxonInfoRequest, PResultsTaxonInfoRequest,
-                                                PSaveTaxonRequest, PResultsSaveTaxonRequest)
+                                                PAssignTaxonRequest, PResultsSaveTaxonRequest)
 from plants.services.query_taxa import (copy_taxon_from_kew, get_taxa_from_local_database,
                                         get_taxa_from_kew_databases)
 from plants.services.scrape_taxon_id import get_gbif_id_from_wikidata, gbif_id_from_gbif_api
@@ -31,6 +31,9 @@ async def search_external_biodiversity_databases(
         request: Request,
         args: PTaxonInfoRequest,
         db: Session = Depends(get_db)):
+    """
+    searches taxon pattern in local database and in kew databases (powo and ipni)
+    """
 
     # search for supplied species in local database
     results = get_taxa_from_local_database(plant_name_pattern=f'%{args.species}%',
@@ -66,7 +69,7 @@ async def search_external_biodiversity_databases(
 @router.post("/assign_taxon_to_plant", response_model=PResultsSaveTaxonRequest)
 async def assign_taxon_to_plant(
         request: Request,
-        args: PSaveTaxonRequest,
+        args: PAssignTaxonRequest,
         db: Session = Depends(get_db)):
     """assign the taxon selected on frontend to the plant; the taxon may either already exist in database or we
     need to create it and retrieve the required information from the kew databases
@@ -118,7 +121,7 @@ async def assign_taxon_to_plant(
     taxon_dict = taxon.as_dict()
     taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
 
-    message = f'Assigned botanical name "{taxon.name}" to plant "{args.plant}".'
+    message = f'Assigned botanical name "{taxon.name}" to plant id {args.plant_id}.'
     logger.info(message)
 
     results = {'action':         'Save Taxon',
