@@ -36,16 +36,11 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
         else:
             record_update.cancellation_date = plant.cancellation_date
 
-        # record_update.set_count(plant=plant.count)
         record_update.field_number = plant.field_number
         record_update.geographic_origin = plant.geographic_origin
         record_update.nursery_source = plant.nursery_source
         record_update.propagation_type = plant.propagation_type
-
-        # record_update.set_generation_date(plant=plant)
-        # record_update.set_generation_type(plant=plant)
         record_update.generation_notes = plant.generation_notes
-        # record_update.set_generation_origin(plant=plant)
         record_update.plant_notes = plant.plant_notes
 
         # parent_plant_id is still the old one if changed; but parent_plant the new parent plant
