@@ -60,8 +60,8 @@ def build_taxon_tree(db: Session) -> List:
         # we might have multiple taxon ids for that species (e.g. varieties), for each of them, get plant ids
         # todo: do a join at the top so we don't need that lookup here
         plant_ids_tuple = db.query(Plant.id).filter(Plant.taxon_id == t[3], or_(Plant.hide.is_(None),
-                                                                                Plant.hide is False),
-                                                    Plant.active is True).all()
+                                                                                Plant.hide.is_(False)),
+                                                    Plant.active.is_(True)).all()
         species_leaf['plant_ids'].extend([t[0] for t in plant_ids_tuple])
 
         genus_node['count'] += (plants_current_taxon := len(plant_ids_tuple))
