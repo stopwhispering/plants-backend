@@ -71,4 +71,14 @@ def build_taxon_tree(db: Session) -> List:
         previous_family = current_family
         previous_genus = current_genus
         previous_species = current_species
+
+    # add empty family to allow for selecting plants with no taxon assigned
+    count_empty = db.query(Plant).filter(exists_filter).filter(Plant.taxon_id.is_(None)).count()
+    if count_empty:
+        plant_ids_empty_tuples = db.query(Plant.id).filter(exists_filter).filter(Plant.taxon_id.is_(None)).all()
+        plant_ids_empty = [t[0] for t in plant_ids_empty_tuples]
+        node_empty_species = {'key': '', 'level': 2, 'count': count_empty, 'plant_ids': plant_ids_empty}
+        node_empty_genus = {'key': '', 'level': 1, 'count': count_empty, 'nodes': [node_empty_species]}
+        node_empty_family = {'key': '', 'level': 0, 'count': count_empty, 'nodes': [node_empty_genus]}
+        tree.append(node_empty_family)
     return tree
