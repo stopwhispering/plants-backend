@@ -36,7 +36,7 @@ class PSoilComponent(BaseModel):
 
 
 class PSoil(BaseModel):
-    Optional[id]: int
+    id: Optional[int]
     soil_name: str
     components: List[PSoilComponent]
 
