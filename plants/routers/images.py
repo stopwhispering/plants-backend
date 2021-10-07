@@ -20,7 +20,7 @@ from plants.services.image_services import (resize_image, resizing_required, rem
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants.services.Photo import Photo
 from plants.util.filename_utils import with_suffix
-from plants.validation.event_validation import PImageDelete
+from plants.validation.event_validation import PImageDelete, PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
 from plants.validation.message_validation import PConfirmation
 
@@ -198,39 +198,43 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 
 
 @router.delete("/images/", response_model=PResultsImageDeleted)
-async def delete_image(request: Request, photo: PImageDelete):
+async def delete_image(request: Request, image_container: PImagesDelete):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
 
-    old_path = photo.path_full_local
-    if not os.path.isfile(old_path):
-        logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
-        throw_exception(err_msg, request=request)
+    # todo maybe replace loop
+    for photo in image_container.images:
 
-    filename = os.path.basename(old_path)
-    new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
+        old_path = photo.path_full_local
+        if not os.path.isfile(old_path):
+            logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
+            throw_exception(err_msg, request=request)
 
-    try:
-        os.replace(src=old_path,
-                   dst=new_path)  # silently overwrites if privileges are sufficient
-    except OSError as e:
-        logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-        throw_exception(err_msg, description=f'Filename: {os.path.basename(old_path)}', request=request)
-    logger.info(f'Moved file {old_path} to {new_path}')
+        filename = os.path.basename(old_path)
+        new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
 
-    # remove from PhotoDirectory cache
-    with lock_photo_directory:
-        photo_directory = get_photo_directory(instantiate=False)
-        if photo_directory:
-            photo_obj = photo_directory.get_photo(photo.path_full_local)
-            photo_directory.remove_image_from_directory(photo_obj)
+        try:
+            os.replace(src=old_path,
+                       dst=new_path)  # silently overwrites if privileges are sufficient
+        except OSError as e:
+            logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
+            throw_exception(err_msg, description=f'Filename: {os.path.basename(old_path)}', request=request)
+        logger.info(f'Moved file {old_path} to {new_path}')
 
+        # remove from PhotoDirectory cache
+        with lock_photo_directory:
+            photo_directory = get_photo_directory(instantiate=False)
+            if photo_directory:
+                photo_obj = photo_directory.get_photo(photo.path_full_local)
+                photo_directory.remove_image_from_directory(photo_obj)
+
+    deleted = [os.path.basename(image.path_full_local) for image in image_container.images]
     results = {'action':   'Deleted',
                'resource': 'ImageResource',
-               'message':  get_message(f'Successfully deleted image',
-                                       description=f'Filename: {os.path.basename(old_path)}'),
-               'photo':    photo}
+               'message':  get_message(f'Successfully deleted images',
+                                       description=f'Filenames: {deleted}')
+               }
+               # 'photo':    photo}
 
-    # send the photo back to frontend; it will be removed from json model there
     return results
 
 

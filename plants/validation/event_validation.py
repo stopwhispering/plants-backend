@@ -55,12 +55,17 @@ class PImage(BaseModel):
 
 class PImageDelete(BaseModel):
     # id: Optional[int]  # empty if new
-    # path_thumb: str
-    # path_original: str
     path_full_local: str
 
     class Config:
         extra = 'allow'
+
+
+class PImagesDelete(BaseModel):
+    images: List[PImageDelete]
+
+    class Config:
+        extra = 'forbid'
 
 
 class PEventNew(BaseModel):

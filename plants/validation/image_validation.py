@@ -72,7 +72,7 @@ class PResultsImageDeleted(BaseModel):
     action: str
     resource: str
     message: PMessage
-    photo:  PImage
+    # photo:  PImage
 
     class Config:
         extra = 'forbid'
