@@ -233,7 +233,6 @@ async def delete_image(request: Request, image_container: PImagesDelete):
                'message':  get_message(f'Successfully deleted images',
                                        description=f'Filenames: {deleted}')
                }
-               # 'photo':    photo}
 
     return results
 
