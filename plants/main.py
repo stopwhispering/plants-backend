@@ -5,6 +5,7 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from plants.config_local import LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE
 from plants.extensions.db import init_database_tables, engine
 from plants.routers import (taxa, plants, images, events, property_names, properties, proposals,
                             functions, selection_data, api_biodiversity)
@@ -12,7 +13,7 @@ from plants.util.logger_utils import configure_root_logger
 
 logger = logging.getLogger(__name__)
 
-configure_root_logger()
+configure_root_logger(LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE)
 
 COMMON_PREFIX = '/plants_tagger/backend'
 app = FastAPI(

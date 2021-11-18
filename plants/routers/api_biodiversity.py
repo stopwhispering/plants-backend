@@ -11,7 +11,8 @@ from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxon_occurence_image_services import TaxonOccurencesLoader
 from plants.validation.taxon_validation import (PTaxonInfoRequest, PResultsTaxonInfoRequest,
-                                                PAssignTaxonRequest, PResultsSaveTaxonRequest)
+                                                PAssignTaxonRequest, PResultsSaveTaxonRequest, PFetchTaxonImages,
+                                                PResultsFetchTaxonImages)
 from plants.services.query_taxa import (copy_taxon_from_kew, get_taxa_from_local_database,
                                         get_taxa_from_kew_databases)
 from plants.services.scrape_taxon_id import get_gbif_id_from_wikidata, gbif_id_from_gbif_api
@@ -66,6 +67,7 @@ async def search_external_biodiversity_databases(
     return results
 
 
+# todo rename as does't assign but download taxon infos
 @router.post("/assign_taxon_to_plant", response_model=PResultsSaveTaxonRequest)
 async def assign_taxon_to_plant(
         request: Request,
@@ -129,5 +131,34 @@ async def assign_taxon_to_plant(
                'message':        get_message(message),
                'botanical_name': taxon.name,
                'taxon_data':     taxon_dict}
+
+    return results
+
+
+@router.post("/fetch_taxon_images", response_model=PResultsFetchTaxonImages)  # results todo
+async def fetch_taxon_images(
+        request: Request,
+        args: PFetchTaxonImages,
+        db: Session = Depends(get_db)):
+    """fetch taxon images from gbif and create thumbnails"""
+
+    # lookup ocurrences & images at gbif and generate thumbnails
+    loader = TaxonOccurencesLoader()
+    loader.scrape_occurrences_for_taxon(gbif_id=args.gbif_id, db=db)
+
+    taxon = db.query(Taxon).filter(Taxon.gbif_id == args.gbif_id).first()
+    if not taxon:
+        # would probably have raised earlier
+        logger.error(f"Can't find taxon for GBIF ID {args.gbif_id} in database.")
+        throw_exception(f"Can't find taxon for GBIF ID {args.gbif_id} in database.", request=request)
+    occurrence_images = [o.as_dict() for o in taxon.occurence_images]
+
+    message = f'Refetched occurences for GBIF ID {args.gbif_id}'
+    logger.info(message)
+
+    results = {'action':         'Save Taxon',
+               'resource':       'TaxonSearchDatabaseResource',
+               'message':        get_message(message),
+               'occurrenceImages':     occurrence_images}
 
     return results

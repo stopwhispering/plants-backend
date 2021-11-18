@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from plants.util.ui_utils import throw_exception
 from plants.config import size_tumbnail_image_taxon
 from plants.config_local import MAX_IMAGES_PER_TAXON
-from plants.models.taxon_models import TaxonOccurrenceImage
+from plants.models.taxon_models import TaxonOccurrenceImage, Taxon
 from plants.services.os_paths import PATH_GENERATED_THUMBNAILS_TAXON
 from plants.util.image_utils import generate_thumbnail
 from plants.validation.taxon_validation import PTaxonOccurrenceImage
@@ -176,4 +176,7 @@ class TaxonOccurencesLoader:
         logger.info(f'Saving/Updating {len(image_dicts)} occurrence images to database.')
         self._save_to_db(image_dicts, gbif_id, db)
 
-        return image_dicts
+        taxon: Taxon = db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
+        occurrence_images = [o.as_dict() for o in taxon.occurence_images]
+
+        return occurrence_images

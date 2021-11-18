@@ -42,6 +42,10 @@ class PAssignTaxonRequest(BaseModel):
         extra = 'forbid'
 
 
+class PFetchTaxonImages(BaseModel):
+    gbif_id: int
+
+
 class PDistribution(BaseModel):
     native: List[str]
     introduced: List[str]
@@ -150,6 +154,16 @@ class PResultsGetTaxa(BaseModel):
 
 class PModifiedTaxa(BaseModel):
     ModifiedTaxaCollection: List[PTaxon]
+
+    class Config:
+        extra = 'forbid'
+
+
+class PResultsFetchTaxonImages(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    occurrenceImages: Optional[List[PTaxonOccurrenceImage]]
 
     class Config:
         extra = 'forbid'
