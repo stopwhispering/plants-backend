@@ -38,7 +38,9 @@ class PSoilComponent(BaseModel):
 class PSoil(BaseModel):
     id: Optional[int]
     soil_name: str
-    components: List[PSoilComponent]
+    mix: Optional[str]
+    description: Optional[str]
+    components: Optional[List[PSoilComponent]]  # todo remove completely
 
     class Config:
         extra = 'forbid'

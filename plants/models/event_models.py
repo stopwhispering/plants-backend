@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class Soil(Base, OrmUtil):
     __tablename__ = "soil"
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    description = Column(TEXT)
+    mix = Column(TEXT)
     soil_name = Column(CHAR(100))
     components = relationship(
             "SoilComponent",

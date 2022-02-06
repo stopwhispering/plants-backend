@@ -30,19 +30,20 @@ def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Dep
     results = {}
     if entity_id == ProposalEntity.SOIL:
         results = {'SoilsCollection': [],
-                   'ComponentsCollection': []}
+                   # 'ComponentsCollection': []
+                   }
         # soil mixes
         soils = db.query(Soil).all()
         for soil in soils:
             soil_dict = soil.as_dict()
-            soil_dict['components'] = [{'component_name': c.soil_component.component_name,
-                                        'portion': c.portion} for c in soil.soil_to_component_associations]
+            # soil_dict['components'] = [{'component_name': c.soil_component.component_name,
+            #                             'portion': c.portion} for c in soil.soil_to_component_associations]
 
             results['SoilsCollection'].append(soil_dict)
 
-        # soil components for new mixes
-        components = db.query(SoilComponent).all()
-        results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
+        # # soil components for new mixes
+        # components = db.query(SoilComponent).all()
+        # results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
 
     elif entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update

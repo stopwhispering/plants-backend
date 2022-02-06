@@ -43,7 +43,7 @@ class PResultsProposals(BaseModel):
     message: PMessage
 
     SoilsCollection: Optional[List[PSoil]]
-    ComponentsCollection: Optional[List[PComponentName]]
+    # ComponentsCollection: Optional[List[PComponentName]]
 
     NurseriesSourcesCollection: Optional[List[PNurseryName]]
 
