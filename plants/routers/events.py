@@ -43,7 +43,7 @@ async def get_soils(db: Session = Depends(get_db)):
     soils = db.query(Soil).all()
     for soil in soils:
         soil_dict = soil.as_dict()
-        soil_dict['plants_count'] = soil_counter.get(soil.id)
+        soil_dict['plants_count'] = soil_counter.get(soil.id, 0)
         results['SoilsCollection'].append(soil_dict)
 
     return results
