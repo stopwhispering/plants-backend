@@ -32,6 +32,7 @@ class PSoil(BaseModel):
     soil_name: str
     mix: Optional[str]
     description: Optional[str]
+    plants_count: Optional[int]
 
     class Config:
         extra = 'forbid'
@@ -111,6 +112,13 @@ class PResultsEventResource(BaseModel):
 class PResultsSoilResource(BaseModel):
     soil: PSoil
     message: PMessage
+
+    class Config:
+        extra = 'forbid'
+
+
+class PResultsSoilsResource(BaseModel):
+    SoilsCollection: List[PSoil]
 
     class Config:
         extra = 'forbid'

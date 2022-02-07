@@ -14,7 +14,8 @@ from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import PResultsEventResource, PEventNew, PSoil, PResultsSoilResource
+from plants.validation.event_validation import PResultsEventResource, PEventNew, PSoil, PResultsSoilResource, \
+    PResultsSoilsResource
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +26,26 @@ router = APIRouter(
         )
 
 
-@router.get("/soils")
+@router.get("/soils", response_model=PResultsSoilsResource)
 async def get_soils(db: Session = Depends(get_db)):
     results = {'SoilsCollection': []}
+
+    # add the number of plants that currently have a specific soil
+    # todo make one query out of this to improve performance (but how without writing sql...?)
+    # todo maybe put this into Soil's as_dict function
+    soil_counter = defaultdict(int)
+    plants = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))).all()
+    for plant in plants:
+        if events := [e for e in plant.events if e.soil]:
+            events.sort(key=lambda e: e.date, reverse=True)
+            soil_counter[events[0].soil.id] += 1
+
     soils = db.query(Soil).all()
     for soil in soils:
         soil_dict = soil.as_dict()
+        soil_dict['plants_count'] = soil_counter.get(soil.id)
         results['SoilsCollection'].append(soil_dict)
+
     return results
 
 
