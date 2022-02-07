@@ -9,7 +9,6 @@ from plants.models.plant_models import Plant
 from plants.validation.proposal_validation import ProposalEntity, PResultsProposals
 from plants.services.image_services import get_distinct_keywords_from_image_files
 from plants.models.trait_models import Trait, TraitCategory
-from plants.models.event_models import Soil, SoilComponent
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 
@@ -28,24 +27,8 @@ def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Dep
     """returns proposals for selection tables"""
 
     results = {}
-    if entity_id == ProposalEntity.SOIL:
-        results = {'SoilsCollection': [],
-                   # 'ComponentsCollection': []
-                   }
-        # soil mixes
-        soils = db.query(Soil).all()
-        for soil in soils:
-            soil_dict = soil.as_dict()
-            # soil_dict['components'] = [{'component_name': c.soil_component.component_name,
-            #                             'portion': c.portion} for c in soil.soil_to_component_associations]
 
-            results['SoilsCollection'].append(soil_dict)
-
-        # # soil components for new mixes
-        # components = db.query(SoilComponent).all()
-        # results['ComponentsCollection'] = [{'component_name': c.component_name} for c in components]
-
-    elif entity_id == ProposalEntity.NURSERY:
+    if entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
         nurseries_tuples = db.query(Plant.nursery_source) \
             .order_by(Plant.last_update.desc()) \

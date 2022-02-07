@@ -21,40 +21,9 @@ class Soil(Base, OrmUtil):
     description = Column(TEXT)
     mix = Column(TEXT)
     soil_name = Column(CHAR(100))
-    components = relationship(
-            "SoilComponent",
-            secondary='soil_to_component_association'
-            )
 
     # 1:n relationship to events (no need for bidirectional relationship)
     events = relationship("Event", back_populates="soil")
-
-    # 1:n relationship to the soil/components link table
-    soil_to_component_associations = relationship("SoilToComponentAssociation", back_populates="soil")
-
-
-class SoilComponent(Base):
-    __tablename__ = "soil_component"
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    component_name = Column(CHAR(100))
-    soils = relationship(
-            Soil,
-            secondary='soil_to_component_association'
-            )
-
-    # 1:n relationship to the soil/components link table
-    soil_to_component_associations = relationship("SoilToComponentAssociation", back_populates="soil_component")
-
-
-class SoilToComponentAssociation(Base):
-    __tablename__ = 'soil_to_component_association'
-    soil_id = Column(INTEGER, ForeignKey('soil.id'), primary_key=True)
-    soil_component_id = Column(INTEGER, ForeignKey('soil_component.id'), primary_key=True)
-    portion = Column(CHAR(20))
-
-    # #n:1 relationship to the soil table and to the soil component table
-    soil = relationship('Soil', back_populates="soil_to_component_associations")
-    soil_component = relationship('SoilComponent', back_populates="soil_to_component_associations")
 
 
 class Pot(Base, OrmUtil):
@@ -139,10 +108,6 @@ class Event(Base, OrmUtil):
 
         if self.soil:
             as_dict['soil'] = self.soil.as_dict()
-            if self.soil.soil_to_component_associations:
-                as_dict['soil']['components'] = [{'component_name': association.soil_component.component_name,
-                                                  'portion':        association.portion} for association
-                                                 in self.soil.soil_to_component_associations]
 
         if self.images:
             as_dict['images'] = []

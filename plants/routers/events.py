@@ -1,5 +1,6 @@
 from typing import Optional, Dict, List
 from collections import defaultdict
+
 from sqlalchemy.exc import InvalidRequestError
 from fastapi import APIRouter, Depends, Body
 import logging
@@ -9,11 +10,11 @@ from starlette.requests import Request
 from plants.util.ui_utils import throw_exception, get_message, MessageType
 from plants.dependencies import get_db
 from plants.models.image_models import Image
-from plants.services.event_services import get_or_create_soil
+from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
-from plants.models.event_models import Pot, Observation, Event
-from plants.validation.event_validation import PResultsEventResource, PEventNew
+from plants.models.event_models import Pot, Observation, Event, Soil
+from plants.validation.event_validation import PResultsEventResource, PEventNew, PSoil, PResultsSoilResource
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,40 @@ router = APIRouter(
         tags=["events"],
         responses={404: {"description": "Not found"}},
         )
+
+
+@router.get("/soils")
+async def get_soils(db: Session = Depends(get_db)):
+    results = {'SoilsCollection': []}
+    soils = db.query(Soil).all()
+    for soil in soils:
+        soil_dict = soil.as_dict()
+        results['SoilsCollection'].append(soil_dict)
+    return results
+
+
+@router.post("/soils", response_model=PResultsSoilResource)
+async def create_new_soil(soil: PSoil, db: Session = Depends(get_db)):
+    """create new soil and return it with (newly assigned) id"""
+    soil_obj = create_soil(soil=soil, db=db)
+    msg = f'Created soil with new ID {soil_obj.id}'
+
+    logger.info(msg)
+    results = {'soil': soil_obj.as_dict(),
+               'message': get_message(msg, message_type=MessageType.DEBUG)}
+    return results
+
+
+@router.put("/soils", response_model=PResultsSoilResource)
+async def update_existing_soil(soil: PSoil, db: Session = Depends(get_db)):
+    """update soil attributes"""
+    soil_obj = update_soil(soil=soil, db=db)
+    msg = f'Updated soil with ID {soil_obj.id}'
+
+    logger.info(msg)
+    results = {'soil': soil_obj.as_dict(),
+               'message': get_message(msg, message_type=MessageType.DEBUG)}
+    return results
 
 
 @router.get("/{plant_id}", response_model=PResultsEventResource)
@@ -155,18 +190,24 @@ async def modify_events(request: Request,
                 event_obj.pot.shape_top = event.pot.shape_top
                 event_obj.pot.diameter_width = event.pot.diameter_width * 10 if event.pot.diameter_width else None
 
+            # remove soil from event
+            #  (event to soil is n:1 so we don't delete the soil object but only the assignment)
             if not event.soil:
                 event_obj.soil_event_type = None
-                # remove soil from event (event to soil is n:1 so we don't delete the soil object but only the
-                # assignment)
                 if event_obj.soil:
                     event_obj.soil = None
 
+            # add soil to event
             else:
                 event_obj.soil_event_type = event.soil_event_type
-                # add soil to event or change it
-                if not event_obj.soil or (event.soil and event.soil.id != event_obj.soil.id):
-                    event_obj.soil = get_or_create_soil(event.soil.dict(), counts, db)
+                if not event.soil.id:
+                    throw_exception(f"Can't update Soil {event.soil.soil_name} without ID.")
+                if not event_obj.soil or (event.soil.id != event_obj.soil.id):
+                    soil = db.query(Soil).filter(Soil.id == event.soil.id).first()
+                    if not soil:
+                        throw_exception(f'Soil ID {event.soil.id} not found')
+                    event_obj.soil = soil
+                    counts['Added Soils'] += 1
 
             # changes to images attached to the event
             # deleted images

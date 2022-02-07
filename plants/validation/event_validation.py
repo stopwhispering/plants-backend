@@ -27,20 +27,11 @@ class PPot(BaseModel):
         extra = 'forbid'
 
 
-class PSoilComponent(BaseModel):
-    component_name: str
-    portion: int
-
-    class Config:
-        extra = 'forbid'
-
-
 class PSoil(BaseModel):
     id: Optional[int]
     soil_name: str
     mix: Optional[str]
     description: Optional[str]
-    components: Optional[List[PSoilComponent]]  # todo remove completely
 
     class Config:
         extra = 'forbid'
@@ -111,6 +102,14 @@ class PEvent(BaseModel):
 
 class PResultsEventResource(BaseModel):
     events: List[PEvent]
+    message: PMessage
+
+    class Config:
+        extra = 'forbid'
+
+
+class PResultsSoilResource(BaseModel):
+    soil: PSoil
     message: PMessage
 
     class Config:
