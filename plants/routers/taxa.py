@@ -120,7 +120,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
         # newly assigned images
         if taxon_modified.images:
             for image in taxon_modified.images:
-                image_obj = db.query(Image).filter(Image.relative_path == image.path_original).first()
+                image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
 
                 # not assigned to any event, yet
                 if not image_obj:
