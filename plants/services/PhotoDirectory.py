@@ -1,13 +1,13 @@
-import glob
-import os
 import logging
 import datetime
 import threading
+from pathlib import Path
 from typing import Optional, Dict, List
 
+from plants import config
 from plants.models.entities import ImageInfo
 from plants.services.Photo import Photo
-from plants.services.os_paths import PATH_ORIGINAL_PHOTOS, PATH_GENERATED_THUMBNAILS
+from plants.util.filename_utils import find_jpg_files
 
 logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
@@ -16,8 +16,8 @@ NULL_DATE = datetime.date(1900, 1, 1)
 class PhotoDirectory:
     """"cache for photo files metadata"""
 
-    def __init__(self, root_folder: str = PATH_ORIGINAL_PHOTOS):
-        self.root_folder: str = root_folder
+    def __init__(self, root_folder: Path = config.path_original_photos):
+        self.root_folder: Path = root_folder
         self.latest_image_dates: Dict[str, ImageInfo] = {}
         self.photos: List[Photo] = []
 
@@ -27,27 +27,24 @@ class PhotoDirectory:
         """
         logger.info('Re-reading exif files from Photos Folder.')
         self._scan_files(self.root_folder)
-        self._get_files_already_generated(PATH_GENERATED_THUMBNAILS)
+        self._get_files_already_generated(config.path_generated_thumbnails)
         self._read_exif_tags_all_images()
         self._generate_images()
         self._read_latest_image_dates()
         return self
 
-    def _scan_files(self, folder):
+    def _scan_files(self, folder: Path):
         """read all image files and create a list of dicts (one dict for each file)"""
-        paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
-        paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
-        paths = set(paths)  # on windows, on the other hand, the extension would produce duplicates...
+        paths = find_jpg_files(folder)
         logger.info(f"Scanned through originals folder. Found {len(paths)} image files.")
         self.photos = [Photo(path_full_local=path_full,
-                             filename=os.path.basename(path_full)) for path_full in paths]
+                             filename=path_full.name) for path_full in paths]
 
-    def _get_files_already_generated(self, folder):
+    def _get_files_already_generated(self, folder: Path):
         """returns a list of already-generated file derivatives (thumbnails & resized)"""
-        paths = glob.glob(folder + '/**/*.jp*g', recursive=True)
-        paths.extend(glob.glob(folder + '/**/*.JP*G', recursive=True))  # on linux glob works case-sensitive!
-        paths = list(set(paths))
-        self.files_already_generated = [os.path.basename(path_full) for path_full in paths]
+
+        paths = find_jpg_files(folder)
+        self.files_already_generated = [path_full.name for path_full in paths]
 
     def _read_exif_tags_all_images(self):
         """reads exif info for each original file and parses information from it (plants list etc.), adds these
@@ -63,7 +60,7 @@ class PhotoDirectory:
         for photo in self.photos:
             photo.generate_thumbnails(self.files_already_generated)
 
-    def get_photo(self, path_full_local: str) -> Optional[Photo]:
+    def get_photo(self, path_full_local: Path) -> Optional[Photo]:
         """
         get photo instance by path_full_local
         """

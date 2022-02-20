@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Optional, Dict
 import datetime
 
@@ -56,8 +57,8 @@ class PDistribution(BaseModel):
 
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
-    path_thumb: str
-    path_original: str
+    path_thumb: Path
+    path_original: Path
     description: Optional[str]
 
     class Config:
@@ -76,7 +77,7 @@ class PTaxonOccurrenceImage(BaseModel):
     publisher_dataset: Optional[str]
     references: Optional[str]
     href: str
-    filename_thumbnail: str = Field(alias='path_thumbnail')
+    filename_thumbnail: Path = Field(alias='path_thumbnail')
 
     class Config:
         extra = 'forbid'

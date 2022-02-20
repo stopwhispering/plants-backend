@@ -1,3 +1,5 @@
+from pathlib import PurePath
+
 from fastapi import APIRouter, Depends
 import logging
 from typing import List
@@ -59,7 +61,7 @@ async def get_taxa(
         if taxon.images:
             for link_obj in taxon.image_to_taxon_associations:
                 image_obj = link_obj.image
-                path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
+                path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
                                                                            size=config.size_thumbnail_image)
                 taxon_dict[taxon.id]['images'].append({'id':            image_obj.id,
                                                        'path_thumb':    path_small,

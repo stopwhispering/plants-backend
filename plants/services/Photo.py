@@ -1,13 +1,12 @@
 import datetime
-import os
 from dataclasses import dataclass
+from pathlib import PurePath, Path
 from typing import Optional, List, Iterable
 import piexif
 import logging
 from piexif import InvalidImageDataError
 
 from plants import config
-from plants.services.os_paths import REL_PATH_PHOTOS_GENERATED, REL_PATH_PHOTOS_ORIGINAL
 from plants.util.exif_utils import auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time, \
     set_modified_date, encode_record_date_time, modified_date, encode_keywords_tag, exif_dict_has_all_relevant_tags
 from plants.util.filename_utils import get_generated_filename
@@ -19,9 +18,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Photo:
     filename_thumb: Optional[str] = None
-    path_thumb: Optional[str] = None
-    path_original: Optional[str] = None
-    path_full_local: Optional[str] = None
+    path_thumb: Optional[PurePath] = None  # relative
+    path_original: Optional[PurePath] = None  # relative
+    path_full_local: Optional[Path] = None
     filename: Optional[str] = None
     tag_description: Optional[str] = ''
     tag_keywords: Optional[List] = None
@@ -37,7 +36,7 @@ class Photo:
             raise ValueError('File path not set.')
 
         try:
-            exif_dict = piexif.load(self.path_full_local)
+            exif_dict = piexif.load(self.path_full_local.as_posix())
         except InvalidImageDataError:
             logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {self.path_full_local}.')
             self.tag_description = ''
@@ -84,11 +83,14 @@ class Photo:
         if not files_already_generated or self.filename_thumb not in files_already_generated:
             _ = generate_thumbnail(image=self.path_full_local,
                                    size=config.size_thumbnail_image,
-                                   # path_thumbnail=os.path.join(PATH_BASE, REL_PATH_PHOTOS_GENERATED))
-                                   path_thumbnail=os.path.join(config.path_base, REL_PATH_PHOTOS_GENERATED))
+                                   path_thumbnail=config.path_generated_thumbnails)
 
-        self.path_thumb = os.path.join(REL_PATH_PHOTOS_GENERATED, self.filename_thumb)
-        self.path_original = self.path_full_local[self.path_full_local.find(REL_PATH_PHOTOS_ORIGINAL):]
+        self.path_thumb = config.rel_path_photos_generated.joinpath(self.filename_thumb)
+        # for the frontend we need to cut off the first part of the path
+        rel_path_photos_original = config.rel_path_photos_original.as_posix()
+        path_full_local = self.path_full_local.as_posix()
+        path_original = path_full_local[path_full_local.find(rel_path_photos_original):]
+        self.path_original = PurePath(path_original)
 
     def write_exif_tags(self) -> None:
         """
@@ -103,7 +105,7 @@ class Photo:
         else:
             tag_authors_plants = b''
 
-        exif_dict = piexif.load(self.path_full_local)
+        exif_dict = piexif.load(self.path_full_local.as_posix())
 
         # check if any of the tags has been changed or if any of the relevant tags is missing altogether
         if (not exif_dict_has_all_relevant_tags(exif_dict)
@@ -136,7 +138,7 @@ class Photo:
                 exif_bytes = piexif.dump(exif_dict)
 
             # ... save using piexif
-            piexif.insert(exif_bytes, self.path_full_local)
+            piexif.insert(exif_bytes, self.path_full_local.as_posix())
             # reset modified time
             set_modified_date(self.path_full_local, modified_time_seconds)  # set access and modifide date
 

@@ -3,7 +3,7 @@
 ########################################################################################################################
 [images]
 size_preview_image = [300, 300]
-size_tumbnail_image_taxon = [220, 1000]  # constant width of 220px on details site
+size_thumbnail_image_taxon = [220, 1000]  # constant width of 220px on details site
 size_thumbnail_image = [350, 350]
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
 jpg_quality = 82
@@ -21,9 +21,8 @@ log_ignore_missing_image_files = true  # ignore missing image files after db tra
 max_images_per_taxon = 10  # max. number of images scraped from biodiv. db occurrences for each taxon
 allow_cors = true  # allow cors on development system if no reverse proxy available
 n_plants = 50  # return only n plants, no matter how many plants the database has
-path_base = "C:\\Workspaces\\VS Code Projects\\plants_frontend\\webapp"
-subdirectory_photos = "localService"
-path_deleted_photos = "C:\\common\\plants\\photos\\deleted"  # may not be a subfolder of PATH_PHOTOS_BASE
+path_photos = "C:\\Workspaces\\VS Code Projects\\plants_frontend\\webapp\\localService"
+path_deleted_photos = "C:\\common\\plants\\photos\\deleted"
 
 [environments.prod]
 log_severity_console = "INFO"
@@ -32,6 +31,5 @@ log_ignore_missing_image_files = false  # ignore missing image files after db tr
 max_images_per_taxon = 20  # max. number of images scraped from biodiv. db occurrences for each taxon
 allow_cors = false  # allow cors on development system if no reverse proxy available
 n_plants = 0  # return only n plants, no matter how many plants the database has
-path_base = "/common/plants"
-subdirectory_photos = 'photos'
-path_deleted_photos = '/common/plants/photos/deleted'  # may not be a subfolder of PATH_PHOTOS_BASE
+path_photos = "/common/plants/photos"
+path_deleted_photos = '/common/plants/photos/deleted'

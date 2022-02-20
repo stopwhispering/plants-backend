@@ -7,14 +7,15 @@ import logging
 import datetime
 import json
 
+from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
+from plants.util.filename_utils import add_slash
 from plants.util.ui_utils import throw_exception
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory, NULL_DATE
 from plants.models.taxon_models import Taxon
 from plants.services.image_services import generate_previewimage_get_rel_path
-from plants.services.os_paths import SUBDIRECTORY_PHOTOS_SEARCH
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 from plants.validation.plant_validation import PPlant
@@ -101,7 +102,7 @@ class Plant(Base, OrmUtil):
         if self.filename_previewimage:  # supply relative path of original image
             rel_path_gen = generate_previewimage_get_rel_path(self.filename_previewimage)
             # there is a huge problem with the slashes
-            as_dict['url_preview'] = json.dumps(rel_path_gen)[1:-1]
+            as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
         else:
             as_dict['url_preview'] = None
 
@@ -150,8 +151,10 @@ class Plant(Base, OrmUtil):
             return
 
         # we need to remove the localService prefix
-        if (filename_tmp := filename_tmp.replace('\\\\', '\\')).startswith(SUBDIRECTORY_PHOTOS_SEARCH):
-            self.filename_previewimage = filename_tmp[len(SUBDIRECTORY_PHOTOS_SEARCH):]
+        # todo really?!?
+        subdirectory_photos_search = add_slash(config.subdirectory_photos)
+        if (filename_tmp := filename_tmp.replace('\\\\', '\\')).startswith(subdirectory_photos_search):
+            self.filename_previewimage = filename_tmp[len(subdirectory_photos_search):]
         else:
             self.filename_previewimage = filename_tmp
 

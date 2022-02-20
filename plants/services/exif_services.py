@@ -21,12 +21,12 @@ def rename_plant_in_exif_tags(image: Photo, plant_name_old: str, plant_name_new:
     tag_authors_plants = ';'.join(image.tag_authors_plants).encode('utf-8')
 
     # load file's current exif tags and overwrite the authors tag used for saving plants
-    exif_dict = piexif.load(image.path_full_local)
+    exif_dict = piexif.load(image.path_full_local.as_posix())
     exif_dict['0th'][315] = tag_authors_plants  # Windows Authors Tag
 
     # update the file's exif tags physically
     exif_bytes = piexif.dump(exif_dict)
-    piexif.insert(exif_bytes, image.path_full_local)
+    piexif.insert(exif_bytes, image.path_full_local.as_posix())
 
     # reset file's last modified date to the previous date
     set_modified_date(image.path_full_local, modified_time_seconds)  # set access and modifide date

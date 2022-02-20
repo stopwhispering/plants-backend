@@ -1,4 +1,4 @@
-import os
+from pathlib import Path, PurePath
 from typing import Union, Optional, Sequence
 import piexif
 from PIL import Image
@@ -11,20 +11,20 @@ from plants import config
 logger = logging.getLogger(__name__)
 
 
-def generate_thumbnail(image: Union[str, BytesIO],
+def generate_thumbnail(image: Union[Path, BytesIO],
+                       path_thumbnail: Path,
                        size: Sequence = (100, 100),
-                       path_thumbnail: str = '',
-                       filename_thumb: str = '') -> Optional[str]:
+                       filename_thumb: Union[PurePath, str] = None) -> Optional[Path]:
     """
     generates a resized variant of an image; returns the full local path
     supply original image either as filename or i/o stream
-    if Image is supplied as BytesIO, a filename <<must>> be supplied
+    if Image is supplied as BytesIO, a filename_thumb <<must>> be supplied
     """
     if not config.log_ignore_missing_image_files:
         logger.debug(f'Generating resized image of {image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
 
-    if type(image) == str and not os.path.isfile(image):
+    if isinstance(image, Path) and not image.is_file():
         if not config.log_ignore_missing_image_files:
             logger.error(f"Original Image of default image does not exist. Can't generate thumbnail. {image}")
         return
@@ -33,19 +33,18 @@ def generate_thumbnail(image: Union[str, BytesIO],
     # there's a bug in chrome: it's not respecting the orientation exif (unless directly opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
-    exif_obj = im._getexif()
-    im = _rotate_if_required(im, exif_obj)
+    exif_obj = im._getexif()  # noqa
+    im = _rotate_if_required(im, exif_obj)  # noqa
 
     im.thumbnail(tuple(size))
 
     if not filename_thumb:
-        filename_image = os.path.basename(image)
-        filename_thumb_list = filename_image.split('.')
+        filename_thumb_list = image.name.split('.')
         # noinspection PyTypeChecker
         filename_thumb_list.insert(-1, suffix)
         filename_thumb = ".".join(filename_thumb_list)
 
-    path_save = os.path.join(path_thumbnail, filename_thumb)
+    path_save = path_thumbnail.joinpath(filename_thumb)
     im.save(path_save, "JPEG")
 
     return path_save

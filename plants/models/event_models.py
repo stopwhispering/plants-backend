@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from pathlib import PurePath
 from typing import List
 from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, TEXT
 from sqlalchemy.orm import relationship, Session
@@ -115,7 +117,7 @@ class Event(Base, OrmUtil):
         if self.images:
             as_dict['images'] = []
             for image_obj in self.images:
-                path_small = get_thumbnail_relative_path_for_relative_path(image_obj.relative_path,
+                path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
                                                                            size=config.size_thumbnail_image)
                 as_dict['images'].append({'id':            image_obj.id,
                                           'path_thumb':    path_small,

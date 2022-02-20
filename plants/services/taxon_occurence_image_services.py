@@ -1,5 +1,4 @@
 from typing import List, Dict, Optional
-import os
 import requests
 from pydantic.error_wrappers import ValidationError
 from pygbif import occurrences as occ_api
@@ -12,7 +11,6 @@ from sqlalchemy.orm import Session
 from plants import config
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import TaxonOccurrenceImage, Taxon
-from plants.services.os_paths import PATH_GENERATED_THUMBNAILS_TAXON
 from plants.util.image_utils import generate_thumbnail
 from plants.validation.taxon_validation import PTaxonOccurrenceImage
 
@@ -76,13 +74,13 @@ class TaxonOccurencesLoader:
 
     @staticmethod
     def _download_and_generate_thumbnail(info: Dict) -> Optional[str]:
-        size_x = config.size_tumbnail_image_taxon[0]
-        size_y = config.size_tumbnail_image_taxon[1]
+        size_x = config.size_thumbnail_image_taxon[0]
+        size_y = config.size_thumbnail_image_taxon[1]
         filename = f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}." \
                    f"{size_x}_{size_y}.jpg"
         href = info['href']
 
-        if os.path.isfile(os.path.join(PATH_GENERATED_THUMBNAILS_TAXON, filename)):
+        if config.path_generated_thumbnails_taxon.joinpath(filename).is_file():
             logger.debug(f'File already downloaded. Skipping download - {href}')
             return filename
 
@@ -95,8 +93,8 @@ class TaxonOccurencesLoader:
         image_bytes_io = BytesIO(result.content)
         try:
             path_thumbnail = generate_thumbnail(image=image_bytes_io,
-                                                size=config.size_tumbnail_image_taxon,
-                                                path_thumbnail=PATH_GENERATED_THUMBNAILS_TAXON,
+                                                size=config.size_thumbnail_image_taxon,
+                                                path_thumbnail=config.path_generated_thumbnails_taxon,
                                                 filename_thumb=filename)
         except OSError as err:
             logger.warning(f"Could not load as image: {href} ({str(err)}")

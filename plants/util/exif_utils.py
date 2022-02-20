@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Tuple
 
 from PIL import Image
@@ -10,23 +11,26 @@ import piexif
 logger = logging.getLogger(__name__)
 
 
-def modified_date(path_to_file: str) -> float:
+def modified_date(path_to_file: Path) -> float:
     """
     tries to get the file's last modified date (in seconds)
     see http://stackoverflow.com/a/39501288/1709587 for explanation.
     """
     if platform.system() == 'Windows':
-        return os.path.getmtime(path_to_file)
+        # todo pathlib
+        return os.path.getmtime(path_to_file.as_posix())
     else:
-        stat = os.stat(path_to_file)
+        # todo pathlib
+        stat = os.stat(path_to_file.as_posix())
         return stat.st_mtime
 
 
-def set_modified_date(path_to_file: str, modified_time_seconds: float) -> None:
+def set_modified_date(path_to_file: Path, modified_time_seconds: float) -> None:
     """
     set file's last access and modified time
     """
-    os.utime(path_to_file, (modified_time_seconds, modified_time_seconds))
+    # todo pathlib
+    os.utime(path_to_file.as_posix(), (modified_time_seconds, modified_time_seconds))
 
 
 def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
@@ -53,7 +57,7 @@ def encode_record_date_time(dt: datetime.datetime):
     return s_dt.encode('utf-8')
 
 
-def auto_rotate_jpeg(path_image: str, exif_dict: dict) -> None:
+def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     """
     auto-rotates images according to exif tag; required as chrome does not display them correctly otherwise;
     applies a recompression with high quality; re-attaches the original exif files to the new file but without the
@@ -76,7 +80,7 @@ def auto_rotate_jpeg(path_image: str, exif_dict: dict) -> None:
         del exif_dict['thumbnail']
         exif_bytes = piexif.dump(exif_dict)
 
-    filename = os.path.basename(path_image)
+    filename = path_image.name
 
     if orientation == 2:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)

@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import FastAPI
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -12,7 +13,6 @@ from plants.util.logger_utils import configure_root_logger
 
 logger = logging.getLogger(__name__)
 
-# configure_root_logger(LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE)
 configure_root_logger(config.log_severity_console, config.log_severity_file)
 
 COMMON_PREFIX = '/plants_tagger/backend'

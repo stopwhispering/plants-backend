@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 import aiofiles
 import json
 from sqlalchemy.orm import Session
@@ -13,13 +13,12 @@ from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
                                                 PKeyword, PPlantTag, PResultsImagesUploaded)
-from plants.services.os_paths import PATH_ORIGINAL_PHOTOS_UPLOADED
 from plants import config
 from plants.services.image_services import (resize_image, resizing_required, remove_files_already_existing)
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants.services.Photo import Photo
 from plants.util.filename_utils import with_suffix
-from plants.validation.event_validation import PImageDelete, PImagesDelete
+from plants.validation.event_validation import PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
 from plants.validation.message_validation import PConfirmation
 
@@ -204,19 +203,18 @@ async def delete_image(request: Request, image_container: PImagesDelete):
     for photo in image_container.images:
 
         old_path = photo.path_full_local
-        if not os.path.isfile(old_path):
+        if not old_path.is_file():
             logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
             throw_exception(err_msg, request=request)
 
-        filename = os.path.basename(old_path)
-        new_path = os.path.join(config.path_deleted_photos, filename)
+        new_path = config.path_deleted_photos.joinpath(old_path.name)
 
         try:
             os.replace(src=old_path,
                        dst=new_path)  # silently overwrites if privileges are sufficient
         except OSError as e:
             logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-            throw_exception(err_msg, description=f'Filename: {os.path.basename(old_path)}', request=request)
+            throw_exception(err_msg, description=f'Filename: {old_path.name}', request=request)
         logger.info(f'Moved file {old_path} to {new_path}')
 
         # remove from PhotoDirectory cache
@@ -226,7 +224,7 @@ async def delete_image(request: Request, image_container: PImagesDelete):
                 photo_obj = photo_directory.get_photo(photo.path_full_local)
                 photo_directory.remove_image_from_directory(photo_obj)
 
-    deleted = [os.path.basename(image.path_full_local) for image in image_container.images]
+    deleted = [image.path_full_local.name for image in image_container.images]
     results = {'action':   'Deleted',
                'resource': 'ImageResource',
                'message':  get_message(f'Successfully deleted images',
@@ -245,7 +243,7 @@ async def _save_image_files(files: List[UploadFile],
     photos = []
     for photo_upload in files:
         # save to file system
-        path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
+        path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
         logger.info(f'Saving {path}.')
 
         async with aiofiles.open(path, 'wb') as out_file:
@@ -270,7 +268,7 @@ async def _save_image_files(files: List[UploadFile],
         # add to photo directory (cache) and add keywords and plant tags
         # (all the same for each uploaded photo)
         photo = Photo(path_full_local=path,
-                      filename=os.path.basename(path))
+                      filename=path.name)
         photo.tag_authors_plants = [p['key'] for p in plants]
         photo.tag_keywords = [k['keyword'] for k in keywords]
         with lock_photo_directory:

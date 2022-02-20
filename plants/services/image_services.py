@@ -1,63 +1,59 @@
 from itertools import chain
+from pathlib import Path, PurePath
 from typing import Tuple, List, Generator
 import os
 from PIL import Image
 import logging
 from typing import Set
 
-import plants.services.PhotoDirectory
-import plants.services.os_paths
 from plants import config
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants.services.Photo import Photo
 from plants.services.exif_services import rename_plant_in_exif_tags
-from plants.services.os_paths import (REL_PATH_PHOTOS_GENERATED, PATH_GENERATED_THUMBNAILS,
-                                      REL_PATH_PHOTOS_GENERATED_TAXON, PATH_ORIGINAL_PHOTOS_UPLOADED)
 from plants.util.filename_utils import get_generated_filename, with_suffix
 from plants.util.image_utils import generate_thumbnail
 
 logger = logging.getLogger(__name__)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path_raw: str) -> str:
+def generate_previewimage_get_rel_path(original_image_rel_path_raw: str) -> Path:
     """
     generates a preview image for a plant's default image if not exists, yet
     returns the relative path to it
     """
+    # todo replace following lines...
     if os.name == 'nt':  # handle forward- and backslash for linux/windows systems
-        original_image_rel_path = original_image_rel_path_raw.replace('/', '\\')
+        original_image_rel_path = PurePath(original_image_rel_path_raw.replace('/', '\\'))
     else:
-        original_image_rel_path = original_image_rel_path_raw.replace('\\', '/')
+        original_image_rel_path = PurePath(original_image_rel_path_raw.replace('\\', '/'))
 
     # get filename of preview image and check if that file already exists
-    filename_original = os.path.basename(original_image_rel_path)
-    filename_generated = get_generated_filename(filename_original,
+    filename_generated = get_generated_filename(original_image_rel_path.name,
                                                 size=config.size_preview_image)
 
-    path_full = os.path.join(plants.services.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
-    path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
-    if not os.path.isfile(path_generated):
+    path_full = config.path_photos_base.joinpath(original_image_rel_path)
+    path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
+
+    if not path_generated.is_file():
         if not config.log_ignore_missing_image_files:
             logger.info('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
-                           # path_thumbnail=os.path.join(plants.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))
-                           path_thumbnail=os.path.join(config.path_base, REL_PATH_PHOTOS_GENERATED))
+                           path_thumbnail=config.path_generated_thumbnails)
 
-    return os.path.join(plants.services.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
+    return config.rel_path_photos_generated.joinpath(filename_generated)
 
 
-def get_thumbnail_relative_path_for_relative_path(path_relative: str, size: tuple) -> str:
+def get_thumbnail_relative_path_for_relative_path(path_relative: PurePath, size: tuple) -> Path:
     """
     returns relative path of the corresponding thumbnail for an image file's relative path
     """
-    filename = os.path.basename(path_relative)
-    filename_thumbnail = get_generated_filename(filename, size)
-    return os.path.join(REL_PATH_PHOTOS_GENERATED, filename_thumbnail)
+    filename_thumbnail = get_generated_filename(path_relative.name, size)
+    return config.rel_path_photos_generated.joinpath(filename_thumbnail)
 
 
-def get_path_for_taxon_thumbnail(filename: str):
-    return os.path.join(REL_PATH_PHOTOS_GENERATED_TAXON, filename)
+def get_path_for_taxon_thumbnail(filename: Path):
+    return config.rel_path_photos_generated_taxon.joinpath(filename)
 
 
 def get_distinct_keywords_from_image_files() -> Set[str]:
@@ -88,26 +84,26 @@ def resizing_required(path: str, size: Tuple[int, int]) -> bool:
     return size != image.size
 
 
-def resize_image(path: str, save_to_path: str, size: Tuple[int, int], quality: int) -> None:
+def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality: int) -> None:
     """
     load image at supplied path, save resized image to other path; observes size and quality params;
     original file is finally <<deleted>>
     """
-    with Image.open(path) as image:
+    with Image.open(path.as_posix()) as image:
         image.thumbnail(size)  # preserves aspect ratio
         if image.info.get('exif'):
-            image.save(save_to_path,
+            image.save(save_to_path.as_posix(),
                        quality=quality,
                        exif=image.info.get('exif'),
                        optimize=True)
         else:  # fix some bug with ebay images that apparently have no exif part
             logger.info("Saving w/o exif.")
-            image.save(save_to_path,
+            image.save(save_to_path.as_posix(),
                        quality=quality,
                        optimize=True)
 
     if path != save_to_path:
-        os.remove(path)
+        path.unlink()  # delete file
 
 
 def _get_images_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
@@ -149,10 +145,10 @@ def remove_files_already_existing(files: List, suffix: str) -> List[str]:
     """
     duplicate_filenames = []
     for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
-        path = os.path.join(PATH_ORIGINAL_PHOTOS_UPLOADED, photo_upload.filename)
+        path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
         # logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
         logger.debug(f'Checking uploaded photo ({photo_upload.content_type}) to be saved as {path}.')
-        if os.path.isfile(path) or os.path.isfile(with_suffix(path, suffix)):  # todo: better check all folders!
+        if path.is_file() or with_suffix(path, suffix).is_file():  # todo: better check all folders!
             files.remove(photo_upload)
             duplicate_filenames.append(photo_upload.filename)
             logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')

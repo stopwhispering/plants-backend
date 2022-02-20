@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, List, Union
 from datetime import datetime, date
 from pydantic.main import BaseModel
@@ -14,8 +15,8 @@ class PDescdendantPlant(BaseModel):
 
 
 class PPlantLatestImage(BaseModel):
-    path: str
-    path_thumb: str
+    path: Path
+    path_thumb: Path
     date: datetime
 
     class Config:
@@ -58,7 +59,7 @@ class PPlant(BaseModel):
     parent_plant_id: Optional[int]
     parent_plant_pollen_id: Optional[int]
     plant_notes: Optional[str]
-    filename_previewimage: Optional[str]
+    filename_previewimage: Optional[Path]
     hide: Optional[bool]  # i.e. deleted  todo: enforce True/False
     last_update: Optional[datetime]  # empty if new
     taxon_id: Optional[int]
