@@ -4,7 +4,7 @@ import logging
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from plants.config import TRAIT_CATEGORIES
+from plants.constants import TRAIT_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.validation.proposal_validation import ProposalEntity, PResultsProposals
 from plants.services.image_services import get_distinct_keywords_from_image_files

@@ -17,14 +17,21 @@ class Image(Base):
             "Event",
             secondary='image_to_event_association'
             )
-    image_to_event_associations = relationship("ImageToEventAssociation", back_populates="image")
+    image_to_event_associations = relationship("ImageToEventAssociation",
+                                               back_populates="image",
+                                               overlaps="events"  # silence warnings
+                                               )
 
     # 1:n relationship to the image/taxon link table
     taxa = relationship(
             "Taxon",
-            secondary='image_to_taxon_association'
+            secondary='image_to_taxon_association',
+            overlaps="image_to_taxon_associations,images"  # silence warnings
             )
-    image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="image")
+    image_to_taxon_associations = relationship("ImageToTaxonAssociation",
+                                               back_populates="image",
+                                               overlaps="images,taxa"  # silence warnings
+                                               )
 
 
 class ImageToEventAssociation(Base):
@@ -32,8 +39,14 @@ class ImageToEventAssociation(Base):
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
     event_id = Column(INTEGER, ForeignKey('event.id'), primary_key=True)
 
-    image = relationship('Image', back_populates='image_to_event_associations')
-    event = relationship('Event', back_populates='image_to_event_associations')
+    image = relationship('Image',
+                         back_populates='image_to_event_associations',
+                         overlaps="events"  # silence warnings
+                         )
+    event = relationship('Event',
+                         back_populates='image_to_event_associations',
+                         overlaps="events"  # silence warnings
+                         )
 
 
 class ImageToTaxonAssociation(Base):
@@ -43,5 +56,11 @@ class ImageToTaxonAssociation(Base):
 
     description = Column(TEXT)
 
-    image = relationship('Image', back_populates='image_to_taxon_associations')
-    taxon = relationship('Taxon', back_populates='image_to_taxon_associations')
+    image = relationship('Image',
+                         back_populates='image_to_taxon_associations',
+                         overlaps="images,taxa"  # silence warnings
+                         )
+    taxon = relationship('Taxon',
+                         back_populates='image_to_taxon_associations',
+                         overlaps="images,taxa"  # silence warnings
+                         )

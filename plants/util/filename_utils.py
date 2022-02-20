@@ -1,3 +1,5 @@
+from typing import Sequence
+
 
 def with_suffix(path: str, suffix: str) -> str:
     """
@@ -9,7 +11,7 @@ def with_suffix(path: str, suffix: str) -> str:
     return ".".join(path_list)
 
 
-def get_generated_filename(filename_original: str, size: tuple) -> str:
+def get_generated_filename(filename_original: str, size: Sequence) -> str:
     """
     get the derivative filename of a resized image file (when creating thumbnails, a common
     naming convention is applied that adds resolution as a suffix to the filename)

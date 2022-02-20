@@ -1,18 +1,18 @@
 import os
-from typing import Union, Optional
+from typing import Union, Optional, Sequence
 import piexif
 from PIL import Image
 import logging
 from io import BytesIO
 from PIL.JpegImagePlugin import JpegImageFile
 
-from plants.config_local import LOG_IS_DEV
+from plants import config
 
 logger = logging.getLogger(__name__)
 
 
 def generate_thumbnail(image: Union[str, BytesIO],
-                       size: tuple = (100, 100),
+                       size: Sequence = (100, 100),
                        path_thumbnail: str = '',
                        filename_thumb: str = '') -> Optional[str]:
     """
@@ -20,12 +20,12 @@ def generate_thumbnail(image: Union[str, BytesIO],
     supply original image either as filename or i/o stream
     if Image is supplied as BytesIO, a filename <<must>> be supplied
     """
-    if not LOG_IS_DEV:
+    if not config.log_ignore_missing_image_files:
         logger.debug(f'Generating resized image of {image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
 
     if type(image) == str and not os.path.isfile(image):
-        if not LOG_IS_DEV:
+        if not config.log_ignore_missing_image_files:
             logger.error(f"Original Image of default image does not exist. Can't generate thumbnail. {image}")
         return
     im = Image.open(image)
@@ -36,7 +36,7 @@ def generate_thumbnail(image: Union[str, BytesIO],
     exif_obj = im._getexif()
     im = _rotate_if_required(im, exif_obj)
 
-    im.thumbnail(size)
+    im.thumbnail(tuple(size))
 
     if not filename_thumb:
         filename_image = os.path.basename(image)

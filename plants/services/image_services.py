@@ -5,11 +5,9 @@ from PIL import Image
 import logging
 from typing import Set
 
-import plants.config_local
 import plants.services.PhotoDirectory
 import plants.services.os_paths
 from plants import config
-from plants.config_local import LOG_IS_DEV
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants.services.Photo import Photo
 from plants.services.exif_services import rename_plant_in_exif_tags
@@ -39,11 +37,12 @@ def generate_previewimage_get_rel_path(original_image_rel_path_raw: str) -> str:
     path_full = os.path.join(plants.services.os_paths.PATH_PHOTOS_BASE, original_image_rel_path)
     path_generated = os.path.join(PATH_GENERATED_THUMBNAILS, filename_generated)
     if not os.path.isfile(path_generated):
-        if not LOG_IS_DEV:
+        if not config.log_ignore_missing_image_files:
             logger.info('Preview Image: Generating the not-yet-existing preview image.')
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
-                           path_thumbnail=os.path.join(plants.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))
+                           # path_thumbnail=os.path.join(plants.config_local.PATH_BASE, REL_PATH_PHOTOS_GENERATED))
+                           path_thumbnail=os.path.join(config.path_base, REL_PATH_PHOTOS_GENERATED))
 
     return os.path.join(plants.services.os_paths.REL_PATH_PHOTOS_GENERATED, filename_generated)
 

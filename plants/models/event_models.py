@@ -6,7 +6,7 @@ import logging
 
 from plants.util.ui_utils import throw_exception
 from plants import config
-from plants.config import TRAIT_CATEGORIES
+from plants.constants import TRAIT_CATEGORIES
 from plants.models.trait_models import TraitCategory
 from plants.services.image_services import get_thumbnail_relative_path_for_relative_path
 from plants.util.OrmUtilMixin import OrmUtil
@@ -85,9 +85,12 @@ class Event(Base, OrmUtil):
     # 1:n relationship to the image/event link table
     images = relationship(
             "Image",
-            secondary='image_to_event_association'
+            secondary='image_to_event_association',
+            overlaps="events,image,image_to_event_associations,event"  # silence warnings
             )
-    image_to_event_associations = relationship("ImageToEventAssociation", back_populates="event")
+    image_to_event_associations = relationship("ImageToEventAssociation",
+                                               back_populates="event",
+                                               overlaps="events,images")  # silence warnings
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""

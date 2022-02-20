@@ -9,9 +9,8 @@ import dateutil
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from plants import config
 from plants.util.ui_utils import throw_exception
-from plants.config import size_tumbnail_image_taxon
-from plants.config_local import MAX_IMAGES_PER_TAXON
 from plants.models.taxon_models import TaxonOccurrenceImage, Taxon
 from plants.services.os_paths import PATH_GENERATED_THUMBNAILS_TAXON
 from plants.util.image_utils import generate_thumbnail
@@ -77,8 +76,10 @@ class TaxonOccurencesLoader:
 
     @staticmethod
     def _download_and_generate_thumbnail(info: Dict) -> Optional[str]:
+        size_x = config.size_tumbnail_image_taxon[0]
+        size_y = config.size_tumbnail_image_taxon[1]
         filename = f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}." \
-                   f"{size_tumbnail_image_taxon[0]}_{size_tumbnail_image_taxon[1]}.jpg"
+                   f"{size_x}_{size_y}.jpg"
         href = info['href']
 
         if os.path.isfile(os.path.join(PATH_GENERATED_THUMBNAILS_TAXON, filename)):
@@ -94,7 +95,7 @@ class TaxonOccurencesLoader:
         image_bytes_io = BytesIO(result.content)
         try:
             path_thumbnail = generate_thumbnail(image=image_bytes_io,
-                                                size=size_tumbnail_image_taxon,
+                                                size=config.size_tumbnail_image_taxon,
                                                 path_thumbnail=PATH_GENERATED_THUMBNAILS_TAXON,
                                                 filename_thumb=filename)
         except OSError as err:
@@ -109,12 +110,12 @@ class TaxonOccurencesLoader:
     def _treat_occurences(self, occs: List, gbif_id: int) -> List[Dict]:
         image_dicts = []
         for occ in occs:
-            if len(image_dicts) >= MAX_IMAGES_PER_TAXON:
+            if len(image_dicts) >= config.max_images_per_taxon:
                 break
 
             media = [m for m in occ['media'] if 'format' in m]  # some entries are not parseable
             for j, m in enumerate(media, 1):
-                if len(image_dicts) >= MAX_IMAGES_PER_TAXON:
+                if len(image_dicts) >= config.max_images_per_taxon:
                     break
 
                 d = self._get_image_metadata(occ, m, gbif_id)

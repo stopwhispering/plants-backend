@@ -8,9 +8,8 @@ from pydantic.error_wrappers import ValidationError
 from fastapi import UploadFile
 from fastapi import APIRouter, Depends, Request
 
-from plants.util.ui_utils import MessageType, get_message, throw_exception, make_list_items_json_serializable
+from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
-from plants.config_local import PATH_DELETED_PHOTOS
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
                                                 PKeyword, PPlantTag, PResultsImagesUploaded)
@@ -210,7 +209,7 @@ async def delete_image(request: Request, image_container: PImagesDelete):
             throw_exception(err_msg, request=request)
 
         filename = os.path.basename(old_path)
-        new_path = os.path.join(PATH_DELETED_PHOTOS, filename)
+        new_path = os.path.join(config.path_deleted_photos, filename)
 
         try:
             os.replace(src=old_path,
@@ -265,7 +264,7 @@ async def _save_image_files(files: List[UploadFile],
             resize_image(path=path,
                          save_to_path=with_suffix(path, RESIZE_SUFFIX),
                          size=config.resizing_size,
-                         quality=config.quality)
+                         quality=config.jpg_quality)
             path = with_suffix(path, RESIZE_SUFFIX)
 
         # add to photo directory (cache) and add keywords and plant tags

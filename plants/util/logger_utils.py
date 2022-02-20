@@ -1,8 +1,8 @@
 import logging
 
 
-def configure_root_logger(log_severity_console=logging.INFO,
-                          log_severity_file=logging.INFO,
+def configure_root_logger(log_severity_console,
+                          log_severity_file,
                           log_filter: logging.Filter = None):
     """configure the root logger; each module's default (__name__) logger will inherit these settings"""
     logger = logging.getLogger()  # no name returns the root loggre

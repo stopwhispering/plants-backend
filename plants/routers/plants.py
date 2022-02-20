@@ -4,13 +4,13 @@ import logging
 import datetime
 from starlette.requests import Request
 
+from plants import config
 from plants.util.ui_utils import (make_list_items_json_serializable, get_message, throw_exception,
                                   make_dict_values_json_serializable)
 from plants.dependencies import get_db
-from plants.config_local import DEMO_MODE_RESTRICT_TO_N_PLANTS
 from plants.validation.plant_validation import PResultsPlants, PPlant
 from plants.models.plant_models import Plant
-from plants import config
+# from plants import config
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
@@ -53,12 +53,13 @@ async def get_plants(db: Session = Depends(get_db)):
     # select plants from database
     # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
     query = db.query(Plant)
-    if config.filter_hidden:
+    # if config.filter_hidden:
+    if config.filter_hidden_plants:
         # sqlite does not like "is None" and pylint doesn't like "== None"
         query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
 
-    if DEMO_MODE_RESTRICT_TO_N_PLANTS:
-        query = query.order_by(Plant.plant_name).limit(DEMO_MODE_RESTRICT_TO_N_PLANTS)
+    if config.n_plants:
+        query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
     plants_obj = query.all()
     plants_list = [p.as_dict() for p in plants_obj]

@@ -7,7 +7,6 @@ import logging
 from piexif import InvalidImageDataError
 
 from plants import config
-from plants.config_local import PATH_BASE
 from plants.services.os_paths import REL_PATH_PHOTOS_GENERATED, REL_PATH_PHOTOS_ORIGINAL
 from plants.util.exif_utils import auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time, \
     set_modified_date, encode_record_date_time, modified_date, encode_keywords_tag, exif_dict_has_all_relevant_tags
@@ -80,11 +79,13 @@ class Photo:
         also sets attributes for relative paths to these generated images
         """
         # generate a thumbnail...
-        self.filename_thumb = get_generated_filename(self.filename, size=config.size_thumbnail_image)
+        self.filename_thumb = get_generated_filename(self.filename,
+                                                     size=config.size_thumbnail_image)
         if not files_already_generated or self.filename_thumb not in files_already_generated:
             _ = generate_thumbnail(image=self.path_full_local,
                                    size=config.size_thumbnail_image,
-                                   path_thumbnail=os.path.join(PATH_BASE, REL_PATH_PHOTOS_GENERATED))
+                                   # path_thumbnail=os.path.join(PATH_BASE, REL_PATH_PHOTOS_GENERATED))
+                                   path_thumbnail=os.path.join(config.path_base, REL_PATH_PHOTOS_GENERATED))
 
         self.path_thumb = os.path.join(REL_PATH_PHOTOS_GENERATED, self.filename_thumb)
         self.path_original = self.path_full_local[self.path_full_local.find(REL_PATH_PHOTOS_ORIGINAL):]

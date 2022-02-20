@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 
-from plants.config import PROPERTY_CATEGORIES
+from plants.constants import PROPERTY_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyValue, PropertyCategory, PropertyName
 from plants.models.taxon_models import Taxon

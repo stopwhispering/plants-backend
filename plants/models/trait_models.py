@@ -13,8 +13,14 @@ class TaxonToTraitAssociation(Base):
     trait_id = Column(INTEGER, ForeignKey('trait.id'), primary_key=True)
     status = Column(CHAR(20))
 
-    taxon = relationship('Taxon', back_populates='taxon_to_trait_associations')
-    trait = relationship('Trait', back_populates='taxon_to_trait_associations')
+    taxon = relationship('Taxon',
+                         back_populates='taxon_to_trait_associations',
+                         overlaps="traits"  # silence warnings
+                         )
+    trait = relationship('Trait',
+                         back_populates='taxon_to_trait_associations',
+                         overlaps="traits"  # silence warnings
+                         )
 
 
 class Trait(Base, OrmUtil):
@@ -26,9 +32,13 @@ class Trait(Base, OrmUtil):
     # 1:n relationship to the taxon/traits link table
     taxa = relationship(
             "Taxon",
-            secondary='taxon_to_trait_association'
+            secondary='taxon_to_trait_association',
+            overlaps="taxon,taxon_to_trait_associations,traits,trait"  # silence warnings
             )
-    taxon_to_trait_associations = relationship("TaxonToTraitAssociation", back_populates="trait")
+    taxon_to_trait_associations = relationship("TaxonToTraitAssociation",
+                                               back_populates="trait",
+                                               overlaps="taxa,traits"  # silence warnings
+                                               )
 
     # trait to trait category: n:1
     trait_category_id = Column(INTEGER, ForeignKey('trait_category.id'))
@@ -42,7 +52,8 @@ class TraitCategory(Base, OrmUtil):
     category_name = Column(CHAR(80))
     sort_flag = Column(INTEGER)
 
-    traits = relationship("Trait", back_populates="trait_category")
+    traits = relationship("Trait",
+                          back_populates="trait_category")
     # property_names = relationship("PropertyName", back_populates="property_category")   # todo del if removing prop
 
     # static query methods

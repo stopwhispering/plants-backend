@@ -1,11 +1,10 @@
 import logging
-
 from fastapi import FastAPI
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from plants.config_local import LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE
+from plants import config
 from plants.extensions.db import init_database_tables, engine
 from plants.routers import (taxa, plants, images, events, property_names, properties, proposals,
                             functions, selection_data, api_biodiversity)
@@ -13,7 +12,8 @@ from plants.util.logger_utils import configure_root_logger
 
 logger = logging.getLogger(__name__)
 
-configure_root_logger(LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE)
+# configure_root_logger(LOG_SEVERITY_CONSOLE, LOG_SEVERITY_FILE)
+configure_root_logger(config.log_severity_console, config.log_severity_file)
 
 COMMON_PREFIX = '/plants_tagger/backend'
 app = FastAPI(
@@ -22,21 +22,21 @@ app = FastAPI(
         openapi_url=COMMON_PREFIX + "/openapi.json"
         )
 
-# allow cors on dev  # todo really only on dev
-origins = [
-    "http://localhost",
-    "http://localhost:5000",
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://localhost:8081",
-    ]
-app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        )
+if config.allow_cors:
+    origins = [
+        "http://localhost",
+        "http://localhost:5000",
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://localhost:8081",
+        ]
+    app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            )
 
 
 # override 422 request validation error (pydantic models) to log them

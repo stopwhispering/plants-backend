@@ -60,14 +60,20 @@ class Taxon(Base, OrmUtil):
             "Trait",
             secondary='taxon_to_trait_association'
             )
-    taxon_to_trait_associations = relationship("TaxonToTraitAssociation", back_populates="taxon")
+    taxon_to_trait_associations = relationship("TaxonToTraitAssociation",
+                                               back_populates="taxon",
+                                               overlaps="traits",  # silence warnings
+                                               )
 
     # 1:n relationship to the image/taxon link table
     images = relationship(
             "Image",
             secondary='image_to_taxon_association'
             )
-    image_to_taxon_associations = relationship("ImageToTaxonAssociation", back_populates="taxon")
+    image_to_taxon_associations = relationship("ImageToTaxonAssociation",
+                                               back_populates="taxon",
+                                               overlaps="images"  # silence warnings
+                                               )
 
     # taxon to occurence images (n:m)
     occurence_images = relationship("TaxonOccurrenceImage", back_populates="taxa")

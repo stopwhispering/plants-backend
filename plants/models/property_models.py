@@ -5,7 +5,7 @@ from sqlalchemy import Column, INTEGER, CHAR, ForeignKey
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
-from plants.config import PROPERTY_CATEGORIES
+from plants.constants import PROPERTY_CATEGORIES
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 
