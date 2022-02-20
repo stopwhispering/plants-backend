@@ -235,11 +235,11 @@ async def modify_events(request: Request,
             # newly assigned images
             if event.images:
                 for image in event.images:
-                    image_obj = db.query(Image).filter(Image.relative_path == image.path_original).first()
+                    image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
 
                     # not assigned to any event, yet
                     if not image_obj:
-                        image_obj = Image(relative_path=image.path_original)
+                        image_obj = Image(relative_path=image.path_original.as_posix())
                         new_list.append(image_obj)
 
                     # not assigned to that specific event, yet
