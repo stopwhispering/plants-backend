@@ -10,8 +10,8 @@ from plants.extensions.config_values import parse_config
 # os.getenv('CONNECTION_STRING')
 #
 # # show all .env env. vars:
-# from dotenv import dotenv_values
-# dotenv_values()
+from dotenv import dotenv_values
+print(dotenv_values())
 load_dotenv(dotenv_path='.env', override=True)
 
 config = parse_config()

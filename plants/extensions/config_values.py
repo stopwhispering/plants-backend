@@ -35,7 +35,7 @@ def parse_config() -> Configuration:
         here, we only use the latter information
     - config.toml contains global configuration and environment-specific configuration values
     """
-    environment = getenv('environment').lower()
+    environment = getenv('ENVIRONMENT').lower()
 
     config_global = toml.load("config.toml")
     config_env = config_global['environments'][environment]
