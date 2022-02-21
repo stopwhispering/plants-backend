@@ -4,7 +4,6 @@ from pydantic.main import BaseModel
 
 
 class PMessage(BaseModel):
-    # type: # MessageType  #todo
     message: str
     additionalText: Optional[str]
     description: Optional[str]

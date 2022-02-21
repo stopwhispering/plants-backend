@@ -82,7 +82,7 @@ class PTaxonOccurrenceImage(BaseModel):
     class Config:
         extra = 'forbid'
         anystr_strip_whitespace = True
-        # alias_generator = humps.camelize  # todo
+        # alias_generator = humps.camelize
         allow_population_by_field_name = True  # populate model by both alias (default) and field name
 
     @validator("date")

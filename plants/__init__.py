@@ -1,4 +1,3 @@
-import toml
 from dotenv import load_dotenv
 
 from plants.extensions.config_values import parse_config

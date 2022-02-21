@@ -1,7 +1,6 @@
 from glob import glob
 from pathlib import Path
 from typing import Sequence, Set
-from os import name
 
 
 def with_suffix(path: Path, suffix: str) -> Path:
@@ -9,10 +8,6 @@ def with_suffix(path: Path, suffix: str) -> Path:
     """
     filename_new = path.stem + suffix + path.suffix
     return path.with_name(filename_new)
-    # path_list = path.as_posix().split('.')
-    # if len(path_list) >= 2:
-    #     path_list[-2] = f'{path_list[-2]}{suffix}'
-    # return Path(".".join(path_list))
 
 
 def get_generated_filename(filename_original: str, size: Sequence) -> str:
@@ -26,14 +21,6 @@ def get_generated_filename(filename_original: str, size: Sequence) -> str:
     return filename_generated
 
 
-def add_slash(path_raw: str) -> str:
-    # todo do we really need this?? there must be some better way...
-    if name == 'nt':
-        return path_raw + '\\'
-    else:
-        return path_raw + r'/'
-
-
 def find_jpg_files(folder: Path) -> Set[Path]:
     paths = list(folder.rglob('**/*.jp*g'))
     paths.extend(list(folder.rglob('**/*.JP*G')))  # on linux glob works case-sensitive!
@@ -41,7 +28,6 @@ def find_jpg_files(folder: Path) -> Set[Path]:
     # todo remove the old glob.glob code if this never fails...
     paths_old = glob(folder.as_posix() + '/**/*.jp*g', recursive=True)
     paths_old.extend(glob(folder.as_posix() + '/**/*.JP*G', recursive=True))
-    # paths_old = [Path(p) for p in paths_old]
     assert len(paths) == len(paths_old)
     # we need to remove dupliates for windows
     return set(paths)

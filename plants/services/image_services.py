@@ -1,7 +1,6 @@
 from itertools import chain
 from pathlib import Path, PurePath
 from typing import Tuple, List, Generator
-import os
 from PIL import Image
 import logging
 from typing import Set
@@ -16,19 +15,13 @@ from plants.util.image_utils import generate_thumbnail
 logger = logging.getLogger(__name__)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path_raw: str) -> Path:
+def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Path:
     """
     generates a preview image for a plant's default image if not exists, yet
     returns the relative path to it
     """
-    # todo replace following lines...
-    if os.name == 'nt':  # handle forward- and backslash for linux/windows systems
-        original_image_rel_path = PurePath(original_image_rel_path_raw.replace('/', '\\'))
-    else:
-        original_image_rel_path = PurePath(original_image_rel_path_raw.replace('\\', '/'))
-
     # get filename of preview image and check if that file already exists
-    filename_generated = get_generated_filename(original_image_rel_path.name,
+    filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
                                                 size=config.size_preview_image)
 
     path_full = config.path_photos_base.joinpath(original_image_rel_path)
@@ -137,7 +130,6 @@ def rename_plant_in_image_files(plant_name_old: str, plant_name_new: str) -> int
     return count_modified
 
 
-# def remove_files_already_existing(files: List[FileStorage], suffix: str) -> List[str]:  # todo
 def remove_files_already_existing(files: List, suffix: str) -> List[str]:
     """
     iterates over file objects, checks whether a file with that name already exists in filesystem; removes already
@@ -146,9 +138,8 @@ def remove_files_already_existing(files: List, suffix: str) -> List[str]:
     duplicate_filenames = []
     for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
         path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
-        # logger.debug(f'Checking uploaded photo ({photo_upload.mimetype}) to be saved as {path}.')
         logger.debug(f'Checking uploaded photo ({photo_upload.content_type}) to be saved as {path}.')
-        if path.is_file() or with_suffix(path, suffix).is_file():  # todo: better check all folders!
+        if path.is_file() or with_suffix(path, suffix).is_file():
             files.remove(photo_upload)
             duplicate_filenames.append(photo_upload.filename)
             logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')

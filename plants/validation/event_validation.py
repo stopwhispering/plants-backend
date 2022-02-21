@@ -21,7 +21,8 @@ class PPot(BaseModel):
     id: Optional[int]  # missing if new
     material: str
     shape_top: str
-    shape_side: Optional[str]  # todo enforce
+    shape_side: Optional[str]  # todo enforce by enum (
+    # https://pydantic-docs.helpmanual.io/usage/types/#enums-and-choices)
     diameter_width: float
 
     class Config:

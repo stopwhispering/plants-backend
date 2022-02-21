@@ -67,14 +67,12 @@ async def search_external_biodiversity_databases(
     return results
 
 
-# todo rename as does't assign but download taxon infos
-@router.post("/assign_taxon_to_plant", response_model=PResultsSaveTaxonRequest)
-async def assign_taxon_to_plant(
+@router.post("/download_taxon_details", response_model=PResultsSaveTaxonRequest)
+async def download_taxon_details(
         request: Request,
         args: PAssignTaxonRequest,
         db: Session = Depends(get_db)):
-    """assign the taxon selected on frontend to the plant; the taxon may either already exist in database or we
-    need to create it and retrieve the required information from the kew databases
+    """retrieve taxon details from kew databases (sync.) and occurrence images from gbif (async. in thread)
     Note: The actual assignment is persisted to the database when the plant is saved"""
 
     plants_taxon_id = args.id  # None if source is kew database, otherwise database
@@ -135,12 +133,12 @@ async def assign_taxon_to_plant(
     return results
 
 
-@router.post("/fetch_taxon_images", response_model=PResultsFetchTaxonImages)  # results todo
+@router.post("/fetch_taxon_images", response_model=PResultsFetchTaxonImages)
 async def fetch_taxon_images(
         request: Request,
         args: PFetchTaxonImages,
         db: Session = Depends(get_db)):
-    """fetch taxon images from gbif and create thumbnails"""
+    """(re)fetch taxon images from gbif and create thumbnails"""
 
     # lookup ocurrences & images at gbif and generate thumbnails
     loader = TaxonOccurencesLoader()

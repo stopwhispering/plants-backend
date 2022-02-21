@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import logging
 import datetime
@@ -10,7 +10,6 @@ from plants.util.ui_utils import (make_list_items_json_serializable, get_message
 from plants.dependencies import get_db
 from plants.validation.plant_validation import PResultsPlants, PPlant
 from plants.models.plant_models import Plant
-# from plants import config
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
@@ -83,7 +82,6 @@ def clone_plant(
     """
     clone plant with supplied plant_id; include duplication of events, image assignments, and
     properties
-    todo copy image assignments in exif tags
     """
     plant_original = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
 
@@ -140,6 +138,7 @@ def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Dep
 
     args = data
 
+    # todo switch to id
     record_update: Plant = db.query(Plant).filter_by(plant_name=args.plant).first()
     if not record_update:
         logger.error(f'Plant to be deleted not found in database: {args.plant}.')

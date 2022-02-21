@@ -30,7 +30,7 @@ class PImage(BaseModel):
     description: str
     filename: Path
     path_full_local: Path  # not a FilePath as existence check would cause performance problems
-    record_date_time: Optional[datetime]  # 2019-11-21T11:51:13  # todo really optional? seems initial after upload
+    record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:
         extra = 'forbid'

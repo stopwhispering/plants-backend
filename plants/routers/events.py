@@ -31,7 +31,7 @@ async def get_soils(db: Session = Depends(get_db)):
     results = {'SoilsCollection': []}
 
     # add the number of plants that currently have a specific soil
-    # todo make one query out of this to improve performance (but how without writing sql...?)
+    # todo make one query out of this to improve performance (but how without writing plain sql...?)
     # todo maybe put this into Soil's as_dict function
     soil_counter = defaultdict(int)
     plants = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))).all()

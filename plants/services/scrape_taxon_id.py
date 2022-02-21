@@ -128,7 +128,6 @@ def get_gbif_id_from_wikidata(ipni_id: str) -> Optional[int]:
         return
     elif not correct_found:
         logger.warning('Wikidata site is not the correct one. Aborting.')
-        # todo: try other search results?
         return
 
     # finally, get the gbif id

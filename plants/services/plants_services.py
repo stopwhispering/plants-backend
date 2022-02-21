@@ -4,7 +4,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from plants.extensions.db import Base
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
 from plants.services.tag_services import tag_modified, update_tag
@@ -89,18 +88,18 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     """
     cloned = []
 
-    plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,
+    plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,  # noqa
                                                          'last_update': datetime.now()})
     plant_clone.set_last_update()
     cloned.append(plant_clone)
 
     for tag in plant_original.tags:
-        tag_clone = _clone_instance(tag, {'last_update': datetime.now()})
+        tag_clone = _clone_instance(tag, {'last_update': datetime.now()})  # noqa
         tag_clone.plant = plant_clone
         cloned.append(tag_clone)
 
     for event in plant_original.events:
-        event_clone = _clone_instance(event)
+        event_clone = _clone_instance(event)  # noqa
         event_clone.plant = plant_clone
         cloned.append(event_clone)
 
@@ -109,7 +108,7 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
             image.events.append(event_clone)
 
     for property_value in plant_original.property_values_plant:
-        property_value_clone = _clone_instance(property_value)
+        property_value_clone = _clone_instance(property_value)  # noqa
         property_value_clone.plant = plant_clone
         cloned.append(property_value_clone)
 

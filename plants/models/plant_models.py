@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import PurePath
 from typing import Optional, List
 from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
 from sqlalchemy.orm import relationship, Session
@@ -11,7 +12,6 @@ from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
-from plants.util.filename_utils import add_slash
 from plants.util.ui_utils import throw_exception
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory, NULL_DATE
 from plants.models.taxon_models import Taxon
@@ -36,7 +36,7 @@ class Plant(Base, OrmUtil):
 
     count = Column(INTEGER)
     active = Column(BOOLEAN)
-    cancellation_reason = Column(CHAR(60))  # only set if active == False  # todo finish implementation
+    cancellation_reason = Column(CHAR(60))  # only set if active == False
     cancellation_date = Column(DATETIME)
 
     generation_notes = Column(CHAR(120))
@@ -100,7 +100,7 @@ class Plant(Base, OrmUtil):
 
         # add path to preview image
         if self.filename_previewimage:  # supply relative path of original image
-            rel_path_gen = generate_previewimage_get_rel_path(self.filename_previewimage)
+            rel_path_gen = generate_previewimage_get_rel_path(PurePath(self.filename_previewimage))
             # there is a huge problem with the slashes
             as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
         else:
@@ -144,19 +144,20 @@ class Plant(Base, OrmUtil):
         else:
             self.parent_plant_pollen_id = None
 
-    def set_filename_previewimage(self, filename_previewimage=None, plant: Optional[PPlant] = None):
-        filename_tmp = plant.filename_previewimage if plant else filename_previewimage
-        if not filename_tmp:
+    def set_filename_previewimage(self, plant: Optional[PPlant] = None):
+        """we actually set the path to preview image (the original image, not the thumbnail) excluding
+        the photos-subdir part of the uri
+        """
+        if not plant.filename_previewimage:
             self.filename_previewimage = None
             return
 
-        # we need to remove the localService prefix
-        # todo really?!?
-        subdirectory_photos_search = add_slash(config.subdirectory_photos)
-        if (filename_tmp := filename_tmp.replace('\\\\', '\\')).startswith(subdirectory_photos_search):
-            self.filename_previewimage = filename_tmp[len(subdirectory_photos_search):]
+        # the photos-subdir may be part of the supplied path
+        # but need not (depending on whether already saved)
+        if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
+            self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
         else:
-            self.filename_previewimage = filename_tmp
+            plant.filename_previewimage.as_posix()
 
     def set_taxon(self, db: Session, taxon_id: Optional[int]):
         if taxon_id:

@@ -54,7 +54,6 @@ class TraitCategory(Base, OrmUtil):
 
     traits = relationship("Trait",
                           back_populates="trait_category")
-    # property_names = relationship("PropertyName", back_populates="property_category")   # todo del if removing prop
 
     # static query methods
     @staticmethod
