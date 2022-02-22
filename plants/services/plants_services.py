@@ -124,7 +124,7 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
             if not tag.id:
                 # new tag
                 tag_object: Tag = Tag(text=tag.text,
-                                      icon=tag.icon,
+                                      # icon=tag.icon,
                                       state=tag.state,
                                       plant=plant_obj,
                                       # last_update=datetime.datetime.now()

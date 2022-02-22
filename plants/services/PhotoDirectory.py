@@ -1,16 +1,21 @@
 import logging
 import datetime
 import threading
-from pathlib import Path
-from typing import Optional, Dict, List
+from pathlib import Path, PurePath
+from typing import Optional, Dict, List, NamedTuple
 
 from plants import config
-from plants.models.entities import ImageInfo
 from plants.services.Photo import Photo
 from plants.util.filename_utils import find_jpg_files
 
 logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
+
+
+class ImageInfo(NamedTuple):
+    date: datetime.date
+    path: PurePath
+    path_thumb: PurePath
 
 
 class PhotoDirectory:

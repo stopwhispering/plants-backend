@@ -3,6 +3,7 @@ from typing import Optional, List, Union
 from datetime import datetime, date
 from pydantic.main import BaseModel
 
+from plants.models.enums import PropagationType, CancellationReason, TagState
 from plants.validation.message_validation import PMessage
 
 
@@ -33,15 +34,14 @@ class PPlantCurrentSoil(BaseModel):
 
 class PPlantTag(BaseModel):
     id: Optional[int]  # empty if new
-    plant_name: Optional[str]  # supplied if new
     text: str
-    icon: str  # todo redundant?
-    state: str  # todo enum?
+    state: TagState
     last_update: Optional[datetime]  # empty if new
-    plant_id: Optional[int]  # not always supplied -> todo redundant?
+    plant_id: int
 
     class Config:
         extra = 'forbid'
+        use_enum_values = True
 
 
 class PPlant(BaseModel):
@@ -50,10 +50,9 @@ class PPlant(BaseModel):
     field_number: Optional[str]
     geographic_origin: Optional[str]
     nursery_source: Optional[str]
-    propagation_type: Optional[str]  # todo enum?
-    count: Optional[str]  # e.g. "3+"  # todo remove
-    active: Optional[bool]  # todo: enforce True/Force
-    cancellation_reason: Optional[str]  # only set if active == False  # todo enum
+    propagation_type: Optional[PropagationType]
+    active: bool
+    cancellation_reason: Optional[CancellationReason]  # only set if active == False
     cancellation_date: Optional[Union[datetime, str]]  # only set if active == False
     generation_notes: Optional[str]  # obsolete?
     parent_plant_id: Optional[int]
@@ -76,13 +75,7 @@ class PPlant(BaseModel):
 
     class Config:
         extra = 'forbid'
-
-
-# class PResponsePlant(BaseModel):
-#     action: str
-#     resource: str
-#     message: PMessage
-#     plant: PPlant
+        use_enum_values = True  # populate model with enum values, rather than the raw enum
 
 
 class PResultsPlants(BaseModel):
@@ -113,7 +106,7 @@ class PResultsPlantsUpdate(BaseModel):
 
 
 class PPlantsDeleteRequest(BaseModel):
-    plant: str  # todo switch to plant_id
+    plant_id: int
 
     class Config:
         extra = 'forbid'

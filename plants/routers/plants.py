@@ -138,19 +138,18 @@ def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Dep
 
     args = data
 
-    # todo switch to id
-    record_update: Plant = db.query(Plant).filter_by(plant_name=args.plant).first()
+    record_update: Plant = db.query(Plant).filter_by(id=args.plant_id).first()
     if not record_update:
-        logger.error(f'Plant to be deleted not found in database: {args.plant}.')
-        throw_exception(f'Plant to be deleted not found in database: {args.plant}.', request=request)
+        logger.error(f'Plant to be deleted not found in database: {args.plant_id}.')
+        throw_exception(f'Plant to be deleted not found in database: {args.plant_id}.', request=request)
     record_update.hide = True
     db.commit()
 
-    logger.info(message := f'Deleted plant {args.plant}')
+    logger.info(message := f'Deleted plant {record_update.plant_name}')
     results = {'action':   'Deleted plant',
                'resource': 'PlantResource',
                'message':  get_message(message,
-                                       description=f'Plant name: {args.plant}\nHide: True')
+                                       description=f'Plant name: {record_update.plant_name}\nHide: True')
                }
 
     return results

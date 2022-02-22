@@ -3,6 +3,7 @@ from typing import Optional, List
 
 from pydantic.main import BaseModel
 
+from plants.models.enums import ShapeTop, ShapeSide
 from plants.validation.message_validation import PMessage
 
 
@@ -20,19 +21,19 @@ class PObservation(BaseModel):
 class PPot(BaseModel):
     id: Optional[int]  # missing if new
     material: str
-    shape_top: str
-    shape_side: Optional[str]  # todo enforce by enum (
-    # https://pydantic-docs.helpmanual.io/usage/types/#enums-and-choices)
+    shape_top: ShapeTop
+    shape_side: ShapeSide
     diameter_width: float
 
     class Config:
         extra = 'forbid'
+        use_enum_values = True
 
 
 class PSoil(BaseModel):
     id: Optional[int]
     soil_name: str
-    mix: Optional[str]
+    mix: str
     description: Optional[str]
     plants_count: Optional[int]
 
@@ -86,7 +87,6 @@ class PEventNew(BaseModel):
 class PEvent(BaseModel):
     id: int
     date: str
-    # icon':            None,
     event_notes: Optional[str]
     observation_id: Optional[int]
     observation: Optional[PObservation]

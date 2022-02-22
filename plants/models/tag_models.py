@@ -12,7 +12,7 @@ class Tag(Base, OrmUtil):
     __tablename__ = 'tags'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
     text = Column(CHAR(20))
-    icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    # icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
     state = Column(CHAR(11))  # Error, Information, None, Success, Warning
     last_update = Column(TIMESTAMP)
     # tag to plant: n:1

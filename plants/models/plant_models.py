@@ -34,7 +34,7 @@ class Plant(Base, OrmUtil):
     nursery_source = Column(CHAR(100))
     propagation_type = Column(CHAR(30))
 
-    count = Column(INTEGER)
+    # count = Column(INTEGER)
     active = Column(BOOLEAN)
     cancellation_reason = Column(CHAR(60))  # only set if active == False
     cancellation_date = Column(DATETIME)
