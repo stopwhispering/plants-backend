@@ -20,7 +20,7 @@ log_severity_file = "INFO"
 log_ignore_missing_image_files = true  # ignore missing image files after db transfer prod to dev without images
 max_images_per_taxon = 10  # max. number of images scraped from biodiv. db occurrences for each taxon
 allow_cors = true  # allow cors on development system if no reverse proxy available
-n_plants = 50  # return only n plants, no matter how many plants the database has
+n_plants = 0  # return only n plants, no matter how many plants the database has
 path_photos = "C:\\Workspaces\\VS Code Projects\\plants_frontend\\webapp\\localService"
 path_deleted_photos = "C:\\common\\plants\\photos\\deleted"
 

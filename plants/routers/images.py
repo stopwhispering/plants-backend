@@ -89,38 +89,20 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     return results
 
 
-@router.get("/images/", response_model=PResultsImageResource)
-async def get_images(untagged: bool = False, db: Session = Depends(get_db)):
+@router.get("/images/untagged/", response_model=PResultsImageResource)
+async def get_untagged_images(db: Session = Depends(get_db)):
     """
-    get image information for all plants from images and their exif tags including plants and keywords
-    optionally, request only images that have no plants tagged, yet
+    get information on untagged images including plants and keywords
     """
-    # instantiate photo directory if required, get photos in external format from files exif data
-    # with lock_photo_directory:
-    #     photo_files_all = get_photo_directory().get_photo_files_ext()
     with lock_photo_directory:
-        if untagged:
-            photo_files_all = get_photo_directory().get_photo_files_untagged()
-        else:
-            photo_files_all = get_photo_directory().get_photo_files()
+        photo_files_all = get_photo_directory().get_photo_files_untagged()
 
     photo_files_ext = _get_pimages_from_photos(photo_files_all, db=db)
-
-    # filter out images whose only plants are configured to be inactive
-    inactive_plants = set(p.plant_name for p in db.query(Plant.plant_name).filter_by(hide=True))
-    photo_files_ext = [f for f in photo_files_ext if len(f.plants) != 1 or f.plants[0].key not in
-                       inactive_plants]
-    logger.debug(f'Filter out {len(photo_files_all) - len(photo_files_ext)} images due to Hide flag of the only tagged '
-                 f'plant.')
-
-    # make serializable
-    # make_list_items_json_serializable(photo_files_ext)
     logger.info(f'Returned {len(photo_files_ext)} images.')
     results = {'ImagesCollection': photo_files_ext,
                'message':          get_message('Loaded images from backend.',
                                                description=f'Count: {len(photo_files_ext)}')
                }
-
     return results
 
 

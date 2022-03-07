@@ -34,7 +34,6 @@ class Plant(Base, OrmUtil):
     nursery_source = Column(CHAR(100))
     propagation_type = Column(CHAR(30))
 
-    # count = Column(INTEGER)
     active = Column(BOOLEAN)
     cancellation_reason = Column(CHAR(60))  # only set if active == False
     cancellation_date = Column(DATETIME)
@@ -58,7 +57,6 @@ class Plant(Base, OrmUtil):
     descendant_plants_pollen = relationship("Plant",
                                             primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
                                             back_populates="parent_plant_pollen")
-    # parent_plant_pollen_name = relationship("Plant", remote_side="Plant.id")
 
     # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
