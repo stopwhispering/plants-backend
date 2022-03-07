@@ -22,7 +22,7 @@ class PPot(BaseModel):
     id: Optional[int]  # missing if new
     material: str
     shape_top: ShapeTop
-    shape_side: Optional[ShapeSide]  # todo make mandatory after fixing events data
+    shape_side: ShapeSide
     diameter_width: float
 
     class Config:
