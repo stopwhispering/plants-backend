@@ -152,6 +152,10 @@ class Plant(Base, OrmUtil):
 
         # the photos-subdir may be part of the supplied path
         # but need not (depending on whether already saved)
+        # todo: there seems to be a bug when plant.filename_previewimage.is_relative_to
+        # todo: raises AttributeError: 'PosixPath' object has no attribute 'is_relative_to'
+        logger.warning(f'plant.filename_previewimage: {plant.filename_previewimage}')
+        logger.warning(f'type: {type(plant.filename_previewimage)}')
         if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
             self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
         else:

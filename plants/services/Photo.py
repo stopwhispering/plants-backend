@@ -44,6 +44,9 @@ class Photo:
             self.tag_authors_plants = []
             self.record_date_time = None
             return
+        except ValueError:
+            # todo not a true jpeg or similar
+            a = 1
 
         auto_rotate_jpeg(self.path_full_local, exif_dict)
 
