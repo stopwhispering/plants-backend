@@ -10,6 +10,7 @@ from plants.validation.message_validation import PMessage
 class PPlantShort(BaseModel):
     plant_name: str
     id: int
+    active: bool
 
     class Config:
         extra = 'forbid'
