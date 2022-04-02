@@ -7,7 +7,7 @@ from plants.models.enums import PropagationType, CancellationReason, TagState
 from plants.validation.message_validation import PMessage
 
 
-class PDescdendantPlant(BaseModel):
+class PPlantShort(BaseModel):
     plant_name: str
     id: int
 
@@ -64,7 +64,9 @@ class PPlant(BaseModel):
     taxon_id: Optional[int]
     parent_plant: Optional[str]
     parent_plant_pollen: Optional[str]
-    descendant_plants: Optional[List[PDescdendantPlant]]  # empty if new
+    descendant_plants: List[PPlantShort] = []
+    sibling_plants: List[PPlantShort] = []
+    same_taxon_plants: List[PPlantShort] = []
     url_preview: Optional[str]
     current_soil: Optional[PPlantCurrentSoil]
     latest_image_record_date: Optional[date]

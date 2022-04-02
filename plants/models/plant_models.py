@@ -58,6 +58,15 @@ class Plant(Base, OrmUtil):
                                             primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
                                             back_populates="parent_plant_pollen")
 
+    # sibling_plants_temp = relationship("Plant",
+    #                                    primaryjoin='Plant.parent_plant_id==Plant.parent_plant_id',
+    #                                    remote_side=[parent_plant_id],
+    #                                    back_populates="sibling_plants")
+    #
+    # sibling_plants = relationship("Plant",
+    #                               primaryjoin="Plant.parent_plant_id==Plant.parent_plant_id",
+    #                               back_populates="sibling_plants_temp")
+
     # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(CHAR(240))  # original filename of the image that is set as preview image
@@ -78,7 +87,8 @@ class Plant(Base, OrmUtil):
     property_values_plant: List[PropertyValue] = relationship("PropertyValue", back_populates="plant")
 
     def as_dict(self):
-        """add some additional fields to mixin's as_dict, especially from relationships"""
+        """add some additional fields to mixin's as_dict, especially from relationships
+        merge descendant_plants_pollen into descendant_plants"""
         as_dict = super(Plant, self).as_dict()
         as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
         as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
@@ -87,10 +97,32 @@ class Plant(Base, OrmUtil):
                 'id': p.id
                   } for p in (self.descendant_plants + self.descendant_plants_pollen)]
 
-        # add botanical name and author
+        if self.parent_plant:
+            siblings = set(self.parent_plant.descendant_plants)
+            siblings.remove(self)
+            if self.parent_plant_pollen:
+                siblings_pollen = set(self.parent_plant_pollen.descendant_plants_pollen)
+                siblings_pollen.remove(self)
+                siblings = siblings.intersection(siblings_pollen)
+            else:
+                siblings = [p for p in siblings if not p.parent_plant_pollen]
+            as_dict['sibling_plants'] = [{
+                'plant_name': p.plant_name,
+                'id':         p.id
+                } for p in siblings]
+
+        # add botanical name, author, and plants of same taxon
         if self.taxon:
             as_dict['botanical_name'] = self.taxon.name
             as_dict['taxon_authors'] = self.taxon.authors
+
+            if 'hybr' not in self.taxon.name:
+                same_taxon_plants = self.taxon.plants.copy()
+                same_taxon_plants.remove(self)
+                as_dict['same_taxon_plants'] = [{
+                    'plant_name': p.plant_name,
+                    'id':         p.id
+                    } for p in same_taxon_plants]
 
         # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
         if self.propagation_type is None:
