@@ -12,9 +12,9 @@ from plants.validation.trait_validation import PTraitCategoryWithTraits
 
 
 class PTaxonInfoRequest(BaseModel):
-    species: str
     includeKew: bool
     searchForGenus: bool
+    species: str  # search string
 
     class Config:
         extra = 'forbid'
@@ -33,11 +33,10 @@ class PResultsTaxonInfoRequest(BaseModel):
 class PAssignTaxonRequest(BaseModel):
     fqId: Optional[str]
     hasCustomName: bool
-    nameInclAddition: str
-    source: str
     id: Optional[int]  # taxon id
-    # plant: str
+    nameInclAddition: str
     plant_id: int
+    source: str  # "Local DB" or ...
 
     class Config:
         extra = 'forbid'
