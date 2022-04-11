@@ -36,14 +36,14 @@ router = APIRouter(
 @router.get("/plants/{plant_id}/images/", response_model=List[PImage])
 async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     """
-    get image information for requested plant_id from images and their exif tags including plants and keywords
+    get photo information for requested plant_id including (other) plants and keywords
     """
-    # instantiate photo directory if required, get photos in external format from files exif data
+    # instantiate photo directory if required
     plant_name = Plant.get_plant_name_by_plant_id(plant_id, db=db, raise_exception=True)
     with lock_photo_directory:
         photo_files = get_photo_directory().get_photo_files(plant_name=plant_name)
 
-    # if a plant_name is tagged for an image file but is not in the plants database, we set plant_id to None
+    # if a plant_name is tagged for an photo file but is not in the plants database, we set plant_id to None
     photo_files_ext = _get_pimages_from_photos(photo_files, db=db)
 
     # make_list_items_json_serializable(photo_files_ext)
@@ -108,19 +108,19 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 
 @router.put("/images/", response_model=PConfirmation)
 async def update_images(request: Request, modified_ext: PImageUpdated):
-    """modify existing image's exif tags"""
+    """modify existing photo's metadata"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images.")
     with lock_photo_directory:
         directory = get_photo_directory()
         for image_ext in modified_ext.ImagesCollection:
-            if not (photo := directory.get_photo(image_ext.path_full_local)):
-                throw_exception(f"Can't find image file: {image_ext.path_full_local}", request=request)
+            if not (photo := directory.get_photo(image_ext.absolute_path)):
+                throw_exception(f"Can't find photo file: {image_ext.absolute_path}", request=request)
 
-            logger.info(f'Updating changed image in PhotoDirectory Cache: {photo.path_full_local}')
-            photo.tag_keywords = [k.keyword for k in image_ext.keywords]
-            photo.tag_authors_plants = [p.key for p in image_ext.plants]
-            photo.tag_description = image_ext.description
-            photo.write_exif_tags()
+            logger.info(f'Updating changed photo in PhotoDirectory Cache: {photo.absolute_path}')
+            photo.keywords = [k.keyword for k in image_ext.keywords]
+            photo.plants = [p.key for p in image_ext.plants]
+            photo.description = image_ext.description
+            photo.save_metadata()
 
     results = {'action':   'Saved',
                'resource': 'ImageResource',
@@ -132,7 +132,7 @@ async def update_images(request: Request, modified_ext: PImageUpdated):
 
 @router.post("/images/", response_model=PResultsImagesUploaded)
 async def upload_images(request: Request, db: Session = Depends(get_db)):
-    """upload new image(s)
+    """upload new photo(s)
     todo: switch key in supplied plants list to id"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
@@ -184,7 +184,7 @@ async def delete_image(request: Request, image_container: PImagesDelete):
     # todo maybe replace loop
     for photo in image_container.images:
 
-        old_path = photo.path_full_local
+        old_path = photo.absolute_path
         if not old_path.is_file():
             logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
             throw_exception(err_msg, request=request)
@@ -203,10 +203,10 @@ async def delete_image(request: Request, image_container: PImagesDelete):
         with lock_photo_directory:
             photo_directory = get_photo_directory(instantiate=False)
             if photo_directory:
-                photo_obj = photo_directory.get_photo(photo.path_full_local)
+                photo_obj = photo_directory.get_photo(photo.absolute_path)
                 photo_directory.remove_image_from_directory(photo_obj)
 
-    deleted = [image.path_full_local.name for image in image_container.images]
+    deleted = [image.absolute_path.name for image in image_container.images]
     results = {'action':   'Deleted',
                'resource': 'ImageResource',
                'message':  get_message(f'Successfully deleted images',
@@ -249,19 +249,19 @@ async def _save_image_files(files: List[UploadFile],
 
         # add to photo directory (cache) and add keywords and plant tags
         # (all the same for each uploaded photo)
-        photo = Photo(path_full_local=path,
+        photo = Photo(absolute_path=path,
                       filename=path.name)
-        photo.tag_authors_plants = [p['key'] for p in plants]
-        photo.tag_keywords = [k['keyword'] for k in keywords]
+        photo.plants = [p['key'] for p in plants]
+        photo.keywords = [k['keyword'] for k in keywords]
         with lock_photo_directory:
             if p := get_photo_directory(instantiate=False):
                 if p in p.photos:
-                    throw_exception(f"Already found in PhotoDirectory cache: {photo.path_full_local}", request=request)
+                    throw_exception(f"Already found in PhotoDirectory cache: {photo.absolute_path}", request=request)
                 p.photos.append(photo)
 
-        # generate thumbnail image for frontend display and update file's exif tags
+        # generate thumbnail photo for frontend display and update file's metadata
         photo.generate_thumbnails()
-        photo.write_exif_tags()
+        photo.save_metadata()
         photos.append(photo)
 
     return photos
@@ -270,19 +270,19 @@ async def _save_image_files(files: List[UploadFile],
 def _get_pimages_from_photos(photo_files: List[Photo], db: Session):
     """converts from internal Photo object to pydantic api structure"""
     photo_files_ext = [PImage(
-            path_thumb=photo.path_thumb,
-            path_original=photo.path_original,
-            # keywords=[KeywordImageTagExt(keyword=k) for k in photo.tag_keywords],
-            keywords=[PKeyword(keyword=k) for k in photo.tag_keywords],
+            path_thumb=photo.relative_path_thumb,
+            path_original=photo.relative_path,
+            # keywords=[KeywordImageTagExt(keyword=k) for k in photo.keywords],
+            keywords=[PKeyword(keyword=k) for k in photo.keywords],
             # plants=[PlantImageTagExt(
             plants=[PPlantTag(
                     plant_id=Plant.get_plant_id_by_plant_name(p, db=db, raise_exception=False),
                     key=p,
                     text=p,
-                    ) for p in photo.tag_authors_plants],
-            description='' if photo.tag_description.strip() == 'SONY DSC' else photo.tag_description,
+                    ) for p in photo.plants],
+            description='' if photo.description.strip() == 'SONY DSC' else photo.description,
             filename=photo.filename or '',
-            path_full_local=photo.path_full_local,
+            path_full_local=photo.absolute_path,
             record_date_time=photo.record_date_time,
             ) for photo in photo_files]
     return photo_files_ext

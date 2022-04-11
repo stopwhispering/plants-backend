@@ -80,7 +80,7 @@ def clone_plant(
         db: Session = Depends(get_db),
         ):
     """
-    clone plant with supplied plant_id; include duplication of events, image assignments, and
+    clone plant with supplied plant_id; include duplication of events, photo assignments, and
     properties
     """
     plant_original = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
@@ -171,11 +171,10 @@ def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Dep
     plant_obj.plant_name = args.NewPlantName
     plant_obj.last_update = datetime.datetime.now()
 
-    # most difficult task: exif tags use plant name not id; we need to change each plant name occurence
-    # in images' exif tags
+    # most difficult task: photo tags use plant name not id; we need to change each plant name occurence
     count_modified_images = rename_plant_in_image_files(args.OldPlantName, args.NewPlantName)
 
-    # only after image modifications have gone well, we can commit changes to database
+    # only after photo modifications have gone well, we can commit changes to database
     db.commit()
 
     create_history_entry(description=f"Renamed to {args.NewPlantName}",

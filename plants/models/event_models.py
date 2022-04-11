@@ -84,7 +84,7 @@ class Event(Base, OrmUtil):
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
 
-    # 1:n relationship to the image/event link table
+    # 1:n relationship to the photo/event link table
     images = relationship(
             "Image",
             secondary='image_to_event_association',
@@ -120,8 +120,8 @@ class Event(Base, OrmUtil):
                 path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
                                                                            size=config.size_thumbnail_image)
                 as_dict['images'].append({'id':            image_obj.id,
-                                          'path_thumb':    path_small,
-                                          'path_original': image_obj.relative_path})
+                                          'relative_path_thumb':    path_small,
+                                          'relative_path': image_obj.relative_path})
 
         return as_dict
 

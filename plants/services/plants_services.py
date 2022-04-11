@@ -82,7 +82,7 @@ def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
 def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     """
     clone supplied plant
-    includes duplication of events, image-to-event assignments, properties, tags
+    includes duplication of events, photo-to-event assignments, properties, tags
     excludes descendant plants
     assignments to same instances of parent plants, parent plants pollen (nothing to do here)
     """
@@ -103,7 +103,7 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
         event_clone.plant = plant_clone
         cloned.append(event_clone)
 
-        # image-to-event associations via image instances (no need to update these explicitly)
+        # photo-to-event associations via photo instances (no need to update these explicitly)
         for image in event.images:
             image.events.append(event_clone)
 

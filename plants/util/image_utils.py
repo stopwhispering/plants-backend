@@ -16,17 +16,17 @@ def generate_thumbnail(image: Union[Path, BytesIO],
                        size: Sequence = (100, 100),
                        filename_thumb: Union[PurePath, str] = None) -> Optional[Path]:
     """
-    generates a resized variant of an image; returns the full local path
-    supply original image either as filename or i/o stream
+    generates a resized variant of an photo; returns the full local path
+    supply original photo either as filename or i/o stream
     if Image is supplied as BytesIO, a filename_thumb <<must>> be supplied
     """
     if not config.log_ignore_missing_image_files:
-        logger.debug(f'Generating resized image of {image} in size {size}.')
+        logger.debug(f'Generating resized photo of {image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
 
     if isinstance(image, Path) and not image.is_file():
         if not config.log_ignore_missing_image_files:
-            logger.error(f"Original Image of default image does not exist. Can't generate thumbnail. {image}")
+            logger.error(f"Original Image of default photo does not exist. Can't generate thumbnail. {image}")
         return
     im = Image.open(image)
 
@@ -52,12 +52,12 @@ def generate_thumbnail(image: Union[Path, BytesIO],
 
 def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
     """
-    rotate image if exif file has a rotate directive
+    rotate photo if exif file has a rotate directive
     (solves chrome bug not respecting orientation exif tag)
     no exif tag manipulation required as this is not saved
     to thumbnails anyway
     """
-    if exif_obj:  # the image might have no exif-tags
+    if exif_obj:  # the photo might have no exif-tags
         # noinspection PyProtectedMember
         exif = dict(exif_obj.items())
         if piexif.ImageIFD.Orientation in exif:

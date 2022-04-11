@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional, List
 
+from pydantic import Field
 from pydantic.main import BaseModel
 
 from plants.models.enums import ShapeTop, ShapeSide
@@ -43,16 +44,20 @@ class PSoil(BaseModel):
 
 class PImage(BaseModel):
     id: Optional[int]  # empty if new
-    path_thumb: Path
-    path_original: Path
+    # path_thumb: Path
+    relative_path_thumb: Path = Field(alias='path_thumb')
+    # path_original: Path
+    relative_path: Path = Field(alias='path_original')
 
     class Config:
         extra = 'forbid'
+        allow_population_by_field_name = True
 
 
 class PImageDelete(BaseModel):
     # id: Optional[int]  # empty if new
-    path_full_local: Path
+    # path_full_local: Path
+    absolute_path: Path = Field(alias='path_full_local')
 
     class Config:
         extra = 'allow'

@@ -8,7 +8,6 @@ from typing import Set
 from plants import config
 from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
 from plants.services.Photo import Photo
-from plants.services.exif_services import rename_plant_in_exif_tags
 from plants.util.filename_utils import get_generated_filename, with_suffix
 from plants.util.image_utils import generate_thumbnail
 
@@ -17,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Path:
     """
-    generates a preview image for a plant's default image if not exists, yet
+    generates a preview photo for a plant's default photo if not exists, yet
     returns the relative path to it
     """
-    # get filename of preview image and check if that file already exists
+    # get filename of preview photo and check if that file already exists
     filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
                                                 size=config.size_preview_image)
 
@@ -29,7 +28,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Pat
 
     if not path_generated.is_file():
         if not config.log_ignore_missing_image_files:
-            logger.info('Preview Image: Generating the not-yet-existing preview image.')
+            logger.info('Preview Image: Generating the not-yet-existing preview photo.')
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
                            path_thumbnail=config.path_generated_thumbnails)
@@ -39,7 +38,7 @@ def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Pat
 
 def get_thumbnail_relative_path_for_relative_path(path_relative: PurePath, size: tuple) -> Path:
     """
-    returns relative path of the corresponding thumbnail for an image file's relative path
+    returns relative path of the corresponding thumbnail for an photo file's relative path
     """
     filename_thumbnail = get_generated_filename(path_relative.name, size)
     return config.rel_path_photos_generated.joinpath(filename_thumbnail)
@@ -57,13 +56,13 @@ def get_distinct_keywords_from_image_files() -> Set[str]:
         photo_directory = get_photo_directory()
 
         # get flattening generator and create set of distinct keywords
-        keywords_nested_gen = (photo.tag_keywords for photo in photo_directory.photos if photo.tag_keywords)
+        keywords_nested_gen = (photo.keywords for photo in photo_directory.photos if photo.keywords)
         return set(chain.from_iterable(keywords_nested_gen))
 
 
 def resizing_required(path: str, size: Tuple[int, int]) -> bool:
     """
-    checks size of image at supplied path and compares to supplied maximum size
+    checks size of photo at supplied path and compares to supplied maximum size
     """
     with Image.open(path) as image:  # only works with path, not file object
         x, y = image.size
@@ -79,7 +78,7 @@ def resizing_required(path: str, size: Tuple[int, int]) -> bool:
 
 def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality: int) -> None:
     """
-    load image at supplied path, save resized image to other path; observes size and quality params;
+    load photo at supplied path, save resized photo to other path; observes size and quality params;
     original file is finally <<deleted>>
     """
     with Image.open(path.as_posix()) as image:
@@ -101,29 +100,30 @@ def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality:
 
 def _get_images_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
     """
-    returns generator of image entries from photo directory tagging supplied plant name
+    returns generator of photo entries from photo directory tagging supplied plant name
     """
     with lock_photo_directory:
         photo_directory = get_photo_directory()
-        return (p for p in photo_directory.photos if plant_name in p.tag_authors_plants)
-    # isinstance(p.tag_authors_plants, list) and plant_name in p.tag_authors_plants]
+        return (p for p in photo_directory.photos if plant_name in p.plants)
+    # isinstance(p.plants, list) and plant_name in p.plants]
 
 
 def rename_plant_in_image_files(plant_name_old: str, plant_name_new: str) -> int:
     """
-    in each image file that has the old plant name tagged in exif, switch tag to the new plant name
+    in each photo file that has the old plant name tagged, fit tag to the new plant name
     """
     # get the relevant images from the photo directory cache
     images = _get_images_by_plant_name(plant_name_old)
     count_modified = 0
     if not images:
-        logger.info(f'No image tag to change for {plant_name_old}.')
+        logger.info(f'No photo tag to change for {plant_name_old}.')
 
-    for image in images:
+    photo: Photo
+    for photo in images:
         # double check
-        if plant_name_old in image.tag_authors_plants:
-            logger.info(f"Switching plant tag in image file {image.path_full_local}")
-            rename_plant_in_exif_tags(image, plant_name_old, plant_name_new)
+        if plant_name_old in photo.plants:
+            logger.info(f"Switching plant tag in photo file {photo.absolute_path}")
+            photo.rename_tagged_plant(plant_name_old=plant_name_old, plant_name_new=plant_name_new)
             count_modified += 1
 
     # note: there's no need to upload the cache as we did modify directly in the cache above

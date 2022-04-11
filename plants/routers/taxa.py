@@ -64,8 +64,8 @@ async def get_taxa(
                 path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
                                                                            size=config.size_thumbnail_image)
                 taxon_dict[taxon.id]['images'].append({'id':            image_obj.id,
-                                                       'path_thumb':    path_small,
-                                                       'path_original': image_obj.relative_path,
+                                                       'relative_path_thumb':    path_small,
+                                                       'relative_path': image_obj.relative_path,
                                                        'description':   link_obj.description})
 
         # distribution codes according to WGSRPD (level 3)
@@ -113,7 +113,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
             taxon_modified.images else []
         for image_obj in taxon.images:
             if image_obj.relative_path not in path_originals_saved:
-                # don't delete image object, but only the association (image might be assigned to other events)
+                # don't delete photo object, but only the association (photo might be assigned to other events)
                 db.delete([link for link in taxon.image_to_taxon_associations if
                            link.image.relative_path == image_obj.relative_path][0])
 
@@ -128,7 +128,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
                     db.add(image_obj)
                     db.flush()  # required to obtain id
 
-                # update link table including the image description
+                # update link table including the photo description
                 current_taxon_to_image_link = [t for t in taxon.image_to_taxon_associations if t.image == image_obj]
 
                 # insert link

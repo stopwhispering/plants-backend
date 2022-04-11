@@ -56,12 +56,15 @@ class PDistribution(BaseModel):
 
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
-    path_thumb: Path
-    path_original: Path
+    # path_thumb: Path
+    relative_path_thumb: Path = Field(alias='path_thumb')
+    # path_original: Path
+    relative_path: Path = Field(alias='path_original')
     description: Optional[str]
 
     class Config:
         extra = 'forbid'
+        allow_population_by_field_name = True
 
 
 class PTaxonOccurrenceImage(BaseModel):

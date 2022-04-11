@@ -6,7 +6,7 @@ from plants.extensions.db import Base
 
 class Image(Base):
     """image paths"""
-    # images themselves are stored in file system and their information in exif tags
+    # images themselves are stored in file system
     # this table is only used to link events to images
     __tablename__ = 'image'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)

@@ -60,7 +60,7 @@ class Plant(Base, OrmUtil):
 
     # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
-    filename_previewimage = Column(CHAR(240))  # original filename of the image that is set as preview image
+    filename_previewimage = Column(CHAR(240))  # original filename of the photo that is set as preview photo
     hide = Column(BOOLEAN)
     last_update = Column(TIMESTAMP, nullable=False)
 
@@ -122,8 +122,8 @@ class Plant(Base, OrmUtil):
         if self.propagation_type is None:
             as_dict['propagation_type'] = ''
 
-        # add path to preview image
-        if self.filename_previewimage:  # supply relative path of original image
+        # add path to preview photo
+        if self.filename_previewimage:  # supply relative path of original photo
             rel_path_gen = generate_previewimage_get_rel_path(PurePath(self.filename_previewimage))
             # there is a huge problem with the slashes
             as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
@@ -148,7 +148,7 @@ class Plant(Base, OrmUtil):
 
             if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
                 as_dict['latest_image'] = {'path':       latest_image.path,
-                                           'path_thumb': latest_image.path_thumb,
+                                           'relative_path_thumb': latest_image.path_thumb,
                                            'date':       latest_image.date}
             else:
                 as_dict['latest_image_record_date'] = NULL_DATE
@@ -169,7 +169,7 @@ class Plant(Base, OrmUtil):
             self.parent_plant_pollen_id = None
 
     def set_filename_previewimage(self, plant: Optional[PPlant] = None):
-        """we actually set the path to preview image (the original image, not the thumbnail) excluding
+        """we actually set the path to preview photo (the original photo, not the thumbnail) excluding
         the photos-subdir part of the uri
         """
         if not plant.filename_previewimage:

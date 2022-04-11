@@ -228,7 +228,7 @@ async def modify_events(request: Request,
             path_originals_saved = [image.path_original for image in event.images] if event.images else []
             for image_obj in event_obj.images:
                 if image_obj.relative_path not in path_originals_saved:
-                    # don't delete image object, but only the association (image might be assigned to other events)
+                    # don't delete photo object, but only the association (photo might be assigned to other events)
                     db.delete([link for link in event_obj.image_to_event_associations if
                                link.image.relative_path == image_obj.relative_path][0])
 

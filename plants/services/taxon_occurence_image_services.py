@@ -168,7 +168,7 @@ class TaxonOccurencesLoader:
         occurrences = [o for o in occ_search['results'] if o.get('basisOfRecord') != 'PRESERVED_SPECIMEN'
                        and o.get('countryCode')]
 
-        # get image information & save thumbnail
+        # get photo information & save thumbnail
         image_dicts = self._treat_occurences(occurrences, gbif_id)
 
         # save information to database
