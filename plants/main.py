@@ -11,7 +11,9 @@ from plants.routers import (taxa, plants, images, events, property_names, proper
                             functions, selection_data, api_biodiversity)
 from plants.util.logger_utils import configure_root_logger
 
-configure_root_logger(config.log_severity_console, config.log_severity_file)
+configure_root_logger(log_severity_console=config.log_severity_console,
+                      log_severity_file=config.log_severity_file,
+                      log_file_path=config.log_file_path)
 logger = logging.getLogger(__name__)
 
 COMMON_PREFIX = '/plants_tagger/backend'

@@ -20,6 +20,7 @@ class Configuration:
 
     log_severity_console: str  # e.g. 'DEBUG', will be mapped to int
     log_severity_file: int
+    log_file_path: Path
     log_ignore_missing_image_files: bool
     allow_cors: bool
 
@@ -73,6 +74,7 @@ def parse_config() -> Configuration:
 
         log_severity_console=config_env['log_severity_console'].upper(),
         log_severity_file=config_env['log_severity_file'].upper(),
+        log_file_path=Path(config_env['log_file_path']),
         log_ignore_missing_image_files=config_env['log_ignore_missing_image_files'],
         allow_cors=config_env['allow_cors'],
         max_images_per_taxon=config_env['max_images_per_taxon'],

@@ -1,8 +1,10 @@
 import logging
+from pathlib import Path
 
 
 def configure_root_logger(log_severity_console,
                           log_severity_file,
+                          log_file_path: Path = Path('./plants.log'),
                           log_filter: logging.Filter = None):
     """configure the root logger; each module's default (__name__) logger will inherit these settings"""
     logger = logging.getLogger()  # no name returns the root logger
@@ -10,7 +12,7 @@ def configure_root_logger(log_severity_console,
     # logging.basicConfig(level=logging.DEBUG)
 
     # create file handler
-    file_handler = logging.FileHandler('plants.log')
+    file_handler = logging.FileHandler(log_file_path)
     # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     formatter = logging.Formatter('%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
