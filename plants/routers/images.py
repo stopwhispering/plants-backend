@@ -57,7 +57,6 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     # remove duplicates (filename already exists in file system)
     duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
 
-    # todo get rid of that key/text thing
     images: List[Image] = await save_image_files(files=files,
                                                  db=db,
                                                  plant_ids=(plant_id,),
@@ -87,8 +86,8 @@ async def get_untagged_images(db: Session = Depends(get_db)):
     untagged_images = db.query(Image).filter(~Image.plants.any()).all()
     images_ext = [_to_response_image(image) for image in untagged_images]
 
-    # todooooo remove
-    images_ext = [i for i in images_ext if i.record_date_time]
+    # # todooooo remove
+    # images_ext = [i for i in images_ext if i.record_date_time]
 
     logger.info(f'Returned {len(images_ext)} images.')
     results = {'ImagesCollection': images_ext,
