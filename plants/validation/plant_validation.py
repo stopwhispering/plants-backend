@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional, List, Union
 from datetime import datetime, date
+
+from pydantic import Field
 from pydantic.main import BaseModel
 
 from plants.models.enums import PropagationType, CancellationReason, TagState
@@ -18,11 +20,12 @@ class PPlantShort(BaseModel):
 
 class PPlantLatestImage(BaseModel):
     path: Path
-    path_thumb: Path
+    relative_path_thumb: Path = Field(alias='path_thumb')
     date: datetime
 
     class Config:
         extra = 'forbid'
+        allow_population_by_field_name = True
 
 
 class PPlantCurrentSoil(BaseModel):
@@ -70,7 +73,7 @@ class PPlant(BaseModel):
     same_taxon_plants: List[PPlantShort] = []
     url_preview: Optional[str]
     current_soil: Optional[PPlantCurrentSoil]
-    latest_image_record_date: Optional[date]
+    latest_image_record_date: Optional[date]  # actually used?
     latest_image: Optional[PPlantLatestImage]
     botanical_name: Optional[str]
     taxon_authors: Optional[str]

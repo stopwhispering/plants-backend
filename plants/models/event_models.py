@@ -10,7 +10,7 @@ from plants.util.ui_utils import throw_exception
 from plants import config
 from plants.constants import TRAIT_CATEGORIES
 from plants.models.trait_models import TraitCategory
-from plants.services.image_services import get_thumbnail_relative_path_for_relative_path
+from plants.util.path_utils import get_thumbnail_relative_path_for_relative_path
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 
@@ -84,7 +84,7 @@ class Event(Base, OrmUtil):
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
 
-    # 1:n relationship to the photo/event link table
+    # 1:n relationship to the photo_file/event link table
     images = relationship(
             "Image",
             secondary='image_to_event_association',

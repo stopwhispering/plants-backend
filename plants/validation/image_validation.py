@@ -25,15 +25,12 @@ class PPlantTag(BaseModel):
 
 
 class PImage(BaseModel):
-    # path_thumb: Path  # not a FilePath as full url is concatenated in frontend
     relative_path_thumb: Path = Field(alias='path_thumb')
-    # path_original: Path  # not a FilePath as full url is concatenated in frontend
     relative_path: Path = Field(alias='path_original')
     keywords: List[PKeyword]
     plants: List[PPlantTag]
-    description: str
+    description: str | None
     filename: Path
-    # path_full_local: Path  # not a FilePath as existence check would cause performance problems
     absolute_path: Path = Field(alias='path_full_local')
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
@@ -68,8 +65,8 @@ class PResultsImagesUploaded(BaseModel):
 
 
 class PImageUploadedMetadata(BaseModel):
-    plants: List[int]
-    keywords: List[str]
+    plants: list[int]
+    keywords: list[str]
 
     class Config:
         extra = 'forbid'
@@ -79,7 +76,7 @@ class PResultsImageDeleted(BaseModel):
     action: str
     resource: str
     message: PMessage
-    # photo:  PImage
+    # photo_file:  PImage
 
     class Config:
         extra = 'forbid'

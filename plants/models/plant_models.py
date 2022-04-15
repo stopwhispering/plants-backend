@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-from pathlib import PurePath
+# from pathlib import PurePath
 from typing import Optional, List
 from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
 from sqlalchemy.orm import relationship, Session
 import logging
 import datetime
-import json
 
 from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
 from plants.util.ui_utils import throw_exception
-from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory, NULL_DATE
 from plants.models.taxon_models import Taxon
-from plants.services.image_services import generate_previewimage_get_rel_path
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 from plants.validation.plant_validation import PPlant
@@ -40,6 +37,16 @@ class Plant(Base, OrmUtil):
 
     generation_notes = Column(CHAR(120))
 
+    images = relationship(
+            "Image",
+            secondary='image_to_plant_association',
+            overlaps="plants,image_to_plant_associations"  # silence warnings
+            )
+    image_to_plant_associations = relationship("ImageToPlantAssociation",
+                                               back_populates="plant",
+                                               overlaps="plants"  # silence warnings
+                                               )
+
     parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))
     parent_plant = relationship("Plant",
                                 primaryjoin='Plant.parent_plant_id==Plant.id',
@@ -60,7 +67,7 @@ class Plant(Base, OrmUtil):
 
     # generation_origin = Column(CHAR(60))
     plant_notes = Column(TEXT)
-    filename_previewimage = Column(CHAR(240))  # original filename of the photo that is set as preview photo
+    filename_previewimage = Column(CHAR(240))  # original filename of the photo_file that is set as preview photo_file
     hide = Column(BOOLEAN)
     last_update = Column(TIMESTAMP, nullable=False)
 
@@ -80,81 +87,82 @@ class Plant(Base, OrmUtil):
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships
         merge descendant_plants_pollen into descendant_plants"""
-        as_dict = super(Plant, self).as_dict()
-        as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
-        as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
-        as_dict['descendant_plants'] = [{
-                'plant_name': p.plant_name,
-                'id': p.id,
-                'active': p.active
-                  } for p in (self.descendant_plants + self.descendant_plants_pollen)]
-
-        if self.parent_plant:
-            siblings = set(self.parent_plant.descendant_plants)
-            siblings.remove(self)
-            if self.parent_plant_pollen:
-                siblings_pollen = set(self.parent_plant_pollen.descendant_plants_pollen)
-                siblings_pollen.remove(self)
-                siblings = siblings.intersection(siblings_pollen)
-            else:
-                siblings = [p for p in siblings if not p.parent_plant_pollen]
-            as_dict['sibling_plants'] = [{
-                'plant_name': p.plant_name,
-                'id':         p.id,
-                'active': p.active
-                } for p in siblings]
-
-        # add botanical name, author, and plants of same taxon
-        if self.taxon:
-            as_dict['botanical_name'] = self.taxon.name
-            as_dict['taxon_authors'] = self.taxon.authors
-
-            if 'hybr' not in self.taxon.name:
-                same_taxon_plants = self.taxon.plants.copy()
-                same_taxon_plants.remove(self)
-                as_dict['same_taxon_plants'] = [{
-                    'plant_name': p.plant_name,
-                    'id':         p.id,
-                    'active': p.active
-                    } for p in same_taxon_plants]
-
-        # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
-        if self.propagation_type is None:
-            as_dict['propagation_type'] = ''
-
-        # add path to preview photo
-        if self.filename_previewimage:  # supply relative path of original photo
-            rel_path_gen = generate_previewimage_get_rel_path(PurePath(self.filename_previewimage))
-            # there is a huge problem with the slashes
-            as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
-        else:
-            as_dict['url_preview'] = None
-
-        # add tags
-        if self.tags:
-            as_dict['tags'] = [t.as_dict() for t in self.tags]
-
-        # add current soil
-        if soil_events := [e for e in self.events if e.soil]:
-            soil_events.sort(key=lambda e: e.date, reverse=True)
-            as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
-                                       'date':      soil_events[0].date}
-        else:
-            as_dict['current_soil'] = None
-
-        # get latest photo record date per plant
-        with lock_photo_directory:
-            photo_directory = get_photo_directory()
-
-            if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
-                as_dict['latest_image'] = {'path':       latest_image.path,
-                                           'relative_path_thumb': latest_image.path_thumb,
-                                           'date':       latest_image.date}
-            else:
-                as_dict['latest_image_record_date'] = NULL_DATE
-                as_dict['latest_image'] = None
-
-        return as_dict
+        raise NotImplementedError('use get_plant_as_dict() instead')
+        # as_dict = super(Plant, self).as_dict()
+        # as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
+        # as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
+        # as_dict['descendant_plants'] = [{
+        #     'plant_name': p.plant_name,
+        #     'id':         p.id,
+        #     'active':     p.active
+        #     } for p in (self.descendant_plants + self.descendant_plants_pollen)]
+        #
+        # if self.parent_plant:
+        #     siblings = set(self.parent_plant.descendant_plants)
+        #     siblings.remove(self)
+        #     if self.parent_plant_pollen:
+        #         siblings_pollen = set(self.parent_plant_pollen.descendant_plants_pollen)
+        #         siblings_pollen.remove(self)
+        #         siblings = siblings.intersection(siblings_pollen)
+        #     else:
+        #         siblings = [p for p in siblings if not p.parent_plant_pollen]
+        #     as_dict['sibling_plants'] = [{
+        #         'plant_name': p.plant_name,
+        #         'id':         p.id,
+        #         'active':     p.active
+        #         } for p in siblings]
+        #
+        # # add botanical name, author, and plants of same taxon
+        # if self.taxon:
+        #     as_dict['botanical_name'] = self.taxon.name
+        #     as_dict['taxon_authors'] = self.taxon.authors
+        #
+        #     if 'hybr' not in self.taxon.name:
+        #         same_taxon_plants = self.taxon.plants.copy()
+        #         same_taxon_plants.remove(self)
+        #         as_dict['same_taxon_plants'] = [{
+        #             'plant_name': p.plant_name,
+        #             'id':         p.id,
+        #             'active':     p.active
+        #             } for p in same_taxon_plants]
+        #
+        # # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
+        # if self.propagation_type is None:
+        #     as_dict['propagation_type'] = ''
+        #
+        # # add path to preview photo_file
+        # if self.filename_previewimage:  # supply relative path of original photo_file
+        #     rel_path_gen = generate_previewimage_get_rel_path(PurePath(self.filename_previewimage))
+        #     # there is a huge problem with the slashes
+        #     as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
+        # else:
+        #     as_dict['url_preview'] = None
+        #
+        # # add tags
+        # if self.tags:
+        #     as_dict['tags'] = [t.as_dict() for t in self.tags]
+        #
+        # # add current soil
+        # if soil_events := [e for e in self.events if e.soil]:
+        #     soil_events.sort(key=lambda e: e.date, reverse=True)
+        #     as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
+        #                                'date':      soil_events[0].date}
+        # else:
+        #     as_dict['current_soil'] = None
+        #
+        # # get latest photo_file record date per plant
+        # with lock_photo_directory:
+        #     photo_directory = get_photo_directory()
+        #
+        #     if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
+        #         as_dict['latest_image'] = {'path':                latest_image.path,
+        #                                    'relative_path_thumb': latest_image.path_thumb,
+        #                                    'date':                latest_image.date}
+        #     else:
+        #         as_dict['latest_image_record_date'] = NULL_DATE
+        #         as_dict['latest_image'] = None
+        #
+        # return as_dict
 
     def set_parent_plant(self, db: Session, parent_plant_name: str = None):
         if parent_plant_name:
@@ -169,7 +177,7 @@ class Plant(Base, OrmUtil):
             self.parent_plant_pollen_id = None
 
     def set_filename_previewimage(self, plant: Optional[PPlant] = None):
-        """we actually set the path to preview photo (the original photo, not the thumbnail) excluding
+        """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
         the photos-subdir part of the uri
         """
         if not plant.filename_previewimage:

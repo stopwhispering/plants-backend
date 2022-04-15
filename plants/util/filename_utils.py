@@ -1,6 +1,6 @@
 from glob import glob
 from pathlib import Path
-from typing import Sequence, Set
+from typing import Sequence
 
 
 def with_suffix(path: Path, suffix: str) -> Path:
@@ -11,7 +11,7 @@ def with_suffix(path: Path, suffix: str) -> Path:
 
 
 def get_generated_filename(filename_original: str, size: Sequence) -> str:
-    """get the derivative filename of a resized photo file (when creating thumbnails, a common
+    """get the derivative filename of a resized photo_file file (when creating thumbnails, a common
     naming convention is applied that adds resolution as a suffix to the filename)
     """
     suffix = f'{size[0]}_{size[1]}'
@@ -21,7 +21,7 @@ def get_generated_filename(filename_original: str, size: Sequence) -> str:
     return filename_generated
 
 
-def find_jpg_files(folder: Path) -> Set[Path]:
+def find_jpg_files(folder: Path) -> set[Path]:
     paths = list(folder.rglob('**/*.jp*g'))
     paths.extend(list(folder.rglob('**/*.JP*G')))  # on linux glob works case-sensitive!
 

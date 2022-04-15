@@ -1,27 +1,48 @@
 import datetime
+from dataclasses import dataclass
 from pathlib import Path
+import logging
 
 import piexif
 from piexif import InvalidImageDataError
 
-from plants.services.photo_metadata_access import PhotoMetadataAccess, logger, MetadataDTO
 from plants.util.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                     encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
                                     encode_record_date_time, set_modified_date)
 
+logger = logging.getLogger(__name__)
 
-class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
+
+@dataclass
+class MetadataDTO:
+    plant_names: list[str]
+    keywords: list[str]
+    description: str
+    record_date_time: datetime.datetime | None = None
+
+
+class PhotoMetadataAccessExifTags:
     """"Access to Photo Metadata via jpeg exif tags"""
+
     def read_photo_metadata(self, absolute_path: Path) -> MetadataDTO:
-        """retrieve metadata on photo from jpeg file exif tags"""
+        """retrieve metadata on photo_file from jpeg file exif tags"""
         return self._parse_exif_tags(absolute_path=absolute_path)
 
-    def save_photo_metadata(self, absolute_path: Path, metadata: MetadataDTO) -> None:
-        """save/update photo metadata"""
+    def save_photo_metadata(self,
+                            absolute_path: Path,
+                            plant_names: list[str],
+                            keywords: list[str],
+                            description: str,
+                            ) -> None:
+        """save/update photo_file metadata"""
+        metadata = MetadataDTO(plant_names=plant_names,
+                               keywords=keywords,
+                               description=description,
+                               )
         self._write_exif_tags(metadata=metadata, absolute_path=absolute_path)
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
-        """rewrite the plants assigned to the photo at the supplied path"""
+        """rewrite the plants assigned to the photo_file at the supplied path"""
         self._rewrite_plant_assignments_in_exif_tags(absolute_path=absolute_path, plants=plants)
 
     @staticmethod
@@ -41,12 +62,15 @@ class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
             keywords = []
             plants = []
             record_date_time = None
-            return MetadataDTO(plants, keywords, description, record_date_time)
+            return MetadataDTO(plant_names=plants,
+                               keywords=keywords,
+                               description=description,
+                               record_date_time=record_date_time)
         except ValueError as e:
             # todo not a true jpeg or similar
             raise e
 
-        auto_rotate_jpeg(absolute_path, exif_dict)
+        auto_rotate_jpeg(absolute_path, exif_dict)  # todo move elsewhere
 
         try:  # description
             description = exif_dict['0th'][270].decode('utf-8')  # windows description/title tag
@@ -73,19 +97,22 @@ class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
         except KeyError:
             record_date_time = None
 
-        return MetadataDTO(plants, keywords, description, record_date_time)
+        return MetadataDTO(plant_names=plants,
+                           keywords=keywords,
+                           description=description,
+                           record_date_time=record_date_time)
 
     @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
         """
-        adjust exif tags in file described in photo object; optionally append to photo directory (used for newly
-        uploaded photo files)
+        adjust exif tags in file described in photo_file object; optionally append to photo_file directory (used for newly
+        uploaded photo_file files)
         """
         tag_descriptions = metadata.description.encode('utf-8')
         tag_keywords = encode_keywords_tag(metadata.keywords)
 
-        if metadata.plants:
-            tag_authors_plants = ';'.join(metadata.plants).encode('utf-8')
+        if metadata.plant_names:
+            tag_authors_plants = ';'.join(metadata.plant_names).encode('utf-8')
         else:
             tag_authors_plants = b''
 
@@ -102,7 +129,7 @@ class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
             exif_dict['0th'][315] = tag_authors_plants  # Windows Authors Tag
 
             # we want to preserve the file's last-change-date
-            # additionally, if photo does not have a record time in exif tag,
+            # additionally, if photo_file does not have a record time in exif tag,
             #    then we enter the last-changed-date there
             modified_time_seconds = modified_date(absolute_path)  # seconds
             if not exif_dict['Exif'].get(36867):
@@ -110,7 +137,7 @@ class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
                 b_dt = encode_record_date_time(dt)
                 exif_dict['Exif'][36867] = b_dt
 
-            # fix some problem with windows photo editor writing exif tag in wrong format
+            # fix some problem with windows photo_file editor writing exif tag in wrong format
             if exif_dict.get('GPS') and type(exif_dict['GPS'].get(11)) is bytes:
                 del exif_dict['GPS'][11]
             try:
@@ -129,13 +156,13 @@ class PhotoMetadataAccessExifTags(PhotoMetadataAccess):
     @staticmethod
     def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]) -> None:
         """
-        rewrite the plants assigned to the photo at the supplied path; keep the last-modifide date (called in context
+        rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called in context
         of renaming)
         """
         # we want to preserve the file's last-change-date
         modified_time_seconds = modified_date(absolute_path)  # seconds
 
-        # get a new list of plants for the photo and convert it to exif tag syntax
+        # get a new list of plants for the photo_file and convert it to exif tag syntax
         tag_authors_plants = ';'.join(plants).encode('utf-8')
 
         # load file's current exif tags and overwrite the authors tag used for saving plants

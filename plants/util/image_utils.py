@@ -1,5 +1,5 @@
 from pathlib import Path, PurePath
-from typing import Union, Optional, Sequence
+from typing import Union, Optional, Sequence, Tuple
 import piexif
 from PIL import Image
 import logging
@@ -16,17 +16,17 @@ def generate_thumbnail(image: Union[Path, BytesIO],
                        size: Sequence = (100, 100),
                        filename_thumb: Union[PurePath, str] = None) -> Optional[Path]:
     """
-    generates a resized variant of an photo; returns the full local path
-    supply original photo either as filename or i/o stream
+    generates a resized variant of an photo_file; returns the full local path
+    supply original photo_file either as filename or i/o stream
     if Image is supplied as BytesIO, a filename_thumb <<must>> be supplied
     """
     if not config.log_ignore_missing_image_files:
-        logger.debug(f'Generating resized photo of {image} in size {size}.')
+        logger.debug(f'Generating resized photo_file of {image} in size {size}.')
     suffix = f'{size[0]}_{size[1]}'
 
     if isinstance(image, Path) and not image.is_file():
         if not config.log_ignore_missing_image_files:
-            logger.error(f"Original Image of default photo does not exist. Can't generate thumbnail. {image}")
+            logger.error(f"Original Image of default photo_file does not exist. Can't generate thumbnail. {image}")
         return
     im = Image.open(image)
 
@@ -52,12 +52,12 @@ def generate_thumbnail(image: Union[Path, BytesIO],
 
 def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
     """
-    rotate photo if exif file has a rotate directive
+    rotate photo_file if exif file has a rotate directive
     (solves chrome bug not respecting orientation exif tag)
     no exif tag manipulation required as this is not saved
     to thumbnails anyway
     """
-    if exif_obj:  # the photo might have no exif-tags
+    if exif_obj:  # the photo_file might have no exif-tags
         # noinspection PyProtectedMember
         exif = dict(exif_obj.items())
         if piexif.ImageIFD.Orientation in exif:
@@ -68,3 +68,25 @@ def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
             elif exif[piexif.ImageIFD.Orientation] == 8:
                 image = image.rotate(90, expand=True)
     return image
+
+
+def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality: int) -> None:
+    """
+    load photo_file at supplied path, save resized photo_file to other path; observes size and quality params;
+    original file is finally <<deleted>>
+    """
+    with Image.open(path.as_posix()) as image:
+        image.thumbnail(size)  # preserves aspect ratio
+        if image.info.get('exif'):
+            image.save(save_to_path.as_posix(),
+                       quality=quality,
+                       exif=image.info.get('exif'),
+                       optimize=True)
+        else:  # fix some bug with ebay images that apparently have no exif part
+            logger.info("Saving w/o exif.")
+            image.save(save_to_path.as_posix(),
+                       quality=quality,
+                       optimize=True)
+
+    if path != save_to_path:
+        path.unlink()  # delete file

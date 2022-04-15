@@ -12,7 +12,7 @@ from plants.validation.plant_validation import PResultsPlants, PPlant
 from plants.models.plant_models import Plant
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
-from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
+from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant, get_plant_as_dict
 from plants.validation.message_validation import PConfirmation
 from plants.validation.plant_validation import (PPlantsUpdateRequest, PResultsPlantsUpdate, PPlantsDeleteRequest,
                                                 PPlantsRenameRequest)
@@ -40,7 +40,8 @@ async def get_plant(request: Request,
     plant_obj = db.query(Plant).filter(Plant.id == plant_id).first()
     if not plant_obj:
         throw_exception(f'Plant not found: {plant_id}.', request=request)
-    plant = plant_obj.as_dict()
+    # plant = plant_obj.as_dict()
+    plant = get_plant_as_dict(plant_obj)
 
     make_dict_values_json_serializable(plant)
     return plant
@@ -52,7 +53,6 @@ async def get_plants(db: Session = Depends(get_db)):
     # select plants from database
     # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
     query = db.query(Plant)
-    # if config.filter_hidden:
     if config.filter_hidden_plants:
         # sqlite does not like "is None" and pylint doesn't like "== None"
         query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
@@ -61,7 +61,7 @@ async def get_plants(db: Session = Depends(get_db)):
         query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
     plants_obj = query.all()
-    plants_list = [p.as_dict() for p in plants_obj]
+    plants_list = [get_plant_as_dict(p) for p in plants_obj]
 
     make_list_items_json_serializable(plants_list)
     results = {'action':           'Get plants',
@@ -80,7 +80,7 @@ def clone_plant(
         db: Session = Depends(get_db),
         ):
     """
-    clone plant with supplied plant_id; include duplication of events, photo assignments, and
+    clone plant with supplied plant_id; include duplication of events, photo_file assignments, and
     properties
     """
     plant_original = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
@@ -102,7 +102,8 @@ def clone_plant(
     results = {'action':   'Renamed plant',
                'resource': 'PlantResource',
                'message':  get_message(msg, description=msg),
-               'plants':   [plant_clone.as_dict()]}
+               # 'plants':   [plant_clone.as_dict()]}
+               'plants':   [get_plant_as_dict(plant_clone)]}
 
     return results
 
@@ -120,7 +121,8 @@ def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
     plants_saved = update_plants_from_list_of_dicts(plants_modified, db)
 
     # serialize updated/created plants to refresh data in frontend
-    plants_list = [p.as_dict() for p in plants_saved]
+    # plants_list = [p.as_dict() for p in plants_saved]
+    plants_list = [get_plant_as_dict(p) for p in plants_saved]
     make_list_items_json_serializable(plants_list)
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
@@ -171,10 +173,11 @@ def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Dep
     plant_obj.plant_name = args.NewPlantName
     plant_obj.last_update = datetime.datetime.now()
 
-    # most difficult task: photo tags use plant name not id; we need to change each plant name occurence
-    count_modified_images = rename_plant_in_image_files(args.OldPlantName, args.NewPlantName)
+    # most difficult task: jpg exif tags use plant name not id; we need to change each plant name occurence
+    count_modified_images = rename_plant_in_image_files(plant=plant_obj,
+                                                        plant_name_old=args.OldPlantName)
 
-    # only after photo modifications have gone well, we can commit changes to database
+    # only after photo_file modifications have gone well, we can commit changes to database
     db.commit()
 
     create_history_entry(description=f"Renamed to {args.NewPlantName}",

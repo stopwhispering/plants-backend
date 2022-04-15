@@ -6,9 +6,9 @@ from pydantic import validator
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
-from plants.services.image_services import get_path_for_taxon_thumbnail
 from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategoryWithTraits
+from plants.simple_services.image_services import get_path_for_taxon_thumbnail
 
 
 class PTaxonInfoRequest(BaseModel):

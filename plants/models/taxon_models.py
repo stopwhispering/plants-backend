@@ -65,7 +65,7 @@ class Taxon(Base, OrmUtil):
                                                overlaps="traits",  # silence warnings
                                                )
 
-    # 1:n relationship to the photo/taxon link table
+    # 1:n relationship to the photo_file/taxon link table
     images = relationship(
             "Image",
             secondary='image_to_taxon_association'

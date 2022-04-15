@@ -6,8 +6,8 @@ from starlette.requests import Request
 
 from plants.constants import TRAIT_CATEGORIES
 from plants.models.plant_models import Plant
+from plants.services.plants_services import get_distinct_image_keywords
 from plants.validation.proposal_validation import ProposalEntity, PResultsProposals
-from plants.services.image_services import get_distinct_keywords_from_image_files
 from plants.models.trait_models import Trait, TraitCategory
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
@@ -41,7 +41,8 @@ def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Dep
 
     elif entity_id == ProposalEntity.KEYWORD:
         # return collection of all distinct keywords used in images
-        keywords_set = get_distinct_keywords_from_image_files()
+        # keywords_set = get_distinct_keywords_from_image_files()
+        keywords_set = get_distinct_image_keywords(db=db)
         keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
         results = {'KeywordsCollection': keywords_collection}
 

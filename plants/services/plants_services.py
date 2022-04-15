@@ -1,11 +1,19 @@
 import datetime
 import logging
+from operator import attrgetter
+from pathlib import PurePath
 from typing import List, Optional
+import json
+
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from datetime import datetime
+from datetime import date
 
+from plants.models.image_models import ImageKeyword, Image
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
+from plants.simple_services.image_services import generate_previewimage_get_rel_path
 from plants.services.tag_services import tag_modified, update_tag
 from plants.validation.plant_validation import PPlant, PPlantTag
 
@@ -82,7 +90,7 @@ def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
 def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     """
     clone supplied plant
-    includes duplication of events, photo-to-event assignments, properties, tags
+    includes duplication of events, photo_file-to-event assignments, properties, tags
     excludes descendant plants
     assignments to same instances of parent plants, parent plants pollen (nothing to do here)
     """
@@ -103,7 +111,7 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
         event_clone.plant = plant_clone
         cloned.append(event_clone)
 
-        # photo-to-event associations via photo instances (no need to update these explicitly)
+        # photo_file-to-event associations via photo_file instances (no need to update these explicitly)
         for image in event.images:
             image.events.append(event_clone)
 
@@ -146,3 +154,116 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
                 db.delete(tag_object)
 
     return new_list
+
+
+def get_plant_as_dict(plant: Plant):
+    """add some additional fields to mixin's as_dict, especially from relationships
+    merge descendant_plants_pollen into descendant_plants"""
+    # as_dict = super(Plant, self).as_dict()
+    # does not include objects from relationships nor _sa_instance_state
+    as_dict = {c.key: getattr(plant, c.key) for c in inspect(plant).mapper.column_attrs}
+
+    as_dict['parent_plant'] = plant.parent_plant.plant_name if plant.parent_plant else None
+    as_dict['parent_plant_pollen'] = plant.parent_plant_pollen.plant_name if plant.parent_plant_pollen else None
+    as_dict['descendant_plants'] = [{
+        'plant_name': p.plant_name,
+        'id':         p.id,
+        'active':     p.active
+        } for p in (plant.descendant_plants + plant.descendant_plants_pollen)]
+
+    if plant.parent_plant:
+        siblings = set(plant.parent_plant.descendant_plants)
+        siblings.remove(plant)
+        if plant.parent_plant_pollen:
+            siblings_pollen = set(plant.parent_plant_pollen.descendant_plants_pollen)
+            siblings_pollen.remove(plant)
+            siblings = siblings.intersection(siblings_pollen)
+        else:
+            siblings = [p for p in siblings if not p.parent_plant_pollen]
+        as_dict['sibling_plants'] = [{
+            'plant_name': p.plant_name,
+            'id':         p.id,
+            'active':     p.active
+            } for p in siblings]
+
+    # add botanical name, author, and plants of same taxon
+    if plant.taxon:
+        as_dict['botanical_name'] = plant.taxon.name
+        as_dict['taxon_authors'] = plant.taxon.authors
+
+        if 'hybr' not in plant.taxon.name:
+            same_taxon_plants = plant.taxon.plants.copy()
+            same_taxon_plants.remove(plant)
+            as_dict['same_taxon_plants'] = [{
+                'plant_name': p.plant_name,
+                'id':         p.id,
+                'active':     p.active
+                } for p in same_taxon_plants]
+
+    # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
+    if plant.propagation_type is None:
+        as_dict['propagation_type'] = ''
+
+    # add path to preview photo_file
+    if plant.filename_previewimage:  # supply relative path of original photo_file
+        rel_path_gen = generate_previewimage_get_rel_path(PurePath(plant.filename_previewimage))
+        # there is a huge problem with the slashes
+        as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
+    else:
+        as_dict['url_preview'] = None
+
+    # add tags
+    if plant.tags:
+        as_dict['tags'] = [t.as_dict() for t in plant.tags]
+
+    # add current soil
+    if soil_events := [e for e in plant.events if e.soil]:
+        soil_events.sort(key=lambda e: e.date, reverse=True)
+        as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
+                                   'date':      soil_events[0].date}
+    else:
+        as_dict['current_soil'] = None
+
+    # get latest image date
+    if plant.images:
+        latest_image: Image = max(plant.images, key=attrgetter('record_date_time'))
+        as_dict['latest_image'] = {'path':                latest_image.relative_path,
+                                   'relative_path_thumb': latest_image.relative_path_thumb,
+                                   'date':                latest_image.record_date_time}
+    else:
+        as_dict['latest_image_record_date'] = NULL_DATE  # todo why only here?
+        as_dict['latest_image'] = None
+
+    # for photo in photos:
+    #     for p in photo.plants:
+    #         try:
+    #             if p not in self.latest_image_dates or self.latest_image_dates[p].date < photo.record_date_time:
+    #                 self.latest_image_dates[p] = ImageInfo(date=photo.record_date_time,
+    #                                                        path=photo.relative_path,
+    #                                                        path_thumb=photo.relative_path_thumb)
+    #         except TypeError:
+    #             pass
+
+    # with lock_photo_directory:
+    #     photo_directory = get_photo_directory()
+    #
+    #     if latest_image := photo_directory.get_latest_date_per_plant(plant.plant_name):
+    #         as_dict['latest_image'] = {'path':                latest_image.path,
+    #                                    'relative_path_thumb': latest_image.path_thumb,
+    #                                    'date':                latest_image.date}
+    #     else:
+    #         as_dict['latest_image_record_date'] = NULL_DATE
+    #         as_dict['latest_image'] = None
+
+    return as_dict
+
+
+def get_distinct_image_keywords(db: Session) -> set[str]:
+    """
+    get set of all image keywords
+    """
+    keyword_tuples = db.query(ImageKeyword.keyword).distinct().all()
+    return {k[0] for k in keyword_tuples}
+
+
+NULL_DATE = date(1900, 1, 1)

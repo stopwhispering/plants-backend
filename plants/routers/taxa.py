@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import PurePath
 
 from fastapi import APIRouter, Depends
@@ -8,13 +9,13 @@ from starlette.requests import Request
 
 from plants.util.ui_utils import throw_exception, get_message
 from plants import config
-from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa
-from plants.services.image_services import get_thumbnail_relative_path_for_relative_path
+from plants.util.path_utils import get_thumbnail_relative_path_for_relative_path
 from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
 from plants.services.trait_services import update_traits
 from plants.validation.message_validation import PConfirmation
+from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa
 
 logger = logging.getLogger(__name__)
 
@@ -109,26 +110,30 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
 
         # changes to images attached to the taxon
         # deleted images
-        path_originals_saved = [image.path_original for image in taxon_modified.images] if \
+        # path_originals_saved = [image.path_original for image in taxon_modified.images] if \
+        path_originals_saved = [image.relative_path for image in taxon_modified.images] if \
             taxon_modified.images else []
         for image_obj in taxon.images:
             if image_obj.relative_path not in path_originals_saved:
-                # don't delete photo object, but only the association (photo might be assigned to other events)
+                # don't delete photo_file object, but only the association (photo_file might be assigned to other events)
                 db.delete([link for link in taxon.image_to_taxon_associations if
                            link.image.relative_path == image_obj.relative_path][0])
 
         # newly assigned images
         if taxon_modified.images:
             for image in taxon_modified.images:
-                image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
+                # image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
+                image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
 
                 # not assigned to any event, yet
                 if not image_obj:
-                    image_obj = Image(relative_path=image.path_original)
+                    # image_obj = Image(relative_path=image.path_original)
+                    image_obj = Image(relative_path=image.relative_path,
+                                      last_update=datetime.now())
                     db.add(image_obj)
                     db.flush()  # required to obtain id
 
-                # update link table including the photo description
+                # update link table including the photo_file description
                 current_taxon_to_image_link = [t for t in taxon.image_to_taxon_associations if t.image == image_obj]
 
                 # insert link

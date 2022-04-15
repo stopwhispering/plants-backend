@@ -55,7 +55,7 @@ class TaxonOccurencesLoader:
             else:
                 d['references'] = None
 
-            # get the photo href
+            # get the photo_file href
             if m.get('references') and ('jpg' in m['references'].lower() or 'jpeg' in m['references'].lower()):
                 d['href'] = m['references']
             elif m.get('identifier') and ('jpg' in m['identifier'].lower() or 'jpeg' in m['identifier'].lower()):
@@ -168,7 +168,7 @@ class TaxonOccurencesLoader:
         occurrences = [o for o in occ_search['results'] if o.get('basisOfRecord') != 'PRESERVED_SPECIMEN'
                        and o.get('countryCode')]
 
-        # get photo information & save thumbnail
+        # get photo_file information & save thumbnail
         image_dicts = self._treat_occurences(occurrences, gbif_id)
 
         # save information to database
