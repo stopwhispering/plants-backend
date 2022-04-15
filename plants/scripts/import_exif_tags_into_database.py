@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 
 from sqlalchemy.orm import Session
 
@@ -88,6 +89,12 @@ def _import(photo_directory: PhotoDirectory, db: Session):
                 logger.error(f'Missing plants in file for {photo_file.relative_path}: {missing_plant_names_in_file}. '
                              f'(file:{photo_file_plant_names}/db:{image_db_plant_names}). Doing nothing')
 
+        duplicate_keywords = [kw for kw, count in Counter(photo_file.keywords).items() if count > 1]
+        if duplicate_keywords:
+            new_keywords = list(set(photo_file.keywords))
+            logger.warning(f'Found keyword duplicates for image {photo_file.relative_path}. Keywords in exif tags: '
+                           f'{photo_file.keywords}. Assuming {new_keywords}.')
+            photo_file.keywords = new_keywords
         if photo_file.keywords != [k.keyword for k in image_db.keywords]:
             image_db_keywords = set(k.keyword for k in image_db.keywords)
             photo_file_keywords = set(p for p in photo_file.keywords)

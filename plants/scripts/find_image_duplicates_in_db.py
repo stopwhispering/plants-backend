@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 all_plants_names_not_found_in_db = []
 
 
-def _find_duplicates(db: Session):
+def _find_duplicates_image_with_same_relative_path(db: Session):
     all_images = db.query(Image).all()
     all_image_relative_paths = [i.relative_path for i in all_images]
     counter = Counter(all_image_relative_paths)
@@ -55,5 +55,6 @@ def _find_duplicates(db: Session):
         db.add_all(add_list)
         db.commit()
 
+
 if __name__ == '__main__':
-    _find_duplicates(db=next(get_db()))
+    _find_duplicates_image_with_same_relative_path(db=next(get_db()))
