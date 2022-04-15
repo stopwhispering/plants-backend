@@ -1,5 +1,3 @@
-import json
-
 from fastapi import APIRouter, Depends
 import logging
 
@@ -30,10 +28,7 @@ router = APIRouter(
 #
 #     return results
 
-
-@router.get("/functions/maintenance/compare_files_with_db")
-async def find_photo_files_missing_in_db(db: Session = Depends(get_db)):
-    """todo"""
+def compare_images_in_db_with_exif_tags(db: Session):
     photos_from_files = PhotoFactoryLocalFiles().make_photos()
     photos_from_db = PhotoFactoryDatabase(db=db).make_photos()
 
@@ -95,8 +90,11 @@ async def find_photo_files_missing_in_db(db: Session = Depends(get_db)):
 
     make_dict_values_json_serializable(results)
 
-    json_string = json.dumps(results)
-    with open('comparison_results_db_exif.json', 'w') as outfile:
-        outfile.write(json_string)
-
     return results
+
+
+@router.get("/functions/maintenance/compare_files_with_db")
+async def find_photo_files_missing_in_db(db: Session = Depends(get_db)):
+    """todo"""
+
+    return compare_images_in_db_with_exif_tags(db)
