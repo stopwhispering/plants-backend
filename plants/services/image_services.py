@@ -1,146 +1,130 @@
-from itertools import chain
-from pathlib import Path, PurePath
-from typing import Tuple, List, Generator
-from PIL import Image
+from typing import List
 import logging
-from typing import Set
+
+import aiofiles
+from fastapi import UploadFile
+from sqlalchemy.orm import Session
 
 from plants import config
-from plants.services.PhotoDirectory import lock_photo_directory, get_photo_directory
-from plants.services.Photo import Photo
-from plants.services.exif_services import rename_plant_in_exif_tags
-from plants.util.filename_utils import get_generated_filename, with_suffix
-from plants.util.image_utils import generate_thumbnail
+from plants.models.image_models import Image, create_image
+from plants.models.plant_models import Plant
+from plants.constants import RESIZE_SUFFIX
+
+from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.simple_services.image_services import resizing_required, get_relative_path
+from plants.util.exif_utils import read_record_datetime_from_exif_tags
+from plants.util.filename_utils import with_suffix
+from plants.util.image_utils import resize_image, generate_thumbnail
 
 logger = logging.getLogger(__name__)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Path:
+# def get_distinct_keywords_from_image_files() -> Set[str]:
+#     """
+#     get set of all keywords from all the images in the directory
+#     """
+#     with lock_photo_directory:
+#         photo_directory = get_photo_directory()
+#
+#         # get flattening generator and create set of distinct keywords
+#         keywords_nested_gen = (photo.keywords for photo in photo_directory.photos if photo.keywords)
+#         return set(chain.from_iterable(keywords_nested_gen))
+
+
+# def _get_photos_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
+#     """
+#     returns generator of photo_file entries from photo_file directory tagging supplied plant name
+#     """
+#     with lock_photo_directory:
+#         photo_directory = get_photo_directory()
+#         return (p for p in photo_directory.photos if plant_name in p.plants)
+#     # isinstance(p.plants, list) and plant_name in p.plants]
+
+
+def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
     """
-    generates a preview image for a plant's default image if not exists, yet
-    returns the relative path to it
+    in each photo_file file that has the old plant name tagged, fit tag to the new plant name
     """
-    # get filename of preview image and check if that file already exists
-    filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
-                                                size=config.size_preview_image)
+    if not plant.images:
+        logger.info(f'No photo_file tag to change for {plant_name_old}.')
+    for image in plant.images:
+        plant_names = [p.plant_name for p in image.plants]
+        PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
+                                                                plants=plant_names)
 
-    path_full = config.path_photos_base.joinpath(original_image_rel_path)
-    path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
-
-    if not path_generated.is_file():
-        if not config.log_ignore_missing_image_files:
-            logger.info('Preview Image: Generating the not-yet-existing preview image.')
-        generate_thumbnail(image=path_full,
-                           size=config.size_preview_image,
-                           path_thumbnail=config.path_generated_thumbnails)
-
-    return config.rel_path_photos_generated.joinpath(filename_generated)
-
-
-def get_thumbnail_relative_path_for_relative_path(path_relative: PurePath, size: tuple) -> Path:
-    """
-    returns relative path of the corresponding thumbnail for an image file's relative path
-    """
-    filename_thumbnail = get_generated_filename(path_relative.name, size)
-    return config.rel_path_photos_generated.joinpath(filename_thumbnail)
-
-
-def get_path_for_taxon_thumbnail(filename: Path):
-    return config.rel_path_photos_generated_taxon.joinpath(filename)
-
-
-def get_distinct_keywords_from_image_files() -> Set[str]:
-    """
-    get set of all keywords from all the images in the directory
-    """
-    with lock_photo_directory:
-        photo_directory = get_photo_directory()
-
-        # get flattening generator and create set of distinct keywords
-        keywords_nested_gen = (photo.tag_keywords for photo in photo_directory.photos if photo.tag_keywords)
-        return set(chain.from_iterable(keywords_nested_gen))
-
-
-def resizing_required(path: str, size: Tuple[int, int]) -> bool:
-    """
-    checks size of image at supplied path and compares to supplied maximum size
-    """
-    with Image.open(path) as image:  # only works with path, not file object
-        x, y = image.size
-    if x > size[0]:
-        y = int(max(y * size[0] / x, 1))
-        x = int(size[0])
-    if y > size[1]:
-        x = int(max(x * size[1] / y, 1))
-        y = int(size[1])
-    size = x, y
-    return size != image.size
-
-
-def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality: int) -> None:
-    """
-    load image at supplied path, save resized image to other path; observes size and quality params;
-    original file is finally <<deleted>>
-    """
-    with Image.open(path.as_posix()) as image:
-        image.thumbnail(size)  # preserves aspect ratio
-        if image.info.get('exif'):
-            image.save(save_to_path.as_posix(),
-                       quality=quality,
-                       exif=image.info.get('exif'),
-                       optimize=True)
-        else:  # fix some bug with ebay images that apparently have no exif part
-            logger.info("Saving w/o exif.")
-            image.save(save_to_path.as_posix(),
-                       quality=quality,
-                       optimize=True)
-
-    if path != save_to_path:
-        path.unlink()  # delete file
-
-
-def _get_images_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
-    """
-    returns generator of image entries from photo directory tagging supplied plant name
-    """
-    with lock_photo_directory:
-        photo_directory = get_photo_directory()
-        return (p for p in photo_directory.photos if plant_name in p.tag_authors_plants)
-    # isinstance(p.tag_authors_plants, list) and plant_name in p.tag_authors_plants]
-
-
-def rename_plant_in_image_files(plant_name_old: str, plant_name_new: str) -> int:
-    """
-    in each image file that has the old plant name tagged in exif, switch tag to the new plant name
-    """
-    # get the relevant images from the photo directory cache
-    images = _get_images_by_plant_name(plant_name_old)
-    count_modified = 0
-    if not images:
-        logger.info(f'No image tag to change for {plant_name_old}.')
-
-    for image in images:
-        # double check
-        if plant_name_old in image.tag_authors_plants:
-            logger.info(f"Switching plant tag in image file {image.path_full_local}")
-            rename_plant_in_exif_tags(image, plant_name_old, plant_name_new)
-            count_modified += 1
+    # # get the relevant images from the photo_file directory cache
+    # photos = _get_photos_by_plant_name(plant_name_old)
+    # count_modified = 0
+    # if not photos:
+    #     logger.info(f'No photo_file tag to change for {plant_name_old}.')
+    #
+    # photo: Photo
+    # for photo in photos:
+    #     # double check
+    #     if plant_name_old in photo.plants:
+    #         logger.info(f"Switching plant_names tag in jpg image exif tags: {photo.absolute_path}")
+    #         photo.rename_tagged_plant(plant_name_old=plant_name_old, plant_name_new=plant.plant_name)
+    #
+    #         PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=photo.absolute_path,
+    #                                                                 plants=photo.plants)
+    #
+    #         count_modified += 1
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
-    return count_modified
+    return len(plant.images)
 
 
-def remove_files_already_existing(files: List, suffix: str) -> List[str]:
-    """
-    iterates over file objects, checks whether a file with that name already exists in filesystem; removes already
-    existing files from files list and returns a list of already existing file names
-    """
-    duplicate_filenames = []
-    for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
+async def save_image_files(files: List[UploadFile],
+                           db: Session,
+                           plant_ids: tuple[int] = (),
+                           keywords: tuple[str] = ()
+                           ) -> list[Image]:
+    """save the files supplied as starlette uploadfiles on os; assign plants and keywords"""
+    images = []
+    for photo_upload in files:
+        # save to file system
         path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
-        logger.debug(f'Checking uploaded photo ({photo_upload.content_type}) to be saved as {path}.')
-        if path.is_file() or with_suffix(path, suffix).is_file():
-            files.remove(photo_upload)
-            duplicate_filenames.append(photo_upload.filename)
-            logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
-    return duplicate_filenames
+        logger.info(f'Saving {path}.')
+
+        async with aiofiles.open(path, 'wb') as out_file:
+            content = await photo_upload.read()  # async read
+            await out_file.write(content)  # async write
+
+        # photo_upload.save(path)  # we can't use object first and then save as this alters file object
+
+        # resize file by lowering resolution if required
+        if not config.resizing_size:
+            pass
+        elif not resizing_required(path, config.resizing_size):
+            logger.info(f'No resizing required.')
+        else:
+            logger.info(f'Saving and resizing {path}.')
+            resize_image(path=path,
+                         save_to_path=with_suffix(path, RESIZE_SUFFIX),
+                         size=config.resizing_size,
+                         quality=config.jpg_quality)
+            path = with_suffix(path, RESIZE_SUFFIX)
+
+        # add to db
+        record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
+        plants = [Plant.get_plant_by_plant_id(plant_id=p, db=db, raise_exception=True) for p in plant_ids]
+        image: Image = create_image(db=db,
+                                    relative_path=get_relative_path(path),
+                                    record_date_time=record_datetime,
+                                    keywords=keywords,
+                                    plants=plants)
+
+        # generate thumbnail photo_file for frontend display and update file's metadata
+        # photo.generate_thumbnails()
+        generate_thumbnail(image=path,
+                           size=config.size_thumbnail_image,
+                           path_thumbnail=config.path_generated_thumbnails)
+
+        # save metadata in jpg exif tags
+        PhotoMetadataAccessExifTags().save_photo_metadata(absolute_path=path,
+                                                          plant_names=[p.plant_name for p in plants],
+                                                          keywords=list(keywords),
+                                                          description='')
+        images.append(image)
+
+    return images

@@ -6,9 +6,9 @@ from pydantic import validator
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
-from plants.services.image_services import get_path_for_taxon_thumbnail
 from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategoryWithTraits
+from plants.simple_services.image_services import get_path_for_taxon_thumbnail
 
 
 class PTaxonInfoRequest(BaseModel):
@@ -56,12 +56,15 @@ class PDistribution(BaseModel):
 
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
-    path_thumb: Path
-    path_original: Path
+    # path_thumb: Path
+    relative_path_thumb: Path = Field(alias='path_thumb')
+    # path_original: Path
+    relative_path: Path = Field(alias='path_original')
     description: Optional[str]
 
     class Config:
         extra = 'forbid'
+        allow_population_by_field_name = True
 
 
 class PTaxonOccurrenceImage(BaseModel):

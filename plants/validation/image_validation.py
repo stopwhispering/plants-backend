@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
+
+from pydantic import Field
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
@@ -23,17 +25,18 @@ class PPlantTag(BaseModel):
 
 
 class PImage(BaseModel):
-    path_thumb: Path  # not a FilePath as full url is concatenated in frontend
-    path_original: Path  # not a FilePath as full url is concatenated in frontend
+    relative_path_thumb: Path = Field(alias='path_thumb')
+    relative_path: Path = Field(alias='path_original')
     keywords: List[PKeyword]
     plants: List[PPlantTag]
-    description: str
+    description: str | None
     filename: Path
-    path_full_local: Path  # not a FilePath as existence check would cause performance problems
+    absolute_path: Path = Field(alias='path_full_local')
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:
         extra = 'forbid'
+        allow_population_by_field_name = True
 
 
 class PImageUpdated(BaseModel):
@@ -62,8 +65,8 @@ class PResultsImagesUploaded(BaseModel):
 
 
 class PImageUploadedMetadata(BaseModel):
-    plants: List[int]
-    keywords: List[str]
+    plants: list[int]
+    keywords: list[str]
 
     class Config:
         extra = 'forbid'
@@ -73,7 +76,7 @@ class PResultsImageDeleted(BaseModel):
     action: str
     resource: str
     message: PMessage
-    # photo:  PImage
+    # photo_file:  PImage
 
     class Config:
         extra = 'forbid'

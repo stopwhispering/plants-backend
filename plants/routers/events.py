@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, Dict, List
 from collections import defaultdict
 
@@ -225,21 +226,25 @@ async def modify_events(request: Request,
 
             # changes to images attached to the event
             # deleted images
-            path_originals_saved = [image.path_original for image in event.images] if event.images else []
+            # path_originals_saved = [image.path_original for image in event.images] if event.images else []
+            path_originals_saved = [image.relative_path for image in event.images] if event.images else []
             for image_obj in event_obj.images:
                 if image_obj.relative_path not in path_originals_saved:
-                    # don't delete image object, but only the association (image might be assigned to other events)
+                    # don't delete photo_file object, but only the association (photo_file might be assigned to other events)
                     db.delete([link for link in event_obj.image_to_event_associations if
                                link.image.relative_path == image_obj.relative_path][0])
 
             # newly assigned images
             if event.images:
                 for image in event.images:
-                    image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
+                    # image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
+                    image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
 
                     # not assigned to any event, yet
                     if not image_obj:
-                        image_obj = Image(relative_path=image.path_original.as_posix())
+                        # image_obj = Image(relative_path=image.path_original.as_posix())
+                        image_obj = Image(relative_path=image.relative_path.as_posix(),
+                                          last_update=datetime.now())
                         new_list.append(image_obj)
 
                     # not assigned to that specific event, yet

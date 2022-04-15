@@ -6,6 +6,7 @@ import logging
 import os
 import datetime
 import piexif
+from piexif import InvalidImageDataError
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ def decode_keywords_tag(t: tuple) -> List[str]:
     return chars.split(';')
 
 
-def encode_keywords_tag(keywords: list) -> Tuple:
+def encode_keywords_tag(keywords: list[str]) -> Tuple:
     """
     reverse decode_keywords_tag function
     """
@@ -151,3 +152,24 @@ def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
     except KeyError:
         return False
     return True
+
+
+def read_record_datetime_from_exif_tags(absolute_path: Path) -> datetime.datetime | None:
+    """
+    open jpeg file and read exif tags; decode and return original record datetime
+    """
+    if not absolute_path:
+        raise ValueError('File path not set.')
+
+    try:
+        exif_dict = piexif.load(absolute_path.as_posix())
+    except InvalidImageDataError:
+        logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {absolute_path}.')
+        return None
+    except ValueError as e:
+        raise e
+
+    try:  # record date+time
+        return decode_record_date_time(exif_dict["Exif"][36867])
+    except KeyError:
+        return None

@@ -1,4 +1,6 @@
 from enum import Enum
+from pathlib import Path
+
 from fastapi import HTTPException
 from starlette.requests import Request
 import json
@@ -82,6 +84,8 @@ def treat_non_serializable(x):
             except TypeError:
                 x[i] = treat_non_serializable(l)
         return x
+    elif isinstance(x, Path):
+        return x.as_posix()
     else:
         return str(x)
 
