@@ -49,14 +49,16 @@ def _delete_images_with_keywords(db: Session, delete):
 
 if __name__ == '__main__':
     delete = [
-        (128, 'photos/original/uploaded/20191123_141337.jpg'),
-        (221, 'photos/original/uploaded/DSC05645_resized.JPG'),
-        (1514, 'photos/original/uploaded/20210710_202956_resized.jpg'),
-        (7932, 'photos/original/DCIM/Google Takeouts 2015/20151213_204126.jpg'),
+        # (128, 'photos/original/uploaded/20191123_141337.jpg'),
+        # (221, 'photos/original/uploaded/DSC05645_resized.JPG'),
+        # (1514, 'photos/original/uploaded/20210710_202956_resized.jpg'),
+        # (7932, 'photos/original/DCIM/Google Takeouts 2015/20151213_204126.jpg'),
+        #
+        # (5184, 'photos/original/DCIM/Google Takeouts 2015/20151213_194156.jpg'),
+        # (6830, 'photos/original/DCIM/Google Takeouts 2015/20151213_194150.jpg'),
+        # (3471, 'photos/original/DCIM/Google Takeouts 2015/20151213_194145.jpg'),
+        # (6355, 'photos/original/DCIM/Google Takeouts 2015/20151213_194127.jpg'),
 
-        (5184, 'photos/original/DCIM/Google Takeouts 2015/20151213_194156.jpg'),
-        (6830, 'photos/original/DCIM/Google Takeouts 2015/20151213_194150.jpg'),
-        (3471, 'photos/original/DCIM/Google Takeouts 2015/20151213_194145.jpg'),
-        (6355, 'photos/original/DCIM/Google Takeouts 2015/20151213_194127.jpg'),
+        (2229, 'photos/original/DCIM/Google Takeouts 2015/IMG_20141030_141240.jpg'),
         ]
     _delete_images_with_keywords(next(get_db()), delete=delete)
