@@ -1,7 +1,6 @@
 from typing import List
 import json
 from sqlalchemy.orm import Session
-import os
 import logging
 from pydantic.error_wrappers import ValidationError
 from fastapi import UploadFile
@@ -9,15 +8,14 @@ from fastapi import APIRouter, Depends, Request
 
 from plants.constants import RESIZE_SUFFIX
 from plants.models.image_models import Image, get_image_by_relative_path, update_image_if_altered
-from plants.services.image_services import save_image_files
+from plants.services.image_services import save_image_files, delete_image_file_and_db_entries
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
                                                 PPlantTag, PResultsImagesUploaded)
-from plants import config
-from plants.simple_services.image_services import remove_files_already_existing, get_relative_path
+from plants.services.image_services_simple import remove_files_already_existing, get_relative_path
 from plants.validation.event_validation import PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
 from plants.validation.message_validation import PConfirmation
@@ -61,7 +59,6 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
                                                  db=db,
                                                  plant_ids=(plant_id,),
                                                  )
-    # photo_files_ext = _get_pimages_from_photos(photos, db=db)
     images_ext = [_to_response_image(i) for i in images]
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
@@ -86,9 +83,6 @@ async def get_untagged_images(db: Session = Depends(get_db)):
     untagged_images = db.query(Image).filter(~Image.plants.any()).all()
     images_ext = [_to_response_image(image) for image in untagged_images]
 
-    # # todooooo remove
-    # images_ext = [i for i in images_ext if i.record_date_time]
-
     logger.info(f'Returned {len(images_ext)} images.')
     results = {'ImagesCollection': images_ext,
                'message':          get_message('Loaded images from backend.',
@@ -98,10 +92,10 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 
 
 @router.put("/images/", response_model=PConfirmation)
-async def update_images(request: Request, modified_ext: PImageUpdated, db: Session = Depends(get_db)):
+# async def update_images(request: Request, modified_ext: PImageUpdated, db: Session = Depends(get_db)):
+async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_db)):
     """modify existing photo_file's metadata"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and exif tags.")
-    # with lock_photo_directory:
     for image_ext in modified_ext.ImagesCollection:
         # alter metadata in jpg exif tags
         logger.info(f'Updating {image_ext.absolute_path}')
@@ -167,34 +161,12 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 
 
 @router.delete("/images/", response_model=PResultsImageDeleted)
-async def delete_image(request: Request, image_container: PImagesDelete, db: Session = Depends(get_db)):
+async def delete_image(image_container: PImagesDelete, db: Session = Depends(get_db)):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
-
-    # todo maybe replace loop
     for photo in image_container.images:
-
-        old_path = photo.absolute_path
-        if not old_path.is_file():
-            logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
-            throw_exception(err_msg, request=request)
-
-        new_path = config.path_deleted_photos.joinpath(old_path.name)
-
-        try:
-            os.replace(src=old_path,
-                       dst=new_path)  # silently overwrites if privileges are sufficient
-        except OSError as e:
-            logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
-            throw_exception(err_msg, description=f'Filename: {old_path.name}', request=request)
-        logger.info(f'Moved file {old_path} to {new_path}')
-
-        # todo remove from db
-        # todo works for events, taxa, keywords, plants???
-        # --> test
         relative_path = get_relative_path(photo.absolute_path)
         image = get_image_by_relative_path(relative_path=relative_path, db=db, raise_exception=True)
-        db.delete(image)
-        db.commit()
+        delete_image_file_and_db_entries(image=image, db=db)
 
     deleted = [image.absolute_path.name for image in image_container.images]
     results = {'action':   'Deleted',

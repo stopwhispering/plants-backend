@@ -30,7 +30,7 @@ class TaxonOccurencesLoader:
                  'scientific_name':    occ['scientificName'],  # redundant, but show as additional info
                  'basis_of_record':    occ['basisOfRecord'],
                  'verbatim_locality':  occ.get('verbatimLocality') or occ.get('locality'),
-                 'date':               dateutil.parser.isoparse(m.get('created') or occ.get('eventDate')),
+                 'date':               dateutil.parser.isoparse(m.get('created') or occ.get('eventDate')),  # noqa
                  'creator_identifier': m.get('identifiedBy') or m.get('creator') or occ.get('recordedBy'),
                  'publisher_dataset':  occ.get('publisher') or m.get('publisher') or occ.get(
                          'institutionCode') or occ.get('rightsHolder') or occ.get('datasetName') or occ.get(

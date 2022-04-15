@@ -13,7 +13,7 @@ from datetime import date
 from plants.models.image_models import ImageKeyword, Image
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
-from plants.simple_services.image_services import generate_previewimage_get_rel_path
+from plants.services.image_services_simple import generate_previewimage_get_rel_path
 from plants.services.tag_services import tag_modified, update_tag
 from plants.validation.plant_validation import PPlant, PPlantTag
 
@@ -159,7 +159,6 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
 def get_plant_as_dict(plant: Plant):
     """add some additional fields to mixin's as_dict, especially from relationships
     merge descendant_plants_pollen into descendant_plants"""
-    # as_dict = super(Plant, self).as_dict()
     # does not include objects from relationships nor _sa_instance_state
     as_dict = {c.key: getattr(plant, c.key) for c in inspect(plant).mapper.column_attrs}
 
@@ -233,27 +232,6 @@ def get_plant_as_dict(plant: Plant):
     else:
         as_dict['latest_image_record_date'] = NULL_DATE  # todo why only here?
         as_dict['latest_image'] = None
-
-    # for photo in photos:
-    #     for p in photo.plants:
-    #         try:
-    #             if p not in self.latest_image_dates or self.latest_image_dates[p].date < photo.record_date_time:
-    #                 self.latest_image_dates[p] = ImageInfo(date=photo.record_date_time,
-    #                                                        path=photo.relative_path,
-    #                                                        path_thumb=photo.relative_path_thumb)
-    #         except TypeError:
-    #             pass
-
-    # with lock_photo_directory:
-    #     photo_directory = get_photo_directory()
-    #
-    #     if latest_image := photo_directory.get_latest_date_per_plant(plant.plant_name):
-    #         as_dict['latest_image'] = {'path':                latest_image.path,
-    #                                    'relative_path_thumb': latest_image.path_thumb,
-    #                                    'date':                latest_image.date}
-    #     else:
-    #         as_dict['latest_image_record_date'] = NULL_DATE
-    #         as_dict['latest_image'] = None
 
     return as_dict
 

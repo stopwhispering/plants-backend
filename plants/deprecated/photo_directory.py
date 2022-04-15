@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import Dict, List, Iterable
+from typing import List, Iterable, NamedTuple
 import logging
 import threading
 from typing import Optional
@@ -10,9 +10,8 @@ from sqlalchemy.orm import Session
 
 from plants import config
 from plants.models.image_models import Image
-from plants.services.image_info import ImageInfo
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.simple_services.image_services import get_filename_thumb, get_relative_path_thumb, get_relative_path
+from plants.services.image_services_simple import get_filename_thumb, get_relative_path_thumb, get_relative_path
 from plants.util.filename_utils import find_jpg_files
 from plants.util.image_utils import generate_thumbnail
 
@@ -25,7 +24,6 @@ class PhotoDirectory:
     def __init__(self,
                  root_folder: Path = config.path_original_photos):
         self.root_folder: Path = root_folder
-        self.latest_image_dates: Dict[str, ImageInfo] = {}  # todo reactivate
         self.photos: List[Photo] = []
         self.files_already_generated: list[str] = []
 
@@ -63,9 +61,9 @@ class PhotoDirectory:
 
     def _generate_images(self):
         # todo move to file upload and to new 'repair function'
-        """generates photo_file derivatives (resized & thumbnail) for each original photo_file file if not already exists;
-        adds relative paths to these generated images to directory (i.e. to the list of dicts (one dict for each
-        photo_file file))"""
+        """generates photo_file derivatives (resized & thumbnail) for each original photo_file file if not
+        already exists; adds relative paths to these generated images to directory (i.e. to the list of dicts (one
+        dict for each photo_file file))"""
         for photo in self.photos:
             photo.generate_thumbnails(self.files_already_generated)
 
@@ -157,14 +155,6 @@ class Photo:
                                    size=config.size_thumbnail_image,
                                    path_thumbnail=config.path_generated_thumbnails)
 
-    def rename_tagged_plant(self, plant_name_old: str, plant_name_new: str):
-        """rename a tagged plant, both in file and in images directory; preserves last modified date of photo_file
-        file """
-        self.plants.remove(plant_name_old)
-        self.plants.append(plant_name_new)
-
-        # PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=self.absolute_path, plants=self.plants)
-
 
 class PhotoFactoryDatabase:
     """photo_file object factory reading from database"""
@@ -240,3 +230,8 @@ class PhotoFactoryLocalFiles:
                 keywords=metadata.keywords,
                 plants=metadata.plant_names)
         return photo
+
+
+class ImageInfo(NamedTuple):
+    date: datetime.date
+    path: PurePath

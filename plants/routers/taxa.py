@@ -114,7 +114,8 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
             taxon_modified.images else []
         for image_obj in taxon.images:
             if image_obj.relative_path not in path_originals_saved:
-                # don't delete photo_file object, but only the association (photo_file might be assigned to other events)
+                # don't delete photo_file object, but only the association
+                # (photo_file might be assigned to other events)
                 db.delete([link for link in taxon.image_to_taxon_associations if
                            link.image.relative_path == image_obj.relative_path][0])
 
@@ -127,12 +128,6 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
                 # not assigned to any event, yet
                 if not image_obj:
                     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
-
-                    # # image_obj = Image(relative_path=image.path_original)
-                    # image_obj = Image(relative_path=image.relative_path,
-                    #                   last_update=datetime.now())
-                    # db.add(image_obj)
-                    # db.flush()  # required to obtain id
 
                 # update link table including the photo_file description
                 current_taxon_to_image_link = [t for t in taxon.image_to_taxon_associations if t.image == image_obj]

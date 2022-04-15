@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, Session
 from plants import config
 from plants.extensions.db import Base
 from plants.models.plant_models import Plant
-from plants.simple_services.image_services import get_filename_thumb, get_relative_path_thumb
+from plants.services.image_services_simple import get_filename_thumb, get_relative_path_thumb
 from plants.util.ui_utils import throw_exception
 
 
@@ -29,6 +29,11 @@ class ImageToPlantAssociation(Base):
     __tablename__ = 'image_to_plant_association'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True, nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'), primary_key=True, nullable=False)
+
+    # silence warnings for deletions of associated entities (image has image_to_plant_association and plants)
+    __mapper_args__ = {
+        "confirm_deleted_rows": False,
+        }
 
     image = relationship(
             "Image",
@@ -112,6 +117,11 @@ class ImageToEventAssociation(Base):
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
     event_id = Column(INTEGER, ForeignKey('event.id'), primary_key=True)
 
+    # silence warnings for deletions of associated entities (image has image_to_event_association and events)
+    __mapper_args__ = {
+        "confirm_deleted_rows": False,
+        }
+
     image = relationship('Image',
                          back_populates='image_to_event_associations',
                          overlaps="events"  # silence warnings
@@ -128,6 +138,11 @@ class ImageToTaxonAssociation(Base):
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'), primary_key=True)
 
     description = Column(TEXT)
+
+    # silence warnings for deletions of associated entities (image has image_to_taxa_association and taxa)
+    __mapper_args__ = {
+        "confirm_deleted_rows": False,
+        }
 
     image = relationship('Image',
                          back_populates='image_to_taxon_associations',
@@ -210,7 +225,7 @@ def update_image_if_altered(db: Session,
                                            if a.plant not in new_plants]
     added_image_to_plant_associations = [ImageToPlantAssociation(
             image=image,
-            plant=p,)
+            plant=p, )
         for p in new_plants if p not in image.plants]
     for removed_image_to_plant_association in removed_image_to_plant_associations:
         db.delete(removed_image_to_plant_association)

@@ -8,7 +8,7 @@ from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategoryWithTraits
-from plants.simple_services.image_services import get_path_for_taxon_thumbnail
+from plants.services.image_services_simple import get_path_for_taxon_thumbnail
 
 
 class PTaxonInfoRequest(BaseModel):
@@ -88,13 +88,13 @@ class PTaxonOccurrenceImage(BaseModel):
         allow_population_by_field_name = True  # populate model by both alias (default) and field name
 
     @validator("date")
-    def datetime_to_string(cls, v):
+    def datetime_to_string(cls, v):  # noqa
         """validator decorator makes this a class method and enforces cls param"""
         # return v.isoformat()
         return v.strftime("%Y-%m-%d")
 
     @validator("filename_thumbnail")
-    def get_path(cls, v):
+    def get_path(cls, v):  # noqa
         """validator decorator makes this a class method and enforces cls param"""
         return get_path_for_taxon_thumbnail(v)
 

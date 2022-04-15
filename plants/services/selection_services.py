@@ -8,7 +8,6 @@ from plants.models.plant_models import Plant
 
 def build_taxon_tree(db: Session) -> List:
     # build up an exists filter that we're gonna reuse
-    # exists_filter = Taxon.plants.any(and_(or_(Plant.hide.is_(None), Plant.hide is False), Plant.active is True))
     plant_exists_filter = and_(or_(Plant.hide.is_(None), Plant.hide.is_(False)), Plant.active)
     exists_filter = Taxon.plants.any(plant_exists_filter)
 

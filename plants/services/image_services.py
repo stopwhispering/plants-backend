@@ -1,5 +1,6 @@
 from typing import List
 import logging
+import os
 
 import aiofiles
 from fastapi import UploadFile
@@ -11,35 +12,13 @@ from plants.models.plant_models import Plant
 from plants.constants import RESIZE_SUFFIX
 
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.simple_services.image_services import resizing_required, get_relative_path
+from plants.services.image_services_simple import resizing_required, get_relative_path
 from plants.util.exif_utils import read_record_datetime_from_exif_tags
 from plants.util.filename_utils import with_suffix
 from plants.util.image_utils import resize_image, generate_thumbnail
+from plants.util.ui_utils import throw_exception
 
 logger = logging.getLogger(__name__)
-
-
-# def get_distinct_keywords_from_image_files() -> Set[str]:
-#     """
-#     get set of all keywords from all the images in the directory
-#     """
-#     with lock_photo_directory:
-#         photo_directory = get_photo_directory()
-#
-#         # get flattening generator and create set of distinct keywords
-#         keywords_nested_gen = (photo.keywords for photo in photo_directory.photos if photo.keywords)
-#         return set(chain.from_iterable(keywords_nested_gen))
-
-
-# def _get_photos_by_plant_name(plant_name: str) -> Generator[Photo, None, None]:
-#     """
-#     returns generator of photo_file entries from photo_file directory tagging supplied plant name
-#     """
-#     with lock_photo_directory:
-#         photo_directory = get_photo_directory()
-#         return (p for p in photo_directory.photos if plant_name in p.plants)
-#     # isinstance(p.plants, list) and plant_name in p.plants]
-
 
 
 def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
@@ -52,24 +31,6 @@ def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
         plant_names = [p.plant_name for p in image.plants]
         PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
                                                                 plants=plant_names)
-
-    # # get the relevant images from the photo_file directory cache
-    # photos = _get_photos_by_plant_name(plant_name_old)
-    # count_modified = 0
-    # if not photos:
-    #     logger.info(f'No photo_file tag to change for {plant_name_old}.')
-    #
-    # photo: Photo
-    # for photo in photos:
-    #     # double check
-    #     if plant_name_old in photo.plants:
-    #         logger.info(f"Switching plant_names tag in jpg image exif tags: {photo.absolute_path}")
-    #         photo.rename_tagged_plant(plant_name_old=plant_name_old, plant_name_new=plant.plant_name)
-    #
-    #         PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=photo.absolute_path,
-    #                                                                 plants=photo.plants)
-    #
-    #         count_modified += 1
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
     return len(plant.images)
@@ -129,3 +90,42 @@ async def save_image_files(files: List[UploadFile],
         images.append(image)
 
     return images
+
+
+def delete_image_file_and_db_entries(image: Image, db: Session):
+    """delete image file and entries in db"""
+    if image.image_to_event_associations:
+        logger.info(f'Deleting {len(image.image_to_event_associations)} associated Image to Event associations.')
+        [db.delete(a) for a in image.image_to_event_associations]
+        image.events = []
+    if image.image_to_plant_associations:
+        logger.info(f'Deleting {len(image.image_to_plant_associations)} associated Image to Plant associations.')
+        [db.delete(a) for a in image.image_to_plant_associations]
+        image.plants = []
+    if image.image_to_taxon_associations:
+        logger.info(f'Deleting {len(image.image_to_taxon_associations)} associated Image to Taxon associations.')
+        [db.delete(a) for a in image.image_to_taxon_associations]
+        image.taxa = []
+    if image.keywords:
+        logger.info(f'Deleting {len(image.keywords)} associated Keywords.')
+        [db.delete(k) for k in image.keywords]
+    db.delete(image)
+    # we're committing at the end if deletion works; in case of a problem, flushing will raise exception
+    # in most situations, too
+    db.flush()
+
+    old_path = image.absolute_path
+    if not old_path.is_file():
+        logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
+        throw_exception(err_msg)
+
+    new_path = config.path_deleted_photos.joinpath(old_path.name)
+    try:
+        os.replace(src=old_path,
+                   dst=new_path)  # silently overwrites if privileges are sufficient
+    except OSError as e:
+        logger.error(err_msg := f'OSError when moving file {old_path} to {new_path}', exc_info=e)
+        throw_exception(err_msg, description=f'Filename: {old_path.name}')
+    logger.info(f'Moved file {old_path} to {new_path}')
+
+    db.commit()
