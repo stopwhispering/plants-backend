@@ -8,8 +8,14 @@ from plants.models.image_models import get_image_by_relative_path, create_image,
 from plants.models.plant_models import Plant
 from plants.deprecated.photo_directory import get_photo_directory, PhotoDirectory
 
-logging.basicConfig(level=logging.INFO)
+
+# logging.basicConfig(level=logging.INFO)
+from plants.util.logger_utils import configure_root_logger
+
+configure_root_logger(log_severity_console=logging.INFO, log_severity_file=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+
 
 all_plants_names_not_found_in_db = []
 
@@ -33,6 +39,13 @@ def _add_plants(plant_names: list[str], db: Session, image: Image):
 def _import(photo_directory: PhotoDirectory, db: Session):
     for photo_file in photo_directory.photos:
         logger.info(photo_file.relative_path)
+        logger.debug(photo_file.description)
+        logger.debug(photo_file.keywords)
+        logger.debug(photo_file.plants)
+        logger.debug(photo_file.record_date_time)
+        logger.debug(photo_file.relative_path_thumb)
+        logger.debug(photo_file.absolute_path)
+        logger.debug(photo_file.filename)
         image_db: Image = get_image_by_relative_path(relative_path=photo_file.relative_path, db=db)
 
         # create new image in db

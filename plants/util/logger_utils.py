@@ -11,6 +11,9 @@ def configure_root_logger(log_severity_console,
 
     # create file handler
     file_handler = logging.FileHandler('plants.log')
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
     file_handler.setLevel(log_severity_file)
     # format_file = '%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s'
     # file_handler.setFormatter(logging.Formatter(format_file))
