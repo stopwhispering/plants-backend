@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 #     # isinstance(p.plants, list) and plant_name in p.plants]
 
 
+
 def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
     """
     in each photo_file file that has the old plant name tagged, fit tag to the new plant name

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 all_plants_names_not_found_in_db = []
 
 
-def _add_plants(plant_names: list[str], db: Session,  image: Image):
+def _add_plants(plant_names: list[str], db: Session, image: Image):
     plants = [Plant.get_plant_by_plant_name(plant_name=plant_name,
                                             db=db) for plant_name in plant_names]
     indices_not_found = [i for i, v in enumerate(plants) if v is None]
@@ -32,16 +32,17 @@ def _add_plants(plant_names: list[str], db: Session,  image: Image):
 
 def _import(photo_directory: PhotoDirectory, db: Session):
     for photo_file in photo_directory.photos:
+        logger.info(photo_file.relative_path)
         image_db: Image = get_image_by_relative_path(relative_path=photo_file.relative_path, db=db)
 
         # create new image in db
         if not image_db:
             logger.debug(f'Adding to db: {photo_file.relative_path} with {len(photo_file.keywords)} keywords.')
             image_db = create_image(db=db,
-                                 relative_path=photo_file.relative_path,
-                                 record_date_time=photo_file.record_date_time,
-                                 description=photo_file.description,
-                                 keywords=photo_file.keywords)
+                                    relative_path=photo_file.relative_path,
+                                    record_date_time=photo_file.record_date_time,
+                                    description=photo_file.description,
+                                    keywords=photo_file.keywords)
             _add_plants(plant_names=photo_file.plants, db=db, image=image_db)
 
         # upate missing entries
