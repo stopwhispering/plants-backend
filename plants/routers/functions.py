@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends
 import logging
 
@@ -58,22 +60,22 @@ async def find_photo_files_missing_in_db(db: Session = Depends(get_db)):
         photo_from_db = [p for p in photos_from_db if p.relative_path == photo_from_file.relative_path][0]
         if (photo_from_file.description != photo_from_db.description
                 and (photo_from_file.description or photo_from_db.description)):
-            different_descriptions[photo_from_file.relative_path] = {
+            different_descriptions[photo_from_file.relative_path.as_posix()] = {
                 'file': photo_from_file.description,
                 'db': photo_from_db.description
                 }
         if photo_from_file.record_date_time != photo_from_db.record_date_time:
-            different_record_dates[photo_from_file.relative_path] = {
+            different_record_dates[photo_from_file.relative_path.as_posix()] = {
                 'file': photo_from_file.record_date_time,
                 'db': photo_from_db.record_date_time
                 }
         if set(photo_from_file.plants) != set(photo_from_db.plants):
-            different_plants[photo_from_file.relative_path] = {
+            different_plants[photo_from_file.relative_path.as_posix()] = {
                 'file': photo_from_file.plants,
                 'db': photo_from_db.plants
                 }
         if set(photo_from_file.keywords) != set(photo_from_db.keywords):
-            different_keywords[photo_from_file.relative_path] = {
+            different_keywords[photo_from_file.relative_path.as_posix()] = {
                 'file': photo_from_file.keywords,
                 'db': photo_from_db.keywords
                 }
@@ -92,5 +94,9 @@ async def find_photo_files_missing_in_db(db: Session = Depends(get_db)):
         }
 
     make_dict_values_json_serializable(results)
+
+    json_string = json.dumps(results)
+    with open('comparison_results_db_exif.json', 'w') as outfile:
+        outfile.write(json_string)
 
     return results
