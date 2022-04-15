@@ -170,6 +170,9 @@ def create_image(db: Session,
                  keywords: Sequence[str] = (),
                  # events and taxa are saved elsewhere
                  ) -> Image:
+    if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
+        raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')
+
     image = Image(relative_path=relative_path.as_posix(),
                   record_date_time=record_date_time,
                   description=description,

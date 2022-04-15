@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import PurePath
 
 from fastapi import APIRouter, Depends
@@ -127,11 +126,13 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
 
                 # not assigned to any event, yet
                 if not image_obj:
-                    # image_obj = Image(relative_path=image.path_original)
-                    image_obj = Image(relative_path=image.relative_path,
-                                      last_update=datetime.now())
-                    db.add(image_obj)
-                    db.flush()  # required to obtain id
+                    raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
+
+                    # # image_obj = Image(relative_path=image.path_original)
+                    # image_obj = Image(relative_path=image.relative_path,
+                    #                   last_update=datetime.now())
+                    # db.add(image_obj)
+                    # db.flush()  # required to obtain id
 
                 # update link table including the photo_file description
                 current_taxon_to_image_link = [t for t in taxon.image_to_taxon_associations if t.image == image_obj]
