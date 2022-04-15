@@ -210,8 +210,7 @@ def update_image_if_altered(db: Session,
                                            if a.plant not in new_plants]
     added_image_to_plant_associations = [ImageToPlantAssociation(
             image=image,
-            plant=p,
-            created_at=datetime.now())
+            plant=p,)
         for p in new_plants if p not in image.plants]
     for removed_image_to_plant_association in removed_image_to_plant_associations:
         db.delete(removed_image_to_plant_association)
