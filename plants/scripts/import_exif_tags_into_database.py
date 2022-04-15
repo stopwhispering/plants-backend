@@ -89,6 +89,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
                 logger.error(f'Missing plants in file for {photo_file.relative_path}: {missing_plant_names_in_file}. '
                              f'(file:{photo_file_plant_names}/db:{image_db_plant_names}). Doing nothing')
 
+        photo_file.keywords = [k.strip() for k in photo_file.keywords]
         duplicate_keywords = [kw for kw, count in Counter(photo_file.keywords).items() if count > 1]
         if duplicate_keywords:
             new_keywords = list(set(photo_file.keywords))
