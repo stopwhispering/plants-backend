@@ -38,9 +38,21 @@ def _add_plants(plant_names: list[str], db: Session, image: Image):
         add_plants_to_image(image=image, plants=plants, db=db)
 
 
+def _treat_duplicates(photo_file_keywords: list[str], photo_file_relative_path: str):
+    duplicate_keywords = [kw for kw, count in Counter(photo_file_keywords).items() if count > 1]
+    if duplicate_keywords:
+        new_keywords = list(set(photo_file_keywords))
+        logger.warning(
+                f'Found keyword duplicates for image {photo_file_relative_path}. Keywords in exif tags: '
+                f'{photo_file_keywords}. Assuming {new_keywords} for file.')
+        return new_keywords
+    else:
+        return photo_file_keywords
+
+
 def _import(photo_directory: PhotoDirectory, db: Session):
     for photo_file in photo_directory.photos:
-        logger.info(photo_file.relative_path)
+        logger.debug(photo_file.relative_path)
         logger.debug(photo_file.description)
         logger.debug(photo_file.keywords)
         logger.debug(photo_file.plants)
@@ -53,6 +65,8 @@ def _import(photo_directory: PhotoDirectory, db: Session):
         # create new image in db
         if not image_db:
             logger.debug(f'Adding to db: {photo_file.relative_path} with {len(photo_file.keywords)} keywords.')
+            photo_file.keywords = [k.strip() for k in photo_file.keywords]
+            photo_file.keywords = _treat_duplicates(photo_file.keywords, photo_file.relative_path.as_posix())
             image_db = create_image(db=db,
                                     relative_path=photo_file.relative_path,
                                     record_date_time=photo_file.record_date_time,
@@ -91,12 +105,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
                              f'(file:{photo_file_plant_names}/db:{image_db_plant_names}). Doing nothing')
 
         photo_file.keywords = [k.strip() for k in photo_file.keywords]
-        duplicate_keywords = [kw for kw, count in Counter(photo_file.keywords).items() if count > 1]
-        if duplicate_keywords:
-            new_keywords = list(set(photo_file.keywords))
-            logger.warning(f'Found keyword duplicates for image {photo_file.relative_path}. Keywords in exif tags: '
-                           f'{photo_file.keywords}. Assuming {new_keywords} for file.')
-            photo_file.keywords = new_keywords
+        photo_file.keywords = _treat_duplicates(photo_file.keywords, photo_file.relative_path.as_posix())
         if set(photo_file.keywords) != set(k.keyword for k in image_db.keywords):
             image_db_keywords = set(k.keyword for k in image_db.keywords)
             photo_file_keywords = set(p for p in photo_file.keywords)
@@ -112,7 +121,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
             missing_keywords_in_file = [p for p in image_db_keywords if p not in photo_file_keywords]
             if missing_keywords_in_file:
                 logger.error(f'Missing keywords in file for {photo_file.relative_path}: {missing_keywords_in_file}. '
-                             f'(file:{photo_file_keywords}/db:{image_db_keywords}). Doing nothing.')
+                             f'(file:{photo_file.keywords}/db:{image_db_keywords}). Doing nothing.')
 
 
 if __name__ == '__main__':
