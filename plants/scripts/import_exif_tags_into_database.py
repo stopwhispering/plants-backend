@@ -96,7 +96,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
             logger.warning(f'Found keyword duplicates for image {photo_file.relative_path}. Keywords in exif tags: '
                            f'{photo_file.keywords}. Assuming {new_keywords}.')
             photo_file.keywords = new_keywords
-        if photo_file.keywords != [k.keyword for k in image_db.keywords]:
+        if set(photo_file.keywords) != set(k.keyword for k in image_db.keywords):
             image_db_keywords = set(k.keyword for k in image_db.keywords)
             photo_file_keywords = set(p for p in photo_file.keywords)
             missing_keywords_in_db = [p for p in photo_file_keywords if p not in image_db_keywords]
