@@ -1,6 +1,7 @@
 import logging
 from collections import Counter
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from plants.dependencies import get_db
@@ -94,7 +95,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
         if duplicate_keywords:
             new_keywords = list(set(photo_file.keywords))
             logger.warning(f'Found keyword duplicates for image {photo_file.relative_path}. Keywords in exif tags: '
-                           f'{photo_file.keywords}. Assuming {new_keywords}.')
+                           f'{photo_file.keywords}. Assuming {new_keywords} for file.')
             photo_file.keywords = new_keywords
         if set(photo_file.keywords) != set(k.keyword for k in image_db.keywords):
             image_db_keywords = set(k.keyword for k in image_db.keywords)
@@ -103,7 +104,11 @@ def _import(photo_directory: PhotoDirectory, db: Session):
             if missing_keywords_in_db:
                 logger.debug(f'Missing keywords in db for {photo_file.relative_path}: {missing_keywords_in_db}. '
                              f'Adding them.')
-                add_keywords_to_image(image=image_db, keywords=missing_keywords_in_db, db=db)
+                try:
+                    add_keywords_to_image(image=image_db, keywords=missing_keywords_in_db, db=db)
+                except IntegrityError as e:
+                    logger.error(f'IntegrityError at: {photo_file.relative_path}')
+                    raise e
             missing_keywords_in_file = [p for p in image_db_keywords if p not in photo_file_keywords]
             if missing_keywords_in_file:
                 logger.error(f'Missing keywords in file for {photo_file.relative_path}: {missing_keywords_in_file}. '
