@@ -164,6 +164,7 @@ def get_plant_as_dict(plant: Plant):
 
     as_dict['parent_plant'] = plant.parent_plant.plant_name if plant.parent_plant else None
     as_dict['parent_plant_pollen'] = plant.parent_plant_pollen.plant_name if plant.parent_plant_pollen else None
+    # as_dict['descendant_plants'] = []
     as_dict['descendant_plants'] = [{
         'plant_name': p.plant_name,
         'id':         p.id,

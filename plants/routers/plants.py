@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,  subqueryload
 import logging
 import datetime
 from starlette.requests import Request
 
 from plants import config
+from plants.models.taxon_models import Taxon
 from plants.util.ui_utils import (make_list_items_json_serializable, get_message, throw_exception,
                                   make_dict_values_json_serializable)
 from plants.dependencies import get_db
@@ -60,7 +61,14 @@ async def get_plants(db: Session = Depends(get_db)):
     if config.n_plants:
         query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
-    plants_obj = query.all()
+    # save around 30% of time using subqueryload instead of lazyload (default)
+    plants_obj = query.options(subqueryload(Plant.parent_plant).subqueryload(Plant.descendant_plants),
+                               subqueryload(Plant.parent_plant_pollen).subqueryload(Plant.descendant_plants),
+                               subqueryload(Plant.taxon).subqueryload(Taxon.plants),
+                               subqueryload(Plant.tags),
+                               subqueryload(Plant.events),
+                               subqueryload(Plant.images),
+                               ).all()
     plants_list = [get_plant_as_dict(p) for p in plants_obj]
 
     make_list_items_json_serializable(plants_list)

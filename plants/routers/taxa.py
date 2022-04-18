@@ -3,9 +3,10 @@ from pathlib import PurePath
 from fastapi import APIRouter, Depends
 import logging
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
+from plants.models.trait_models import TaxonToTraitAssociation
 from plants.util.ui_utils import throw_exception, get_message
 from plants import config
 from plants.util.path_utils import get_thumbnail_relative_path_for_relative_path
@@ -26,11 +27,18 @@ router = APIRouter(
 
 
 @router.get("/", response_model=PResultsGetTaxa)
-async def get_taxa(
+def get_taxa(
         db: Session = Depends(get_db)
         ):
     """returns taxa from taxon database table"""
-    taxa: List[Taxon] = db.query(Taxon).all()
+    # taxa: List[Taxon] = db.query(Taxon).all()
+    taxa: List[Taxon] = db.query(Taxon).options(subqueryload(Taxon.taxon_to_trait_associations).subqueryload(
+                                                    TaxonToTraitAssociation.trait),
+                                                subqueryload(Taxon.images),
+                                                subqueryload(Taxon.image_to_taxon_associations).subqueryload(
+                                                    ImageToTaxonAssociation.image),
+                                                subqueryload(Taxon.occurence_images)
+                                                ).all()
     taxon_dict = {}
     for taxon in taxa:
         taxon_dict[taxon.id] = taxon.as_dict()
