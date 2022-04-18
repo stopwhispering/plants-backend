@@ -17,6 +17,6 @@ Wikidata
 requests
 python-multipart
 toml
-pandas
-matplotlib
+# pandas
+# matplotlib
 python-dotenv
