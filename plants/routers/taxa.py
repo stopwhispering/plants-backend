@@ -27,7 +27,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=PResultsGetTaxa)
-def get_taxa(
+async def get_taxa(
         db: Session = Depends(get_db)
         ):
     """returns taxa from taxon database table"""

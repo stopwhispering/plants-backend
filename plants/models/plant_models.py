@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-# from pathlib import PurePath
+from operator import attrgetter
+from pathlib import PurePath
 from typing import Optional, List
 from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
 from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import foreign, remote  # noqa
 import logging
 import datetime
 
@@ -11,6 +13,7 @@ from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
+from plants.services.image_services_simple import get_previewimage_rel_path, generate_previewimage_if_not_exists
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
@@ -84,97 +87,92 @@ class Plant(Base, OrmUtil):
     # plant to plant property values: 1:n
     property_values_plant: List[PropertyValue] = relationship("PropertyValue", back_populates="plant")
 
+    @property
+    def url_preview(self) -> PurePath:
+        if self.filename_previewimage:
+            rel_path_gen = get_previewimage_rel_path(PurePath(self.filename_previewimage))
+            # there is a huge problem with the slashes
+            # return json.dumps(rel_path_gen.as_posix())[1:-1]
+            # return rel_path_gen.as_posix()[1:-1]
+            return rel_path_gen
+
+    @property
+    def descendant_plants_all(self) -> list[Plant]:
+        return self.descendant_plants + self.descendant_plants_pollen
+
+    # todo use instead of code in as_dict()
+    sibling_plants: list[Plant] = relationship(
+            "Plant",
+            primaryjoin="(foreign(Plant.parent_plant_id) == remote(Plant.parent_plant_id)) & "
+                        "("
+                        "   ("
+                        "       (foreign(Plant.parent_plant_pollen_id.is_(None))) & "
+                        "       (remote(Plant.parent_plant_pollen_id.is_(None)))"
+                        "   ) | ("
+                        "       (foreign(Plant.parent_plant_pollen_id) == remote(Plant.parent_plant_pollen_id)) "
+                        "   )"
+                        ") & "
+                        "(foreign(Plant.id) != remote(Plant.id)) ",
+            foreign_keys='Plant.parent_plant_id',
+            viewonly=True,
+            uselist=True
+            )
+
+    same_taxon_plants: list[Plant] = relationship(
+            "Plant",
+            # primaryjoin="Plant.taxon_id == Plant.taxon_id",  # works
+            # primaryjoin="foreign(Plant.taxon_id) == remote(Plant.taxon_id)",  # works
+            # primaryjoin="and_(foreign(Plant.taxon_id) == remote(Plant.taxon_id), foreign(Plant.id) != remote("
+            #             "Plant.id))",  # works
+            primaryjoin="(~Plant.plant_name.contains('×')) & "
+                        "(foreign(Plant.taxon_id) == remote(Plant.taxon_id)) & "
+                        "(foreign(Plant.id) != remote(Plant.id))",
+            foreign_keys='Plant.taxon_id',
+            viewonly=True,
+            uselist=True
+            )
+
+    @property
+    def latest_image(self):
+        if self.images:
+            latest_image = max(self.images, key=attrgetter('record_date_time'))
+            return latest_image
+
+    @property
+    def current_soil(self) -> dict:
+        if soil_events := [e for e in self.events if e.soil]:
+            soil_events.sort(key=lambda e: e.date, reverse=True)
+            return {'soil_name': soil_events[0].soil.soil_name,
+                    'date':      soil_events[0].date}
+
+    @property
+    def botanical_name(self) -> str:
+        if self.taxon:
+            return self.taxon.name
+
+    @property
+    def taxon_authors(self) -> str:
+        if self.taxon:
+            return self.taxon.authors
+
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships
         merge descendant_plants_pollen into descendant_plants"""
         raise NotImplementedError('use get_plant_as_dict() instead')
-        # as_dict = super(Plant, self).as_dict()
-        # as_dict['parent_plant'] = self.parent_plant.plant_name if self.parent_plant else None
-        # as_dict['parent_plant_pollen'] = self.parent_plant_pollen.plant_name if self.parent_plant_pollen else None
-        # as_dict['descendant_plants'] = [{
-        #     'plant_name': p.plant_name,
-        #     'id':         p.id,
-        #     'active':     p.active
-        #     } for p in (self.descendant_plants + self.descendant_plants_pollen)]
-        #
-        # if self.parent_plant:
-        #     siblings = set(self.parent_plant.descendant_plants)
-        #     siblings.remove(self)
-        #     if self.parent_plant_pollen:
-        #         siblings_pollen = set(self.parent_plant_pollen.descendant_plants_pollen)
-        #         siblings_pollen.remove(self)
-        #         siblings = siblings.intersection(siblings_pollen)
-        #     else:
-        #         siblings = [p for p in siblings if not p.parent_plant_pollen]
-        #     as_dict['sibling_plants'] = [{
-        #         'plant_name': p.plant_name,
-        #         'id':         p.id,
-        #         'active':     p.active
-        #         } for p in siblings]
-        #
-        # # add botanical name, author, and plants of same taxon
-        # if self.taxon:
-        #     as_dict['botanical_name'] = self.taxon.name
-        #     as_dict['taxon_authors'] = self.taxon.authors
-        #
-        #     if 'hybr' not in self.taxon.name:
-        #         same_taxon_plants = self.taxon.plants.copy()
-        #         same_taxon_plants.remove(self)
-        #         as_dict['same_taxon_plants'] = [{
-        #             'plant_name': p.plant_name,
-        #             'id':         p.id,
-        #             'active':     p.active
-        #             } for p in same_taxon_plants]
-        #
-        # # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
-        # if self.propagation_type is None:
-        #     as_dict['propagation_type'] = ''
-        #
-        # # add path to preview photo_file
-        # if self.filename_previewimage:  # supply relative path of original photo_file
-        #     rel_path_gen = generate_previewimage_get_rel_path(PurePath(self.filename_previewimage))
-        #     # there is a huge problem with the slashes
-        #     as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
-        # else:
-        #     as_dict['url_preview'] = None
-        #
-        # # add tags
-        # if self.tags:
-        #     as_dict['tags'] = [t.as_dict() for t in self.tags]
-        #
-        # # add current soil
-        # if soil_events := [e for e in self.events if e.soil]:
-        #     soil_events.sort(key=lambda e: e.date, reverse=True)
-        #     as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
-        #                                'date':      soil_events[0].date}
-        # else:
-        #     as_dict['current_soil'] = None
-        #
-        # # get latest photo_file record date per plant
-        # with lock_photo_directory:
-        #     photo_directory = get_photo_directory()
-        #
-        #     if latest_image := photo_directory.get_latest_date_per_plant(self.plant_name):
-        #         as_dict['latest_image'] = {'path':                latest_image.path,
-        #                                    'relative_path_thumb': latest_image.path_thumb,
-        #                                    'date':                latest_image.date}
-        #     else:
-        #         as_dict['latest_image_record_date'] = NULL_DATE
-        #         as_dict['latest_image'] = None
-        #
-        # return as_dict
 
-    def set_parent_plant(self, db: Session, parent_plant_name: str = None):
-        if parent_plant_name:
-            self.parent_plant_id = self.get_plant_id_by_plant_name(parent_plant_name, db)
-        else:
-            self.parent_plant_id = None
+    # # todo still required?
+    # def set_parent_plant(self, db: Session, parent_plant_name: str = None):
+    #     if parent_plant_name:
+    #         self.parent_plant_id = self.get_plant_id_by_plant_name(parent_plant_name, db)
+    #     else:
+    #         self.parent_plant_id = None
 
-    def set_parent_plant_pollen(self, db: Session, parent_plant_pollen_name: str = None):
-        if parent_plant_pollen_name:
-            self.parent_plant_pollen_id = self.get_plant_id_by_plant_name(parent_plant_pollen_name, db)
-        else:
-            self.parent_plant_pollen_id = None
+    # # todo still required?
+    # def set_parent_plant_pollen(self, db: Session, parent_plant_pollen_name: str = None):
+    #     if parent_plant_pollen_name:
+    #         self.parent_plant_pollen_id = self.get_plant_id_by_plant_name(parent_plant_pollen_name, db)
+    #     else:
+    #         self.parent_plant_pollen_id = None
 
     def set_filename_previewimage(self, plant: Optional[PPlant] = None):
         """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
@@ -184,12 +182,14 @@ class Plant(Base, OrmUtil):
             self.filename_previewimage = None
             return
 
+        generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
+
         # the photos-subdir may be part of the supplied path
         # but need not (depending on whether already saved)
         # todo: there seems to be a bug when plant.filename_previewimage.is_relative_to
         # todo: raises AttributeError: 'PosixPath' object has no attribute 'is_relative_to'
-        logger.warning(f'plant.filename_previewimage: {plant.filename_previewimage}')
-        logger.warning(f'type: {type(plant.filename_previewimage)}')
+        # logger.warning(f'plant.filename_previewimage: {plant.filename_previewimage}')
+        # logger.warning(f'type: {type(plant.filename_previewimage)}')
         if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
             self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
         else:

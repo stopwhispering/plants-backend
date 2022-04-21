@@ -1,47 +1,43 @@
 import datetime
 import logging
-from operator import attrgetter
-from pathlib import PurePath
 from typing import List, Optional
-import json
 
-from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from datetime import datetime
 from datetime import date
 
-from plants.models.image_models import ImageKeyword, Image
+from plants.models.image_models import ImageKeyword
 from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
-from plants.services.image_services_simple import generate_previewimage_get_rel_path
 from plants.services.tag_services import tag_modified, update_tag
-from plants.validation.plant_validation import PPlant, PPlantTag
+from plants.util.ui_utils import throw_exception
+from plants.validation.plant_validation import PPlantTag, PPlant
 
 logger = logging.getLogger(__name__)
 
 
 def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[Plant]:
-
     new_list = []
     plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
-        record_update = Plant.get_plant_by_plant_name(plant.plant_name, db)
-        if boo_new := False if record_update else True:
-            if [r for r in new_list if isinstance(r, Plant) and r.plant_name == plant.plant_name]:
-                continue  # same plant in multiple new records
-            # create new record (as object) & add to list later)
+        if plant.id is None:
             record_update = Plant(plant_name=plant.plant_name)
-            logger.info(f'Saving new plant {plant.plant_name}')
+            if [r for r in new_list if isinstance(r, Plant) and r.plant_name == plant.plant_name]:
+                # continue  # same plant in multiple new records
+                throw_exception('Plant Name supplied multiple times.')
+            if Plant.get_plant_by_plant_name(plant.plant_name, db):
+                throw_exception('Plant Name already exists.')
+                record_update = Plant(plant_name=plant.plant_name)
+                logger.info(f'Creating new plant {plant.plant_name}')
+            new_list.append(record_update)
+        else:
+            record_update = Plant.get_plant_by_plant_id(plant.id, db)
 
-        # catch key errors (new entries don't have all keys in the dict)
-        record_update.plant_name = plant.plant_name   # key is always supplied
+        record_update.plant_name = plant.plant_name   # pseudo-key, is always supplied
         record_update.active = plant.active
         record_update.cancellation_reason = plant.cancellation_reason
-        if type(plant.cancellation_date) == str:
-            record_update.cancellation_date = datetime.strptime(plant.cancellation_date, '%Y-%m-%d')
-        else:
-            record_update.cancellation_date = plant.cancellation_date
+        record_update.cancellation_date = plant.cancellation_date
 
         record_update.field_number = plant.field_number
         record_update.geographic_origin = plant.geographic_origin
@@ -50,10 +46,8 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
         record_update.generation_notes = plant.generation_notes
         record_update.plant_notes = plant.plant_notes
 
-        # parent_plant_id is still the old one if changed; but parent_plant the new parent plant
-        # in db, we only persist the parent plant id
-        record_update.set_parent_plant(db, parent_plant_name=plant.parent_plant)
-        record_update.set_parent_plant_pollen(db, parent_plant_pollen_name=plant.parent_plant_pollen)
+        record_update.parent_plant_id = plant.parent_plant.id if plant.parent_plant else None
+        record_update.parent_plant_pollen_id = plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         record_update.set_filename_previewimage(plant=plant)
         record_update.set_taxon(db=db, taxon_id=plant.taxon_id)
         record_update.set_last_update()
@@ -63,8 +57,6 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
         new_list.extend(new_tags)
 
         plants_saved.append(record_update)
-        if boo_new:
-            new_list.append(record_update)
 
     if new_list:
         db.add_all(new_list)
@@ -155,86 +147,86 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
 
     return new_list
 
-
-def get_plant_as_dict(plant: Plant):
-    """add some additional fields to mixin's as_dict, especially from relationships
-    merge descendant_plants_pollen into descendant_plants"""
-    # does not include objects from relationships nor _sa_instance_state
-    as_dict = {c.key: getattr(plant, c.key) for c in inspect(plant).mapper.column_attrs}
-
-    as_dict['parent_plant'] = plant.parent_plant.plant_name if plant.parent_plant else None
-    as_dict['parent_plant_pollen'] = plant.parent_plant_pollen.plant_name if plant.parent_plant_pollen else None
-    # as_dict['descendant_plants'] = []
-    as_dict['descendant_plants'] = [{
-        'plant_name': p.plant_name,
-        'id':         p.id,
-        'active':     p.active
-        } for p in (plant.descendant_plants + plant.descendant_plants_pollen)]
-
-    if plant.parent_plant:
-        siblings = set(plant.parent_plant.descendant_plants)
-        siblings.remove(plant)
-        if plant.parent_plant_pollen:
-            siblings_pollen = set(plant.parent_plant_pollen.descendant_plants_pollen)
-            siblings_pollen.remove(plant)
-            siblings = siblings.intersection(siblings_pollen)
-        else:
-            siblings = [p for p in siblings if not p.parent_plant_pollen]
-        as_dict['sibling_plants'] = [{
-            'plant_name': p.plant_name,
-            'id':         p.id,
-            'active':     p.active
-            } for p in siblings]
-
-    # add botanical name, author, and plants of same taxon
-    if plant.taxon:
-        as_dict['botanical_name'] = plant.taxon.name
-        as_dict['taxon_authors'] = plant.taxon.authors
-
-        if 'hybr' not in plant.taxon.name:
-            same_taxon_plants = plant.taxon.plants.copy()
-            same_taxon_plants.remove(plant)
-            as_dict['same_taxon_plants'] = [{
-                'plant_name': p.plant_name,
-                'id':         p.id,
-                'active':     p.active
-                } for p in same_taxon_plants]
-
-    # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
-    if plant.propagation_type is None:
-        as_dict['propagation_type'] = ''
-
-    # add path to preview photo_file
-    if plant.filename_previewimage:  # supply relative path of original photo_file
-        rel_path_gen = generate_previewimage_get_rel_path(PurePath(plant.filename_previewimage))
-        # there is a huge problem with the slashes
-        as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
-    else:
-        as_dict['url_preview'] = None
-
-    # add tags
-    if plant.tags:
-        as_dict['tags'] = [t.as_dict() for t in plant.tags]
-
-    # add current soil
-    if soil_events := [e for e in plant.events if e.soil]:
-        soil_events.sort(key=lambda e: e.date, reverse=True)
-        as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
-                                   'date':      soil_events[0].date}
-    else:
-        as_dict['current_soil'] = None
-
-    # get latest image date
-    if plant.images:
-        latest_image: Image = max(plant.images, key=attrgetter('record_date_time'))
-        as_dict['latest_image'] = {'path':                latest_image.relative_path,
-                                   'relative_path_thumb': latest_image.relative_path_thumb,
-                                   'date':                latest_image.record_date_time}
-    else:
-        as_dict['latest_image_record_date'] = NULL_DATE  # todo why only here?
-        as_dict['latest_image'] = None
-
-    return as_dict
+#
+# def get_plant_as_dict(plant: Plant):
+#     """add some additional fields to mixin's as_dict, especially from relationships
+#     merge descendant_plants_pollen into descendant_plants"""
+#     # does not include objects from relationships nor _sa_instance_state
+#     as_dict = {c.key: getattr(plant, c.key) for c in inspect(plant).mapper.column_attrs}
+#
+#     as_dict['parent_plant'] = plant.parent_plant.plant_name if plant.parent_plant else None
+#     as_dict['parent_plant_pollen'] = plant.parent_plant_pollen.plant_name if plant.parent_plant_pollen else None
+#     # as_dict['descendant_plants'] = []
+#     as_dict['descendant_plants'] = [{
+#         'plant_name': p.plant_name,
+#         'id':         p.id,
+#         'active':     p.active
+#         } for p in (plant.descendant_plants + plant.descendant_plants_pollen)]
+#
+#     if plant.parent_plant:
+#         siblings = set(plant.parent_plant.descendant_plants)
+#         siblings.remove(plant)
+#         if plant.parent_plant_pollen:
+#             siblings_pollen = set(plant.parent_plant_pollen.descendant_plants_pollen)
+#             siblings_pollen.remove(plant)
+#             siblings = siblings.intersection(siblings_pollen)
+#         else:
+#             siblings = [p for p in siblings if not p.parent_plant_pollen]
+#         as_dict['sibling_plants'] = [{
+#             'plant_name': p.plant_name,
+#             'id':         p.id,
+#             'active':     p.active
+#             } for p in siblings]
+#
+#     # add botanical name, author, and plants of same taxon
+#     if plant.taxon:
+#         as_dict['botanical_name'] = plant.taxon.name
+#         as_dict['taxon_authors'] = plant.taxon.authors
+#
+#         if 'hybr' not in plant.taxon.name:
+#             same_taxon_plants = plant.taxon.plants.copy()
+#             same_taxon_plants.remove(plant)
+#             as_dict['same_taxon_plants'] = [{
+#                 'plant_name': p.plant_name,
+#                 'id':         p.id,
+#                 'active':     p.active
+#                 } for p in same_taxon_plants]
+#
+#     # overwrite None with empty string as workaround for some UI5 frontend bug with comboboxes
+#     if plant.propagation_type is None:
+#         as_dict['propagation_type'] = ''
+#
+#     # add path to preview photo_file
+#     if plant.filename_previewimage:  # supply relative path of original photo_file
+#         rel_path_gen = get_previewimage_rel_path(PurePath(plant.filename_previewimage))
+#         # there is a huge problem with the slashes
+#         as_dict['url_preview'] = json.dumps(rel_path_gen.as_posix())[1:-1]
+#     else:
+#         as_dict['url_preview'] = None
+#
+#     # add tags
+#     if plant.tags:
+#         as_dict['tags'] = [t.as_dict() for t in plant.tags]
+#
+#     # add current soil
+#     if soil_events := [e for e in plant.events if e.soil]:
+#         soil_events.sort(key=lambda e: e.date, reverse=True)
+#         as_dict['current_soil'] = {'soil_name': soil_events[0].soil.soil_name,
+#                                    'date':      soil_events[0].date}
+#     else:
+#         as_dict['current_soil'] = None
+#
+#     # get latest image date
+#     if plant.images:
+#         latest_image: Image = max(plant.images, key=attrgetter('record_date_time'))
+#         as_dict['latest_image'] = {'path':                latest_image.relative_path,
+#                                    'relative_path_thumb': latest_image.relative_path_thumb,
+#                                    'date':                latest_image.record_date_time}
+#     else:
+#         # as_dict['latest_image_record_date'] = NULL_DATE  # todo why only here?
+#         as_dict['latest_image'] = None
+#
+#     return as_dict
 
 
 def get_distinct_image_keywords(db: Session) -> set[str]:

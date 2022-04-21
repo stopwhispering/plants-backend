@@ -14,6 +14,7 @@ def get_generated_filename(filename_original: str, size: Sequence) -> str:
     """get the derivative filename of a resized photo_file file (when creating thumbnails, a common
     naming convention is applied that adds resolution as a suffix to the filename)
     """
+    # todo implement with pathlib
     suffix = f'{size[0]}_{size[1]}'
     filename_list = filename_original.split('.')
     filename_list.insert(-1, suffix)

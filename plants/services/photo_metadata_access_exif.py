@@ -6,6 +6,7 @@ import logging
 import piexif
 from piexif import InvalidImageDataError
 
+from plants import config
 from plants.util.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                     encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
                                     encode_record_date_time, set_modified_date)
@@ -154,11 +155,14 @@ class PhotoMetadataAccessExifTags:
             set_modified_date(absolute_path, modified_time_seconds)  # set access and modifide date
 
     @staticmethod
-    def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]) -> None:
+    def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]):
         """
         rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called
         in context of renaming)
         """
+        if not absolute_path.is_file() and config.log_ignore_missing_image_files:
+            return
+
         # we want to preserve the file's last-change-date
         modified_time_seconds = modified_date(absolute_path)  # seconds
 

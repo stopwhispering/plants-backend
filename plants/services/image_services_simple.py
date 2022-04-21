@@ -56,25 +56,28 @@ def get_path_for_taxon_thumbnail(filename: Path):
     return config.rel_path_photos_generated_taxon.joinpath(filename)
 
 
-def generate_previewimage_get_rel_path(original_image_rel_path: PurePath) -> Path:
+def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
     """
-    generates a preview photo_file for a plant's default photo_file if not exists, yet
-    returns the relative path to it
-    """
-    # get filename of preview photo_file and check if that file already exists
+     generates a preview image for a plant's default if it does not yet exist"""
     filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
                                                 size=config.size_preview_image)
-
-    path_full = config.path_photos_base.joinpath(original_image_rel_path)
+    path_full = config.path_photos_base.parent.joinpath(original_image_rel_path)
     path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
 
     if not path_generated.is_file():
-        if not config.log_ignore_missing_image_files:
-            logger.info('Preview Image: Generating the not-yet-existing preview photo_file.')
+        # if not config.log_ignore_missing_image_files:
+        #     logger.info('Preview Image: Generating the not-yet-existing preview photo_file.')
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
                            path_thumbnail=config.path_generated_thumbnails)
 
+
+def get_previewimage_rel_path(original_image_rel_path: PurePath) -> Path:
+    """
+    get plant's default photo_file's relative path
+    """
+    filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
+                                                size=config.size_preview_image)
     return config.rel_path_photos_generated.joinpath(filename_generated)
 
 

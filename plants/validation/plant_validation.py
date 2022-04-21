@@ -9,33 +9,6 @@ from plants.models.enums import PropagationType, CancellationReason, TagState
 from plants.validation.message_validation import PMessage
 
 
-class PPlantShort(BaseModel):
-    plant_name: str
-    id: int
-    active: bool
-
-    class Config:
-        extra = 'forbid'
-
-
-class PPlantLatestImage(BaseModel):
-    path: Path
-    relative_path_thumb: Path = Field(alias='path_thumb')
-    date: datetime
-
-    class Config:
-        extra = 'forbid'
-        allow_population_by_field_name = True
-
-
-class PPlantCurrentSoil(BaseModel):
-    soil_name: str
-    date: date
-
-    class Config:
-        extra = 'forbid'
-
-
 class PPlantTag(BaseModel):
     id: Optional[int]  # empty if new
     text: str
@@ -46,69 +19,7 @@ class PPlantTag(BaseModel):
     class Config:
         extra = 'forbid'
         use_enum_values = True
-
-
-class PPlant(BaseModel):
-    id: Optional[int]  # empty if new
-    plant_name: str
-    field_number: Optional[str]
-    geographic_origin: Optional[str]
-    nursery_source: Optional[str]
-    propagation_type: Optional[PropagationType]
-    active: bool
-    cancellation_reason: Optional[CancellationReason]  # only set if active == False
-    cancellation_date: Optional[Union[datetime, str]]  # only set if active == False
-    generation_notes: Optional[str]  # obsolete?
-    parent_plant_id: Optional[int]
-    parent_plant_pollen_id: Optional[int]
-    plant_notes: Optional[str]
-    filename_previewimage: Optional[Path]
-    hide: Optional[bool]  # i.e. deleted  todo: enforce True/False
-    last_update: Optional[datetime]  # empty if new
-    taxon_id: Optional[int]
-    parent_plant: Optional[str]
-    parent_plant_pollen: Optional[str]
-    descendant_plants: List[PPlantShort] = []
-    sibling_plants: List[PPlantShort] = []
-    same_taxon_plants: List[PPlantShort] = []
-    url_preview: Optional[str]
-    current_soil: Optional[PPlantCurrentSoil]
-    latest_image_record_date: Optional[date]  # actually used?
-    latest_image: Optional[PPlantLatestImage]
-    botanical_name: Optional[str]
-    taxon_authors: Optional[str]
-    tags: List[PPlantTag] = []
-
-    class Config:
-        extra = 'forbid'
-        use_enum_values = True  # populate model with enum values, rather than the raw enum
-
-
-class PResultsPlants(BaseModel):
-    action: str
-    resource: str
-    message: Optional[PMessage]
-    PlantsCollection: List[PPlant]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PPlantsUpdateRequest(BaseModel):
-    PlantsCollection: List[PPlant]
-
-    class Config:
-        extra = 'forbid'
-
-
-class PResultsPlantsUpdate(BaseModel):
-    action: str
-    resource: str
-    message: PMessage
-    plants: List[PPlant]
-
-    class Config:
-        extra = 'forbid'
+        orm_mode = True
 
 
 class PPlantsDeleteRequest(BaseModel):
@@ -126,4 +37,112 @@ class PPlantsRenameRequest(BaseModel):
         extra = 'forbid'
 
 
+class PPlantCurrentSoil(BaseModel):
+    soil_name: str
+    date: date
 
+    class Config:
+        extra = 'forbid'
+
+
+class PPlantLatestImage(BaseModel):
+    relative_path: Path = Field(alias='path')
+    relative_path_thumb: Path = Field(alias='path_thumb')
+    record_date_time: datetime = Field(alias='date')
+
+    class Config:
+        extra = 'forbid'
+        allow_population_by_field_name = True
+        orm_mode = True
+
+
+class PAssociatedPlantExtractForPlant(BaseModel):
+    id: int
+    plant_name: str
+    active: bool
+
+    class Config:
+        extra = 'forbid'
+        orm_mode = True
+
+
+class PAssociatedPlantExtractForPlantOptional(BaseModel):
+    id: int | None
+    plant_name: str | None
+    active: bool | None
+
+    class Config:
+        extra = 'forbid'
+        orm_mode = True
+
+
+class PPlant(BaseModel):
+    id: int | None  # None for new plants
+    plant_name: str
+    field_number: str | None
+    geographic_origin: str | None
+    nursery_source: str | None
+    propagation_type: PropagationType | None
+    active: bool
+    cancellation_reason: CancellationReason | None  # only set if active == False
+    cancellation_date: date | None  # only set if active == False
+    generation_notes: str | None
+    taxon_id: int | None
+    taxon_authors: str | None
+    botanical_name: str | None
+
+    # taxon: PTaxonExtractForPlant | None  # todo changed -> adapt frontend and usages
+
+    # parent_plant_id: int | None
+    # parent_plant: Optional[PAssociatedPlantExtractForPlantOptional] = 11
+    parent_plant: PAssociatedPlantExtractForPlantOptional | None
+    # parent_plant_pollen_id: int | None
+    # parent_plant_pollen: Optional[PAssociatedPlantExtractForPlantOptional] = 11
+    parent_plant_pollen: PAssociatedPlantExtractForPlantOptional | None
+    # todo
+            # changed -> adapt frontend and usages
+    plant_notes: str | None
+    filename_previewimage: Path | None  # todo rename/rework filename handling in frontend
+    hide: bool | None  # i.e. deleted  todo: enforce True/False
+    last_update: datetime | None  # None for new plants
+
+    descendant_plants_all: list[PAssociatedPlantExtractForPlant]  # todo rename to descendant_plants or adapt in fr.
+    sibling_plants: list[PAssociatedPlantExtractForPlant]
+    same_taxon_plants: list[PAssociatedPlantExtractForPlant]
+
+    url_preview: Path | None
+    current_soil: PPlantCurrentSoil | None
+    latest_image: PPlantLatestImage | None
+    tags: list[PPlantTag]
+
+    class Config:
+        extra = 'forbid'
+        use_enum_values = True  # populate model with enum values, rather than the raw enum
+        orm_mode = True
+
+
+class PResultsPlants(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    PlantsCollection: list[PPlant]
+
+    class Config:
+        extra = 'forbid'
+
+
+class PPlantsUpdateRequest(BaseModel):
+    PlantsCollection: list[PPlant]
+
+    class Config:
+        extra = 'forbid'
+
+
+class PResultsPlantsUpdate(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    plants: list[PPlant]
+
+    class Config:
+        extra = 'forbid'

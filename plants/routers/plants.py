@@ -1,22 +1,20 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session,  subqueryload
+from sqlalchemy.orm import Session, subqueryload
 import logging
 import datetime
 from starlette.requests import Request
 
 from plants import config
-from plants.models.taxon_models import Taxon
-from plants.util.ui_utils import (make_list_items_json_serializable, get_message, throw_exception,
-                                  make_dict_values_json_serializable)
+from plants.util.ui_utils import (get_message, throw_exception)
 from plants.dependencies import get_db
-from plants.validation.plant_validation import PResultsPlants, PPlant
 from plants.models.plant_models import Plant
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
-from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant, get_plant_as_dict
+from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
 from plants.validation.message_validation import PConfirmation
-from plants.validation.plant_validation import (PPlantsUpdateRequest, PResultsPlantsUpdate, PPlantsDeleteRequest,
-                                                PPlantsRenameRequest)
+from plants.validation.plant_validation import (PPlantsDeleteRequest,
+                                                PPlantsRenameRequest, PResultsPlants, PPlantsUpdateRequest,
+                                                PResultsPlantsUpdate)
 
 logger = logging.getLogger(__name__)
 
@@ -27,58 +25,6 @@ router = APIRouter(
         tags=["plants"],
         responses={404: {"description": "Not found"}},
         )
-
-
-@router.get("/{plant_id}", response_model=PPlant)
-async def get_plant(request: Request,
-                    plant_id: int,
-                    db: Session = Depends(get_db)
-                    ):
-    """
-    read plant information from db
-    currently unused
-    """
-    plant_obj = db.query(Plant).filter(Plant.id == plant_id).first()
-    if not plant_obj:
-        throw_exception(f'Plant not found: {plant_id}.', request=request)
-    # plant = plant_obj.as_dict()
-    plant = get_plant_as_dict(plant_obj)
-
-    make_dict_values_json_serializable(plant)
-    return plant
-
-
-@router.get("/", response_model=PResultsPlants)
-async def get_plants(db: Session = Depends(get_db)):
-    """read (almost unfiltered) plants information from db"""
-    # select plants from database
-    # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
-    query = db.query(Plant)
-    if config.filter_hidden_plants:
-        # sqlite does not like "is None" and pylint doesn't like "== None"
-        query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
-
-    if config.n_plants:
-        query = query.order_by(Plant.plant_name).limit(config.n_plants)
-
-    # save around 30% of time using subqueryload instead of lazyload (default)
-    plants_obj = query.options(subqueryload(Plant.parent_plant).subqueryload(Plant.descendant_plants),
-                               subqueryload(Plant.parent_plant_pollen).subqueryload(Plant.descendant_plants),
-                               subqueryload(Plant.taxon).subqueryload(Taxon.plants),
-                               subqueryload(Plant.tags),
-                               subqueryload(Plant.events),
-                               subqueryload(Plant.images),
-                               ).all()
-    plants_list = [get_plant_as_dict(p) for p in plants_obj]
-
-    make_list_items_json_serializable(plants_list)
-    results = {'action':           'Get plants',
-               'resource':         'PlantResource',
-               'message':          get_message(f"Loaded {len(plants_list)} plants from database."),
-               'PlantsCollection': plants_list}
-
-    return results
-
 
 @router.post("/{plant_id}/clone", response_model=PResultsPlantsUpdate)
 def clone_plant(
@@ -111,11 +57,13 @@ def clone_plant(
                'resource': 'PlantResource',
                'message':  get_message(msg, description=msg),
                # 'plants':   [plant_clone.as_dict()]}
-               'plants':   [get_plant_as_dict(plant_clone)]}
+               # 'plants':   [get_plant_as_dict(plant_clone)]}
+               'plants':   [plant_clone]}
 
     return results
 
 
+# @router.post("/", response_model=PResultsPlantsUpdate)
 @router.post("/", response_model=PResultsPlantsUpdate)
 def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
     """
@@ -130,14 +78,14 @@ def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
 
     # serialize updated/created plants to refresh data in frontend
     # plants_list = [p.as_dict() for p in plants_saved]
-    plants_list = [get_plant_as_dict(p) for p in plants_saved]
-    make_list_items_json_serializable(plants_list)
+    # plants_list = [get_plant_as_dict(p) for p in plants_saved]
+    # make_list_items_json_serializable(plants_list)
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
     results = {'action':   'Saved Plants',
                'resource': 'PlantResource',
                'message':  get_message(message),
-               'plants':   plants_list}  # return the updated/created plants
+               'plants':   plants_saved}  # return the updated/created plants
 
     return results
 
@@ -199,5 +147,44 @@ def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Dep
                'resource': 'PlantResource',
                'message':  get_message(f'Renamed {args.OldPlantName} to {args.NewPlantName}',
                                        description=f'Modified {count_modified_images} images.')}
+
+    return results
+
+
+# todo test and maybe replace current method with this
+@router.get("/", response_model=PResultsPlants)
+async def get_plants(db: Session = Depends(get_db)):
+    """read (almost unfiltered) plants information from db"""
+    # select plants from database
+    # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
+    query = db.query(Plant)
+    if config.filter_hidden_plants:
+        # sqlite does not like "is None" and pylint doesn't like "== None"
+        query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+
+    if config.n_plants:
+        query = query.order_by(Plant.plant_name).limit(config.n_plants)
+
+    # save around 30% of time using subqueryload instead of lazyload (default)
+    query = query.options(
+            # subqueryload(Plant.parent_plant).subqueryload(Plant.descendant_plants),
+            subqueryload(Plant.parent_plant),
+            # subqueryload(Plant.parent_plant_pollen).subqueryload(Plant.descendant_plants),
+            subqueryload(Plant.parent_plant_pollen),
+            # subqueryload(Plant.taxon).subqueryload(Taxon.plants),
+            subqueryload(Plant.descendant_plants),
+            subqueryload(Plant.descendant_plants_pollen),
+            subqueryload(Plant.taxon),
+            subqueryload(Plant.tags),
+            subqueryload(Plant.events),
+            subqueryload(Plant.images),
+            subqueryload(Plant.same_taxon_plants),
+            subqueryload(Plant.sibling_plants),
+            )
+    plants_obj = query.all()
+    results = {'action':           'Get plants',
+               'resource':         'PlantResource',
+               'message':          get_message(f"Loaded {len(plants_obj)} plants from database."),
+               'PlantsCollection': plants_obj}
 
     return results

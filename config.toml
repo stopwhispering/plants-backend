@@ -2,7 +2,7 @@
 # global configuration
 ########################################################################################################################
 [images]
-size_preview_image = [300, 300]
+size_preview_image = [300, 300]  # image marked as favorite for a plant
 size_thumbnail_image_taxon = [220, 1000]  # constant width of 220px on details site
 size_thumbnail_image = [350, 350]
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
