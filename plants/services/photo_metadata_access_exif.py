@@ -67,9 +67,6 @@ class PhotoMetadataAccessExifTags:
                                keywords=keywords,
                                description=description,
                                record_date_time=record_date_time)
-        except ValueError as e:
-            # todo not a true jpeg or similar
-            raise e
 
         auto_rotate_jpeg(absolute_path, exif_dict)  # todo move elsewhere
 

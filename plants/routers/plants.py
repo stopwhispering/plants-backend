@@ -65,7 +65,7 @@ def clone_plant(
 
 # @router.post("/", response_model=PResultsPlantsUpdate)
 @router.post("/", response_model=PResultsPlantsUpdate)
-def modify_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
+def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
     """
     update existing or create new plants
     if no id is supplied, a new plant is created having the supplied attributes (only

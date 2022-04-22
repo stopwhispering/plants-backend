@@ -91,22 +91,16 @@ class PPlant(BaseModel):
     taxon_authors: str | None
     botanical_name: str | None
 
-    # taxon: PTaxonExtractForPlant | None  # todo changed -> adapt frontend and usages
-
     # parent_plant_id: int | None
-    # parent_plant: Optional[PAssociatedPlantExtractForPlantOptional] = 11
     parent_plant: PAssociatedPlantExtractForPlantOptional | None
     # parent_plant_pollen_id: int | None
-    # parent_plant_pollen: Optional[PAssociatedPlantExtractForPlantOptional] = 11
     parent_plant_pollen: PAssociatedPlantExtractForPlantOptional | None
-    # todo
-            # changed -> adapt frontend and usages
     plant_notes: str | None
     filename_previewimage: Path | None  # todo rename/rework filename handling in frontend
     hide: bool | None  # i.e. deleted  todo: enforce True/False
     last_update: datetime | None  # None for new plants
 
-    descendant_plants_all: list[PAssociatedPlantExtractForPlant]  # todo rename to descendant_plants or adapt in fr.
+    descendant_plants_all: list[PAssociatedPlantExtractForPlant]
     sibling_plants: list[PAssociatedPlantExtractForPlant]
     same_taxon_plants: list[PAssociatedPlantExtractForPlant]
 
@@ -119,6 +113,7 @@ class PPlant(BaseModel):
         extra = 'forbid'
         use_enum_values = True  # populate model with enum values, rather than the raw enum
         orm_mode = True
+        allow_population_by_field_name = True
 
 
 class PResultsPlants(BaseModel):

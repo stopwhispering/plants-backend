@@ -25,11 +25,6 @@ def get_generated_filename(filename_original: str, size: Sequence) -> str:
 def find_jpg_files(folder: Path) -> set[Path]:
     paths = list(folder.rglob('**/*.jp*g'))
     paths.extend(list(folder.rglob('**/*.JP*G')))  # on linux glob works case-sensitive!
-
-    # todo remove the old glob.glob code if this never fails...
-    paths_old = glob(folder.as_posix() + '/**/*.jp*g', recursive=True)
-    paths_old.extend(glob(folder.as_posix() + '/**/*.JP*G', recursive=True))
-    assert len(paths) == len(paths_old)
     # we need to remove dupliates for windows
     return set(paths)
 
