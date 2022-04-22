@@ -100,7 +100,6 @@ class Plant(Base, OrmUtil):
     def descendant_plants_all(self) -> list[Plant]:
         return self.descendant_plants + self.descendant_plants_pollen
 
-    # todo use instead of code in as_dict()
     sibling_plants: list[Plant] = relationship(
             "Plant",
             primaryjoin="(foreign(Plant.parent_plant_id) == remote(Plant.parent_plant_id)) & "
@@ -160,20 +159,6 @@ class Plant(Base, OrmUtil):
         merge descendant_plants_pollen into descendant_plants"""
         raise NotImplementedError('use get_plant_as_dict() instead')
 
-    # # todo still required?
-    # def set_parent_plant(self, db: Session, parent_plant_name: str = None):
-    #     if parent_plant_name:
-    #         self.parent_plant_id = self.get_plant_id_by_plant_name(parent_plant_name, db)
-    #     else:
-    #         self.parent_plant_id = None
-
-    # # todo still required?
-    # def set_parent_plant_pollen(self, db: Session, parent_plant_pollen_name: str = None):
-    #     if parent_plant_pollen_name:
-    #         self.parent_plant_pollen_id = self.get_plant_id_by_plant_name(parent_plant_pollen_name, db)
-    #     else:
-    #         self.parent_plant_pollen_id = None
-
     def set_filename_previewimage(self, plant: Optional[PPlant] = None):
         """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
         the photos-subdir part of the uri
@@ -184,16 +169,13 @@ class Plant(Base, OrmUtil):
 
         generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
 
-        # the photos-subdir may be part of the supplied path
-        # but need not (depending on whether already saved)
-        # todo: there seems to be a bug when plant.filename_previewimage.is_relative_to
-        # todo: raises AttributeError: 'PosixPath' object has no attribute 'is_relative_to'
-        # logger.warning(f'plant.filename_previewimage: {plant.filename_previewimage}')
-        # logger.warning(f'type: {type(plant.filename_previewimage)}')
-        if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
-            self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
-        else:
-            plant.filename_previewimage.as_posix()
+        # rmeove photos-subdir from path
+        self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
+        # if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
+        #     self.filename_previewimage = (plant.filename_previewimage.relative_to(
+        #     config.subdirectory_photos).as_posix())
+        # else:
+        #     plant.filename_previewimage.as_posix()
 
     def set_taxon(self, db: Session, taxon_id: Optional[int]):
         if taxon_id:

@@ -16,7 +16,7 @@ class ImageKeyword(Base):
     """keywords tagged at images"""
     __tablename__ = 'image_keywords'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True, nullable=False)
-    keyword = Column(CHAR(100), primary_key=True, nullable=False)  # todo enough?
+    keyword = Column(CHAR(100), primary_key=True, nullable=False)
 
     image = relationship(
             "Image",
@@ -243,4 +243,4 @@ def update_image_if_altered(db: Session,
         db.delete(removed_keyword)
     if added_keywords:
         image.keywords.extend(added_keywords)
-    db.commit()  # todo only if altered
+    db.commit()

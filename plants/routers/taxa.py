@@ -31,7 +31,6 @@ async def get_taxa(
         db: Session = Depends(get_db)
         ):
     """returns taxa from taxon database table"""
-    # taxa: List[Taxon] = db.query(Taxon).all()
     taxa: List[Taxon] = db.query(Taxon).options(subqueryload(Taxon.taxon_to_trait_associations).subqueryload(
                                                     TaxonToTraitAssociation.trait),
                                                 subqueryload(Taxon.images),

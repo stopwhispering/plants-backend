@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 
 from plants.models.event_models import Soil
 from plants.util.ui_utils import throw_exception
-from plants.validation.event_validation import PSoil
+from plants.validation.event_validation import PSoil, PSoilCreate
 
 logger = logging.getLogger(__name__)
 
 
-def create_soil(soil: PSoil, db: Session) -> Soil:
+def create_soil(soil: PSoilCreate, db: Session) -> Soil:
     """create new soil in database"""
     if soil.id:
         throw_exception(f'Soil already exists: {soil.id}')

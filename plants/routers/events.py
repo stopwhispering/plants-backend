@@ -1,10 +1,11 @@
-from typing import Optional, Dict, List
+from operator import attrgetter
+from typing import Optional
 from collections import defaultdict
 
 from sqlalchemy.exc import InvalidRequestError
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
 from plants.util.ui_utils import throw_exception, get_message, MessageType
@@ -14,8 +15,8 @@ from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import PResultsEventResource, PEventNew, PSoil, PResultsSoilResource, \
-    PResultsSoilsResource
+from plants.validation.event_validation import (PResultsEventResource, PSoil, PResultsSoilResource,
+                                                PResultsSoilsResource, PSoilCreate, PEventCreateOrUpdateRequest)
 
 logger = logging.getLogger(__name__)
 
@@ -28,47 +29,47 @@ router = APIRouter(
 
 @router.get("/soils", response_model=PResultsSoilsResource)
 async def get_soils(db: Session = Depends(get_db)):
-    results = {'SoilsCollection': []}
+    soils = []
 
     # add the number of plants that currently have a specific soil
-    # todo make one query out of this to improve performance (but how without writing plain sql...?)
-    # todo maybe put this into Soil's as_dict function
     soil_counter = defaultdict(int)
-    plants = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))).all()
+
+    plants = (db.query(Plant)
+              .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+              .options(subqueryload(Plant.events))  # .subqueryload(Event.soil))
+              .all())
     for plant in plants:
-        if events := [e for e in plant.events if e.soil]:
-            events.sort(key=lambda e: e.date, reverse=True)
-            soil_counter[events[0].soil.id] += 1
+        if events := [e for e in plant.events if e.soil_id]:
+            latest_event = max(events, key=attrgetter('date'))
+            soil_counter[latest_event.soil_id] += 1
 
-    soils = db.query(Soil).all()
-    for soil in soils:
-        soil_dict = soil.as_dict()
-        soil_dict['plants_count'] = soil_counter.get(soil.id, 0)
-        results['SoilsCollection'].append(soil_dict)
+    for soil in db.query(Soil).all():
+        soil.plants_count = soil_counter.get(soil.id, 0)
+        soils.append(soil)
 
-    return results
+    return {'SoilsCollection': soils}
 
 
 @router.post("/soils", response_model=PResultsSoilResource)
-async def create_new_soil(soil: PSoil, db: Session = Depends(get_db)):
+async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
     """create new soil and return it with (newly assigned) id"""
-    soil_obj = create_soil(soil=soil, db=db)
+    soil_obj = create_soil(soil=new_soil, db=db)
     msg = f'Created soil with new ID {soil_obj.id}'
 
     logger.info(msg)
-    results = {'soil': soil_obj.as_dict(),
+    results = {'soil':    soil_obj,  # soil_obj.as_dict(),
                'message': get_message(msg, message_type=MessageType.DEBUG)}
     return results
 
 
 @router.put("/soils", response_model=PResultsSoilResource)
-async def update_existing_soil(soil: PSoil, db: Session = Depends(get_db)):
+async def update_existing_soil(updated_soil: PSoil, db: Session = Depends(get_db)):
     """update soil attributes"""
-    soil_obj = update_soil(soil=soil, db=db)
+    soil_obj = update_soil(soil=updated_soil, db=db)
     msg = f'Updated soil with ID {soil_obj.id}'
 
     logger.info(msg)
-    results = {'soil': soil_obj.as_dict(),
+    results = {'soil':    soil_obj.as_dict(),
                'message': get_message(msg, message_type=MessageType.DEBUG)}
     return results
 
@@ -94,10 +95,11 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=PConfirmation)
-async def modify_events(request: Request,
-                        # todo replace dict with ordinary pydantic schema (also on ui side)
-                        plants_events_dict: Dict[int, List[PEventNew]] = Body(..., embed=True),
-                        db: Session = Depends(get_db)):
+async def create_or_update_events(request: Request,
+                                  # todo replace dict with ordinary pydantic schema (also on ui side)
+                                  args: PEventCreateOrUpdateRequest,
+                                  # plants_events_dict: Dict[int, List[PEventCreateOrUpdate]] = Body(..., embed=True),
+                                  db: Session = Depends(get_db)):
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has been changed, added, or
     # deleted. it does, however, always submit all these plants' events
@@ -105,7 +107,7 @@ async def modify_events(request: Request,
     # loop at the plants and their events
     counts = defaultdict(int)
     new_list = []
-    for plant_id, events in plants_events_dict.items():
+    for plant_id, events in args.plants_to_events.items():
 
         # plant_obj = Plant.get_plant_by_plant_name(plant_name, db, raise_exception=True)
         plant_obj = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)

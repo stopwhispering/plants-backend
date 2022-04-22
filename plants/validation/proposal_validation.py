@@ -3,7 +3,6 @@ from enum import Enum
 from pydantic.main import BaseModel
 from typing import List, Optional
 
-from plants.validation.event_validation import PSoil
 from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategory, PTrait
 
@@ -42,7 +41,6 @@ class PResultsProposals(BaseModel):
     resource: str
     message: PMessage
 
-    SoilsCollection: Optional[List[PSoil]]
     NurseriesSourcesCollection: Optional[List[PNurseryName]]
     KeywordsCollection: Optional[List[PKeywordName]]
     TraitCategoriesCollection: Optional[List[PTraitCategory]]

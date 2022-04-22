@@ -160,6 +160,7 @@ async def get_plants(db: Session = Depends(get_db)):
     query = db.query(Plant)
     if config.filter_hidden_plants:
         # sqlite does not like "is None" and pylint doesn't like "== None"
+        # todo force bool
         query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
 
     if config.n_plants:
