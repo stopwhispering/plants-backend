@@ -38,7 +38,7 @@ class PSoil(BaseModel):
     description: Optional[str]
 
     class Config:
-        extra = 'forbid'
+        extra = 'allowed'  # plants_count when updated from frontend
         orm_mode = True
 
 

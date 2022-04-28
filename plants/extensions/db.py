@@ -30,3 +30,5 @@ def init_database_tables(engine_, session: Session = None):
     from plants.models.property_models import insert_property_categories
     insert_categories(SessionLocal() if not session else session)
     insert_property_categories(SessionLocal() if not session else session)
+
+
