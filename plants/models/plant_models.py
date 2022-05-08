@@ -169,8 +169,11 @@ class Plant(Base, OrmUtil):
 
         generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
 
-        # rmeove photos-subdir from path
-        self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
+        # rmeove photos-subdir from path if required (todo: still required somewhere?)
+        if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
+            self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
+        else:
+            self.filename_previewimage = plant.filename_previewimage.as_posix()
         # if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
         #     self.filename_previewimage = (plant.filename_previewimage.relative_to(
         #     config.subdirectory_photos).as_posix())
