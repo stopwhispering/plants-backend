@@ -134,7 +134,10 @@ class Plant(Base, OrmUtil):
     @property
     def latest_image(self):
         if self.images:
-            latest_image = max(self.images, key=attrgetter('record_date_time'))
+            try:
+                latest_image = max(self.images, key=attrgetter('record_date_time'))
+            except TypeError:  # no image with a record date
+                return None
             return latest_image
 
     @property
