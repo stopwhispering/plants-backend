@@ -21,6 +21,7 @@ def init_database_tables(engine_, session: Session = None):
     import plants.models.tag_models  # noqa
     import plants.models.taxon_models  # noqa
     import plants.models.trait_models  # noqa
+    import plants.models.pollination_models  # noqa
 
     # create db tables if not existing
     Base.metadata.create_all(bind=engine_)

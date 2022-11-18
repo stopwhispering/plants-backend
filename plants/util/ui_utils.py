@@ -113,3 +113,33 @@ def make_dict_values_json_serializable(d: dict):
                 _ = json.dumps(d[key])
             except TypeError:
                 d[key] = treat_non_serializable(d[key])
+
+
+def parse_api_date(date_str: str | None) -> date:
+    """Parse date from API request (e.g. '2022-11-16') to date object"""
+    if date_str:
+        return datetime.strptime(date_str, FORMAT_YYYY_MM_DD).date()
+
+
+def format_api_date(d: date) -> str:
+    """Format date from date object to API format (e.g. '2022-11-16')"""
+    if d:
+        return d.strftime(FORMAT_YYYY_MM_DD)
+
+
+def parse_api_datetime(dt_str: str | None) -> datetime:
+    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object"""
+    if dt_str:
+        return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)
+
+
+def format_api_datetime(dt: datetime) -> str:
+    """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
+    if dt:
+        return dt.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
+
+
+FORMAT_YYYY_MM = '%Y-%m'
+FORMAT_FULL_DATETIME = '%Y-%m-%d %H:%M:%S'
+FORMAT_YYYY_MM_DD = '%Y-%m-%d'
+FORMAT_API_YYYY_MM_DD_HH_MM = '%Y-%m-%d %H:%M'

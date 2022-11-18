@@ -87,6 +87,11 @@ class Plant(Base, OrmUtil):
     # plant to plant property values: 1:n
     property_values_plant: List[PropertyValue] = relationship("PropertyValue", back_populates="plant")
 
+    # plant to florescences: 1:n
+    florescences = relationship("Florescence", back_populates="plant")
+
+    count_stored_pollen_containers = Column(INTEGER)
+
     @property
     def url_preview(self) -> PurePath:
         if self.filename_previewimage:
