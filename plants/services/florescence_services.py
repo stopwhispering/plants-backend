@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from plants.models.plant_models import Plant
@@ -103,4 +104,15 @@ def create_new_florescence(new_florescence_data: PRequestNewFlorescence, db: Ses
     )
 
     db.add(florescence)
+    db.commit()
+
+
+def remove_florescence(florescence_id: int, db: Session):
+    """ Delete a florescence """
+    florescence: Florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
+    if not florescence:
+        raise HTTPException(500, detail={'message': 'Florescence attempt not found'})
+    if florescence.pollinations:
+        raise HTTPException(500, detail={'message': 'Florescence has pollinations'})
+    db.delete(florescence)
     db.commit()

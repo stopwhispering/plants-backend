@@ -171,6 +171,15 @@ def save_new_pollination(new_pollination_data: PRequestNewPollination, db: Sessi
     db.commit()
 
 
+def remove_pollination(pollination_id: int, db: Session):
+    """ Delete a pollination attempt """
+    pollination = db.query(Pollination).filter(Pollination.id == pollination_id).first()
+    if not pollination:
+        raise HTTPException(500, detail={'message': 'Pollination attempt not found'})
+    db.delete(pollination)
+    db.commit()
+
+
 def update_pollination(pollination_data: PRequestEditedPollination, db: Session):
     """ Update a pollination attempt """
 

@@ -6,7 +6,7 @@ import datetime
 from plants.models.pollination_models import COLORS_MAP, PollinationStatus
 from plants.services.pollination_services import (save_new_pollination, read_ongoing_pollinations, update_pollination,
                                                   read_pollen_containers, update_pollen_containers,
-                                                  read_plants_without_pollen_containers)
+                                                  read_plants_without_pollen_containers, remove_pollination)
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
 from plants.validation.pollination_validation import (PResultsOngoingPollinations,
@@ -93,3 +93,10 @@ async def put_pollination(
         db: Session = Depends(get_db)):
     assert pollination_id == edited_pollination_data.id
     update_pollination(pollination_data=edited_pollination_data, db=db)
+
+
+@router.delete('/pollinations/{pollination_id}')
+async def delete_pollination(
+        pollination_id: int,
+        db: Session = Depends(get_db)):
+    remove_pollination(pollination_id=pollination_id, db=db)

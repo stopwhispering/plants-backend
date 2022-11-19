@@ -4,7 +4,7 @@ import logging
 import datetime
 
 from plants.services.florescence_services import read_active_florescences, update_active_florescence, \
-    read_plants_for_new_florescence, create_new_florescence
+    read_plants_for_new_florescence, create_new_florescence, remove_florescence
 from plants.services.pollination_services import read_potential_pollen_donors
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
@@ -59,6 +59,14 @@ async def post_active_florescence(new_florescence_data: PRequestNewFlorescence,
                                   db: Session = Depends(get_db)):
     """create new florescence for a plant"""
     create_new_florescence(new_florescence_data=new_florescence_data, db=db)
+
+
+@router.delete('/florescences/{florescence_id}')
+async def delete_florescence(
+        florescence_id: int,
+        db: Session = Depends(get_db)):
+    remove_florescence(florescence_id=florescence_id, db=db)
+
 
 
 @router.get("/potential_pollen_donors/{plant_id}",
