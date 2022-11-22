@@ -40,6 +40,8 @@ class Configuration:
     rel_path_photos_original: PurePath
     rel_path_photos_generated: PurePath
 
+    path_pickled_ml_models: Path
+
 
 def parse_config() -> Configuration:
     """Configuration is specified in environment variables (or .env file) and in config.toml
@@ -47,6 +49,8 @@ def parse_config() -> Configuration:
         here, we only use the latter information
     - config.toml contains global configuration and environment-specific configuration values
     """
+    if not getenv('ENVIRONMENT'):
+        raise ValueError('Environment variable ENVIRONMENT is not set. Use .env file or set it manually.')
     environment = getenv('ENVIRONMENT').lower()
 
     config_global = toml.load("config.toml")
@@ -90,12 +94,14 @@ def parse_config() -> Configuration:
         rel_path_photos_generated_taxon=rel_path_photos_generated_taxon,
         rel_path_photos_original=rel_path_photos_original,
         rel_path_photos_generated=rel_path_photos_generated,
+        path_pickled_ml_models=Path(config_env['path_pickled_ml_models']),
         )
 
     # create folders not yet existing
     create_if_not_exists(folders=[config.path_deleted_photos,
                                   config.path_generated_thumbnails,
                                   config.path_generated_thumbnails_taxon,
-                                  config.path_original_photos_uploaded], parents=True)
+                                  config.path_original_photos_uploaded,
+                                  config.path_pickled_ml_models], parents=True)
 
     return config

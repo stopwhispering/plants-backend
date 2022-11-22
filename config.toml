@@ -25,6 +25,7 @@ n_plants = 0  # return only n plants, no matter how many plants the database has
 #path_photos = "C:\\Workspaces\\VS Code Projects\\plants_frontend\\webapp\\photos"
 path_photos = "/Workspaces/VS Code Projects/plants_frontend/webapp/photos"
 path_deleted_photos = "/common/plants/photos/deleted"
+path_pickled_ml_models = '/common/plants/pickled'
 
 [environments.prod]
 log_severity_console = "INFO"
@@ -36,3 +37,4 @@ allow_cors = false  # allow cors on development system if no reverse proxy avail
 n_plants = 0  # return only n plants, no matter how many plants the database has
 path_photos = "/common/plants/photos"
 path_deleted_photos = '/common/plants/photos/deleted'
+path_pickled_ml_models = '/common/plants/pickled'

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from plants.models.plant_models import Plant
 from plants.models.pollination_models import (Florescence, FlorescenceStatus, PollenType, Pollination,
                                               PollinationStatus, Context, Location, COLORS_MAP, COLORS_MAP_TO_RGB)
+from plants.services.ml_prediction import predict_probability_of_seed_production
 from plants.util.ui_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date, \
     FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.validation.pollination_validation import (PRequestNewPollination, POngoingPollination,
@@ -61,10 +62,24 @@ def _read_resulting_plants(plant: Plant, pollen_donor: Plant, db: Session) -> li
     return resulting_plants
 
 
-def read_potential_pollen_donors(plant_id: int, db: Session) -> list[PPotentialPollenDonor]:
+def get_probability_pollination_to_seed(florescence: Florescence,
+                                        pollen_donor: Plant,
+                                        pollen_type: PollenType) -> int:
+    """ Get the ml prediction for the probability of successful pollination to seed"""
+    probability = predict_probability_of_seed_production(florescence=florescence,
+                                                         pollen_donor=pollen_donor,
+                                                         pollen_type=pollen_type)
+    return probability
+
+
+def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[PPotentialPollenDonor]:
     """ Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen"""
-    plant = Plant.get_plant_by_plant_id(plant_id=plant_id, db=db)
+    florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
+    if not florescence:
+        raise HTTPException(500, detail={'message': 'Florescence not found'})
+
+    plant = Plant.get_plant_by_plant_id(plant_id=florescence.plant_id, db=db)
     potential_pollen_donors = []
 
     # 1. flowering plants
@@ -84,6 +99,9 @@ def read_potential_pollen_donors(plant_id: int, db: Session) -> list[PPotentialP
             'pollen_type': PollenType.FRESH.value,
             'count_stored_pollen_containers': None,
             'already_ongoing_attempt': already_ongoing_attempt,
+            'probability_pollination_to_seed': get_probability_pollination_to_seed(florescence=florescence,
+                                                                                   pollen_donor=f.plant,
+                                                                                   pollen_type=PollenType.FRESH),
             'pollination_attempts': _read_pollination_attempts(plant=plant,
                                                                pollen_donor=f.plant,
                                                                db=db),
@@ -95,7 +113,7 @@ def read_potential_pollen_donors(plant_id: int, db: Session) -> list[PPotentialP
 
     # 2. frozen pollen
     query = (db.query(Plant).filter(  # Plant.florescence_status == FlorescenceStatus.FINISHED.value,
-        Plant.id != plant_id,
+        Plant.id != florescence.plant_id,
         Plant.count_stored_pollen_containers >= 1))
     frozen_pollen_plants = query.all()
 
@@ -111,6 +129,9 @@ def read_potential_pollen_donors(plant_id: int, db: Session) -> list[PPotentialP
             'pollen_type': PollenType.FROZEN.value,
             'count_stored_pollen_containers': frozen_pollen_plant.count_stored_pollen_containers,
             'already_ongoing_attempt': already_ongoing_attempt,
+            'probability_pollination_to_seed': get_probability_pollination_to_seed(florescence=florescence,
+                                                                                   pollen_donor=frozen_pollen_plant,
+                                                                                   pollen_type=PollenType.FROZEN),
             'pollination_attempts': _read_pollination_attempts(plant=plant,
                                                                pollen_donor=frozen_pollen_plant,
                                                                db=db),

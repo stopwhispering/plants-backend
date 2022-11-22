@@ -86,6 +86,7 @@ class PPotentialPollenDonor(BaseModel):
     count_stored_pollen_containers: int | None  # only relevant for frozen
     already_ongoing_attempt: bool
     # pollen_harvest_month: str | None  # only relevant for frozen
+    probability_pollination_to_seed: int | None  # None only in error case
 
     pollination_attempts: list[PPollinationAttempt]
     resulting_plants: list[PPollinationResultingPlant]

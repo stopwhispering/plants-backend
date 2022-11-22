@@ -69,10 +69,10 @@ async def delete_florescence(
 
 
 
-@router.get("/potential_pollen_donors/{plant_id}",
+@router.get("/potential_pollen_donors/{florescence_id}",
             response_model=PResultsPotentialPollenDonors)
-async def get_potential_pollen_donors(plant_id: int, db: Session = Depends(get_db)):
-    potential_pollen_donors = read_potential_pollen_donors(plant_id=plant_id, db=db)
+async def get_potential_pollen_donors(florescence_id: int, db: Session = Depends(get_db)):
+    potential_pollen_donors = read_potential_pollen_donors(florescence_id=florescence_id, db=db)
 
     results = {'action': 'Get potential pollen donors',
                'message': get_message(f"Provided {len(potential_pollen_donors)} potential donors."),

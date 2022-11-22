@@ -20,3 +20,4 @@ toml
 # pandas
 # matplotlib
 python-dotenv
+scikit-learn
