@@ -21,3 +21,5 @@ toml
 # matplotlib
 python-dotenv
 scikit-learn
+python-jose[cryptography]
+passlib[bcrypt]
