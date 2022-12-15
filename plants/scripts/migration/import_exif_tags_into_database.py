@@ -57,7 +57,7 @@ def _import(photo_directory: PhotoDirectory, db: Session):
         logger.debug(photo_file.keywords)
         logger.debug(photo_file.plants)
         logger.debug(photo_file.record_date_time)
-        logger.debug(photo_file.relative_path_thumb)
+        logger.debug(photo_file.relative_path_thumb)  # todo remove
         logger.debug(photo_file.absolute_path)
         logger.debug(photo_file.filename)
         image_db: Image = get_image_by_relative_path(relative_path=photo_file.relative_path, db=db)

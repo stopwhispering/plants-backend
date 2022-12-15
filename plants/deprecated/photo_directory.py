@@ -134,7 +134,7 @@ class Photo:
     absolute_path: Path
     filename: str
     filename_thumb: str
-    relative_path_thumb: PurePath  # relative
+    relative_path_thumb: PurePath  # relative  # todo remove
     relative_path: PurePath  # relative
     record_date_time: datetime.datetime
     description: Optional[str] = ''
@@ -179,7 +179,7 @@ class PhotoFactoryDatabase:
                 absolute_path=absolute_path,
                 filename=filename,
                 filename_thumb=filename_thumb,
-                relative_path_thumb=get_relative_path_thumb(filename_thumb),
+                relative_path_thumb=get_relative_path_thumb(filename_thumb),  # todo remove
                 relative_path=get_relative_path(absolute_path),
                 record_date_time=image.record_date_time,
                 description=image.description,
@@ -214,7 +214,7 @@ class PhotoFactoryLocalFiles:
         absolute_path = absolute_path
         filename = absolute_path.name
         filename_thumb = get_filename_thumb(filename)
-        relative_path_thumb = get_relative_path_thumb(filename_thumb)
+        relative_path_thumb = get_relative_path_thumb(filename_thumb)  # todo remove
         relative_path = get_relative_path(absolute_path)
         metadata = self.metadata_access.read_photo_metadata(absolute_path=absolute_path)
 
@@ -223,7 +223,7 @@ class PhotoFactoryLocalFiles:
                 absolute_path=absolute_path,
                 filename=filename,
                 filename_thumb=filename_thumb,
-                relative_path_thumb=relative_path_thumb,
+                relative_path_thumb=relative_path_thumb,  # todo remove
                 relative_path=relative_path,
                 record_date_time=metadata.record_date_time,
                 description=metadata.description,

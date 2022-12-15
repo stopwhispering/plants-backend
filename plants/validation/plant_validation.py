@@ -47,7 +47,7 @@ class PPlantCurrentSoil(BaseModel):
 
 class PPlantLatestImage(BaseModel):
     relative_path: Path = Field(alias='path')
-    relative_path_thumb: Path = Field(alias='path_thumb')
+    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove
     record_date_time: datetime = Field(alias='date')
 
     class Config:
@@ -96,7 +96,7 @@ class PPlant(BaseModel):
     # parent_plant_pollen_id: int | None
     parent_plant_pollen: PAssociatedPlantExtractForPlantOptional | None
     plant_notes: str | None
-    filename_previewimage: Path | None  # todo rename/rework filename handling in frontend
+    filename_previewimage: Path | None
     hide: bool | None  # i.e. deleted  todo: enforce True/False
     last_update: datetime | None  # None for new plants
 

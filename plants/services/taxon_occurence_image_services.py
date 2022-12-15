@@ -17,6 +17,11 @@ from plants.validation.taxon_validation import PTaxonOccurrenceImage
 logger = logging.getLogger(__name__)
 
 
+def get_occurrence_thumbnail_filename(gbif_id: int, occurrence_id: int, img_no: int, size_x: int, size_y: int) -> str:
+    filename = f"{gbif_id}_{occurrence_id}_{img_no}." \
+               f"{size_x}_{size_y}.jpg"
+    return filename
+
 class TaxonOccurencesLoader:
     @staticmethod
     def _get_image_metadata(occ: dict, m: dict, gbif_id: int) -> Optional[dict]:
@@ -74,10 +79,13 @@ class TaxonOccurencesLoader:
 
     @staticmethod
     def _download_and_generate_thumbnail(info: Dict) -> Optional[str]:
-        size_x = config.size_thumbnail_image_taxon[0]
-        size_y = config.size_thumbnail_image_taxon[1]
-        filename = f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}." \
-                   f"{size_x}_{size_y}.jpg"
+        # filename = f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}." \
+        #            f"{size_x}_{size_y}.jpg"
+        filename = get_occurrence_thumbnail_filename(gbif_id=info['gbif_id'],
+                                                     occurrence_id=info['occurrence_id'],
+                                                     img_no=info['img_no'],
+                                                     size_x=config.size_thumbnail_image_taxon[0],
+                                                     size_y=config.size_thumbnail_image_taxon[1])
         href = info['href']
 
         if config.path_generated_thumbnails_taxon.joinpath(filename).is_file():

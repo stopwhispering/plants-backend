@@ -1,0 +1,6 @@
+services:
+    plants-backend:
+      restart: on-failure
+      labels:
+        - traefik.http.routers.plants-backend-insecure.entrypoints=http-ep
+        - traefik.http.routers.plants-backend-insecure.rule=Host(`plants.localhost`) && PathPrefix(`/api`)

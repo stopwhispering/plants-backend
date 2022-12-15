@@ -25,7 +25,7 @@ class PPlantTag(BaseModel):
 
 
 class PImage(BaseModel):
-    relative_path_thumb: Path = Field(alias='path_thumb')
+    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove
     relative_path: Path = Field(alias='path_original')
     keywords: List[PKeyword]
     plants: List[PPlantTag]

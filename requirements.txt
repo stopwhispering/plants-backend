@@ -6,10 +6,11 @@ SQLAlchemy
 piexif
 python-dateutil
 pykew
-fastapi
-starlette==0.17.1  # newer versions seem not to work (with fastapi?)
+fastapi==0.88.0
+# starlette==0.17.1  # noqa  # newer versions seem not to work (with fastapi?)
+starlette  # noqa  # newer versions seem not to work (with fastapi?)
 bs4
-uvicorn
+uvicorn==0.20.0
 aiofiles
 beautifulsoup4
 Unidecode
@@ -17,7 +18,7 @@ Wikidata
 requests
 python-multipart
 toml
-# pandas
+pandas==1.5.2
 # matplotlib
 python-dotenv
 scikit-learn

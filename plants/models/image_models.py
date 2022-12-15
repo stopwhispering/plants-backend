@@ -1,3 +1,4 @@
+import logging
 from pathlib import PurePath
 from datetime import datetime
 from typing import Sequence
@@ -10,6 +11,8 @@ from plants.extensions.db import Base
 from plants.models.plant_models import Plant
 from plants.services.image_services_simple import get_filename_thumb, get_relative_path_thumb
 from plants.util.ui_utils import throw_exception
+
+logger = logging.getLogger(__name__)
 
 
 class ImageKeyword(Base):
@@ -54,7 +57,8 @@ class Image(Base):
     # this table is only used to link events to images
     __tablename__ = 'image'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name  # pseudo-key
+    filename = Column(CHAR(150), unique=True, nullable=False)
+    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name  # pseudo-key  # todo remove
     description = Column(CHAR(500))
     record_date_time = Column(TIMESTAMP, nullable=False)
     last_update = Column(TIMESTAMP, nullable=False)  # update (description)
@@ -64,16 +68,16 @@ class Image(Base):
     def absolute_path(self):
         return config.path_photos_base.parent.joinpath(PurePath(self.relative_path))
 
-    @property
-    def filename(self):
-        return PurePath(self.relative_path).name
+    # @property
+    # def filename(self):
+    #     return PurePath(self.relative_path).name
 
     @property
-    def filename_thumb(self):
+    def filename_thumb(self):  # todo remove
         return get_filename_thumb(self.filename)
 
     @property
-    def relative_path_thumb(self):
+    def relative_path_thumb(self):  # todo remove
         return get_relative_path_thumb(self.filename_thumb)
 
     keywords = relationship(
@@ -111,6 +115,14 @@ class Image(Base):
                                                overlaps="images,taxa"  # silence warnings
                                                )
 
+    @staticmethod
+    def get_image_by_filename(db: Session, filename: str) -> "Image":
+        """returns image by filename"""
+        image = db.query(Image).filter(Image.filename == filename).first()
+        if not image:
+            logger.error(err_msg := f'Image not found in db: {filename}')
+            throw_exception(err_msg)
+        return image
 
 class ImageToEventAssociation(Base):
     __tablename__ = 'image_to_event_association'
@@ -189,6 +201,7 @@ def create_image(db: Session,
         raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')
 
     image = Image(relative_path=relative_path.as_posix(),
+                  filename=relative_path.name,
                   record_date_time=record_date_time,
                   description=description,
                   last_update=datetime.now(),

@@ -157,7 +157,7 @@ class PhotoMetadataAccessExifTags:
         rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called
         in context of renaming)
         """
-        if not absolute_path.is_file() and config.log_ignore_missing_image_files:
+        if not absolute_path.is_file() and config.ignore_missing_image_files:
             return
 
         # we want to preserve the file's last-change-date

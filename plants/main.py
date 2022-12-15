@@ -16,20 +16,21 @@ configure_root_logger(log_severity_console=config.log_severity_console,
                       log_file_path=config.log_file_path)
 logger = logging.getLogger(__name__)
 
-COMMON_PREFIX = '/plants_tagger/backend'
+COMMON_PREFIX = '/api'
 app = FastAPI(
         docs_url=COMMON_PREFIX + "/docs",
         redoc_url=COMMON_PREFIX + "/redoc",
         openapi_url=COMMON_PREFIX + "/openapi.json"
         )
 
+# CORS for development only
 if config.allow_cors:
     origins = [
-        "http://localhost",
+        # "http://localhost",
         "http://localhost:5000",
-        "http://localhost:8000",
+        # "http://localhost:8000",
         "http://localhost:8080",
-        "http://localhost:8081",
+        # "http://localhost:8081",
         ]
     app.add_middleware(
             CORSMiddleware,

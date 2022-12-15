@@ -5,10 +5,12 @@ import logging
 from pydantic.error_wrappers import ValidationError
 from fastapi import UploadFile
 from fastapi import APIRouter, Depends, Request
+from starlette.responses import Response
 
 from plants.constants import RESIZE_SUFFIX
 from plants.models.image_models import Image, get_image_by_relative_path, update_image_if_altered
-from plants.services.image_services import save_image_files, delete_image_file_and_db_entries
+from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
+    read_occurrence_thumbnail
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
@@ -23,9 +25,9 @@ from plants.validation.message_validation import PConfirmation
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-        tags=["images"],
-        responses={404: {"description": "Not found"}},
-        )
+    tags=["images"],
+    responses={404: {"description": "Not found"}},
+)
 
 
 @router.get("/plants/{plant_id}/images/", response_model=List[PImage])
@@ -66,10 +68,10 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
                       description=f'Saved: {[p.filename for p in files]}.'
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])
-    results = {'action':   'Uploaded',
+    results = {'action': 'Uploaded',
                'resource': 'ImageResource',
-               'message':  msg,
-               'images':   images_ext
+               'message': msg,
+               'images': images_ext
                }
 
     return results
@@ -85,8 +87,8 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 
     logger.info(f'Returned {len(images_ext)} images.')
     results = {'ImagesCollection': images_ext,
-               'message':          get_message('Loaded images from backend.',
-                                               description=f'Count: {len(images_ext)}')
+               'message': get_message('Loaded images from backend.',
+                                      description=f'Count: {len(images_ext)}')
                }
     return results
 
@@ -111,9 +113,9 @@ async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_d
                                 keywords=[k.keyword for k in image_ext.keywords],
                                 db=db)
 
-    results = {'action':   'Saved',
+    results = {'action': 'Saved',
                'resource': 'ImageResource',
-               'message':  get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images.")
+               'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images.")
                }
 
     return results
@@ -151,10 +153,10 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
                       description=f'Saved: {[p.filename for p in files]}.'
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])
-    results = {'action':   'Uploaded',
+    results = {'action': 'Uploaded',
                'resource': 'ImageResource',
-               'message':  msg,
-               'images':   images_ext
+               'message': msg,
+               'images': images_ext
                }
 
     return results
@@ -169,10 +171,10 @@ async def delete_image(image_container: PImagesDelete, db: Session = Depends(get
         delete_image_file_and_db_entries(image=image, db=db)
 
     deleted = [image.absolute_path.name for image in image_container.images]
-    results = {'action':   'Deleted',
+    results = {'action': 'Deleted',
                'resource': 'ImageResource',
-               'message':  get_message(f'Successfully deleted images',
-                                       description=f'Filenames: {deleted}')
+               'message': get_message(f'Successfully deleted images',
+                                      description=f'Filenames: {deleted}')
                }
 
     return results
@@ -180,15 +182,40 @@ async def delete_image(image_container: PImagesDelete, db: Session = Depends(get
 
 def _to_response_image(image: Image) -> PImage:
     return PImage(
-            relative_path=image.relative_path,
-            relative_path_thumb=image.relative_path_thumb,
-            keywords=[{'keyword': k.keyword} for k in image.keywords],
-            plants=[PPlantTag(
-                    plant_id=p.id,
-                    key=p.plant_name,
-                    text=p.plant_name,
-                    ) for p in image.plants],
-            description=image.description,
-            filename=image.filename or '',
-            absolute_path=image.absolute_path,
-            record_date_time=image.record_date_time)
+        relative_path=image.relative_path,  # todo remove?
+        relative_path_thumb=image.relative_path_thumb,  # todo remove?
+        keywords=[{'keyword': k.keyword} for k in image.keywords],
+        plants=[PPlantTag(
+            plant_id=p.id,
+            key=p.plant_name,
+            text=p.plant_name,
+        ) for p in image.plants],
+        description=image.description,
+        filename=image.filename or '',
+        absolute_path=image.absolute_path,  # todo remove?
+        record_date_time=image.record_date_time)
+
+
+@router.get("/photo",
+            # Prevent FastAPI from adding "application/json" as an additional
+            # response media type in the autogenerated OpenAPI specification.
+            response_class=Response)
+def get_photo(filename: str, size_rem: float = None, size_px: int = None, db: Session = Depends(get_db)):
+    image_bytes: bytes = read_image_by_size(filename=filename, db=db, size_rem=size_rem, size_px=size_px)
+
+    # media_type here sets the media type of the actual response sent to the client.
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@router.get("/occurrence_thumbnail",
+            # Prevent FastAPI from adding "application/json" as an additional
+            # response media type in the autogenerated OpenAPI specification.
+            response_class=Response)
+def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: Session = Depends(get_db)):
+    image_bytes: bytes = read_occurrence_thumbnail(gbif_id=gbif_id,
+                                                   occurrence_id=occurrence_id,
+                                                   img_no=img_no,
+                                                   db=db)
+
+    # media_type here sets the media type of the actual response sent to the client.
+    return Response(content=image_bytes, media_type="image/png")

@@ -10,9 +10,10 @@ from plants.util.filename_utils import create_if_not_exists
 
 @dataclass
 class Configuration:
-    size_preview_image: Tuple[int, int]  # e.g.[300, 300]
-    size_thumbnail_image_taxon: Tuple[int, int]  # e.g.[220, 1000]
-    size_thumbnail_image: Tuple[int, int]  # e.g.[350, 350]
+    size_preview_image: Tuple[int, int]  # e.g.[300, 300]  # todo remove
+    size_thumbnail_image_taxon: Tuple[int, int]  # e.g.[220, 1000]  # todo remove
+    size_thumbnail_image: Tuple[int, int]  # e.g.[350, 350]  # todo remove
+    sizes: Tuple[Tuple[int, int], ...]  # required lower-resolution sizes for images
     resizing_size: Tuple[int, int]  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
 
@@ -21,7 +22,8 @@ class Configuration:
     log_severity_console: str  # e.g. 'DEBUG', will be mapped to int
     log_severity_file: int
     log_file_path: Path
-    log_ignore_missing_image_files: bool
+    # if True, missing image files will not be logged and a default image will be used instead
+    ignore_missing_image_files: bool
     allow_cors: bool
 
     max_images_per_taxon: int  # e.g.10
@@ -69,17 +71,18 @@ def parse_config() -> Configuration:
     rel_path_photos_generated = subdirectory_photos.joinpath("generated")
 
     config = Configuration(
-        size_preview_image=config_global['images']['size_preview_image'],
-        size_thumbnail_image_taxon=config_global['images']['size_thumbnail_image_taxon'],
-        size_thumbnail_image=config_global['images']['size_thumbnail_image'],
-        resizing_size=config_global['images']['resizing_size'],
+        size_preview_image=config_global['images']['size_preview_image'],  # todo remove
+        size_thumbnail_image_taxon=config_global['images']['size_thumbnail_image_taxon'],  # todo remove
+        size_thumbnail_image=config_global['images']['size_thumbnail_image'],  # todo remove
+        resizing_size=tuple(config_global['images']['resizing_size']),
+        sizes=tuple(tuple(s) for s in config_global['images']['sizes']),
         jpg_quality=config_global['images']['jpg_quality'],
         filter_hidden_plants=config_global['plants']['filter_hidden'],
 
         log_severity_console=config_env['log_severity_console'].upper(),
         log_severity_file=config_env['log_severity_file'].upper(),
         log_file_path=Path(config_env['log_file_path']),
-        log_ignore_missing_image_files=config_env['log_ignore_missing_image_files'],
+        ignore_missing_image_files=config_env['ignore_missing_image_files'],
         allow_cors=config_env['allow_cors'],
         max_images_per_taxon=config_env['max_images_per_taxon'],
         n_plants=config_env['n_plants'],

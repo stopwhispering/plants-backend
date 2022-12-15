@@ -16,7 +16,7 @@ def get_filename_thumb(filename: str) -> str:
                                   size=config.size_thumbnail_image)
 
 
-def get_relative_path_thumb(filename_thumb: str) -> PurePath:
+def get_relative_path_thumb(filename_thumb: str) -> PurePath:  # todo remove
     return config.rel_path_photos_generated.joinpath(filename_thumb)
 
 
@@ -65,7 +65,7 @@ def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
     path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
 
     if not path_generated.is_file():
-        # if not config.log_ignore_missing_image_files:
+        # if not config.ignore_missing_image_files:
         #     logger.info('Preview Image: Generating the not-yet-existing preview photo_file.')
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 import logging
 import os
@@ -10,15 +11,20 @@ from plants import config
 from plants.models.image_models import Image, create_image
 from plants.models.plant_models import Plant
 from plants.constants import RESIZE_SUFFIX
+from plants.models.taxon_models import TaxonOccurrenceImage
 
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.services.image_services_simple import resizing_required, get_relative_path
+from plants.services.taxon_occurence_image_services import get_occurrence_thumbnail_filename
 from plants.util.exif_utils import read_record_datetime_from_exif_tags
-from plants.util.filename_utils import with_suffix
+from plants.util.filename_utils import with_suffix, get_generated_filename
 from plants.util.image_utils import resize_image, generate_thumbnail
+from plants.util.path_utils import get_absolute_path_for_generated_image
 from plants.util.ui_utils import throw_exception
 
 logger = logging.getLogger(__name__)
+
+NOT_AVAILABLE_IMAGE_FILENAME = "not_available.png"
 
 
 def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
@@ -76,11 +82,12 @@ async def save_image_files(files: List[UploadFile],
                                     keywords=keywords,
                                     plants=plants)
 
-        # generate thumbnail photo_file for frontend display and update file's metadata
-        # photo.generate_thumbnails()
-        generate_thumbnail(image=path,
-                           size=config.size_thumbnail_image,
-                           path_thumbnail=config.path_generated_thumbnails)
+        # generate thumbnails for frontend display
+        for size in config.sizes:
+            generate_thumbnail(image=path,
+                               # size=config.size_thumbnail_image,
+                               size=size,
+                               path_thumbnail=config.path_generated_thumbnails)
 
         # save metadata in jpg exif tags
         PhotoMetadataAccessExifTags().save_photo_metadata(absolute_path=path,
@@ -129,3 +136,77 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
     logger.info(f'Moved file {old_path} to {new_path}')
 
     db.commit()
+
+
+# def _get_sized_image_path(filename: str, size_px: int) -> Path:
+#     """return the path to the image file with the given pixel size"""
+#
+
+def get_image_path_by_size(filename: str, db: Session, size_rem: float = None, size_px: int = None) -> Path:
+    if size_rem and size_px:
+        raise ValueError('Only one of size_rem or size_px can be specified.')
+
+    if not size_rem and not size_px:
+        # get image db entry for the directory it is stored at in local filesystem
+        image: Image = Image.get_image_by_filename(db=db, filename=filename)
+        return Path(image.absolute_path)
+
+    else:
+        # the pixel size is part of the resized images' filenames rem size must be converted to px
+        size = (size_px, size_px) if size_px else (int(size_rem * 16), int(size_rem * 16))
+        filename_sized = get_generated_filename(filename, size)
+        return get_absolute_path_for_generated_image(filename_sized)
+
+
+def get_dummy_image_path_by_size(size_rem: float = None, size_px: int = None) -> Path:
+    if size_rem or size_px:
+        size = (size_px, size_px) if size_px else (int(size_rem * 16), int(size_rem * 16))
+        filename = get_generated_filename(NOT_AVAILABLE_IMAGE_FILENAME, size)
+    else:
+        filename = NOT_AVAILABLE_IMAGE_FILENAME
+    return Path("./static/").joinpath(filename)
+
+
+def read_image_by_size(filename: str, db: Session, size_rem: float = None, size_px: int = None) -> bytes:
+    """return the image in specified size as bytes"""
+    path = get_image_path_by_size(filename=filename,
+                                  db=db,
+                                  size_rem=size_rem,
+                                  size_px=size_px)
+
+    if not path.is_file():
+        # return default image on dev environment where most photos are missing
+        if config.ignore_missing_image_files:
+            path = get_dummy_image_path_by_size(size_rem=size_rem, size_px=size_px)
+        else:
+            logger.error(err_msg := f'Image file not found: {path}')
+            throw_exception(err_msg)
+
+    with open(path, "rb") as image:
+        image_bytes: bytes = image.read()
+
+    return image_bytes
+
+
+def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: Session):
+    taxon_occurrence_image: TaxonOccurrenceImage = (db.query(TaxonOccurrenceImage).filter(
+                                    TaxonOccurrenceImage.gbif_id == gbif_id,
+                                    TaxonOccurrenceImage.occurrence_id == occurrence_id,
+                                    TaxonOccurrenceImage.img_no == img_no).first())
+    if not taxon_occurrence_image:
+        logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
+        throw_exception(err_msg)
+
+    path = config.path_generated_thumbnails_taxon.joinpath(taxon_occurrence_image.filename_thumbnail)
+    if not path.is_file():
+        # return default image on dev environment where most photos are missing
+        if config.ignore_missing_image_files:
+            path = get_dummy_image_path_by_size(size_px=config.size_thumbnail_image_taxon[0])
+        else:
+            logger.error(err_msg := f'Occurence thumbnail file not found: {path}')
+            throw_exception(err_msg)
+
+    with open(path, "rb") as image:
+        image_bytes: bytes = image.read()
+
+    return image_bytes

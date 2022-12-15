@@ -1,0 +1,11 @@
+services:
+    plants-backend:
+    restart: always
+    labels:
+      - traefik.http.routers.plants-backend.entrypoints=https-ep
+      - traefik.http.routers.plants-backend.rule=Host(`plants.astroloba.net`) && PathPrefix(`/api`)
+      - traefik.http.routers.plants-backend.tls=true
+      - traefik.http.routers.plants-backend.tls.certresolver=le
+
+      # enable basic auth as defined in traefik's docker compose file
+      - traefik.http.routers.demo-api.middlewares=my-basic-auth

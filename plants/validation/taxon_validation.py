@@ -57,9 +57,10 @@ class PDistribution(BaseModel):
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
     # path_thumb: Path
-    relative_path_thumb: Path = Field(alias='path_thumb')
+    filename: str
+    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove?
     # path_original: Path
-    relative_path: Path = Field(alias='path_original')
+    relative_path: Path = Field(alias='path_original')  # todo remove?
     description: Optional[str]
 
     class Config:
@@ -78,8 +79,10 @@ class PTaxonOccurrenceImage(BaseModel):
     creator_identifier: str
     publisher_dataset: Optional[str]
     references: Optional[str]
-    href: str
-    filename_thumbnail: Path = Field(alias='path_thumbnail')
+    href: str  # link to iamge at inaturalist etc.
+    filename_thumbnail: str  # filename for generated thumbnails
+
+    # filename_thumbnail: Path = Field(alias='path_thumbnail')
 
     class Config:
         extra = 'forbid'
@@ -93,10 +96,10 @@ class PTaxonOccurrenceImage(BaseModel):
         # return v.isoformat()
         return v.strftime("%Y-%m-%d")
 
-    @validator("filename_thumbnail")
-    def get_path(cls, v):  # noqa
-        """validator decorator makes this a class method and enforces cls param"""
-        return get_path_for_taxon_thumbnail(v)
+    # @validator("filename_thumbnail")
+    # def get_path(cls, v):  # noqa
+    #     """validator decorator makes this a class method and enforces cls param"""
+    #     return get_path_for_taxon_thumbnail(v)
 
 
 class PTaxon(BaseModel):

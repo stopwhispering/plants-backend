@@ -11,21 +11,30 @@ from plants import config
 logger = logging.getLogger(__name__)
 
 
+def get_thumbnail_name(filename: str, size: Tuple[int, int]) -> str:
+    suffix = f'{size[0]}_{size[1]}'
+    filename_thumb_list = filename.split('.')
+    # noinspection PyTypeChecker
+    filename_thumb_list.insert(-1, suffix)
+    filename_thumb = ".".join(filename_thumb_list)
+    return filename_thumb
+
+
 def generate_thumbnail(image: Union[Path, BytesIO],
                        path_thumbnail: Path,
-                       size: Sequence = (100, 100),
+                       size: tuple[int, int] = (100, 100),
                        filename_thumb: Union[PurePath, str] = None) -> Optional[Path]:
     """
     generates a resized variant of an photo_file; returns the full local path
     supply original photo_file either as filename or i/o stream
     if Image is supplied as BytesIO, a filename_thumb <<must>> be supplied
     """
-    if not config.log_ignore_missing_image_files:
+    if not config.ignore_missing_image_files:
         logger.debug(f'Generating resized photo_file of {image} in size {size}.')
-    suffix = f'{size[0]}_{size[1]}'
+    # suffix = f'{size[0]}_{size[1]}'
 
     if isinstance(image, Path) and not image.is_file():
-        if not config.log_ignore_missing_image_files:
+        if not config.ignore_missing_image_files:
             logger.error(f"Original Image of default photo_file does not exist. Can't generate thumbnail. {image}")
         return
     im = Image.open(image)
@@ -39,10 +48,11 @@ def generate_thumbnail(image: Union[Path, BytesIO],
     im.thumbnail(tuple(size))
 
     if not filename_thumb:
-        filename_thumb_list = image.name.split('.')
-        # noinspection PyTypeChecker
-        filename_thumb_list.insert(-1, suffix)
-        filename_thumb = ".".join(filename_thumb_list)
+        filename_thumb = get_thumbnail_name(image.name, size)
+        # filename_thumb_list = image.name.split('.')
+        # # noinspection PyTypeChecker
+        # filename_thumb_list.insert(-1, suffix)
+        # filename_thumb = ".".join(filename_thumb_list)
 
     path_save = path_thumbnail.joinpath(filename_thumb)
     im.save(path_save, "JPEG")

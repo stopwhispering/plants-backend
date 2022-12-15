@@ -2,3 +2,4 @@
 /.env
 *.prof
 /deploy.bat
+/database.db

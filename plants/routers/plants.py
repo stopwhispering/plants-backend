@@ -26,6 +26,7 @@ router = APIRouter(
         responses={404: {"description": "Not found"}},
         )
 
+
 @router.post("/{plant_id}/clone", response_model=PResultsPlantsUpdate)
 def clone_plant(
         request: Request,
@@ -166,6 +167,7 @@ async def get_plants(db: Session = Depends(get_db)):
     if config.n_plants:
         query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
+    # todo subqueryload more?
     # save around 30% of time using subqueryload instead of lazyload (default)
     query = query.options(
             # subqueryload(Plant.parent_plant).subqueryload(Plant.descendant_plants),

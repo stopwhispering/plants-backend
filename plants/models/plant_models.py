@@ -182,11 +182,6 @@ class Plant(Base, OrmUtil):
             self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
         else:
             self.filename_previewimage = plant.filename_previewimage.as_posix()
-        # if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
-        #     self.filename_previewimage = (plant.filename_previewimage.relative_to(
-        #     config.subdirectory_photos).as_posix())
-        # else:
-        #     plant.filename_previewimage.as_posix()
 
     def set_taxon(self, db: Session, taxon_id: Optional[int]):
         if taxon_id:
