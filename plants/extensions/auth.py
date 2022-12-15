@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 
 from fastapi import Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordBearer, SecurityScopes
+from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from pydantic import BaseModel, ValidationError
 
@@ -55,17 +55,16 @@ def authenticate_user(fake_db, username: str, password: str):
     return user
 
 
-async def get_current_user(security_scopes: SecurityScopes,
-                           token: str = Depends(oauth2_scheme),
+async def get_current_user(token: str = Depends(oauth2_scheme),
                            ):
-    if security_scopes.scopes:
-        authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
-    else:
-        authenticate_value = "Bearer"
+    # if security_scopes.scopes:
+    #     authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
+    # else:
+    #     authenticate_value = "Bearer"
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": authenticate_value},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from plants import config
 from plants.extensions.db import init_database_tables, engine
 from plants.routers import (taxa, plants, images, events, property_names, properties, proposals,
-                            functions, selection_data, api_biodiversity, pollinations, florescences)
+                            functions, selection_data, api_biodiversity, pollinations, florescences, auth)
 from plants.util.logger_utils import configure_root_logger
 
 configure_root_logger(log_severity_console=config.log_severity_console,
@@ -59,5 +59,6 @@ app.include_router(selection_data.router, prefix=COMMON_PREFIX)
 app.include_router(api_biodiversity.router, prefix=COMMON_PREFIX)
 app.include_router(pollinations.router, prefix=COMMON_PREFIX)
 app.include_router(florescences.router, prefix=COMMON_PREFIX)
+app.include_router(auth.router, prefix=COMMON_PREFIX)
 
 init_database_tables(engine_=engine)

@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 import logging
 import datetime
 
+from plants.extensions.auth import get_current_user
 from plants.models.pollination_models import COLORS_MAP, PollinationStatus
+from plants.models.users import User
 from plants.services.pollination_services import (save_new_pollination, read_ongoing_pollinations, update_pollination,
                                                   read_pollen_containers, update_pollen_containers,
                                                   read_plants_without_pollen_containers, remove_pollination)
@@ -28,7 +30,8 @@ router = APIRouter(
 @router.post('/pollinations')
 async def post_pollination(
         new_pollination_data: PRequestNewPollination,
-        db: Session = Depends(get_db)):
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)):
     save_new_pollination(new_pollination_data=new_pollination_data, db=db)
 
 
@@ -36,14 +39,16 @@ async def post_pollination(
 async def put_pollination(
         pollination_id: int,
         edited_pollination_data: PRequestEditedPollination,
-        db: Session = Depends(get_db)):
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)):
     assert pollination_id == edited_pollination_data.id
     update_pollination(pollination_data=edited_pollination_data, db=db)
 
 
 @router.get("/ongoing_pollinations",
             response_model=PResultsOngoingPollinations)
-async def get_ongoing_pollinations(db: Session = Depends(get_db)):
+async def get_ongoing_pollinations(db: Session = Depends(get_db),
+                                   current_user: User = Depends(get_current_user)):
     ongoing_pollinations = read_ongoing_pollinations(db=db)
 
     results = {'action': 'Get ongoing pollinations',
@@ -54,7 +59,7 @@ async def get_ongoing_pollinations(db: Session = Depends(get_db)):
 
 @router.get("/pollinations/settings",
             response_model=PResultsSettings)
-async def get_pollination_settings():
+async def get_pollination_settings(current_user: User = Depends(get_current_user)):
     colors = list(COLORS_MAP.keys())
     pollination_status = [
         {'key': PollinationStatus.ATTEMPT.value, 'text': 'Attempt'},
@@ -70,7 +75,8 @@ async def get_pollination_settings():
 
 @router.get("/pollen_containers",
             response_model=PResultsPollenContainers)
-async def get_pollen_containers(db: Session = Depends(get_db)):
+async def get_pollen_containers(db: Session = Depends(get_db),
+                                current_user: User = Depends(get_current_user)):
     """Get pollen containers plus plants without pollen containers """
     pollen_containers = read_pollen_containers(db=db)
     plants_without_pollen_containers = read_plants_without_pollen_containers(db=db)
@@ -81,22 +87,24 @@ async def get_pollen_containers(db: Session = Depends(get_db)):
 
 @router.post("/pollen_containers")
 async def post_pollen_containers(pollen_containers_data: PRequestPollenContainers,
-                                 db: Session = Depends(get_db)):
+                                 db: Session = Depends(get_db),
+                                 current_user: User = Depends(get_current_user)):
     """update pollen containers and add new ones"""
     update_pollen_containers(pollen_containers_data=pollen_containers_data.pollenContainerCollection, db=db)
 
-
-@router.put('/pollinations/{pollination_id}')
-async def put_pollination(
-        pollination_id: int,
-        edited_pollination_data: PRequestEditedPollination,
-        db: Session = Depends(get_db)):
-    assert pollination_id == edited_pollination_data.id
-    update_pollination(pollination_data=edited_pollination_data, db=db)
+#
+# @router.put('/pollinations/{pollination_id}')
+# async def put_pollination(
+#         pollination_id: int,
+#         edited_pollination_data: PRequestEditedPollination,
+#         db: Session = Depends(get_db)):
+#     assert pollination_id == edited_pollination_data.id
+#     update_pollination(pollination_data=edited_pollination_data, db=db)
 
 
 @router.delete('/pollinations/{pollination_id}')
 async def delete_pollination(
         pollination_id: int,
-        db: Session = Depends(get_db)):
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)):
     remove_pollination(pollination_id=pollination_id, db=db)
