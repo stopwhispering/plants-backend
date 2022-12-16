@@ -1,17 +1,17 @@
 services:
     plants-backend:
-    restart: always
-    labels:
-      - traefik.http.routers.plants-backend.entrypoints=https-ep
-      - traefik.http.routers.plants-backend.rule=Host(`plants.astroloba.net`) && PathPrefix(`/api`)
-      - traefik.http.routers.plants-backend.tls=true
-      - traefik.http.routers.plants-backend.tls.certresolver=le
+      restart: always
+      labels:
+        - traefik.http.routers.plants-backend.entrypoints=https-ep
+        - traefik.http.routers.plants-backend.rule=Host(`plants.astroloba.net`) && PathPrefix(`/api`)
+        - traefik.http.routers.plants-backend.tls=true
+        - traefik.http.routers.plants-backend.tls.certresolver=le
 
-      # enable basic auth as defined in traefik's docker compose file
-      - traefik.http.routers.demo-api.middlewares=my-basic-auth
+        # enable basic auth as defined in traefik's docker compose file
+        - traefik.http.routers.demo-api.middlewares=my-basic-auth
 
-    environment:
-#        set LOG_LEVEL for Gunicorn, default is "info"
-        - LOG_LEVEL=info
-        - CONNECTION_STRING=sqlite:////common//plants//db//database.db
-        - ENVIRONMENT=prod
+      environment:
+  #        set LOG_LEVEL for Gunicorn, default is "info"
+          - LOG_LEVEL=info
+          - CONNECTION_STRING=sqlite:////common//plants//db//database.db
+          - ENVIRONMENT=prod

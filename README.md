@@ -39,8 +39,27 @@ IDs are determined.
 Git Clone
 
     git clone https://github.com/stopwhispering/plants-backend.git
+    cd plants-backend
+
+Create folder for images, db, and models
+
+    # linux
+    mkdir -p /common/plants/db
+
+    # windows
+    mkdir /common/plants/db
+
+Adjust hostnames in docker-compose.prod.yml (prod only)
 
 Create & Run Docker Container
+
+    # dev
+    docker compose -f ./docker-compose.base.yml -f ./docker-compose.dev.yml up --build --detach
+    
+    # prod
+    docker compose -f ./docker-compose.base.yml -f ./docker-compose.prod.yml up --build --detach
+
+Test API: Open in Browser - http://plants.localhost/api/plants/
 
 Train model
 
