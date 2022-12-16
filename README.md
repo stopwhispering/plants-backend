@@ -38,15 +38,7 @@ IDs are determined.
 ## Deployment
 Git Clone
 
-    todo 1
-    todo 2
-
-Copy to Server
-
-    todo1 rsync
-    todo2
-
-Create .env File
+    git clone https://github.com/stopwhispering/plants-backend.git
 
 Create & Run Docker Container
 

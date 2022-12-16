@@ -9,3 +9,9 @@ services:
 
       # enable basic auth as defined in traefik's docker compose file
       - traefik.http.routers.demo-api.middlewares=my-basic-auth
+
+    environment:
+#        set LOG_LEVEL for Gunicorn, default is "info"
+        - LOG_LEVEL=info
+        - CONNECTION_STRING=sqlite:////common//plants//db//database.db
+        - ENVIRONMENT=prod

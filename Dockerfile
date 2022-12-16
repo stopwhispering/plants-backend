@@ -7,12 +7,6 @@ RUN pip install --no-cache-dir --upgrade -r /src/requirements.txt
 # fastapi configuration via environment variables, see https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
 # default app module is app.app.main:app and app.main:app -> we need to specify explicitly
 ENV APP_MODULE="plants.main:app"
-# set LOG_LEVEL for Gunicorn, default is "info"
-ENV LOG_LEVEL="debug"
-
-#custom configuration via environment variables
-ENV ENVIRONMENT="dev"
-ENV CONNECTION_STRING="sqlite:////common//plants//db//database.db"
 
 COPY plants /src/plants
 COPY ml_helpers /src/ml_helpers

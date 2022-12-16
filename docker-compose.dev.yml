@@ -4,3 +4,9 @@ services:
       labels:
         - traefik.http.routers.plants-backend-insecure.entrypoints=http-ep
         - traefik.http.routers.plants-backend-insecure.rule=Host(`plants.localhost`) && PathPrefix(`/api`)
+
+      environment:
+#        set LOG_LEVEL for Gunicorn, default is "info"
+        - LOG_LEVEL=debug
+        - CONNECTION_STRING=sqlite:////common//plants//db//database.db
+        - ENVIRONMENT=dev
