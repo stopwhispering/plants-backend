@@ -166,17 +166,17 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 async def delete_image(image_container: PImagesDelete, db: Session = Depends(get_db)):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
     for photo in image_container.images:
-        relative_path = get_relative_path(photo.absolute_path)
-        image = get_image_by_relative_path(relative_path=relative_path, db=db, raise_exception=True)
+        # relative_path = get_relative_path(photo.absolute_path)
+        # image = get_image_by_relative_path(relative_path=relative_path, db=db, raise_exception=True)
+        image = Image.get_image_by_filename(filename=photo.filename, db=db)
         delete_image_file_and_db_entries(image=image, db=db)
 
-    deleted = [image.absolute_path.name for image in image_container.images]
+    deleted = [image.filename for image in image_container.images]
     results = {'action': 'Deleted',
                'resource': 'ImageResource',
-               'message': get_message(f'Successfully deleted images',
+               'message': get_message(f'Deleted image(s)',
                                       description=f'Filenames: {deleted}')
                }
-
     return results
 
 

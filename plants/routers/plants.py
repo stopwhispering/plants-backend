@@ -77,11 +77,6 @@ def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(ge
     # update plants
     plants_saved = update_plants_from_list_of_dicts(plants_modified, db)
 
-    # serialize updated/created plants to refresh data in frontend
-    # plants_list = [p.as_dict() for p in plants_saved]
-    # plants_list = [get_plant_as_dict(p) for p in plants_saved]
-    # make_list_items_json_serializable(plants_list)
-
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
     results = {'action':   'Saved Plants',
                'resource': 'PlantResource',

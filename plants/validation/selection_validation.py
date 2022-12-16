@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, List
 
+from pydantic import Extra
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
@@ -14,7 +15,7 @@ class PTaxonTreeNode(BaseModel):
     plant_ids: Optional[List[int]]  # plants themselves on lowest level
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 # this is required (plus importing annotations) to allow for self-references
@@ -25,7 +26,7 @@ class PTaxonTreeRoot(BaseModel):
     TaxonTree: List[PTaxonTreeNode]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsSelection(BaseModel):
@@ -35,4 +36,4 @@ class PResultsSelection(BaseModel):
     Selection: PTaxonTreeRoot
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

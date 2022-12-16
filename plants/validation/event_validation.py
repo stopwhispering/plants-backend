@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, List
 
-from pydantic import Field, validator
+from pydantic import Field, validator, Extra
 from pydantic.main import BaseModel
 
 from plants.models.enums import ShapeTop, ShapeSide
@@ -16,7 +16,7 @@ class PObservation(BaseModel):
     observation_notes: Optional[str]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPot(BaseModel):
@@ -27,7 +27,7 @@ class PPot(BaseModel):
     diameter_width: float
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         use_enum_values = True
 
 
@@ -38,7 +38,7 @@ class PSoil(BaseModel):
     description: Optional[str]
 
     class Config:
-        # extra = 'forbid'  # plants_count when updated from frontend
+        # extra = 'forbid'  # plants_count when updated from frontend #todo forbid
         orm_mode = True
 
 
@@ -59,27 +59,27 @@ class PSoilWithCount(PSoil):
 class PImage(BaseModel):
     id: Optional[int]  # empty if new
     filename: str
-    relative_path: Path = Field(alias='path_original')
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         allow_population_by_field_name = True
 
 
 class PImageDelete(BaseModel):
     # id: Optional[int]  # empty if new
     # path_full_local: Path
-    absolute_path: Path = Field(alias='path_full_local')
+    filename: str
+    # absolute_path: Path = Field(alias='path_full_local')
 
     class Config:
-        extra = 'allow'
+        extra = Extra.forbid
 
 
 class PImagesDelete(BaseModel):
     images: List[PImageDelete]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PEvent(BaseModel):
@@ -98,11 +98,10 @@ class PEvent(BaseModel):
     images: Optional[List[PImage]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PEventCreateOrUpdate(PEvent):
-    # id: Optional[int]
     id: Optional[int]  # empty for new, filled for updated events
 
 
@@ -110,7 +109,7 @@ class PEventCreateOrUpdateRequest(BaseModel):
     plants_to_events: dict[int, list[PEventCreateOrUpdate]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 # class PEventCreateOrUpdate(BaseModel):
 #     id: Optional[int]  # property missing if event is new
@@ -136,7 +135,7 @@ class PResultsEventResource(BaseModel):
     message: PMessage
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsSoilResource(BaseModel):
@@ -144,11 +143,11 @@ class PResultsSoilResource(BaseModel):
     message: PMessage
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsSoilsResource(BaseModel):
     SoilsCollection: List[PSoilWithCount]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

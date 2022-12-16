@@ -10,9 +10,7 @@ from plants.util.filename_utils import create_if_not_exists
 
 @dataclass
 class Configuration:
-    size_preview_image: Tuple[int, int]  # e.g.[300, 300]  # todo remove
-    size_thumbnail_image_taxon: Tuple[int, int]  # e.g.[220, 1000]  # todo remove
-    size_thumbnail_image: Tuple[int, int]  # e.g.[350, 350]  # todo remove
+    size_thumbnail_image_taxon: Tuple[int, int]  # e.g.[220, 220]
     sizes: Tuple[Tuple[int, int], ...]  # required lower-resolution sizes for images
     resizing_size: Tuple[int, int]  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
@@ -33,7 +31,6 @@ class Configuration:
     subdirectory_photos: PurePath  # 'localService'
     path_deleted_photos: Path  # 'C:\\common\\plants\\photos\\deleted'
 
-    path_original_photos: Path
     path_original_photos_uploaded: Path
     path_generated_thumbnails: Path
     path_generated_thumbnails_taxon: Path
@@ -71,9 +68,7 @@ def parse_config() -> Configuration:
     rel_path_photos_generated = subdirectory_photos.joinpath("generated")
 
     config = Configuration(
-        size_preview_image=config_global['images']['size_preview_image'],  # todo remove
-        size_thumbnail_image_taxon=config_global['images']['size_thumbnail_image_taxon'],  # todo remove
-        size_thumbnail_image=config_global['images']['size_thumbnail_image'],  # todo remove
+        size_thumbnail_image_taxon=config_global['images']['size_thumbnail_image_taxon'],
         resizing_size=tuple(config_global['images']['resizing_size']),
         sizes=tuple(tuple(s) for s in config_global['images']['sizes']),
         jpg_quality=config_global['images']['jpg_quality'],
@@ -90,7 +85,7 @@ def parse_config() -> Configuration:
         path_photos_base=path_photos_base,
         subdirectory_photos=subdirectory_photos,
         path_deleted_photos=Path(config_env['path_deleted_photos']),
-        path_original_photos=path_original_photos,
+        # path_original_photos=path_original_photos,
         path_original_photos_uploaded=path_original_photos_uploaded,
         path_generated_thumbnails=path_generated_thumbnails,
         path_generated_thumbnails_taxon=path_generated_thumbnails_taxon,

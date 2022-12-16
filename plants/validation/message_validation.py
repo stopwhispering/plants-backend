@@ -1,5 +1,6 @@
 from typing import Optional
 
+from pydantic import Extra
 from pydantic.main import BaseModel
 
 
@@ -10,7 +11,7 @@ class PMessage(BaseModel):
     type: Optional[str]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PConfirmation(BaseModel):
@@ -19,4 +20,4 @@ class PConfirmation(BaseModel):
     message: PMessage
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

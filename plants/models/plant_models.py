@@ -13,7 +13,6 @@ from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
-from plants.services.image_services_simple import generate_previewimage_if_not_exists
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
@@ -166,7 +165,7 @@ class Plant(Base, OrmUtil):
             self.filename_previewimage = None
             return
 
-        generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
+        # generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
 
         # rmeove photos-subdir from path if required (todo: still required somewhere?)
         if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):

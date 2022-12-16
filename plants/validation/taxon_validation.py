@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Optional, Dict
 import datetime
 
-from pydantic import validator
+from pydantic import validator, Extra
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
@@ -17,7 +17,7 @@ class PTaxonInfoRequest(BaseModel):
     species: str  # search string
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsTaxonInfoRequest(BaseModel):
@@ -27,7 +27,7 @@ class PResultsTaxonInfoRequest(BaseModel):
     ResultsCollection: List
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PAssignTaxonRequest(BaseModel):
@@ -39,7 +39,7 @@ class PAssignTaxonRequest(BaseModel):
     source: str  # "Local DB" or ...
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PFetchTaxonImages(BaseModel):
@@ -51,19 +51,16 @@ class PDistribution(BaseModel):
     introduced: List[str]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
-    # path_thumb: Path
     filename: str
-    # path_original: Path
-    relative_path: Path = Field(alias='path_original')  # todo remove?
     description: Optional[str]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         allow_population_by_field_name = True
 
 
@@ -84,7 +81,7 @@ class PTaxonOccurrenceImage(BaseModel):
     # filename_thumbnail: Path = Field(alias='path_thumbnail')
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         anystr_strip_whitespace = True
         # alias_generator = humps.camelize
         allow_population_by_field_name = True  # populate model by both alias (default) and field name
@@ -133,7 +130,7 @@ class PTaxon(BaseModel):
     occurrenceImages: Optional[List[PTaxonOccurrenceImage]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsSaveTaxonRequest(BaseModel):
@@ -144,7 +141,7 @@ class PResultsSaveTaxonRequest(BaseModel):
     taxon_data: PTaxon
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsGetTaxa(BaseModel):
@@ -154,14 +151,14 @@ class PResultsGetTaxa(BaseModel):
     TaxaDict: Dict[int, PTaxon]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PModifiedTaxa(BaseModel):
     ModifiedTaxaCollection: List[PTaxon]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsFetchTaxonImages(BaseModel):
@@ -171,4 +168,4 @@ class PResultsFetchTaxonImages(BaseModel):
     occurrenceImages: Optional[List[PTaxonOccurrenceImage]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

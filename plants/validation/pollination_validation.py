@@ -103,7 +103,7 @@ class PResultsOngoingPollinations(BaseModel):
     ongoingPollinationCollection: List[POngoingPollination]
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PPollinationStatus(BaseModel):
@@ -126,12 +126,11 @@ class PResultsSettings(BaseModel):
 
 class PResultsActiveFlorescences(BaseModel):
     action: str
-    # resource: str
     message: Optional[PMessage]
     activeFlorescenceCollection: List[PActiveFlorescence]
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PResultsPotentialPollenDonors(BaseModel):
@@ -141,7 +140,7 @@ class PResultsPotentialPollenDonors(BaseModel):
     potentialPollenDonorCollection: List[PPotentialPollenDonor]
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PPollenContainer(BaseModel):
@@ -205,7 +204,7 @@ class PRequestNewPollination(BaseModel):
     location: str  # e.g. 'outside_led'
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PRequestEditedPollination(BaseModel):
@@ -235,7 +234,7 @@ class PRequestEditedPollination(BaseModel):
     first_seeds_germinated: int | None
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PRequestEditedFlorescence(BaseModel):
@@ -251,7 +250,7 @@ class PRequestEditedFlorescence(BaseModel):
     last_flower_closing_date: str | None  # e.g. '2022-11-16'
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?
 
 
 class PRequestNewFlorescence(BaseModel):
@@ -261,4 +260,4 @@ class PRequestNewFlorescence(BaseModel):
     comment: str | None  # max 40 chars
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.forbid  # todo works?

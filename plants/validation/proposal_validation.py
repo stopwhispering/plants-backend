@@ -1,5 +1,6 @@
 from enum import Enum
 
+from pydantic import Extra
 from pydantic.main import BaseModel
 from typing import List, Optional
 
@@ -19,21 +20,21 @@ class PComponentName(BaseModel):
     component_name: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PNurseryName(BaseModel):
     name: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PKeywordName(BaseModel):
     keyword: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsProposals(BaseModel):
@@ -47,4 +48,4 @@ class PResultsProposals(BaseModel):
     TraitsCollection: Optional[List[PTrait]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 
+from pydantic import Extra
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
@@ -10,7 +11,7 @@ class PKeyword(BaseModel):
     keyword: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPlantTag(BaseModel):
@@ -19,20 +20,18 @@ class PPlantTag(BaseModel):
     text: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PImage(BaseModel):
     filename: str
-    # relative_path: Path = Field(alias='path_original')  #  todo remove
     keywords: List[PKeyword]
     plants: List[PPlantTag]
     description: str | None
-    # absolute_path: Path = Field(alias='path_full_local')#  todo remove
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         allow_population_by_field_name = True
 
 
@@ -40,7 +39,7 @@ class PImageUpdated(BaseModel):
     ImagesCollection: List[PImage]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsImageResource(BaseModel):
@@ -48,7 +47,7 @@ class PResultsImageResource(BaseModel):
     message: PMessage
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsImagesUploaded(BaseModel):
@@ -58,7 +57,7 @@ class PResultsImagesUploaded(BaseModel):
     images: List[PImage]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PImageUploadedMetadata(BaseModel):
@@ -66,7 +65,7 @@ class PImageUploadedMetadata(BaseModel):
     keywords: list[str]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsImageDeleted(BaseModel):
@@ -76,4 +75,4 @@ class PResultsImageDeleted(BaseModel):
     # photo_file:  PImage
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

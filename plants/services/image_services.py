@@ -86,7 +86,6 @@ async def save_image_files(files: List[UploadFile],
         # generate thumbnails for frontend display
         for size in config.sizes:
             generate_thumbnail(image=path,
-                               # size=config.size_thumbnail_image,
                                size=size,
                                path_thumbnail=config.path_generated_thumbnails)
 

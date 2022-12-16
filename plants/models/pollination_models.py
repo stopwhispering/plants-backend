@@ -117,13 +117,6 @@ class Florescence(Base, OrmUtil):
                                 back_populates="florescence",
                                 foreign_keys="Pollination.florescence_id")
 
-    # pollinations where pollen from this florescence was used (with plant as pollen donor)  # todo remove
-    # pollinations_as_pollen_donor = relationship("Pollination",
-    #                                             back_populates="pollen_donor_florescence",
-    #                                             foreign_keys="Pollination.pollen_donor_florescence_id")
-
-    # count_stored_pollen_containers = Column(INTEGER)
-
     def as_dict(self):
         """add some additional fields to mixin's as_dict"""
         as_dict = super(Florescence, self).as_dict()
@@ -149,10 +142,6 @@ class Pollination(Base, OrmUtil):
     pollen_donor_plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     pollen_donor_plant = relationship("Plant",  # back_populates="pollinations_as_donor_plant",
                                       foreign_keys=[pollen_donor_plant_id])
-
-    # florescence where the pollen was taken from  # todo remove entirely
-    # pollen_donor_florescence_id = Column(INTEGER, ForeignKey('florescence.id'))  # optional (not neccessarily known)
-    # pollen_donor_florescence = relationship("Florescence", foreign_keys=[pollen_donor_florescence_id])
 
     pollen_type = Column(CHAR(20), nullable=False)  # PollenType (fresh | frozen | unknown)
     # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))

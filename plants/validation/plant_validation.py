@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional, List, Union
 from datetime import datetime, date
 
-from pydantic import Field
+from pydantic import Field, Extra
 from pydantic.main import BaseModel
 
 from plants.models.enums import PropagationType, CancellationReason, TagState
@@ -17,7 +17,7 @@ class PPlantTag(BaseModel):
     plant_id: int
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         use_enum_values = True
         orm_mode = True
 
@@ -26,7 +26,7 @@ class PPlantsDeleteRequest(BaseModel):
     plant_id: int
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPlantsRenameRequest(BaseModel):
@@ -34,7 +34,7 @@ class PPlantsRenameRequest(BaseModel):
     NewPlantName: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPlantCurrentSoil(BaseModel):
@@ -42,7 +42,7 @@ class PPlantCurrentSoil(BaseModel):
     date: date
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPlantLatestImage(BaseModel):
@@ -50,7 +50,7 @@ class PPlantLatestImage(BaseModel):
     record_date_time: datetime = Field(alias='date')
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         allow_population_by_field_name = True
         orm_mode = True
 
@@ -61,7 +61,7 @@ class PAssociatedPlantExtractForPlant(BaseModel):
     active: bool
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         orm_mode = True
 
 
@@ -71,7 +71,7 @@ class PAssociatedPlantExtractForPlantOptional(BaseModel):
     active: bool | None
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         orm_mode = True
 
 
@@ -109,7 +109,7 @@ class PPlant(BaseModel):
     tags: list[PPlantTag]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
         use_enum_values = True  # populate model with enum values, rather than the raw enum
         orm_mode = True
         allow_population_by_field_name = True
@@ -122,14 +122,14 @@ class PResultsPlants(BaseModel):
     PlantsCollection: list[PPlant]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPlantsUpdateRequest(BaseModel):
     PlantsCollection: list[PPlant]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsPlantsUpdate(BaseModel):
@@ -139,4 +139,4 @@ class PResultsPlantsUpdate(BaseModel):
     plants: list[PPlant]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

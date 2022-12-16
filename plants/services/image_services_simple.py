@@ -5,15 +5,9 @@ import logging
 from PIL import Image
 
 from plants import config
-from plants.util.filename_utils import get_generated_filename, with_suffix
-from plants.util.image_utils import generate_thumbnail
+from plants.util.filename_utils import with_suffix
 
 logger = logging.getLogger(__name__)
-
-
-def get_filename_thumb(filename: str) -> str:
-    return get_generated_filename(filename,
-                                  size=config.size_thumbnail_image)
 
 
 def remove_files_already_existing(files: List, suffix: str) -> List[str]:
@@ -52,20 +46,20 @@ def get_path_for_taxon_thumbnail(filename: Path):
     return config.rel_path_photos_generated_taxon.joinpath(filename)
 
 
-def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
-    """
-     generates a preview image for a plant's default if it does not yet exist"""
-    filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
-                                                size=config.size_preview_image)
-    path_full = config.path_photos_base.parent.joinpath(original_image_rel_path)
-    path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
-
-    if not path_generated.is_file():
-        # if not config.ignore_missing_image_files:
-        #     logger.info('Preview Image: Generating the not-yet-existing preview photo_file.')
-        generate_thumbnail(image=path_full,
-                           size=config.size_preview_image,
-                           path_thumbnail=config.path_generated_thumbnails)
+# def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
+#     """
+#      generates a preview image for a plant's default if it does not yet exist"""
+#     filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
+#                                                 size=config.size_preview_image)
+#     path_full = config.path_photos_base.parent.joinpath(original_image_rel_path)
+#     path_generated = config.path_generated_thumbnails.joinpath(filename_generated)
+#
+#     if not path_generated.is_file():
+#         # if not config.ignore_missing_image_files:
+#         #     logger.info('Preview Image: Generating the not-yet-existing preview photo_file.')
+#         generate_thumbnail(image=path_full,
+#                            size=config.size_preview_image,
+#                            path_thumbnail=config.path_generated_thumbnails)
 
 
 def get_relative_path(absolute_path: Path) -> PurePath:

@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from pydantic import Extra
 from pydantic.main import BaseModel
 
 
@@ -9,7 +10,7 @@ class PTraitCategory(BaseModel):
     sort_flag: Optional[int]   # remove?
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PTrait(BaseModel):
@@ -19,7 +20,7 @@ class PTrait(BaseModel):
     trait_category: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PTraitWithStatus(BaseModel):
@@ -28,7 +29,7 @@ class PTraitWithStatus(BaseModel):
     status: str
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PTraitCategoryWithTraits(BaseModel):
@@ -39,4 +40,4 @@ class PTraitCategoryWithTraits(BaseModel):
     traits: List[PTraitWithStatus]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

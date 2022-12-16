@@ -1,4 +1,6 @@
 from typing import Dict, List, Optional
+
+from pydantic import Extra
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
@@ -10,7 +12,7 @@ class PPropertyName(BaseModel):
     countPlants: int
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsPropertyNames(BaseModel):
@@ -20,7 +22,7 @@ class PResultsPropertyNames(BaseModel):
     propertiesAvailablePerCategory: Dict[str, List[PPropertyName]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PropertyValue(BaseModel):
@@ -29,7 +31,7 @@ class PropertyValue(BaseModel):
     property_value_id: Optional[int]  # missing if new
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 # todo make all this flatter and easier
@@ -41,7 +43,7 @@ class Property(BaseModel):
     property_value_id: Optional[int]  # set at certain point from property values list
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PropertiesInCategory(BaseModel):
@@ -52,7 +54,7 @@ class PropertiesInCategory(BaseModel):
     property_value: Optional[str]  # used in some request to add new property to category
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 # todo unite taxon & plant
@@ -60,14 +62,14 @@ class PPropertyCollectionPlant(BaseModel):  # todo useless with only one key
     categories: List[PropertiesInCategory]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPropertyCollectionTaxon(BaseModel):  # todo useless with only one key
     categories: Dict[int, PropertiesInCategory]  # todo why a dict here?
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PResultsPropertiesForPlant(BaseModel):
@@ -80,18 +82,18 @@ class PResultsPropertiesForPlant(BaseModel):
     taxon_id: Optional[int]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPropertiesModifiedPlant(BaseModel):
     modifiedPropertiesPlants: Dict[int, PPropertyCollectionPlant]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid
 
 
 class PPropertiesModifiedTaxon(BaseModel):
     modifiedPropertiesTaxa: Dict[int, Dict[int, PropertiesInCategory]]
 
     class Config:
-        extra = 'forbid'
+        extra = Extra.forbid

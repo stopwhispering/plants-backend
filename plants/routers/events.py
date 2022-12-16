@@ -98,7 +98,6 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
 async def create_or_update_events(request: Request,
                                   # todo replace dict with ordinary pydantic schema (also on ui side)
                                   args: PEventCreateOrUpdateRequest,
-                                  # plants_events_dict: Dict[int, List[PEventCreateOrUpdate]] = Body(..., embed=True),
                                   db: Session = Depends(get_db)):
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has been changed, added, or
@@ -227,24 +226,24 @@ async def create_or_update_events(request: Request,
 
             # changes to images attached to the event
             # deleted images
-            # path_originals_saved = [image.path_original for image in event.images] if event.images else []
-            path_originals_saved = [image.relative_path for image in event.images] if event.images else []
+            filenames_saved = [image.filename for image in event.images] if event.images else []
             for image_obj in event_obj.images:
                 image_obj: Image
-                if image_obj.relative_path not in path_originals_saved:
+                if image_obj.filename not in filenames_saved:
                     # don't delete photo_file object, but only the association
                     # (photo_file might be assigned to other events)
                     li: ImageToEventAssociation
                     link: ImageToEventAssociation = next(li for li in event_obj.image_to_event_associations if
-                                                         li.image.relative_path == image_obj.relative_path)
+                                                         li.image.filename == image_obj.filename)
                     db.delete(link)
 
             # newly assigned images
             if event.images:
                 for image in event.images:
-                    image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).scalar()
-                    if not image_obj:
-                        raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
+                    image_obj = Image.get_image_by_filename(filename=image.filename, db=db)
+                    # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).scalar()
+                    # if not image_obj:
+                    #     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
 
                     # not assigned to that specific event, yet
                     if image_obj not in event_obj.images:

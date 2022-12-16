@@ -103,13 +103,18 @@ class Image(Base):
                                                      )
 
     @staticmethod
-    def get_image_by_filename(db: Session, filename: str) -> "Image":
+    def get_image_by_filename(filename: str, db: Session) -> "Image":
         """returns image by filename"""
         image = db.query(Image).filter(Image.filename == filename).first()
         if not image:
             logger.error(err_msg := f'Image not found in db: {filename}')
             throw_exception(err_msg)
         return image
+
+    @staticmethod
+    def exists(filename: str, db: Session) -> bool:
+        """returns True if image exists in db"""
+        return db.query(Image).filter(Image.filename == filename).first() is not None
 
 
 class ImageToEventAssociation(Base):

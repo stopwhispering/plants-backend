@@ -12,7 +12,7 @@ from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
 from plants.services.trait_services import update_traits
 from plants.validation.message_validation import PConfirmation
-from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa
+from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa, PTaxon, PTaxonImage
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,6 @@ async def get_taxa(
                 image_obj: Image = link_obj.image
                 taxon_dict[taxon.id]['images'].append({'id': image_obj.id,
                                                        'filename': image_obj.filename,
-                                                       'relative_path': image_obj.relative_path,
                                                        'description':  link_obj.description})
 
         # distribution codes according to WGSRPD (level 3)
@@ -101,6 +100,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
     modified_taxa = modified_taxa.ModifiedTaxaCollection
 
     for taxon_modified in modified_taxa:
+        taxon_modified: PTaxon
         taxon: Taxon = db.query(Taxon).filter(Taxon.id == taxon_modified.id).first()
         if not taxon:
             logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
@@ -112,11 +112,12 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
         # changes to images attached to the taxon
         # deleted images
         # path_originals_saved = [image.path_original for image in taxon_modified.images] if \
-        path_originals_saved = [image.relative_path for image in taxon_modified.images] if \
-            taxon_modified.images else []
+        image: PTaxonImage
+        filenames_saved = ([image.filename for image in taxon_modified.images]
+                           if taxon_modified.images else [])
         for image_obj in taxon.images:
             image_obj: Image
-            if image_obj.relative_path not in path_originals_saved:
+            if image_obj.filename not in filenames_saved:
                 # don't delete photo_file object, but only the association
                 # (photo_file might be assigned to other events)
                 link: ImageToTaxonAssociation
@@ -126,12 +127,12 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
         # newly assigned images
         if taxon_modified.images:
             for image in taxon_modified.images:
-                # image_obj = db.query(Image).filter(Image.relative_path == image.path_original.as_posix()).first()
-                image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
-
-                # not assigned to any event, yet
-                if not image_obj:
-                    raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
+                # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
+                image_obj = Image.get_image_by_filename(filename=image.filename, db=db)
+                # if not image_obj:
+                # if not Image.exists(filename=image.filename, db=db):
+                #     # not assigned to any event, yet
+                #     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
 
                 # update link table including the photo_file description
                 current_taxon_to_image_link = [t for t in taxon.image_to_taxon_associations if t.image == image_obj]
