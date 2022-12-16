@@ -15,3 +15,8 @@ services:
           - LOG_LEVEL=info
           - CONNECTION_STRING=sqlite:////common//plants//db//database.db
           - ENVIRONMENT=prod
+
+      volumes:
+        - type: bind
+          source: /common/plants
+          target: /common/plants

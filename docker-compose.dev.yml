@@ -10,3 +10,8 @@ services:
         - LOG_LEVEL=debug
         - CONNECTION_STRING=sqlite:////common//plants//db//database.db
         - ENVIRONMENT=dev
+
+      volumes:
+        - type: bind
+          source: /c/common/plants
+          target: /common/plants
