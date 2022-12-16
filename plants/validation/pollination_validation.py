@@ -204,7 +204,7 @@ class PRequestNewPollination(BaseModel):
     location: str  # e.g. 'outside_led'
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.ignore
 
 
 class PRequestEditedPollination(BaseModel):
@@ -234,7 +234,7 @@ class PRequestEditedPollination(BaseModel):
     first_seeds_germinated: int | None
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.ignore
 
 
 class PRequestEditedFlorescence(BaseModel):
@@ -250,7 +250,7 @@ class PRequestEditedFlorescence(BaseModel):
     last_flower_closing_date: str | None  # e.g. '2022-11-16'
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.ignore
 
 
 class PRequestNewFlorescence(BaseModel):

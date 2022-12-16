@@ -1,7 +1,6 @@
-from pathlib import Path
 from typing import Optional, List
 
-from pydantic import Field, validator, Extra
+from pydantic import validator, Extra
 from pydantic.main import BaseModel
 
 from plants.models.enums import ShapeTop, ShapeSide

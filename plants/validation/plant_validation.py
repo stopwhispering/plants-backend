@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional
 from datetime import datetime, date
 
 from pydantic import Field, Extra

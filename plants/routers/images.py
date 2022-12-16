@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from starlette.responses import Response
 
 from plants.constants import RESIZE_SUFFIX
-from plants.models.image_models import Image, get_image_by_relative_path, update_image_if_altered, ImageKeyword
+from plants.models.image_models import Image, update_image_if_altered, ImageKeyword
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -17,7 +17,7 @@ from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
                                                 PPlantTag, PResultsImagesUploaded)
-from plants.services.image_services_simple import remove_files_already_existing, get_relative_path
+from plants.services.image_services_simple import remove_files_already_existing
 from plants.validation.event_validation import PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
 from plants.validation.message_validation import PConfirmation

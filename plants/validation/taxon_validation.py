@@ -1,14 +1,11 @@
-from pathlib import Path
 from typing import List, Optional, Dict
 import datetime
 
 from pydantic import validator, Extra
-from pydantic.fields import Field
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
 from plants.validation.trait_validation import PTraitCategoryWithTraits
-from plants.services.image_services_simple import get_path_for_taxon_thumbnail
 
 
 class PTaxonInfoRequest(BaseModel):

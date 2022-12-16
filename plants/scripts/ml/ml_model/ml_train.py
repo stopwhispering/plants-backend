@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.utils._testing import ignore_warnings  # noqa
 
 from ml_helpers.preprocessing.features import FeatureContainer
-from plants.scripts.ml.ml_pipeline import create_pipeline
+from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
 
 
 def apply_grid_search(x: pd.DataFrame, y: pd.Series, pipeline: Pipeline, param_grid: dict) -> Pipeline:
@@ -95,7 +95,7 @@ def _try_classifiers(x, y, feature_container: FeatureContainer):
     print(df_results)
 
 
-def _optimize_knn_classifier(x, y, feature_container: FeatureContainer):
+def optimize_knn_classifier(x, y, feature_container: FeatureContainer):
     """optimize KNN classifier"""
     pipeline = create_pipeline(feature_container=feature_container, model=neighbors.KNeighborsClassifier())
     param_grid = {
@@ -113,7 +113,7 @@ def _optimize_knn_classifier(x, y, feature_container: FeatureContainer):
     # 'estimator__p': 2, 'estimator__weights': 'distance'} has an F1 of 0.60
 
 
-def _cv_classifier(x, y, pipeline: Pipeline):
+def cv_classifier(x, y, pipeline: Pipeline):
     n_groups = 3  # test part will be 1/n
     n_splits = 3  # k-fold will score n times; must be <= n_groups
     np.random.seed(42)
@@ -125,7 +125,7 @@ def _cv_classifier(x, y, pipeline: Pipeline):
     print(f'Mean score: {np.mean(scores)}')
 
 
-def _optimize_randomforest_classifier(x, y, feature_container: FeatureContainer):
+def optimize_randomforest_classifier(x, y, feature_container: FeatureContainer):
     """optimize a RandomForest classifier"""
     pipeline = create_pipeline(feature_container=feature_container, model=ensemble.RandomForestClassifier())
     param_grid = {

@@ -5,11 +5,11 @@ from sklearn import neighbors
 from plants.dependencies import get_db
 from plants.extensions.db import init_database_tables, engine
 from plants.extensions.ml_models import pickle_pipeline
-from plants.scripts.ml.ml_data import create_data
-from plants.scripts.ml.ml_features import ModelType, create_features
-from plants.scripts.ml.ml_pipeline import create_pipeline
-from plants.scripts.ml.ml_train import (_optimize_knn_classifier, _optimize_randomforest_classifier,  # noqa
-                                        _cv_classifier)
+from plants.scripts.ml.ml_model.ml_data import create_data
+from plants.scripts.ml.ml_model.ml_features import ModelType, create_features
+from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
+from plants.scripts.ml.ml_model.ml_train import (optimize_knn_classifier, optimize_randomforest_classifier,
+                                                 cv_classifier)
 
 logging.basicConfig(level=logging.DEBUG, force=True)
 
@@ -49,7 +49,7 @@ def create_model_for_probability_of_seed_production():
     pipeline = create_pipeline(feature_container=feature_container, model=model)
 
     # show f1 cv score
-    _cv_classifier(x, y, pipeline)
+    cv_classifier(x, y, pipeline)
 
     # fit with full dataset
     pipeline.fit(x, y)
