@@ -4,6 +4,7 @@ import logging
 import datetime
 
 from plants.models.pollination_models import COLORS_MAP, PollinationStatus
+from plants.services.ml_model import train_model_for_probability_of_seed_production
 from plants.services.pollination_services import (save_new_pollination, read_ongoing_pollinations, update_pollination,
                                                   read_pollen_containers, update_pollen_containers,
                                                   read_plants_without_pollen_containers, remove_pollination)
@@ -12,7 +13,8 @@ from plants.dependencies import get_db
 from plants.validation.pollination_validation import (PResultsOngoingPollinations,
                                                       PRequestNewPollination,
                                                       PResultsSettings, PRequestEditedPollination,
-                                                      PResultsPollenContainers, PRequestPollenContainers)
+                                                      PResultsPollenContainers, PRequestPollenContainers,
+                                                      PResultsTrainingPollinationModel)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ async def post_pollination(
 async def put_pollination(
         pollination_id: int,
         edited_pollination_data: PRequestEditedPollination,
-        db: Session = Depends(get_db),):
+        db: Session = Depends(get_db), ):
     assert pollination_id == edited_pollination_data.id
     update_pollination(pollination_data=edited_pollination_data, db=db)
 
@@ -85,18 +87,17 @@ async def post_pollen_containers(pollen_containers_data: PRequestPollenContainer
     """update pollen containers and add new ones"""
     update_pollen_containers(pollen_containers_data=pollen_containers_data.pollenContainerCollection, db=db)
 
-#
-# @router.put('/pollinations/{pollination_id}')
-# async def put_pollination(
-#         pollination_id: int,
-#         edited_pollination_data: PRequestEditedPollination,
-#         db: Session = Depends(get_db)):
-#     assert pollination_id == edited_pollination_data.id
-#     update_pollination(pollination_data=edited_pollination_data, db=db)
-
 
 @router.delete('/pollinations/{pollination_id}')
 async def delete_pollination(
         pollination_id: int,
         db: Session = Depends(get_db)):
     remove_pollination(pollination_id=pollination_id, db=db)
+
+
+@router.post('/retrain_probability_pollination_to_seed_model',
+             response_model=PResultsTrainingPollinationModel)
+async def retrain_probability_pollination_to_seed_model(db: Session = Depends(get_db)):
+    """retrain the probability_pollination_to_seed ml model"""
+    results = train_model_for_probability_of_seed_production(db=db)
+    return results

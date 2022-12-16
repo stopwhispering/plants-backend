@@ -5,6 +5,7 @@ from sklearn.pipeline import Pipeline
 
 from ml_helpers.preprocessing.features import FeatureContainer
 from plants import config
+from plants.util.ui_utils import throw_exception
 
 logger = logging.getLogger(__name__)
 FILENAME_PICKLED_POLLINATION_ESTIMATOR = 'pollination_estimator.pkl'
@@ -13,10 +14,10 @@ pipeline, feature_container = None, None
 
 def _unpickle_pipeline() -> tuple[Pipeline, FeatureContainer]:
     path = config.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
+    if not path.is_file():
+        throw_exception(f'Pipeline not found at {path.as_posix()}')
     logger.info(f'Unpickling pipeline from {path.as_posix()}.')
     dump = pickle.load(open(path, "rb"))
-    if not path.exists():
-        raise FileNotFoundError(f'Filename not found: {path.as_posix()}')
     return dump['pipeline'], dump['feature_container']
 
 

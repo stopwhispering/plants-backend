@@ -1,3 +1,5 @@
+# note: Use this for development only; for production, the same code (more oer less) is in services/ml_model.py
+
 import logging
 
 from sklearn import neighbors
@@ -25,7 +27,7 @@ def create_model_for_probability_of_successful_germination():
     # todo...
 
 
-def create_model_for_probability_of_seed_production():
+def train_model_for_probability_of_seed_production():
     """predict whether a pollination attempt is goint to reach SEED status"""
     feature_container = create_features(model_type=ModelType.POLLINATION_TO_SEED)
     df = create_data(feature_container=feature_container)
@@ -56,4 +58,4 @@ def create_model_for_probability_of_seed_production():
     pickle_pipeline(pipeline=pipeline, feature_container=feature_container)
 
 
-create_model_for_probability_of_seed_production()
+train_model_for_probability_of_seed_production()

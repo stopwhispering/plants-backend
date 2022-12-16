@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 import logging
 import datetime
 
-from plants.services.florescence_services import read_active_florescences, update_active_florescence, \
-    read_plants_for_new_florescence, create_new_florescence, remove_florescence
+from plants.services.florescence_services import (
+    read_active_florescences, update_active_florescence, read_plants_for_new_florescence, create_new_florescence,
+    remove_florescence)
 from plants.services.pollination_services import read_potential_pollen_donors
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
@@ -25,7 +26,7 @@ router = APIRouter(
 
 
 @router.get("/active_florescences", response_model=PResultsActiveFlorescences)
-async def get_active_florescences(db: Session = Depends(get_db),):
+async def get_active_florescences(db: Session = Depends(get_db), ):
     """read active florescences, either after inflorescence appeared or flowering"""
     florescences = read_active_florescences(db)
 
@@ -37,7 +38,7 @@ async def get_active_florescences(db: Session = Depends(get_db),):
 
 
 @router.get("/plants_for_new_florescence", response_model=PResultsPlantsForNewFlorescence)
-async def get_active_florescences(db: Session = Depends(get_db),):
+async def get_active_florescences(db: Session = Depends(get_db), ):
     """read all plants available for new florescence"""
     plants = read_plants_for_new_florescence(db)
     results = {'plantsForNewFlorescenceCollection': plants}
@@ -56,7 +57,7 @@ async def put_active_florescence(
 
 @router.post("/active_florescences")
 async def post_active_florescence(new_florescence_data: PRequestNewFlorescence,
-                                  db: Session = Depends(get_db),):
+                                  db: Session = Depends(get_db), ):
     """create new florescence for a plant"""
     create_new_florescence(new_florescence_data=new_florescence_data, db=db)
 
@@ -64,15 +65,14 @@ async def post_active_florescence(new_florescence_data: PRequestNewFlorescence,
 @router.delete('/florescences/{florescence_id}')
 async def delete_florescence(
         florescence_id: int,
-        db: Session = Depends(get_db),):
+        db: Session = Depends(get_db), ):
     remove_florescence(florescence_id=florescence_id, db=db)
-
 
 
 @router.get("/potential_pollen_donors/{florescence_id}",
             response_model=PResultsPotentialPollenDonors)
 async def get_potential_pollen_donors(florescence_id: int,
-                                      db: Session = Depends(get_db),):
+                                      db: Session = Depends(get_db), ):
     potential_pollen_donors = read_potential_pollen_donors(florescence_id=florescence_id, db=db)
 
     results = {'action': 'Get potential pollen donors',

@@ -261,3 +261,11 @@ class PRequestNewFlorescence(BaseModel):
 
     class Config:
         extra = Extra.forbid  # todo works?
+
+
+class PResultsTrainingPollinationModel(BaseModel):
+    mean_f1_score: float
+    model: str
+
+    class Config:
+        extra = Extra.forbid
