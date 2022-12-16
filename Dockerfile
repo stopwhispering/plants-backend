@@ -12,13 +12,11 @@ ENV LOG_LEVEL="debug"
 
 #custom configuration via environment variables
 ENV ENVIRONMENT="dev"
-ENV CONNECTION_STRING="sqlite:////src/database.db"
+ENV CONNECTION_STRING="sqlite:////common//plants//db//database.db"
 
 COPY plants /src/plants
 COPY ml_helpers /src/ml_helpers
 COPY config.toml /src/config.toml
-# todoooooooo
-COPY database.db /src/database.db
 
 # switch working directory to have module "plants" available
 WORKDIR "/src/"

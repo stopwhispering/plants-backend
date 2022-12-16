@@ -23,22 +23,25 @@ app = FastAPI(
         openapi_url=COMMON_PREFIX + "/openapi.json"
         )
 
-# CORS for development only
+# we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
+origins = ["http://pollination.localhost",
+           "https://pollination.astroloba.net",]
+# additional CORS for development only
 if config.allow_cors:
-    origins = [
+    origins.extend([
         # "http://localhost",
         "http://localhost:5000",
         # "http://localhost:8000",
         "http://localhost:8080",
         # "http://localhost:8081",
-        ]
-    app.add_middleware(
-            CORSMiddleware,
-            allow_origins=origins,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-            )
+        ])
+app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        )
 
 
 # override 422 request validation error (pydantic models) to log them

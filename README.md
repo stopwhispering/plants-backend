@@ -17,8 +17,9 @@ settings like db connection string, logging minimum severity, or to allow CORS
 on development environment
 
 ## Database
-I’m using SQLite. Due to SQLAlchemy (declarative system), switching to any other major
-relational database should work by simply changing connection string in config_local.py.
+I’m using SQLite. Thanks to SQLAlchemy (ORM), switching to any other major
+relational database should work by simply changing connection string via environment
+variable..
 Some specific logic is implemented, though, to manage the point in time when auto-incremented
 IDs are determined.
 
@@ -32,8 +33,22 @@ IDs are determined.
 - pykew
 - requests
 
-## Still to be Done...
-- [ ] some instructions on installation
-- [ ] install with PyPi
-- [ ] dockerize
-- [ ] still some todo's in sources
+
+
+## Deployment
+Git Clone
+
+    todo 1
+    todo 2
+
+Copy to Server
+
+    todo1 rsync
+    todo2
+
+Create .env File
+
+Create & Run Docker Container
+
+Train model
+

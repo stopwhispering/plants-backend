@@ -16,6 +16,11 @@ services:
       # and any other service that needs to be publicly available
       - traefik-public
 
+    volumes:
+      - type: bind
+        source: /c/common/plants
+        target: /common/plants
+
 networks:
   # use the previously created public network "traefik-public"
   # create at first time via "docker network create traefik-public"
