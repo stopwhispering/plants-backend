@@ -59,7 +59,6 @@ class PSoilWithCount(PSoil):
 class PImage(BaseModel):
     id: Optional[int]  # empty if new
     filename: str
-    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove
     relative_path: Path = Field(alias='path_original')
 
     class Config:

@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 from plants.util.ui_utils import throw_exception, get_message, MessageType
 from plants.dependencies import get_db
-from plants.models.image_models import Image
+from plants.models.image_models import Image, ImageToEventAssociation
 from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
@@ -21,10 +21,10 @@ from plants.validation.event_validation import (PResultsEventResource, PSoil, PR
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-        prefix="/events",
-        tags=["events"],
-        responses={404: {"description": "Not found"}},
-        )
+    prefix="/events",
+    tags=["events"],
+    responses={404: {"description": "Not found"}},
+)
 
 
 @router.get("/soils", response_model=PResultsSoilsResource)
@@ -57,7 +57,7 @@ async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
     msg = f'Created soil with new ID {soil_obj.id}'
 
     logger.info(msg)
-    results = {'soil':    soil_obj,  # soil_obj.as_dict(),
+    results = {'soil': soil_obj,  # soil_obj.as_dict(),
                'message': get_message(msg, message_type=MessageType.DEBUG)}
     return results
 
@@ -69,7 +69,7 @@ async def update_existing_soil(updated_soil: PSoil, db: Session = Depends(get_db
     msg = f'Updated soil with ID {soil_obj.id}'
 
     logger.info(msg)
-    results = {'soil':    soil_obj.as_dict(),
+    results = {'soil': soil_obj.as_dict(),
                'message': get_message(msg, message_type=MessageType.DEBUG)}
     return results
 
@@ -87,7 +87,7 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
         results.append(event_obj.as_dict())
 
     logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id, db)}.')
-    results = {'events':  results,
+    results = {'events': results,
                'message': get_message(m,
                                       message_type=MessageType.DEBUG)}
 
@@ -230,11 +230,14 @@ async def create_or_update_events(request: Request,
             # path_originals_saved = [image.path_original for image in event.images] if event.images else []
             path_originals_saved = [image.relative_path for image in event.images] if event.images else []
             for image_obj in event_obj.images:
+                image_obj: Image
                 if image_obj.relative_path not in path_originals_saved:
                     # don't delete photo_file object, but only the association
                     # (photo_file might be assigned to other events)
-                    db.delete([link for link in event_obj.image_to_event_associations if
-                               link.image.relative_path == image_obj.relative_path][0])
+                    li: ImageToEventAssociation
+                    link: ImageToEventAssociation = next(li for li in event_obj.image_to_event_associations if
+                                                         li.image.relative_path == image_obj.relative_path)
+                    db.delete(link)
 
             # newly assigned images
             if event.images:
@@ -252,9 +255,9 @@ async def create_or_update_events(request: Request,
     db.commit()
 
     logger.info(' Saving Events: ' + (description := ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])))
-    results = {'action':   'Saved events',
+    results = {'action': 'Saved events',
                'resource': 'EventResource',
-               'message':  get_message(f'Updated events in database.',
-                                       description=description)}
+               'message': get_message(f'Updated events in database.',
+                                      description=description)}
 
     return results

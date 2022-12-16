@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def _delete_images_with_keywords(db: Session, delete):
     image_ids = set(d[0] for d in delete)
     image_relative_paths = set(d[1] for d in delete)
-    images_to_delete = db.query(Image).filter(Image.id.in_(image_ids)).all()
+    images_to_delete: list[Image] = db.query(Image).filter(Image.id.in_(image_ids)).all()
 
     # be sure not to delete the wrong image
     for image in images_to_delete:

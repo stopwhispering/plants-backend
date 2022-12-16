@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship, Session
 from plants import config
 from plants.extensions.db import Base
 from plants.models.plant_models import Plant
-from plants.services.image_services_simple import get_filename_thumb, get_relative_path_thumb
 from plants.util.ui_utils import throw_exception
 
 logger = logging.getLogger(__name__)
@@ -22,9 +21,9 @@ class ImageKeyword(Base):
     keyword = Column(CHAR(100), primary_key=True, nullable=False)
 
     image = relationship(
-            "Image",
-            back_populates="keywords"
-            )
+        "Image",
+        back_populates="keywords"
+    )
 
 
 class ImageToPlantAssociation(Base):
@@ -36,19 +35,19 @@ class ImageToPlantAssociation(Base):
     # silence warnings for deletions of associated entities (image has image_to_plant_association and plants)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
-        }
+    }
 
     image = relationship(
-            "Image",
-            back_populates="image_to_plant_associations",
-            overlaps="images,plants"  # silence warnings
-            )
+        "Image",
+        back_populates="image_to_plant_associations",
+        overlaps="images,plants"  # silence warnings
+    )
 
     plant = relationship(
-            "Plant",
-            back_populates="image_to_plant_associations",
-            overlaps="images,plants"  # silence warnings
-            )
+        "Plant",
+        back_populates="image_to_plant_associations",
+        overlaps="images,plants"  # silence warnings
+    )
 
 
 class Image(Base):
@@ -57,8 +56,8 @@ class Image(Base):
     # this table is only used to link events to images
     __tablename__ = 'image'
     id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    filename = Column(CHAR(150), unique=True, nullable=False)
-    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name  # pseudo-key  # todo remove
+    filename = Column(CHAR(150), unique=True, nullable=False)  # pseudo-key
+    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name
     description = Column(CHAR(500))
     record_date_time = Column(TIMESTAMP, nullable=False)
     last_update = Column(TIMESTAMP, nullable=False)  # update (description)
@@ -68,52 +67,40 @@ class Image(Base):
     def absolute_path(self):
         return config.path_photos_base.parent.joinpath(PurePath(self.relative_path))
 
-    # @property
-    # def filename(self):
-    #     return PurePath(self.relative_path).name
-
-    @property
-    def filename_thumb(self):  # todo remove
-        return get_filename_thumb(self.filename)
-
-    @property
-    def relative_path_thumb(self):  # todo remove
-        return get_relative_path_thumb(self.filename_thumb)
-
-    keywords = relationship(
-            "ImageKeyword",
-            back_populates="image"
-            )
+    keywords: list[ImageKeyword] = relationship(
+        "ImageKeyword",
+        back_populates="image"
+    )
 
     plants = relationship(
-            "Plant",
-            secondary='image_to_plant_association',
-            )
-    image_to_plant_associations = relationship("ImageToPlantAssociation",
-                                               back_populates="image",
-                                               overlaps="plants"  # silence warnings
-                                               )
+        "Plant",
+        secondary='image_to_plant_association',
+    )
+    image_to_plant_associations: list = relationship("ImageToPlantAssociation",
+                                                     back_populates="image",
+                                                     overlaps="plants"  # silence warnings
+                                                     )
 
     # 1:n relationship to the image/event link table
     events = relationship(
-            "Event",
-            secondary='image_to_event_association'
-            )
-    image_to_event_associations = relationship("ImageToEventAssociation",
-                                               back_populates="image",
-                                               overlaps="events"  # silence warnings
-                                               )
+        "Event",
+        secondary='image_to_event_association'
+    )
+    image_to_event_associations: list = relationship("ImageToEventAssociation",
+                                                     back_populates="image",
+                                                     overlaps="events"  # silence warnings
+                                                     )
 
     # 1:n relationship to the image/taxon link table
     taxa = relationship(
-            "Taxon",
-            secondary='image_to_taxon_association',
-            overlaps="image_to_taxon_associations,images"  # silence warnings
-            )
-    image_to_taxon_associations = relationship("ImageToTaxonAssociation",
-                                               back_populates="image",
-                                               overlaps="images,taxa"  # silence warnings
-                                               )
+        "Taxon",
+        secondary='image_to_taxon_association',
+        overlaps="image_to_taxon_associations,images"  # silence warnings
+    )
+    image_to_taxon_associations: list = relationship("ImageToTaxonAssociation",
+                                                     back_populates="image",
+                                                     overlaps="images,taxa"  # silence warnings
+                                                     )
 
     @staticmethod
     def get_image_by_filename(db: Session, filename: str) -> "Image":
@@ -124,6 +111,7 @@ class Image(Base):
             throw_exception(err_msg)
         return image
 
+
 class ImageToEventAssociation(Base):
     __tablename__ = 'image_to_event_association'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True)
@@ -132,7 +120,7 @@ class ImageToEventAssociation(Base):
     # silence warnings for deletions of associated entities (image has image_to_event_association and events)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
-        }
+    }
 
     image = relationship('Image',
                          back_populates='image_to_event_associations',
@@ -154,7 +142,7 @@ class ImageToTaxonAssociation(Base):
     # silence warnings for deletions of associated entities (image has image_to_taxa_association and taxa)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
-        }
+    }
 
     image = relationship('Image',
                          back_populates='image_to_taxon_associations',
@@ -182,9 +170,9 @@ def add_plants_to_image(db: Session,
 
 def add_keywords_to_image(db: Session, image: Image, keywords: Sequence[str]):
     _ = [ImageKeyword(
-            image_id=image.id,
-            image=image,
-            keyword=k) for k in keywords]
+        image_id=image.id,
+        image=image,
+        keyword=k) for k in keywords]
 
     db.commit()
 
@@ -237,8 +225,8 @@ def update_image_if_altered(db: Session,
     removed_image_to_plant_associations = [a for a in image.image_to_plant_associations
                                            if a.plant not in new_plants]
     added_image_to_plant_associations = [ImageToPlantAssociation(
-            image=image,
-            plant=p, )
+        image=image,
+        plant=p, )
         for p in new_plants if p not in image.plants]
     for removed_image_to_plant_association in removed_image_to_plant_associations:
         db.delete(removed_image_to_plant_association)

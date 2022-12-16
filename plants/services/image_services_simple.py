@@ -16,10 +16,6 @@ def get_filename_thumb(filename: str) -> str:
                                   size=config.size_thumbnail_image)
 
 
-def get_relative_path_thumb(filename_thumb: str) -> PurePath:  # todo remove
-    return config.rel_path_photos_generated.joinpath(filename_thumb)
-
-
 def remove_files_already_existing(files: List, suffix: str) -> List[str]:
     """
     iterates over file objects, checks whether a file with that name already exists in filesystem; removes already
@@ -70,15 +66,6 @@ def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
         generate_thumbnail(image=path_full,
                            size=config.size_preview_image,
                            path_thumbnail=config.path_generated_thumbnails)
-
-
-def get_previewimage_rel_path(original_image_rel_path: PurePath) -> Path:
-    """
-    get plant's default photo_file's relative path
-    """
-    filename_generated = get_generated_filename(filename_original=original_image_rel_path.name,
-                                                size=config.size_preview_image)
-    return config.rel_path_photos_generated.joinpath(filename_generated)
 
 
 def get_relative_path(absolute_path: Path) -> PurePath:

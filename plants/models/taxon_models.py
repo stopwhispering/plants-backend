@@ -53,7 +53,7 @@ class Taxon(Base, OrmUtil):
     custom_notes = Column(TEXT)  # may be updated on web frontend
 
     plants = relationship("Plant", back_populates="taxon")
-    distribution = relationship("Distribution", back_populates="taxon")
+    distribution: list = relationship("Distribution", back_populates="taxon")
 
     # 1:n relationship to the taxon/traits link table
     traits = relationship(
@@ -76,7 +76,7 @@ class Taxon(Base, OrmUtil):
                                                )
 
     # taxon to occurence images (n:m)
-    occurence_images = relationship("TaxonOccurrenceImage", back_populates="taxa")
+    occurence_images: list = relationship("TaxonOccurrenceImage", back_populates="taxa")
 
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")

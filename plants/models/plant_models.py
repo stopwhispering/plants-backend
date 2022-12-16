@@ -13,7 +13,7 @@ from plants import config
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
-from plants.services.image_services_simple import get_previewimage_rel_path, generate_previewimage_if_not_exists
+from plants.services.image_services_simple import generate_previewimage_if_not_exists
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
@@ -91,15 +91,6 @@ class Plant(Base, OrmUtil):
     florescences = relationship("Florescence", back_populates="plant")
 
     count_stored_pollen_containers = Column(INTEGER)
-
-    @property
-    def url_preview(self) -> PurePath:
-        if self.filename_previewimage:
-            rel_path_gen = get_previewimage_rel_path(PurePath(self.filename_previewimage))
-            # there is a huge problem with the slashes
-            # return json.dumps(rel_path_gen.as_posix())[1:-1]
-            # return rel_path_gen.as_posix()[1:-1]
-            return rel_path_gen
 
     @property
     def descendant_plants_all(self) -> list[Plant]:

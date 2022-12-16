@@ -47,7 +47,6 @@ class PPlantCurrentSoil(BaseModel):
 
 class PPlantLatestImage(BaseModel):
     relative_path: Path = Field(alias='path')
-    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove
     record_date_time: datetime = Field(alias='date')
 
     class Config:

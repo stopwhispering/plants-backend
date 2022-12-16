@@ -1,8 +1,6 @@
-from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
 
-from pydantic import Field
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
@@ -25,13 +23,12 @@ class PPlantTag(BaseModel):
 
 
 class PImage(BaseModel):
-    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove
-    relative_path: Path = Field(alias='path_original')
+    filename: str
+    # relative_path: Path = Field(alias='path_original')  #  todo remove
     keywords: List[PKeyword]
     plants: List[PPlantTag]
     description: str | None
-    filename: Path
-    absolute_path: Path = Field(alias='path_full_local')
+    # absolute_path: Path = Field(alias='path_full_local')#  todo remove
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:

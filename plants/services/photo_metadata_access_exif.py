@@ -5,8 +5,10 @@ import logging
 
 import piexif
 from piexif import InvalidImageDataError
+from sqlalchemy.orm import Session
 
 from plants import config
+from plants.models.image_models import Image
 from plants.util.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                     encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
                                     encode_record_date_time, set_modified_date)
@@ -30,17 +32,22 @@ class PhotoMetadataAccessExifTags:
         return self._parse_exif_tags(absolute_path=absolute_path)
 
     def save_photo_metadata(self,
-                            absolute_path: Path,
+                            filename: str,
                             plant_names: list[str],
                             keywords: list[str],
                             description: str,
+                            db: Session,
                             ) -> None:
         """save/update photo_file metadata"""
+        # get file system path to the image
+        image = Image.get_image_by_filename(db=db, filename=filename)
+
         metadata = MetadataDTO(plant_names=plant_names,
                                keywords=keywords,
                                description=description,
                                )
-        self._write_exif_tags(metadata=metadata, absolute_path=absolute_path)
+        self._write_exif_tags(metadata=metadata,
+                              absolute_path=image.absolute_path)
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
         """rewrite the plants assigned to the photo_file at the supplied path"""

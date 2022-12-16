@@ -58,7 +58,6 @@ class PTaxonImage(BaseModel):
     id: Optional[int]  # empty if initially assigned to taxon
     # path_thumb: Path
     filename: str
-    relative_path_thumb: Path = Field(alias='path_thumb')  # todo remove?
     # path_original: Path
     relative_path: Path = Field(alias='path_original')  # todo remove?
     description: Optional[str]

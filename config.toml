@@ -6,7 +6,7 @@ size_preview_image = [300, 300]  # image marked as favorite for a plant
 size_thumbnail_image_taxon = [220, 220]  # constant width of 220px on details site for occurrence images from inat.
 size_thumbnail_image = [350, 350]
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
-sizes = [[228, 228], [120, 120], [80, 80], [48, 48]]
+sizes = [[288, 288], [120, 120], [80, 80], [48, 48]]
 jpg_quality = 82
 
 [plants]

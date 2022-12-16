@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from starlette.responses import Response
 
 from plants.constants import RESIZE_SUFFIX
-from plants.models.image_models import Image, get_image_by_relative_path, update_image_if_altered
+from plants.models.image_models import Image, get_image_by_relative_path, update_image_if_altered, ImageKeyword
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -82,7 +82,7 @@ async def get_untagged_images(db: Session = Depends(get_db)):
     """
     get images with no plants assigned, yet
     """
-    untagged_images = db.query(Image).filter(~Image.plants.any()).all()
+    untagged_images = db.query(Image).filter(~Image.plants.any()).all()  # noqa
     images_ext = [_to_response_image(image) for image in untagged_images]
 
     logger.info(f'Returned {len(images_ext)} images.')
@@ -94,19 +94,19 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 
 
 @router.put("/images/", response_model=PConfirmation)
-# async def update_images(request: Request, modified_ext: PImageUpdated, db: Session = Depends(get_db)):
 async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_db)):
     """modify existing photo_file's metadata"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and exif tags.")
     for image_ext in modified_ext.ImagesCollection:
         # alter metadata in jpg exif tags
-        logger.info(f'Updating {image_ext.absolute_path}')
-        PhotoMetadataAccessExifTags().save_photo_metadata(absolute_path=image_ext.absolute_path,
+        logger.info(f'Updating {image_ext.filename}')
+        PhotoMetadataAccessExifTags().save_photo_metadata(filename=image_ext.filename,
                                                           plant_names=[p.key for p in image_ext.plants],
                                                           keywords=[k.keyword for k in image_ext.keywords],
-                                                          description=image_ext.description or '')
-
-        image = get_image_by_relative_path(relative_path=image_ext.relative_path, db=db, raise_exception=True)
+                                                          description=image_ext.description or '',
+                                                          db=db)
+        image = Image.get_image_by_filename(filename=image_ext.filename, db=db)
+        # image = get_image_by_relative_path(relative_path=image_ext.relative_path, db=db, raise_exception=True)
         update_image_if_altered(image=image,
                                 description=image_ext.description,
                                 plant_ids=[plant.plant_id for plant in image_ext.plants],
@@ -181,9 +181,9 @@ async def delete_image(image_container: PImagesDelete, db: Session = Depends(get
 
 
 def _to_response_image(image: Image) -> PImage:
+    k: ImageKeyword
     return PImage(
-        relative_path=image.relative_path,  # todo remove?
-        relative_path_thumb=image.relative_path_thumb,  # todo remove?
+        filename=image.filename or '',
         keywords=[{'keyword': k.keyword} for k in image.keywords],
         plants=[PPlantTag(
             plant_id=p.id,
@@ -191,8 +191,6 @@ def _to_response_image(image: Image) -> PImage:
             text=p.plant_name,
         ) for p in image.plants],
         description=image.description,
-        filename=image.filename or '',
-        absolute_path=image.absolute_path,  # todo remove?
         record_date_time=image.record_date_time)
 
 

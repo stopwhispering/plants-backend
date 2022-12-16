@@ -1,15 +1,12 @@
-from pathlib import PurePath
-
-from fastapi import APIRouter, Depends
 import logging
 from typing import List
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
 from plants.models.trait_models import TaxonToTraitAssociation
 from plants.util.ui_utils import throw_exception, get_message
-from plants import config
-from plants.util.path_utils import get_thumbnail_relative_path_for_relative_path
 from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
@@ -67,12 +64,9 @@ async def get_taxa(
         taxon_dict[taxon.id]['images'] = []
         if taxon.images:
             for link_obj in taxon.image_to_taxon_associations:
-                image_obj = link_obj.image
-                path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
-                                                                           size=config.size_thumbnail_image)
+                image_obj: Image = link_obj.image
                 taxon_dict[taxon.id]['images'].append({'id': image_obj.id,
                                                        'filename': image_obj.filename,
-                                                       'relative_path_thumb':  path_small,  # todo remove
                                                        'relative_path': image_obj.relative_path,
                                                        'description':  link_obj.description})
 
@@ -121,9 +115,11 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
         path_originals_saved = [image.relative_path for image in taxon_modified.images] if \
             taxon_modified.images else []
         for image_obj in taxon.images:
+            image_obj: Image
             if image_obj.relative_path not in path_originals_saved:
                 # don't delete photo_file object, but only the association
                 # (photo_file might be assigned to other events)
+                link: ImageToTaxonAssociation
                 db.delete([link for link in taxon.image_to_taxon_associations if
                            link.image.relative_path == image_obj.relative_path][0])
 

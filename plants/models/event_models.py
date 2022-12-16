@@ -117,12 +117,12 @@ class Event(Base, OrmUtil):
         if self.images:
             as_dict['images'] = []
             for image_obj in self.images:
-                path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
-                                                                           size=config.size_thumbnail_image)
+                # path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
+                #                                                            size=config.size_thumbnail_image)
                 as_dict['images'].append({'id':            image_obj.id,
                                           'filename':      image_obj.filename,
-                                          'relative_path_thumb':    path_small,  # todo remove
-                                          'relative_path': image_obj.relative_path})
+                                          # 'relative_path': image_obj.relative_path
+                                          })
 
         return as_dict
 

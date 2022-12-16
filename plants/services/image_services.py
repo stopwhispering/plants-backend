@@ -8,14 +8,14 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from plants import config
-from plants.models.image_models import Image, create_image
+from plants.models.image_models import Image, create_image, ImageToPlantAssociation, ImageToEventAssociation, \
+    ImageToTaxonAssociation
 from plants.models.plant_models import Plant
 from plants.constants import RESIZE_SUFFIX
 from plants.models.taxon_models import TaxonOccurrenceImage
 
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.services.image_services_simple import resizing_required, get_relative_path
-from plants.services.taxon_occurence_image_services import get_occurrence_thumbnail_filename
 from plants.util.exif_utils import read_record_datetime_from_exif_tags
 from plants.util.filename_utils import with_suffix, get_generated_filename
 from plants.util.image_utils import resize_image, generate_thumbnail
@@ -34,6 +34,7 @@ def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
     if not plant.images:
         logger.info(f'No photo_file tag to change for {plant_name_old}.')
     for image in plant.images:
+        image: Image
         plant_names = [p.plant_name for p in image.plants]
         PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
                                                                 plants=plant_names)
@@ -90,10 +91,11 @@ async def save_image_files(files: List[UploadFile],
                                path_thumbnail=config.path_generated_thumbnails)
 
         # save metadata in jpg exif tags
-        PhotoMetadataAccessExifTags().save_photo_metadata(absolute_path=path,
+        PhotoMetadataAccessExifTags().save_photo_metadata(filename=path.name,
                                                           plant_names=[p.plant_name for p in plants],
                                                           keywords=list(keywords),
-                                                          description='')
+                                                          description='',
+                                                          db=db)
         images.append(image)
 
     return images
@@ -101,17 +103,20 @@ async def save_image_files(files: List[UploadFile],
 
 def delete_image_file_and_db_entries(image: Image, db: Session):
     """delete image file and entries in db"""
+    ai: ImageToEventAssociation
+    ap: ImageToPlantAssociation
+    at: ImageToTaxonAssociation
     if image.image_to_event_associations:
         logger.info(f'Deleting {len(image.image_to_event_associations)} associated Image to Event associations.')
-        [db.delete(a) for a in image.image_to_event_associations]
+        [db.delete(ai) for ai in image.image_to_event_associations]
         image.events = []
     if image.image_to_plant_associations:
         logger.info(f'Deleting {len(image.image_to_plant_associations)} associated Image to Plant associations.')
-        [db.delete(a) for a in image.image_to_plant_associations]
+        [db.delete(ap) for ap in image.image_to_plant_associations]
         image.plants = []
     if image.image_to_taxon_associations:
         logger.info(f'Deleting {len(image.image_to_taxon_associations)} associated Image to Taxon associations.')
-        [db.delete(a) for a in image.image_to_taxon_associations]
+        [db.delete(at) for at in image.image_to_taxon_associations]
         image.taxa = []
     if image.keywords:
         logger.info(f'Deleting {len(image.keywords)} associated Keywords.')
@@ -164,7 +169,11 @@ def get_dummy_image_path_by_size(size_rem: float = None, size_px: int = None) ->
         filename = get_generated_filename(NOT_AVAILABLE_IMAGE_FILENAME, size)
     else:
         filename = NOT_AVAILABLE_IMAGE_FILENAME
-    return Path("./static/").joinpath(filename)
+    path = Path("./static/").joinpath(filename)
+    if not path.is_file():
+        logger.error(err_msg := f'Dummy image file not found: {path}')
+        throw_exception(err_msg)
+    return path
 
 
 def read_image_by_size(filename: str, db: Session, size_rem: float = None, size_px: int = None) -> bytes:
