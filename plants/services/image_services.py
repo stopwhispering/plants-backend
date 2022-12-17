@@ -235,7 +235,7 @@ def generate_missing_thumbnails(db: Session) -> tuple[int, int]:
                                    size=size,
                                    path_thumbnail=config.path_generated_thumbnails)
                 count_already_existed += 1
-                logger.debug(f'Generated thumbnail in size {size} for {image.absolute_path}')
+                logger.info(f'Generated thumbnail in size {size} for {image.absolute_path}')
 
     logger.info(f'Thumbnail Generation - Count already existed: {count_already_existed}')
     logger.info(f'Thumbnail Generation - Count generated: {count_generated}')
