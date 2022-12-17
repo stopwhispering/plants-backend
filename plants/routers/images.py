@@ -3,14 +3,14 @@ import json
 from sqlalchemy.orm import Session
 import logging
 from pydantic.error_wrappers import ValidationError
-from fastapi import UploadFile
+from fastapi import UploadFile, BackgroundTasks
 from fastapi import APIRouter, Depends, Request
 from starlette.responses import Response
 
 from plants.constants import RESIZE_SUFFIX
 from plants.models.image_models import Image, update_image_if_altered, ImageKeyword
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
-    read_occurrence_thumbnail, generate_missing_thumbnails
+    read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
@@ -220,9 +220,8 @@ def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: 
 
 
 @router.post("/generate_missing_thumbnails", response_model=PMessage)
-async def trigger_generate_missing_thumbnails(db: Session = Depends(get_db)):
+async def trigger_generate_missing_thumbnails(background_tasks: BackgroundTasks,
+                                              db: Session = Depends(get_db)):
     """trigger the generation of missing thumbnails for occurrences"""
-    count_already_existed, count_generated = generate_missing_thumbnails(db=db)
-    return get_message(f'Generated thumbnails' if count_generated else 'No new thumbnails required',
-                       description=f'Already existed: {count_already_existed},'
-                                   f'Generated: {count_generated}')
+    msg = trigger_generation_of_missing_thumbnails(db=db, background_tasks=background_tasks)
+    return get_message(msg)

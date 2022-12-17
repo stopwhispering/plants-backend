@@ -4,7 +4,7 @@ import logging
 import os
 
 import aiofiles
-from fastapi import UploadFile
+from fastapi import UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from plants import config
@@ -220,11 +220,17 @@ def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db:
     return image_bytes
 
 
-def generate_missing_thumbnails(db: Session) -> tuple[int, int]:
+def _generate_missing_thumbnails(images: list[Image]):
     count_already_existed = 0
     count_generated = 0
-    images: list[Image] = db.query(Image).all()
-    for image in (i for i in images if i.absolute_path.is_file()):
+    count_files_not_found = 0
+    for i, image in enumerate(images):
+
+        if not image.absolute_path.is_file():
+            count_files_not_found += 1
+            logger.error(f"File not found: {image.absolute_path}")
+            continue
+
         image: Image
         for size in config.sizes:
             path_thumbnail = config.path_generated_thumbnails.joinpath(get_thumbnail_name(image.filename, size))
@@ -239,5 +245,11 @@ def generate_missing_thumbnails(db: Session) -> tuple[int, int]:
 
     logger.info(f'Thumbnail Generation - Count already existed: {count_already_existed}')
     logger.info(f'Thumbnail Generation - Count generated: {count_generated}')
+    logger.info(f'Thumbnail Generation - Files not found: {count_files_not_found}')
 
-    return count_already_existed, count_generated
+
+def trigger_generation_of_missing_thumbnails(db: Session, background_tasks: BackgroundTasks) -> str:
+    images: list[Image] = db.query(Image).all()
+    logger.info(msg := f"Generating thumbnails for {len(images)} images in sizes: {config.sizes} in background.")
+    background_tasks.add_task(_generate_missing_thumbnails, images)
+    return msg
