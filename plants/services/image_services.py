@@ -18,7 +18,7 @@ from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTa
 from plants.services.image_services_simple import resizing_required, get_relative_path
 from plants.util.exif_utils import read_record_datetime_from_exif_tags
 from plants.util.filename_utils import with_suffix, get_generated_filename
-from plants.util.image_utils import resize_image, generate_thumbnail
+from plants.util.image_utils import resize_image, generate_thumbnail, get_thumbnail_name
 from plants.util.path_utils import get_absolute_path_for_generated_image
 from plants.util.ui_utils import throw_exception
 
@@ -218,3 +218,26 @@ def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db:
         image_bytes: bytes = image.read()
 
     return image_bytes
+
+
+def generate_missing_thumbnails(db: Session) -> tuple[int, int]:
+    count_already_existed = 0
+    count_generated = 0
+    images: list[Image] = db.query(Image).all()
+    for image in (i for i in images if i.absolute_path.is_file()):
+        image: Image
+        for size in config.sizes:
+            path_thumbnail = config.path_generated_thumbnails.joinpath(get_thumbnail_name(image.filename, size))
+            if path_thumbnail.is_file():
+                count_already_existed += 1
+            else:
+                generate_thumbnail(image=image.absolute_path,
+                                   size=size,
+                                   path_thumbnail=config.path_generated_thumbnails)
+                count_already_existed += 1
+                logger.debug(f'Generated thumbnail in size {size} for {image.absolute_path}')
+
+    logger.info(f'Thumbnail Generation - Count already existed: {count_already_existed}')
+    logger.info(f'Thumbnail Generation - Count generated: {count_generated}')
+
+    return count_already_existed, count_generated

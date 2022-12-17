@@ -59,7 +59,4 @@ Create & Run Docker Container
     # prod
     docker compose -f ./docker-compose.base.yml -f ./docker-compose.prod.yml up --build --detach
 
-Test API: Open in Browser - http://plants.localhost/api/plants/
-
-Train model
-
+Test API (dev): Open in Browser - http://plants.localhost/api/plants/

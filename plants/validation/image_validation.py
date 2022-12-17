@@ -76,3 +76,11 @@ class PResultsImageDeleted(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+
+class GenerateMissingThumbnails(BaseModel):
+    count_already_existed: int
+    count_generated: int
+
+    class Config:
+        extra = Extra.forbid

@@ -3,14 +3,11 @@
 import pickle  # noqa
 from pathlib import Path, PurePath
 
-from sqlalchemy.orm import Session
-
-from plants import config
 from plants.dependencies import get_db
 from plants.extensions.db import init_database_tables, engine
 from plants.models.image_models import Image
 from plants.models.plant_models import Plant
-from plants.util.image_utils import generate_thumbnail, get_thumbnail_name
+
 
 init_database_tables(engine_=engine)
 db = next(get_db())
@@ -49,27 +46,5 @@ def fill_image_filename(db):
     db.commit()
 
 
-def generate_missing_thumbnails(db: Session):
-    count_already_exists = 0
-    count_generated = 0
-    images: list[Image] = db.query(Image).all()
-    for image in (i for i in images if i.absolute_path.is_file()):
-        image: Image
-        for size in config.sizes:
-            path_thumbnail = config.path_generated_thumbnails.joinpath(get_thumbnail_name(image.filename, size))
-            if path_thumbnail.is_file():
-                count_already_exists += 1
-            else:
-                generate_thumbnail(image=image.absolute_path,
-                                   size=size,
-                                   path_thumbnail=config.path_generated_thumbnails)
-                count_already_exists += 1
-                print(f'Generated thumbnail in size {size} for {image.absolute_path}')
-
-    print('Count already existed:', count_already_exists)
-    print('Count generated:', count_generated)
-
-
-# remove_path_prefixes_from_filename(db=db)
-# fill_image_filename(db=db)
-generate_missing_thumbnails(db=db)
+remove_path_prefixes_from_filename(db=db)
+fill_image_filename(db=db)
