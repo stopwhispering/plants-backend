@@ -146,25 +146,25 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
 #     """return the path to the image file with the given pixel size"""
 #
 
-def get_image_path_by_size(filename: str, db: Session, size_rem: float = None, size_px: int = None) -> Path:
-    if size_rem and size_px:
-        raise ValueError('Only one of size_rem or size_px can be specified.')
+def get_image_path_by_size(filename: str, db: Session, width: int | None, height: int | None) -> Path:
+    if (width is None or height is None) and not (width is None and height is None):
+        logger.error(err_msg := f'Either supply width and height or neither of them.')
+        throw_exception(err_msg)
 
-    if not size_rem and not size_px:
+    if width is None:
         # get image db entry for the directory it is stored at in local filesystem
         image: Image = Image.get_image_by_filename(db=db, filename=filename)
         return Path(image.absolute_path)
 
     else:
         # the pixel size is part of the resized images' filenames rem size must be converted to px
-        size = (size_px, size_px) if size_px else (int(size_rem * 16), int(size_rem * 16))
-        filename_sized = get_generated_filename(filename, size)
+        filename_sized = get_generated_filename(filename, (width, height))
         return get_absolute_path_for_generated_image(filename_sized)
 
 
-def get_dummy_image_path_by_size(size_rem: float = None, size_px: int = None) -> Path:
-    if size_rem or size_px:
-        size = (size_px, size_px) if size_px else (int(size_rem * 16), int(size_rem * 16))
+def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
+    if width:
+        size = (width, height)
         filename = get_generated_filename(NOT_AVAILABLE_IMAGE_FILENAME, size)
     else:
         filename = NOT_AVAILABLE_IMAGE_FILENAME
@@ -175,17 +175,17 @@ def get_dummy_image_path_by_size(size_rem: float = None, size_px: int = None) ->
     return path
 
 
-def read_image_by_size(filename: str, db: Session, size_rem: float = None, size_px: int = None) -> bytes:
+def read_image_by_size(filename: str, db: Session, width: int | None, height: int | None) -> bytes:
     """return the image in specified size as bytes"""
     path = get_image_path_by_size(filename=filename,
                                   db=db,
-                                  size_rem=size_rem,
-                                  size_px=size_px)
+                                  width=width,
+                                  height=height)
 
     if not path.is_file():
         # return default image on dev environment where most photos are missing
         if config.ignore_missing_image_files:
-            path = get_dummy_image_path_by_size(size_rem=size_rem, size_px=size_px)
+            path = get_dummy_image_path_by_size(width=width, height=height)
         else:
             logger.error(err_msg := f'Image file not found: {path}')
             throw_exception(err_msg)
@@ -209,7 +209,8 @@ def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db:
     if not path.is_file():
         # return default image on dev environment where most photos are missing
         if config.ignore_missing_image_files:
-            path = get_dummy_image_path_by_size(size_px=config.size_thumbnail_image_taxon[0])
+            path = get_dummy_image_path_by_size(width=config.size_thumbnail_image_taxon[0],
+                                                height=config.size_thumbnail_image_taxon[1])
         else:
             logger.error(err_msg := f'Occurence thumbnail file not found: {path}')
             throw_exception(err_msg)
@@ -240,7 +241,7 @@ def _generate_missing_thumbnails(images: list[Image]):
                 generate_thumbnail(image=image.absolute_path,
                                    size=size,
                                    path_thumbnail=config.path_generated_thumbnails)
-                count_already_existed += 1
+                count_generated += 1
                 logger.info(f'Generated thumbnail in size {size} for {image.absolute_path}')
 
     logger.info(f'Thumbnail Generation - Count already existed: {count_already_existed}')
