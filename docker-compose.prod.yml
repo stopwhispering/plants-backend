@@ -15,6 +15,7 @@ services:
           - LOG_LEVEL=info
           - CONNECTION_STRING=sqlite:////common//plants//db//database.db
           - ENVIRONMENT=prod
+          - MAX_WORKERS=3
 
       volumes:
         - type: bind

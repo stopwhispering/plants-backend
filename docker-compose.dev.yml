@@ -10,6 +10,7 @@ services:
         - LOG_LEVEL=debug
         - CONNECTION_STRING=sqlite:////common//plants//db//database.db
         - ENVIRONMENT=dev
+        - MAX_WORKERS=3
 
       volumes:
         - type: bind
