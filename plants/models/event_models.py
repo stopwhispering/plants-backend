@@ -71,12 +71,12 @@ class Event(Base, OrmUtil):
 
     # n:1 relationship to pot, bi-directional
     pot_id = Column(INTEGER, ForeignKey('pot.id'))
-    pot_event_type = Column(CHAR(15))  # Repotting, Status
+    # pot_event_type = Column(CHAR(15))  # Repotting, Status
     pot = relationship("Pot", back_populates="events")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey('soil.id'))
-    soil_event_type = Column(CHAR(15))  # Changing Soil, Status    # todo remove?
+    # soil_event_type = Column(CHAR(15))  # Changing Soil, Status    # todo remove?
     soil = relationship("Soil", back_populates="events")
 
     # event to plant: n:1, bi-directional
@@ -97,6 +97,11 @@ class Event(Base, OrmUtil):
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
         as_dict = super(Event, self).as_dict()
+
+        # delete db foreign keys not meant for frontend usage
+        del as_dict['soil_id']
+        del as_dict['pot_id']
+        del as_dict['observation_id']
 
         # read segments from their respective linked tables
         if self.observation:

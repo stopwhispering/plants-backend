@@ -4,3 +4,5 @@
 /deploy.bat
 /database.db
 /pollination_estimator.pkl
+/package-lock.json
+/package.json

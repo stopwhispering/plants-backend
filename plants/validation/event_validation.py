@@ -85,19 +85,23 @@ class PEvent(BaseModel):
     id: int
     date: str
     event_notes: str | None
-    observation_id: Optional[int]
-    observation: Optional[PObservation]
-    pot_id: Optional[int]
-    pot_event_type: Optional[str]  # todo enum ('cancel' | 'repot') just like in ts or remove alltogether
-    soil_id: Optional[int]
+    # observation_id: Optional[int]
+    observation: Optional[PObservation]  # why here and as observation.id? the same or differnt???  # todo remove one
+    # pot_id: Optional[int]
+    # pot_event_type: Optional[str]  # todo enum ('cancel' | 'repot') just like in ts or remove alltogether
+    # soil_id: Optional[int]  # why here and as soil.id? the same or differnt???  # todo remove one
     soil: Optional[PSoil]
-    soil_event_type:  Optional[str]  # todo enum ('cancel') just like in ts or remove alltogether
+    # soil_event_type:  Optional[str]  # todo enum ('cancel') just like in ts or remove alltogether
     plant_id: int
     pot: Optional[PPot]
     images: Optional[list[PImage]]
 
     class Config:
         extra = Extra.forbid
+
+
+class PEvents(BaseModel):
+    __root__: list[PEvent]
 
 
 class PEventCreateOrUpdate(PEvent):
@@ -110,27 +114,9 @@ class PEventCreateOrUpdateRequest(BaseModel):
     class Config:
         extra = Extra.forbid
 
-# class PEventCreateOrUpdate(BaseModel):
-#     id: Optional[int]  # property missing if event is new
-#     date: str
-#     event_notes: Optional[str]
-#     observation_id: Optional[int]
-#     observation: Optional[PObservation]
-#     pot_id: Optional[int]
-#     pot_event_type: Optional[str]
-#     soil_id: Optional[int]
-#     soil: Optional[PSoil]
-#     soil_event_type: Optional[str]
-#     plant_id: Optional[int]  # property missing if event is new
-#     pot: Optional[PPot]
-#     images: Optional[List[PImage]]
-#
-#     class Config:
-#         extra = 'forbid'
-
 
 class PResultsEventResource(BaseModel):
-    events: list[PEvent]
+    events: PEvents
     message: PMessage
 
     class Config:

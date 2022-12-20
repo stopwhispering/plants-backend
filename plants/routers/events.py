@@ -39,9 +39,11 @@ async def get_soils(db: Session = Depends(get_db)):
               .options(subqueryload(Plant.events))  # .subqueryload(Event.soil))
               .all())
     for plant in plants:
-        if events := [e for e in plant.events if e.soil_id]:
+        # if events := [e for e in plant.events if e.soil_id]:
+        if events := [e for e in plant.events if e.soil and e.soil.id]:
             latest_event = max(events, key=attrgetter('date'))
-            soil_counter[latest_event.soil_id] += 1
+            # soil_counter[latest_event.soil_id] += 1
+            soil_counter[latest_event.soil.id] += 1
 
     for soil in db.query(Soil).all():
         soil.plants_count = soil_counter.get(soil.id, 0)
@@ -187,11 +189,11 @@ async def create_or_update_events(request: Request,
                     event.observation.stem_max_diameter else None
 
             if not event.pot:
-                event_obj.pot_event_type = None
+                # event_obj.pot_event_type = None
                 event_obj.pot = None
 
             else:
-                event_obj.pot_event_type = event.pot_event_type
+                # event_obj.pot_event_type = event.pot_event_type
                 # add empty if not existing
                 if not event_obj.pot:
                     pot_obj = Pot()
@@ -208,13 +210,13 @@ async def create_or_update_events(request: Request,
             # remove soil from event
             #  (event to soil is n:1 so we don't delete the soil object but only the assignment)
             if not event.soil:
-                event_obj.soil_event_type = None
+                # event_obj.soil_event_type = None
                 if event_obj.soil:
                     event_obj.soil = None
 
             # add soil to event
             else:
-                event_obj.soil_event_type = event.soil_event_type
+                # event_obj.soil_event_type = event.soil_event_type
                 if not event.soil.id:
                     throw_exception(f"Can't update Soil {event.soil.soil_name} without ID.")
                 if not event_obj.soil or (event.soil.id != event_obj.soil.id):
