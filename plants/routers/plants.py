@@ -57,9 +57,7 @@ def clone_plant(
     results = {'action':   'Renamed plant',
                'resource': 'PlantResource',
                'message':  get_message(msg, description=msg),
-               # 'plants':   [plant_clone.as_dict()]}
-               # 'plants':   [get_plant_as_dict(plant_clone)]}
-               'plants':   [plant_clone]}
+               'plant':   plant_clone}
 
     return results
 
@@ -78,10 +76,10 @@ def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(ge
     plants_saved = update_plants_from_list_of_dicts(plants_modified, db)
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
-    results = {'action':   'Saved Plants',
+    results = {'action': 'Saved Plants',
                'resource': 'PlantResource',
-               'message':  get_message(message),
-               'plants':   plants_saved}  # return the updated/created plants
+               'message': get_message(message),
+               'plants': plants_saved}  # return the updated/created plants
 
     return results
 

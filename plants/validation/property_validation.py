@@ -7,7 +7,7 @@ from plants.validation.message_validation import PMessage
 
 
 class PPropertyName(BaseModel):
-    property_name_id: int
+    property_name_id: Optional[int]  # None if new
     property_name: str
     countPlants: int
 
@@ -25,7 +25,7 @@ class PResultsPropertyNames(BaseModel):
         extra = Extra.forbid
 
 
-class PropertyValue(BaseModel):
+class PPropertyValue(BaseModel):
     type: str
     property_value: str
     property_value_id: Optional[int]  # missing if new
@@ -35,10 +35,10 @@ class PropertyValue(BaseModel):
 
 
 # todo make all this flatter and easier
-class Property(BaseModel):
+class PProperty(BaseModel):
     property_name: str
     property_name_id: Optional[int]  # empty if new
-    property_values: List[PropertyValue]
+    property_values: List[PPropertyValue]
     property_value: Optional[str]  # after flattening
     property_value_id: Optional[int]  # set at certain point from property values list
 
@@ -46,11 +46,11 @@ class Property(BaseModel):
         extra = Extra.forbid
 
 
-class PropertiesInCategory(BaseModel):
+class PPropertiesInCategory(BaseModel):
     category_name: str
     category_id: int
     sort: Optional[int]  # todo remove?
-    properties: List[Property]
+    properties: List[PProperty]
     property_value: Optional[str]  # used in some request to add new property to category
 
     class Config:
@@ -59,14 +59,14 @@ class PropertiesInCategory(BaseModel):
 
 # todo unite taxon & plant
 class PPropertyCollectionPlant(BaseModel):  # todo useless with only one key
-    categories: List[PropertiesInCategory]
+    categories: List[PPropertiesInCategory]
 
     class Config:
         extra = Extra.forbid
 
 
 class PPropertyCollectionTaxon(BaseModel):  # todo useless with only one key
-    categories: Dict[int, PropertiesInCategory]  # todo why a dict here?
+    categories: Dict[int, PPropertiesInCategory]  # todo why a dict here?
 
     class Config:
         extra = Extra.forbid
@@ -93,7 +93,7 @@ class PPropertiesModifiedPlant(BaseModel):
 
 
 class PPropertiesModifiedTaxon(BaseModel):
-    modifiedPropertiesTaxa: Dict[int, Dict[int, PropertiesInCategory]]
+    modifiedPropertiesTaxa: Dict[int, Dict[int, PPropertiesInCategory]]
 
     class Config:
         extra = Extra.forbid

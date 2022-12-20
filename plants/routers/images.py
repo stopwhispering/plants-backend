@@ -16,7 +16,7 @@ from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
-                                                PPlantTag, PResultsImagesUploaded)
+                                                PImagePlantTag, PResultsImagesUploaded)
 from plants.services.image_services_simple import remove_files_already_existing
 from plants.validation.event_validation import PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
@@ -185,7 +185,7 @@ def _to_response_image(image: Image) -> PImage:
     return PImage(
         filename=image.filename or '',
         keywords=[{'keyword': k.keyword} for k in image.keywords],
-        plants=[PPlantTag(
+        plants=[PImagePlantTag(
             plant_id=p.id,
             key=p.plant_name,
             text=p.plant_name,

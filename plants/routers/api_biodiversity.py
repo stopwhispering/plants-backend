@@ -45,6 +45,7 @@ async def search_external_biodiversity_databases(
     if args.includeKew:
         try:
             kew_results = get_taxa_from_kew_databases(args.species + '*', results, args.searchForGenus)
+            # todo merge not required???
             results.extend(kew_results)
         except TooManyResultsError as e:
             logger.error('Exception catched.', exc_info=e)

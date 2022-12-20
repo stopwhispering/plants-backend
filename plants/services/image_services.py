@@ -127,8 +127,12 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
 
     old_path = image.absolute_path
     if not old_path.is_file():
-        logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
-        throw_exception(err_msg)
+        if config.ignore_missing_image_files:
+            logger.warning(f'Image file {old_path} to be deleted not found.')
+            return
+        else:
+            logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
+            throw_exception(err_msg)
 
     new_path = config.path_deleted_photos.joinpath(old_path.name)
     try:

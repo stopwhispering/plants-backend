@@ -17,11 +17,35 @@ class PTaxonInfoRequest(BaseModel):
         extra = Extra.forbid
 
 
+class PKewSearchResultEntry(BaseModel):
+    source: str  # determined upon saving by database
+    id: int | None  # determined upon saving by database
+    count: int
+    count_inactive: int
+    is_custom: bool
+    synonym: bool
+    authors: str
+    family: str
+    name: str
+    rank: str
+    fqId: str | None
+    powo_id: str | None
+    genus: str
+    species: str | None  # None for genus search
+    namePublishedInYear: str
+    phylum: str | None
+    synonyms_concat: str | None
+    distribution_concat: str | None
+
+    class Config:
+        extra = Extra.forbid
+
+
 class PResultsTaxonInfoRequest(BaseModel):
     action: str
     resource: str
     message: PMessage
-    ResultsCollection: List
+    ResultsCollection: list[PKewSearchResultEntry]
 
     class Config:
         extra = Extra.forbid

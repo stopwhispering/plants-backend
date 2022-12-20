@@ -103,7 +103,7 @@ class PPlant(BaseModel):
     sibling_plants: list[PAssociatedPlantExtractForPlant]
     same_taxon_plants: list[PAssociatedPlantExtractForPlant]
 
-    url_preview: Path | None
+    url_preview: Path | None  # todo remove?!?!?!?
     current_soil: PPlantCurrentSoil | None
     latest_image: PPlantLatestImage | None
     tags: list[PPlantTag]

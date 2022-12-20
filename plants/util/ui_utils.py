@@ -60,7 +60,7 @@ def get_message(message: str = None,
 
 def parse_resource_from_request(req: Request):
     items = req.get('path').split('/')
-    index_start = items.index('backend') + 1
+    index_start = items.index('api') + 1
     resource_name = '/'.join(items[index_start:])
     if '?' in resource_name:
         resource_name = resource_name[:resource_name.find('?')]

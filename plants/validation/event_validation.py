@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import validator, Extra
 from pydantic.main import BaseModel
@@ -23,7 +23,7 @@ class PPot(BaseModel):
     material: str
     shape_top: ShapeTop
     shape_side: ShapeSide
-    diameter_width: float
+    diameter_width: Optional[float]
 
     class Config:
         extra = Extra.forbid
@@ -75,7 +75,7 @@ class PImageDelete(BaseModel):
 
 
 class PImagesDelete(BaseModel):
-    images: List[PImageDelete]
+    images: list[PImageDelete]
 
     class Config:
         extra = Extra.forbid
@@ -84,17 +84,17 @@ class PImagesDelete(BaseModel):
 class PEvent(BaseModel):
     id: int
     date: str
-    event_notes: Optional[str]
+    event_notes: str | None
     observation_id: Optional[int]
     observation: Optional[PObservation]
     pot_id: Optional[int]
-    pot_event_type: Optional[str]
+    pot_event_type: Optional[str]  # todo enum ('cancel' | 'repot') just like in ts or remove alltogether
     soil_id: Optional[int]
     soil: Optional[PSoil]
-    soil_event_type: Optional[str]
+    soil_event_type:  Optional[str]  # todo enum ('cancel') just like in ts or remove alltogether
     plant_id: int
     pot: Optional[PPot]
-    images: Optional[List[PImage]]
+    images: Optional[list[PImage]]
 
     class Config:
         extra = Extra.forbid
@@ -130,14 +130,14 @@ class PEventCreateOrUpdateRequest(BaseModel):
 
 
 class PResultsEventResource(BaseModel):
-    events: List[PEvent]
+    events: list[PEvent]
     message: PMessage
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsSoilResource(BaseModel):
+class PResultsUpdateCreateSoil(BaseModel):
     soil: PSoil
     message: PMessage
 
@@ -146,7 +146,7 @@ class PResultsSoilResource(BaseModel):
 
 
 class PResultsSoilsResource(BaseModel):
-    SoilsCollection: List[PSoilWithCount]
+    SoilsCollection: list[PSoilWithCount]
 
     class Config:
         extra = Extra.forbid

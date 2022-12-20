@@ -11,7 +11,7 @@ class PTaxonTreeNode(BaseModel):
     key: str
     level: int
     count: int
-    nodes: Optional[List[PTaxonTreeNode]]  # not on lowest level
+    nodes: Optional[List[PTaxonTreeNode]]  # missing on lowest level
     plant_ids: Optional[List[int]]  # plants themselves on lowest level
 
     class Config:

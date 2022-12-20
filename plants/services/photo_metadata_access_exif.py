@@ -121,6 +121,13 @@ class PhotoMetadataAccessExifTags:
         else:
             tag_authors_plants = b''
 
+        if not absolute_path.is_file():
+            if config.ignore_missing_image_files:
+                logger.warning(f'File {absolute_path} not found. Can''t write EXIF Tags. Ignoring.')
+                return
+            else:
+                raise FileNotFoundError(f'File {absolute_path} not found.')
+
         exif_dict = piexif.load(absolute_path.as_posix())
 
         # check if any of the tags has been changed or if any of the relevant tags is missing altogether

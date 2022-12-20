@@ -76,7 +76,7 @@ class Event(Base, OrmUtil):
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey('soil.id'))
-    soil_event_type = Column(CHAR(15))  # Changing Soil, Status
+    soil_event_type = Column(CHAR(15))  # Changing Soil, Status    # todo remove?
     soil = relationship("Soil", back_populates="events")
 
     # event to plant: n:1, bi-directional

@@ -74,7 +74,9 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
         # build additional results from kew data
         result = {'source':              SOURCE_KEW,
                   'id':                  None,  # determined upon saving by database
-                  'count':               None,  # count of plants assigned the taxon in local extensions
+                  # todo ??
+                  'count':               0,  # count of plants assigned the taxon in local extensions
+                  'count_inactive':      0,
                   'is_custom':           False,
                   'authors':             item.get('authors'),
                   'family':              item.get('family'),
@@ -83,7 +85,9 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
                   'fqId':                item['fqId'],  # ipni id
                   'genus':               item.get('genus'),
                   'species':             item.get('species'),
-                  'namePublishedInYear': item.get('publicationYear')
+                  'namePublishedInYear': item.get('publicationYear'),
+                  # todo
+                  'synonyms_concat':     None,
                   }
 
         # add information from powo if available
@@ -99,7 +103,7 @@ def get_taxa_from_kew_databases(plant_name_pattern: str, local_results: list, se
                 result['namePublishedInYear'] = powo_lookup['namePublishedInYear']
             result['phylum'] = powo_lookup.get('phylum')
             result['synonym'] = powo_lookup.get('synonym')
-            result['author'] = powo_lookup.get('authors')  # overwrite as powo author has more information
+            result['authors'] = powo_lookup.get('authors')  # overwrite as powo author has more information
             if powo_lookup.get('synonym'):
                 try:
                     result['synonyms_concat'] = get_synonym_label_if_only_a_synonym(powo_lookup['accepted']['name'])

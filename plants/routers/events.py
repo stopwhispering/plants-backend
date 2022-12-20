@@ -15,7 +15,7 @@ from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import (PResultsEventResource, PSoil, PResultsSoilResource,
+from plants.validation.event_validation import (PResultsEventResource, PSoil, PResultsUpdateCreateSoil,
                                                 PResultsSoilsResource, PSoilCreate, PEventCreateOrUpdateRequest)
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ async def get_soils(db: Session = Depends(get_db)):
     return {'SoilsCollection': soils}
 
 
-@router.post("/soils", response_model=PResultsSoilResource)
+@router.post("/soils", response_model=PResultsUpdateCreateSoil)
 async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
     """create new soil and return it with (newly assigned) id"""
     soil_obj = create_soil(soil=new_soil, db=db)
@@ -62,7 +62,7 @@ async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
     return results
 
 
-@router.put("/soils", response_model=PResultsSoilResource)
+@router.put("/soils", response_model=PResultsUpdateCreateSoil)
 async def update_existing_soil(updated_soil: PSoil, db: Session = Depends(get_db)):
     """update soil attributes"""
     soil_obj = update_soil(soil=updated_soil, db=db)

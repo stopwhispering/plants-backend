@@ -14,7 +14,7 @@ class PKeyword(BaseModel):
         extra = Extra.forbid
 
 
-class PPlantTag(BaseModel):
+class PImagePlantTag(BaseModel):
     plant_id: int = None
     key: str
     text: str
@@ -26,7 +26,7 @@ class PPlantTag(BaseModel):
 class PImage(BaseModel):
     filename: str
     keywords: List[PKeyword]
-    plants: List[PPlantTag]
+    plants: List[PImagePlantTag]
     description: str | None
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
