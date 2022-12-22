@@ -3,7 +3,7 @@ import ManagedObject from "sap/ui/base/ManagedObject";
 /**
  * @namespace plants.ui.definitions
  */
-export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface PConfirmation {
   action: string;
@@ -11,7 +11,7 @@ export interface PConfirmation {
   message: PMessage;
 }
 export interface PMessage {
-  type: MessageType;
+  type: PMessageType;
   message: string;
   additionalText?: string;
   description?: string;

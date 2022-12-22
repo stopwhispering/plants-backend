@@ -16,7 +16,7 @@ from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyCategory
 from plants.models.taxon_models import Taxon
 from plants.routers.images import _to_response_image
-from plants.util.ui_utils import get_message, MessageType
+from plants.util.ui_utils import get_message, PMessageType
 from plants.validation.event_validation import PResultsEventResource, PImage
 from plants.validation.image_validation import PImages, PResultsImageResource
 from plants.validation.plant_validation import PResultsPlants
@@ -123,7 +123,7 @@ def events_for_plant():
 
     results = {'events': results,
                'message': get_message(f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id, db)}.',
-                                      message_type=MessageType.DEBUG)}
+                                      message_type=PMessageType.DEBUG)}
     PResultsEventResource.parse_obj(results)
 
 

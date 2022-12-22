@@ -3,7 +3,7 @@ import ManagedObject from "sap/ui/base/ManagedObject";
 /**
  * @namespace plants.ui.definitions
  */
-export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface PPropertiesInCategory {
   category_name: string;

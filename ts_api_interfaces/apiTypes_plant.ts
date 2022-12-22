@@ -24,7 +24,7 @@ export type CancellationReason =
   | "Sale"
   | "Others";
 export type TagState = "None" | "Indication01" | "Success" | "Information" | "Error" | "Warning";
-export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface PAssociatedPlantExtractForPlant {
   id: number;
@@ -87,6 +87,12 @@ export interface PPlantsRenameRequest {
 }
 export interface PPlantsUpdateRequest {
   PlantsCollection: PPlant[];
+}
+export interface PResultsPlantCloned {
+  action: string;
+  resource: string;
+  message: PMessage;
+  plant: PPlant;
 }
 export interface PResultsPlants {
   action: string;

@@ -3,11 +3,11 @@ from typing import Optional
 from pydantic import Extra
 from pydantic.main import BaseModel
 
-from plants.util.ui_utils import MessageType
+from plants.util.ui_utils import PMessageType
 
 
 class PMessage(BaseModel):
-    type: MessageType
+    type: PMessageType
     message: str
     additionalText: Optional[str]
     description: Optional[str]

@@ -8,7 +8,7 @@ import logging
 from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
-from plants.util.ui_utils import throw_exception, get_message, MessageType
+from plants.util.ui_utils import throw_exception, get_message, PMessageType
 from plants.dependencies import get_db
 from plants.models.image_models import Image, ImageToEventAssociation
 from plants.services.event_services import create_soil, update_soil
@@ -59,7 +59,7 @@ async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
 
     logger.info(msg)
     results = {'soil': soil_obj,  # soil_obj.as_dict(),
-               'message': get_message(msg, message_type=MessageType.DEBUG)}
+               'message': get_message(msg, message_type=PMessageType.DEBUG)}
     return results
 
 
@@ -71,7 +71,7 @@ async def update_existing_soil(updated_soil: PRSoil, db: Session = Depends(get_d
 
     logger.info(msg)
     results = {'soil': soil_obj.as_dict(),
-               'message': get_message(msg, message_type=MessageType.DEBUG)}
+               'message': get_message(msg, message_type=PMessageType.DEBUG)}
     return results
 
 
@@ -89,7 +89,7 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
     logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id, db)}.')
     results = {'events': results,
                'message': get_message(m,
-                                      message_type=MessageType.DEBUG)}
+                                      message_type=PMessageType.DEBUG)}
 
     return results
 

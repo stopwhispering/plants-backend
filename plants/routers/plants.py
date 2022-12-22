@@ -14,7 +14,7 @@ from plants.services.plants_services import update_plants_from_list_of_dicts, de
 from plants.validation.message_validation import PConfirmation
 from plants.validation.plant_validation import (PPlantsDeleteRequest,
                                                 PPlantsRenameRequest, PResultsPlants, PPlantsUpdateRequest,
-                                                PResultsPlantsUpdate)
+                                                PResultsPlantsUpdate, PResultsPlantCloned)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ router = APIRouter(
         )
 
 
-@router.post("/{plant_id}/clone", response_model=PResultsPlantsUpdate)
+@router.post("/{plant_id}/clone", response_model=PResultsPlantCloned)
 def clone_plant(
         request: Request,
         plant_id: int,

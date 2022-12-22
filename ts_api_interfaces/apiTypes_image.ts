@@ -4,7 +4,7 @@ import ManagedObject from "sap/ui/base/ManagedObject";
  * @namespace plants.ui.definitions
  */
 export type PImages = PImage[];
-export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface GenerateMissingThumbnails {
   count_already_existed: number;

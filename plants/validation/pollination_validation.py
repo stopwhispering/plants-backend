@@ -103,7 +103,7 @@ class PResultsOngoingPollinations(BaseModel):
     ongoingPollinationCollection: List[POngoingPollination]
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.forbid
 
 
 class PPollinationStatus(BaseModel):
@@ -130,7 +130,7 @@ class PResultsActiveFlorescences(BaseModel):
     activeFlorescenceCollection: List[PActiveFlorescence]
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.forbid
 
 
 class PResultsPotentialPollenDonors(BaseModel):
@@ -140,7 +140,7 @@ class PResultsPotentialPollenDonors(BaseModel):
     potentialPollenDonorCollection: List[PPotentialPollenDonor]
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.forbid
 
 
 class PPollenContainer(BaseModel):
@@ -260,7 +260,7 @@ class PRequestNewFlorescence(BaseModel):
     comment: str | None  # max 40 chars
 
     class Config:
-        extra = Extra.forbid  # todo works?
+        extra = Extra.forbid
 
 
 class PResultsTrainingPollinationModel(BaseModel):

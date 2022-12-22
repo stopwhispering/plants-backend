@@ -6,7 +6,7 @@ import ManagedObject from "sap/ui/base/ManagedObject";
 export type ShapeTop = "square" | "round" | "oval" | "hexagonal";
 export type ShapeSide = "very flat" | "flat" | "high" | "very high";
 export type PEvents = PEvent[];
-export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface PEvent {
   id: number;

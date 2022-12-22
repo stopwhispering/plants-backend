@@ -12,7 +12,7 @@ from plants.models.image_models import Image, update_image_if_altered, ImageKeyw
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.util.ui_utils import MessageType, get_message, throw_exception
+from plants.util.ui_utils import PMessageType, get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
@@ -64,7 +64,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     images_ext = [_to_response_image(i) for i in images]
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
-                      message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
+                      message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,
                       description=f'Saved: {[p.filename for p in files]}.'
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])
@@ -149,7 +149,7 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
     images_ext = [_to_response_image(i) for i in images]
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
-                      message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
+                      message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,
                       description=f'Saved: {[p.filename for p in files]}.'
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])

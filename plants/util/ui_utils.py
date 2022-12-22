@@ -7,7 +7,7 @@ import json
 from datetime import date, datetime, timedelta
 
 
-class MessageType(Enum):
+class PMessageType(Enum):
     """message types processed by error/success handlers in ui5 web frontend"""
     INFORMATION = 'Information'
     NONE = 'None'
@@ -18,7 +18,7 @@ class MessageType(Enum):
 
 
 def throw_exception(message: str = None,
-                    message_type: MessageType = MessageType.ERROR,
+                    message_type: PMessageType = PMessageType.ERROR,
                     additional_text: str = None,
                     status_code: int = 520,
                     description: str = None,
@@ -42,7 +42,7 @@ def throw_exception(message: str = None,
 
 
 def get_message(message: str = None,
-                message_type: MessageType = MessageType.INFORMATION,
+                message_type: PMessageType = PMessageType.INFORMATION,
                 additional_text: str = None,
                 description: str = None):
     """generates a message to be userd in a ui5 frontend; uses flask request which is not required as a paramter"""

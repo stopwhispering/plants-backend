@@ -10,10 +10,10 @@ from plants.validation.message_validation import PMessage
 
 
 class PPlantTag(BaseModel):
-    id: Optional[int]  # empty if new
+    id: Optional[int]
     text: str
     state: TagState
-    last_update: Optional[datetime]  # empty if new
+    last_update: Optional[datetime]
     plant_id: int
 
     class Config:
@@ -64,15 +64,15 @@ class PAssociatedPlantExtractForPlant(BaseModel):
         extra = Extra.forbid
         orm_mode = True
 
-
-class PAssociatedPlantExtractForPlantOptional(BaseModel):
-    id: int | None
-    plant_name: str | None
-    active: bool | None
-
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
+# todo required?
+# class PAssociatedPlantExtractForPlantOptional(BaseModel):
+#     id: int | None
+#     plant_name: str | None
+#     active: bool | None
+#
+#     class Config:
+#         extra = Extra.forbid
+#         orm_mode = True
 
 
 class PPlant(BaseModel):
@@ -83,20 +83,17 @@ class PPlant(BaseModel):
     nursery_source: str | None
     propagation_type: PropagationType | None
     active: bool
-    cancellation_reason: CancellationReason | None  # only set if active == False
-    cancellation_date: date | None  # only set if active == False
+    cancellation_reason: CancellationReason | None
+    cancellation_date: date | None
     generation_notes: str | None
     taxon_id: int | None
     taxon_authors: str | None
     botanical_name: str | None
 
-    # parent_plant_id: int | None
-    parent_plant: PAssociatedPlantExtractForPlantOptional | None
-    # parent_plant_pollen_id: int | None
-    parent_plant_pollen: PAssociatedPlantExtractForPlantOptional | None
+    parent_plant: PAssociatedPlantExtractForPlant | None
+    parent_plant_pollen: PAssociatedPlantExtractForPlant | None
     plant_notes: str | None
     filename_previewimage: Path | None
-    # hide: bool | None  # i.e. deleted
     last_update: datetime | None  # None for new plants
 
     descendant_plants_all: list[PAssociatedPlantExtractForPlant]
@@ -137,6 +134,16 @@ class PResultsPlantsUpdate(BaseModel):
     resource: str
     message: PMessage
     plants: list[PPlant]
+
+    class Config:
+        extra = Extra.forbid
+
+
+class PResultsPlantCloned(BaseModel):
+    action: str
+    resource: str
+    message: PMessage
+    plant: PPlant
 
     class Config:
         extra = Extra.forbid
