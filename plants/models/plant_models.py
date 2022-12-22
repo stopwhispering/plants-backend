@@ -34,6 +34,7 @@ class Plant(Base, OrmUtil):
     propagation_type = Column(VARCHAR(30))
 
     active = Column(BOOLEAN)
+    deleted = Column(BOOLEAN)
     cancellation_reason = Column(VARCHAR(60))  # only set if active == False
     cancellation_date = Column(DateTime(timezone=False))
 
@@ -70,7 +71,6 @@ class Plant(Base, OrmUtil):
     # generation_origin = Column(VARCHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(VARCHAR(240))  # original filename of the photo_file that is set as preview photo_file
-    hide = Column(BOOLEAN)
     last_update = Column(TIMESTAMP, nullable=False)
 
     # plant to taxon: n:1

@@ -54,7 +54,6 @@ export interface PPlant {
   parent_plant_pollen?: PAssociatedPlantExtractForPlantOptional;
   plant_notes?: string;
   filename_previewimage?: string;
-  hide?: boolean;
   last_update?: string;
   descendant_plants_all: PAssociatedPlantExtractForPlant[];
   sibling_plants: PAssociatedPlantExtractForPlant[];

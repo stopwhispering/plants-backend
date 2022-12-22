@@ -10,52 +10,37 @@ export type MessageType = "Information" | "None" | "Success" | "Warning" | "Erro
 
 export interface PEvent {
   id: number;
+  plant_id: number;
   date: string;
   event_notes?: string;
-  observation?: PObservation;
-  soil?: PSoil;
-  plant_id: number;
-  pot?: PPot;
+  observation?: PRObservation;
+  soil?: PRSoil;
+  pot?: PRPot;
   images?: PImage[];
 }
-export interface PObservation {
+export interface PRObservation {
   id?: number;
   diseases?: string;
   stem_max_diameter?: number;
   height?: number;
   observation_notes?: string;
 }
-export interface PSoil {
+export interface PRSoil {
   id: number;
   soil_name: string;
-  mix: string;
+  mix?: string;
   description?: string;
 }
-export interface PPot {
+export interface PRPot {
   id?: number;
   material: string;
   shape_top: ShapeTop;
   shape_side: ShapeSide;
-  diameter_width?: number;
+  diameter_width: number;
 }
 export interface PImage {
   id?: number;
   filename: string;
-}
-export interface PEventCreateOrUpdate {
-  id?: number;
-  date: string;
-  event_notes?: string;
-  observation?: PObservation;
-  soil?: PSoil;
-  plant_id: number;
-  pot?: PPot;
-  images?: PImage[];
-}
-export interface PEventCreateOrUpdateRequest {
-  plants_to_events: {
-    [k: string]: PEventCreateOrUpdate[];
-  };
 }
 export interface PImageDelete {
   filename: string;
@@ -73,17 +58,32 @@ export interface PResultsSoilsResource {
 export interface PSoilWithCount {
   id: number;
   soil_name: string;
-  mix: string;
+  mix?: string;
   description?: string;
   plants_count: number;
 }
 export interface PResultsUpdateCreateSoil {
-  soil: PSoil;
+  soil: PRSoil;
   message: PMessage;
 }
 export interface PSoilCreate {
   id?: number;
   soil_name: string;
-  mix: string;
+  mix?: string;
   description?: string;
+}
+export interface RCreateOrUpdateEvent {
+  id?: number;
+  plant_id: number;
+  date: string;
+  event_notes?: string;
+  observation?: PRObservation;
+  soil?: PRSoil;
+  pot?: PRPot;
+  images: PImage[];
+}
+export interface RRequestCreateOrUpdateEvent {
+  plants_to_events: {
+    [k: string]: RCreateOrUpdateEvent[];
+  };
 }

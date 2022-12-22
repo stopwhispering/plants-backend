@@ -15,8 +15,8 @@ from plants.services.event_services import create_soil, update_soil
 from plants.validation.message_validation import PConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import (PResultsEventResource, PSoil, PResultsUpdateCreateSoil,
-                                                PResultsSoilsResource, PSoilCreate, PEventCreateOrUpdateRequest)
+from plants.validation.event_validation import (PResultsEventResource, PRSoil, PResultsUpdateCreateSoil,
+                                                PResultsSoilsResource, PSoilCreate, RRequestCreateOrUpdateEvent)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,6 @@ async def get_soils(db: Session = Depends(get_db)):
     soil_counter = defaultdict(int)
 
     plants = (db.query(Plant)
-              .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
               .options(subqueryload(Plant.events))  # .subqueryload(Event.soil))
               .all())
     for plant in plants:
@@ -65,7 +64,7 @@ async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/soils", response_model=PResultsUpdateCreateSoil)
-async def update_existing_soil(updated_soil: PSoil, db: Session = Depends(get_db)):
+async def update_existing_soil(updated_soil: PRSoil, db: Session = Depends(get_db)):
     """update soil attributes"""
     soil_obj = update_soil(soil=updated_soil, db=db)
     msg = f'Updated soil with ID {soil_obj.id}'
@@ -83,7 +82,6 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
     exports: see PResultsEventResource
     """
     results = []
-    # might be a newly created plant with no existing events, yet
     event_objs = Event.get_events_by_plant_id(plant_id, db)
     for event_obj in event_objs:
         results.append(event_obj.as_dict())
@@ -98,8 +96,7 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=PConfirmation)
 async def create_or_update_events(request: Request,
-                                  # todo replace dict with ordinary pydantic schema (also on ui side)
-                                  args: PEventCreateOrUpdateRequest,
+                                  events_request: RRequestCreateOrUpdateEvent,
                                   db: Session = Depends(get_db)):
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has been changed, added, or
@@ -108,7 +105,7 @@ async def create_or_update_events(request: Request,
     # loop at the plants and their events
     counts = defaultdict(int)
     new_list = []
-    for plant_id, events in args.plants_to_events.items():
+    for plant_id, events in events_request.plants_to_events.items():  # noqa
 
         # plant_obj = Plant.get_plant_by_plant_name(plant_name, db, raise_exception=True)
         plant_obj = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)

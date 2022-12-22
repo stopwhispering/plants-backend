@@ -50,7 +50,8 @@ class catchtime:
 
 def plants_subqueryload():
     query = db.query(Plant)
-    query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    query = query.filter(Plant.deleted.is_(False))
 
     # early-load all relationship tables for Plant model relevant for PResultsPlants
     query = query.options(
@@ -88,7 +89,8 @@ def plants_subqueryload():
 
 def plants_no_subqueryload():
     query = db.query(Plant)
-    query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    query = query.filter(Plant.deleted.is_(False))
     plants_obj = query.all()
     results = {'action':           'Get plants',
                'resource':         'PlantResource',

@@ -318,7 +318,8 @@ def read_pollen_containers(db: Session) -> list[PPollenContainer]:
 def read_plants_without_pollen_containers(db: Session) -> list[PPlantWithoutPollenContainer]:
     query = (db.query(Plant).filter((Plant.count_stored_pollen_containers == 0) |
                                     Plant.count_stored_pollen_containers.is_(None))
-             .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))))
+             # .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))))
+             .filter((Plant.deleted.is_(False))))
     plants: list[Plant] = query.all()
 
     plants_without_pollen_containers = []

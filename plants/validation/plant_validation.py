@@ -96,7 +96,7 @@ class PPlant(BaseModel):
     parent_plant_pollen: PAssociatedPlantExtractForPlantOptional | None
     plant_notes: str | None
     filename_previewimage: Path | None
-    hide: bool | None  # i.e. deleted  todo: enforce True/False
+    # hide: bool | None  # i.e. deleted
     last_update: datetime | None  # None for new plants
 
     descendant_plants_all: list[PAssociatedPlantExtractForPlant]

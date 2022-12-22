@@ -86,7 +86,7 @@ def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(ge
 
 @router.delete("/", response_model=PConfirmation)
 def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Depends(get_db)):
-    """tag deleted plant as 'hide' in database"""
+    """tag deleted plant as 'deleted' in database"""
 
     args = data
 
@@ -94,14 +94,14 @@ def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Dep
     if not record_update:
         logger.error(f'Plant to be deleted not found in database: {args.plant_id}.')
         throw_exception(f'Plant to be deleted not found in database: {args.plant_id}.', request=request)
-    record_update.hide = True
+    record_update.deleted = True
     db.commit()
 
     logger.info(message := f'Deleted plant {record_update.plant_name}')
     results = {'action':   'Deleted plant',
                'resource': 'PlantResource',
                'message':  get_message(message,
-                                       description=f'Plant name: {record_update.plant_name}\nHide: True')
+                                       description=f'Plant name: {record_update.plant_name}\nDeleted: True')
                }
 
     return results
@@ -154,8 +154,8 @@ async def get_plants(db: Session = Depends(get_db)):
     query = db.query(Plant)
     if config.filter_hidden_plants:
         # sqlite does not like "is None" and pylint doesn't like "== None"
-        # todo force bool
-        query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+        # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+        query = query.filter(Plant.deleted.is_(False))
 
     if config.n_plants:
         query = query.order_by(Plant.plant_name).limit(config.n_plants)

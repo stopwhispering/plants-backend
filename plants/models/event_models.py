@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 class Soil(Base, OrmUtil):
     __tablename__ = "soil"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    soil_name = Column(VARCHAR(100), nullable=False)
     description = Column(TEXT)
     mix = Column(TEXT)
-    soil_name = Column(VARCHAR(100))
 
     # 1:n relationship to events (no need for bidirectional relationship)
     events = relationship("Event", back_populates="soil")
@@ -58,8 +58,6 @@ class Event(Base, OrmUtil):
     __tablename__ = 'event'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     date = Column(VARCHAR(12), nullable=False)  # e.g. 201912241645 or 201903
-    # action = Column(VARCHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
-    # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
     event_notes = Column(TEXT)
 
     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
@@ -68,16 +66,13 @@ class Event(Base, OrmUtil):
 
     # n:1 relationship to pot, bi-directional
     pot_id = Column(INTEGER, ForeignKey('pot.id'))
-    # pot_event_type = Column(VARCHAR(15))  # Repotting, Status
     pot = relationship("Pot", back_populates="events")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey('soil.id'))
-    # soil_event_type = Column(VARCHAR(15))  # Changing Soil, Status    # todo remove?
     soil = relationship("Soil", back_populates="events")
 
     # event to plant: n:1, bi-directional
-    # plant_name = Column(VARCHAR(60), ForeignKey('plants.plant_name'), nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
 
@@ -107,14 +102,20 @@ class Event(Base, OrmUtil):
                 as_dict['observation']['height'] = as_dict['observation']['height'] / 10  # mm to cm
             if as_dict['observation'].get('stem_max_diameter'):
                 as_dict['observation']['stem_max_diameter'] = as_dict['observation']['stem_max_diameter'] / 10
+        else:
+            as_dict['observation'] = None
 
         if self.pot:
             as_dict['pot'] = self.pot.as_dict()
             if as_dict['pot'].get('diameter_width'):
                 as_dict['pot']['diameter_width'] = as_dict['pot']['diameter_width'] / 10
+        else:
+            as_dict['pot'] = None
 
         if self.soil:
             as_dict['soil'] = self.soil.as_dict()
+        else:
+            as_dict['soil'] = None
 
         if self.images:
             as_dict['images'] = []
@@ -125,6 +126,8 @@ class Event(Base, OrmUtil):
                                           'filename':      image_obj.filename,
                                           # 'relative_path': image_obj.relative_path
                                           })
+        else:
+            as_dict['images'] = []
 
         return as_dict
 

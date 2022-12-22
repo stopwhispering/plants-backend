@@ -30,6 +30,8 @@ def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[
                 throw_exception('Plant Name already exists.')
                 record_update = Plant(plant_name=plant.plant_name)
                 logger.info(f'Creating new plant {plant.plant_name}')
+
+            record_update.deleted = False
             new_list.append(record_update)
         else:
             record_update = Plant.get_plant_by_plant_id(plant.id, db)
@@ -125,7 +127,7 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
                 # new tag
                 tag_object: Tag = Tag(text=tag.text,
                                       # icon=tag.icon,
-                                      state=tag.state,
+                                      state=tag.state.value(),
                                       plant=plant_obj,
                                       # last_update=datetime.datetime.now()
                                       last_update=datetime.now()

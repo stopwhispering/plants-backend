@@ -21,7 +21,8 @@ def _read_available_colors_rgb(plant: Plant, db: Session):
 
 
 def read_plants_for_new_florescence(db: Session) -> list[PPlantForNewFlorescence]:
-    query = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    # query = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
+    query = db.query(Plant).filter(Plant.deleted.is_(False))
     plants: list[Plant] = query.all()
 
     plants_for_new_florescence = []

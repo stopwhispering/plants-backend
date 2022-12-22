@@ -9,7 +9,8 @@ from plants.models.plant_models import Plant
 def build_taxon_tree(db: Session) -> List:
     # todo optimize sql performance
     # build up an exists filter that we're gonna reuse
-    plant_exists_filter = and_(or_(Plant.hide.is_(None), Plant.hide.is_(False)), Plant.active)
+    # plant_exists_filter = and_(or_(Plant.hide.is_(None), Plant.hide.is_(False)), Plant.active)
+    plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)
     exists_filter = Taxon.plants.any(plant_exists_filter)
 
     # get distinct families, genus, and species (as list of four-element-tuples); sort
@@ -60,8 +61,7 @@ def build_taxon_tree(db: Session) -> List:
 
         # we might have multiple taxon ids for that species (e.g. varieties), for each of them, get plant ids
         # todo: do a join at the top so we don't need that lookup here
-        plant_ids_tuple = db.query(Plant.id).filter(Plant.taxon_id == t[3], or_(Plant.hide.is_(None),
-                                                                                Plant.hide.is_(False)),
+        plant_ids_tuple = db.query(Plant.id).filter(Plant.taxon_id == t[3],
                                                     Plant.active.is_(True)).all()
         species_leaf['plant_ids'].extend([t[0] for t in plant_ids_tuple])
 
