@@ -3,11 +3,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
+from ml_helpers.preprocessing.features import DBType
+from plants import config
+
 Base = declarative_base()
-engine = create_engine(os.getenv('CONNECTION_STRING'),
-                       connect_args={'check_same_thread': False,
-                                     # 'connect_timeout': 10
-                                     })
+if config.db_type == DBType.SQLITE:
+    print(f"TODO REMOVE. Using SQLITE: {os.getenv('CONNECTION_STRING')}.")
+    engine = create_engine(os.getenv('CONNECTION_STRING'), connect_args={'check_same_thread': False})
+    # 'connect_timeout': 10
+else:
+    print(f"TODO REMOVE. Using POSTGRES: {os.getenv('CONNECTION_STRING')}.")
+    engine = create_engine(os.getenv('CONNECTION_STRING'))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -27,9 +33,7 @@ def init_database_tables(engine_, session: Session = None):
     Base.metadata.create_all(bind=engine_)
 
     # initially populate tables with default data
-    from plants.models.event_models import insert_categories
+    # from plants.models.event_models import insert_categories
     from plants.models.property_models import insert_property_categories
-    insert_categories(SessionLocal() if not session else session)
+    # insert_categories(SessionLocal() if not session else session)
     insert_property_categories(SessionLocal() if not session else session)
-
-

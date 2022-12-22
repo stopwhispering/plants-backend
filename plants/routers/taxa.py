@@ -5,60 +5,61 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
-from plants.models.trait_models import TaxonToTraitAssociation
+# from plants.models.trait_models import TaxonToTraitAssociation
 from plants.util.ui_utils import throw_exception, get_message
 from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
-from plants.services.trait_services import update_traits
+# from plants.services.trait_services import update_traits
 from plants.validation.message_validation import PConfirmation
 from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa, PTaxon, PTaxonImage
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-        prefix="/taxa",
-        tags=["taxa"],
-        responses={404: {"description": "Not found"}},
-        )
+    prefix="/taxa",
+    tags=["taxa"],
+    responses={404: {"description": "Not found"}},
+)
 
 
 @router.get("/", response_model=PResultsGetTaxa)
 async def get_taxa(
         db: Session = Depends(get_db)
-        ):
+):
     """returns taxa from taxon database table"""
-    taxa: List[Taxon] = db.query(Taxon).options(subqueryload(Taxon.taxon_to_trait_associations).subqueryload(
-                                                    TaxonToTraitAssociation.trait),
-                                                subqueryload(Taxon.images),
-                                                subqueryload(Taxon.image_to_taxon_associations).subqueryload(
-                                                    ImageToTaxonAssociation.image),
-                                                subqueryload(Taxon.occurence_images)
-                                                ).all()
+    taxa: List[Taxon] = db.query(Taxon).options(
+        # subqueryload(Taxon.taxon_to_trait_associations)
+        # .subqueryload(TaxonToTraitAssociation.trait),
+        subqueryload(Taxon.images),
+        subqueryload(Taxon.image_to_taxon_associations)
+        .subqueryload(ImageToTaxonAssociation.image),
+        subqueryload(Taxon.occurrence_images)
+    ).all()
     taxon_dict = {}
     for taxon in taxa:
         taxon_dict[taxon.id] = taxon.as_dict()
-        if taxon.taxon_to_trait_associations:
-
-            # build a dict of trait categories
-            categories = {}
-            for link in taxon.taxon_to_trait_associations:
-                if link.trait.trait_category.id not in categories:
-                    categories[link.trait.trait_category.id] = {
-                        'id':            link.trait.trait_category.id,
-                        'category_name': link.trait.trait_category.category_name,
-                        'sort_flag':     link.trait.trait_category.sort_flag,
-                        'traits':        []
-                        }
-                categories[link.trait.trait_category.id]['traits'].append({
-                    'id':     link.trait.id,
-                    'trait':  link.trait.trait,
-                    # 'observed': link.observed,
-                    'status': link.status
-                    })
-
-            # ui5 frontend requires a list for the json model
-            taxon_dict[taxon.id]['trait_categories'] = list(categories.values())
+        # if taxon.taxon_to_trait_associations:
+        #
+        #     # build a dict of trait categories
+        #     categories = {}
+        #     for link in taxon.taxon_to_trait_associations:
+        #         if link.trait.trait_category.id not in categories:
+        #             categories[link.trait.trait_category.id] = {
+        #                 'id': link.trait.trait_category.id,
+        #                 'category_name': link.trait.trait_category.category_name,
+        #                 'sort_flag': link.trait.trait_category.sort_flag,
+        #                 'traits': []
+        #             }
+        #         categories[link.trait.trait_category.id]['traits'].append({
+        #             'id': link.trait.id,
+        #             'trait': link.trait.trait,
+        #             # 'observed': link.observed,
+        #             'status': link.status
+        #         })
+        #
+        #     # ui5 frontend requires a list for the json model
+        #     taxon_dict[taxon.id]['trait_categories'] = list(categories.values())
 
         # images
         taxon_dict[taxon.id]['images'] = []
@@ -67,10 +68,10 @@ async def get_taxa(
                 image_obj: Image = link_obj.image
                 taxon_dict[taxon.id]['images'].append({'id': image_obj.id,
                                                        'filename': image_obj.filename,
-                                                       'description':  link_obj.description})
+                                                       'description': link_obj.description})
 
         # distribution codes according to WGSRPD (level 3)
-        taxon_dict[taxon.id]['distribution'] = {'native':     [],
+        taxon_dict[taxon.id]['distribution'] = {'native': [],
                                                 'introduced': []}
         for distribution_obj in taxon.distribution:
             if distribution_obj.establishment == 'Native':
@@ -79,12 +80,12 @@ async def get_taxa(
                 taxon_dict[taxon.id]['distribution']['introduced'].append(distribution_obj.tdwg_code)
 
         # occurence images
-        taxon_dict[taxon.id]['occurrenceImages'] = [o.as_dict() for o in taxon.occurence_images]
+        taxon_dict[taxon.id]['occurrenceImages'] = [o.as_dict() for o in taxon.occurrence_images]
 
     logger.info(message := f'Received {len(taxon_dict)} taxa from database.')
-    results = {'action':   'Get taxa',
+    results = {'action': 'Get taxa',
                'resource': 'TaxonResource',
-               'message':  get_message(message),
+               'message': get_message(message),
                'TaxaDict': taxon_dict}
 
     # snake_case is converted to camelCase and date is converted to isoformat
@@ -107,7 +108,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
             throw_exception(f'Taxon not found: {taxon.name}. Saving canceled.', request=request)
 
         taxon.custom_notes = taxon_modified.custom_notes
-        update_traits(taxon, taxon_modified.trait_categories, db)
+        # update_traits(taxon, taxon_modified.trait_categories, db)  # todo still required?
 
         # changes to images attached to the taxon
         # deleted images
@@ -153,9 +154,9 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
 
     db.commit()
 
-    results = {'action':   'Save taxa',
+    results = {'action': 'Save taxa',
                'resource': 'TaxonResource',
-               'message':  get_message(f'Updated {len(modified_taxa)} taxa in database.')
+               'message': get_message(f'Updated {len(modified_taxa)} taxa in database.')
                }
 
     logger.info(f'Updated {len(modified_taxa)} taxa in database.')

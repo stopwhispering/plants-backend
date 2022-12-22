@@ -5,6 +5,7 @@ from typing import Tuple
 
 import toml
 
+from ml_helpers.preprocessing.features import DBType
 from plants.util.filename_utils import create_if_not_exists
 
 
@@ -41,6 +42,8 @@ class Configuration:
 
     path_pickled_ml_models: Path
 
+    db_type: DBType  # 'postgres' or 'sqlite' or 'unknown'
+
 
 def parse_config() -> Configuration:
     """Configuration is specified in environment variables (or .env file) and in config.toml
@@ -66,6 +69,13 @@ def parse_config() -> Configuration:
     rel_path_photos_generated_taxon = subdirectory_photos.joinpath("generated_taxon")
     rel_path_photos_original = subdirectory_photos.joinpath("original")
     rel_path_photos_generated = subdirectory_photos.joinpath("generated")
+
+    if 'sqlite' in getenv("CONNECTION_STRING"):
+        db_type = DBType.SQLITE
+    elif 'postgres' in getenv("CONNECTION_STRING"):
+        db_type = DBType.POSTGRES
+    else:
+        db_type = DBType.UNKNOWN
 
     config = Configuration(
         size_thumbnail_image_taxon=config_global['images']['size_thumbnail_image_taxon'],
@@ -93,6 +103,7 @@ def parse_config() -> Configuration:
         rel_path_photos_original=rel_path_photos_original,
         rel_path_photos_generated=rel_path_photos_generated,
         path_pickled_ml_models=Path(config_env['path_pickled_ml_models']),
+        db_type=db_type,
         )
 
     # create folders not yet existing

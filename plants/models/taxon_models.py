@@ -1,6 +1,9 @@
 from __future__ import annotations
-from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, BOOLEAN, TEXT
-from sqlalchemy.dialects.sqlite import DATETIME
+from sqlalchemy import (Column, INTEGER, VARCHAR, ForeignKey,
+                        BOOLEAN, TEXT, Identity, ForeignKeyConstraint,
+                        )
+from sqlalchemy.dialects.postgresql import BIGINT
+from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
@@ -12,11 +15,11 @@ class Distribution(Base):
     """geographic distribution"""
     __tablename__ = 'distribution'
 
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    name = Column(CHAR(40))
-    establishment = Column(CHAR(15))
-    feature_id = Column(CHAR(5))
-    tdwg_code = Column(CHAR(10))
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    name = Column(VARCHAR(40))
+    establishment = Column(VARCHAR(15))
+    feature_id = Column(VARCHAR(5))
+    tdwg_code = Column(VARCHAR(10))
     tdwg_level = Column(INTEGER)
 
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
@@ -27,56 +30,73 @@ class Taxon(Base, OrmUtil):
     """botanical details"""
     __tablename__ = 'taxon'
 
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    name = Column(CHAR(100))
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    name = Column(VARCHAR(100))
     is_custom = Column(BOOLEAN)
-    subsp = Column(CHAR(100))
-    species = Column(CHAR(100))
-    subgen = Column(CHAR(100))
-    genus = Column(CHAR(100))
-    family = Column(CHAR(100))
-    phylum = Column(CHAR(100))
-    kingdom = Column(CHAR(100))
-    rank = Column(CHAR(30))
-    taxonomic_status = Column(CHAR(100))
+    subsp = Column(VARCHAR(100))
+    species = Column(VARCHAR(100))
+    subgen = Column(VARCHAR(100))
+    genus = Column(VARCHAR(100))
+    family = Column(VARCHAR(100))
+    phylum = Column(VARCHAR(100))
+    kingdom = Column(VARCHAR(100))
+    rank = Column(VARCHAR(30))
+    taxonomic_status = Column(VARCHAR(100))
     name_published_in_year = Column(INTEGER)
     synonym = Column(BOOLEAN)
-    fq_id = Column(CHAR(50))
-    authors = Column(CHAR(100))
-    basionym = Column(CHAR(100))
-    synonyms_concat = Column(CHAR(200))
-    distribution_concat = Column(CHAR(200))
+    fq_id = Column(VARCHAR(50))
+    authors = Column(VARCHAR(100))
+    basionym = Column(VARCHAR(100))
+    synonyms_concat = Column(VARCHAR(200))
+    distribution_concat = Column(VARCHAR(200))
     hybrid = Column(BOOLEAN)
     hybridgenus = Column(BOOLEAN)
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
-    powo_id = Column(CHAR(50))
+    powo_id = Column(VARCHAR(50))
     custom_notes = Column(TEXT)  # may be updated on web frontend
 
     plants = relationship("Plant", back_populates="taxon")
     distribution: list = relationship("Distribution", back_populates="taxon")
 
-    # 1:n relationship to the taxon/traits link table
-    traits = relationship(
-            "Trait",
-            secondary='taxon_to_trait_association'
-            )
-    taxon_to_trait_associations = relationship("TaxonToTraitAssociation",
-                                               back_populates="taxon",
-                                               overlaps="traits",  # silence warnings
-                                               )
+    # # 1:n relationship to the taxon/traits link table
+    # traits = relationship(
+    #     "Trait",
+    #     secondary='taxon_to_trait_association'
+    # )
+    # taxon_to_trait_associations = relationship("TaxonToTraitAssociation",
+    #                                            back_populates="taxon",
+    #                                            overlaps="traits",  # silence warnings
+    #                                            )
 
     # 1:n relationship to the photo_file/taxon link table
     images = relationship(
-            "Image",
-            secondary='image_to_taxon_association'
-            )
+        "Image",
+        secondary='image_to_taxon_association'
+    )
     image_to_taxon_associations = relationship("ImageToTaxonAssociation",
                                                back_populates="taxon",
                                                overlaps="images"  # silence warnings
                                                )
 
     # taxon to occurence images (n:m)
-    occurence_images: list = relationship("TaxonOccurrenceImage", back_populates="taxa")
+    occurrence_images: list = relationship("TaxonOccurrenceImage",
+                                           back_populates="taxa",
+                                           secondary='taxon_to_occurrence_association'
+                                           )
+
+    # occurrence_images = relationship('TaxonOccurrenceImage',
+    #                                  secondary='taxon_to_occurrence_association',
+    #                                  # foreign_keys='[taxon.id]',
+    #                                  # primaryjoin='Taxon.id == TaxonToOccurrenceAssociation.taxon_id',
+    #                                  # primaryjoin="and_(User.id==Address.user_id, " "Address.city=='Boston')"
+    #                                  primaryjoin="and_(Taxon.id == TaxonToOccurrenceAssociation.taxon_id, TaxonToOccurrenceAssociation.occurrence_id==TaxonOccurrenceImage.occurrence_id)",
+    #                                  back_populates='taxa')
+
+    # occurrence_images = relationship('TaxonOccurrenceImage',
+    #                                  secondary='taxon_to_occurrence_association',
+    #                                  primaryjoin='Taxon.id == foreign(TaxonToOccurrenceAssociation.taxon_id)',
+    #                                  secondaryjoin='and_(TaxonOccurrenceImage.occurrence_id == TaxonToOccurrenceAssociation.occurrence_id, TaxonOccurrenceImage.img_no == foreign(TaxonToOccurrenceAssociation.img_no), TaxonOccurrenceImage.gbif_id == foreign(TaxonToOccurrenceAssociation.gbif_id))'
+    #                                  )
 
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")
@@ -103,18 +123,51 @@ class TaxonOccurrenceImage(Base, OrmUtil):
     """botanical details"""
     __tablename__ = 'taxon_ocurrence_image'
 
-    occurrence_id = Column(INTEGER, primary_key=True, nullable=False)
+    occurrence_id = Column(BIGINT, primary_key=True, nullable=False)
     img_no = Column(INTEGER, primary_key=True, nullable=False)
-    gbif_id = Column(INTEGER, ForeignKey('taxon.gbif_id'), primary_key=True, nullable=False)
-    scientific_name = Column(CHAR(100))
-    basis_of_record = Column(CHAR(25))
-    verbatim_locality = Column(CHAR(120))
-    date = Column(DATETIME)
-    creator_identifier = Column(CHAR(100))
-    publisher_dataset = Column(CHAR(100))
-    references = Column(CHAR(120))
-    href = Column(CHAR(120))
-    filename_thumbnail = Column(CHAR(120))
+    # gbif_id = Column(INTEGER, ForeignKey('taxon.gbif_id'), primary_key=True, nullable=False)
+    gbif_id = Column(INTEGER, primary_key=True, nullable=False)
+    scientific_name = Column(VARCHAR(100))
+    basis_of_record = Column(VARCHAR(25))
+    verbatim_locality = Column(VARCHAR(120))
+    date = Column(DateTime(timezone=False))
+    creator_identifier = Column(VARCHAR(100))
+    publisher_dataset = Column(VARCHAR(100))
+    references = Column(VARCHAR(120))
+    href = Column(VARCHAR(150))
+    filename_thumbnail = Column(VARCHAR(120))
 
     # relationship to taxa (m:n) via gbif_id
-    taxa = relationship("Taxon", back_populates="occurence_images")
+    # taxon = relationship("Taxon",
+    #                      back_populates="occurrence_images",
+    #                      # foreign_keys=[taxon_id]
+    #                      )
+
+    # relationship to Taxon (m:n) via TaxonToOccurrenceImageAssociation
+    taxa = relationship("Taxon",
+                        secondary='taxon_to_occurrence_association',
+                        back_populates="occurrence_images",
+                        )
+    # taxon_to_occurrence_associations = relationship("TaxonToOccurrenceImageAssociation",
+    #                                                 foreign_keys=[occurrence_id, img_no, gbif_id]
+    #                                                 )
+
+
+class TaxonToOccurrenceAssociation(Base, OrmUtil):
+    """link table for taxon to occurrence images"""
+    __tablename__ = 'taxon_to_occurrence_association'
+
+    taxon_id = Column(INTEGER, ForeignKey('taxon.id'), primary_key=True, nullable=False)
+    occurrence_id = Column(BIGINT, primary_key=True, nullable=False)
+    img_no = Column(INTEGER, primary_key=True, nullable=False)
+    gbif_id = Column(INTEGER, primary_key=True, nullable=False)
+    __table_args__ = (ForeignKeyConstraint((occurrence_id, img_no, gbif_id),
+                                           (TaxonOccurrenceImage.occurrence_id,
+                                            TaxonOccurrenceImage.img_no,
+                                            TaxonOccurrenceImage.gbif_id)),
+                      {})
+    # taxon = relationship("Taxon", back_populates="taxon_to_occurrence_associations")
+    # occurrence = relationship("TaxonOccurrenceImage",
+    #                           back_populates="taxon_to_occurrence_associations",
+    #                           foreign_keys=[occurrence_id, img_no, gbif_id]
+    #                           )

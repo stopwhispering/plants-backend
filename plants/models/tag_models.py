@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import Column, INTEGER, CHAR, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, INTEGER, VARCHAR, TIMESTAMP, ForeignKey, Identity
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
@@ -10,10 +10,10 @@ from plants.extensions.db import Base
 class Tag(Base, OrmUtil):
     """tags displayed in master view and created/deleted in details view"""
     __tablename__ = 'tags'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    text = Column(CHAR(20))
-    # icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
-    state = Column(CHAR(11))  # Error, Information, None, Success, Warning
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    text = Column(VARCHAR(20))
+    # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    state = Column(VARCHAR(12))  # Error, Information, None, Success, Warning
     last_update = Column(TIMESTAMP)
     # tag to plant: n:1
     plant_id = Column(INTEGER, ForeignKey('plants.id'))

@@ -184,6 +184,6 @@ class TaxonOccurencesLoader:
         self._save_to_db(image_dicts, gbif_id, db)
 
         taxon: Taxon = db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
-        occurrence_images = [o.as_dict() for o in taxon.occurence_images]
+        occurrence_images = [o.as_dict() for o in taxon.occurrence_images]
 
         return occurrence_images

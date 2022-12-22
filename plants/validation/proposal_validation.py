@@ -13,7 +13,7 @@ class ProposalEntity(str, Enum):
     SOIL = 'SoilProposals'
     NURSERY = 'NurserySourceProposals'
     KEYWORD = 'KeywordProposals'
-    TRAIT_CATEGORY = 'TraitCategoryProposals'
+    # TRAIT_CATEGORY = 'TraitCategoryProposals'
 
 
 class PComponentName(BaseModel):

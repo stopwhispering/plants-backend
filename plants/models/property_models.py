@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 from typing import List
-from sqlalchemy import Column, INTEGER, CHAR, ForeignKey
+from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 class PropertyCategory(Base, OrmUtil):
     """property categories"""
     __tablename__ = 'property_category'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    category_name = Column(CHAR(80), unique=True, nullable=False)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    category_name = Column(VARCHAR(80), unique=True, nullable=False)
     sort = Column(INTEGER)
 
     property_names = relationship("PropertyName", back_populates="property_category")
@@ -40,8 +40,8 @@ class PropertyCategory(Base, OrmUtil):
 class PropertyName(Base, OrmUtil):
     """new named properties - property names"""
     __tablename__ = 'property_name'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    property_name = Column(CHAR(240), nullable=False)  # eg."Epidermis texture"
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    property_name = Column(VARCHAR(240), nullable=False)  # eg."Epidermis texture"
 
     # NamedPropertyName to Category: n:1
     category_id = Column(INTEGER, ForeignKey('property_category.id'), nullable=False)
@@ -53,12 +53,12 @@ class PropertyName(Base, OrmUtil):
 class PropertyValue(Base, OrmUtil):
     """new named properties - property values for plants and taxa"""
     __tablename__ = 'property_value'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
 
     property_name_id = Column(INTEGER, ForeignKey('property_name.id'), nullable=False)
     property_name = relationship("PropertyName", back_populates="property_values")
 
-    property_value = Column(CHAR(240))  # e.g. "tuberculate/asperulous"
+    property_value = Column(VARCHAR(240))  # e.g. "tuberculate/asperulous"
 
     # plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'))

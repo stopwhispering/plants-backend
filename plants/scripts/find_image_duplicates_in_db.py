@@ -30,7 +30,7 @@ def _find_duplicates_image_with_same_relative_path(db: Session):
         map_relative_path_to_duplicates[relative_path] = db.query(Image).filter(Image.relative_path
                                                                                 == relative_path).all()
     all_duplicate_single_images = [i for image_list in map_relative_path_to_duplicates.values() for i in image_list]
-    if any(i.taxa for i in all_duplicate_single_images):
+    if any(i.taxon for i in all_duplicate_single_images):
         raise NotImplementedError
 
     add_list = []

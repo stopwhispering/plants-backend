@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from operator import attrgetter
-from pathlib import PurePath
 from typing import Optional, List
-from sqlalchemy import Column, CHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, DATETIME
+from sqlalchemy import Column, VARCHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, Identity, VARCHAR
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.orm import foreign, remote  # noqa
+from sqlalchemy.types import DateTime
 import logging
 import datetime
 
@@ -25,19 +25,19 @@ logger = logging.getLogger(__name__)
 class Plant(Base, OrmUtil):
     """my plants"""
     __tablename__ = 'plants'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    plant_name = Column(CHAR(100), unique=True, nullable=False)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    plant_name = Column(VARCHAR(100), unique=True, nullable=False)
 
-    field_number = Column(CHAR(20))
-    geographic_origin = Column(CHAR(100))
-    nursery_source = Column(CHAR(100))
-    propagation_type = Column(CHAR(30))
+    field_number = Column(VARCHAR(20))
+    geographic_origin = Column(VARCHAR(100))
+    nursery_source = Column(VARCHAR(100))
+    propagation_type = Column(VARCHAR(30))
 
     active = Column(BOOLEAN)
-    cancellation_reason = Column(CHAR(60))  # only set if active == False
-    cancellation_date = Column(DATETIME)
+    cancellation_reason = Column(VARCHAR(60))  # only set if active == False
+    cancellation_date = Column(DateTime(timezone=False))
 
-    generation_notes = Column(CHAR(120))
+    generation_notes = Column(VARCHAR(250))
 
     images = relationship(
             "Image",
@@ -67,9 +67,9 @@ class Plant(Base, OrmUtil):
                                             primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
                                             back_populates="parent_plant_pollen")
 
-    # generation_origin = Column(CHAR(60))
+    # generation_origin = Column(VARCHAR(60))
     plant_notes = Column(TEXT)
-    filename_previewimage = Column(CHAR(240))  # original filename of the photo_file that is set as preview photo_file
+    filename_previewimage = Column(VARCHAR(240))  # original filename of the photo_file that is set as preview photo_file
     hide = Column(BOOLEAN)
     last_update = Column(TIMESTAMP, nullable=False)
 

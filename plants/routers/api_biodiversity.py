@@ -150,7 +150,7 @@ async def fetch_taxon_images(
         # would probably have raised earlier
         logger.error(f"Can't find taxon for GBIF ID {args.gbif_id} in database.")
         throw_exception(f"Can't find taxon for GBIF ID {args.gbif_id} in database.", request=request)
-    occurrence_images = [o.as_dict() for o in taxon.occurence_images]
+    occurrence_images = [o.as_dict() for o in taxon.occurrence_images]
 
     message = f'Refetched occurences for GBIF ID {args.gbif_id}'
     logger.info(message)

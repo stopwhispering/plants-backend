@@ -1,6 +1,6 @@
 services:
     plants-backend:
-      restart: always
+      restart: unless-stopped
       labels:
         - traefik.http.routers.plants-backend.entrypoints=https-ep
         - traefik.http.routers.plants-backend.rule=Host(`plants.astroloba.net`) && PathPrefix(`/api`)
@@ -8,12 +8,13 @@ services:
         - traefik.http.routers.plants-backend.tls.certresolver=le
 
         # enable basic auth as defined in traefik's docker compose file
-        - traefik.http.routers.demo-api.middlewares=my-basic-auth
+        - traefik.http.routers.plants-backend.middlewares=my-basic-auth
 
       environment:
   #        set LOG_LEVEL for Gunicorn, default is "info"
           - LOG_LEVEL=info
-          - CONNECTION_STRING=sqlite:////common//plants//db//database.db
+#          - CONNECTION_STRING=sqlite:////common//plants//db//database.db
+          - CONNECTION_STRING=postgresql+psycopg2:////plants:M6uLdDsjRhua@postgres:5432//plants
           - ENVIRONMENT=prod
           - MAX_WORKERS=3
 

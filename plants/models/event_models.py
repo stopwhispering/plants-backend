@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from pathlib import PurePath
 from typing import List
-from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, TEXT
+from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR
 from sqlalchemy.orm import relationship, Session
 import logging
 
 from plants.util.ui_utils import throw_exception
-from plants import config
-from plants.constants import TRAIT_CATEGORIES
-from plants.models.trait_models import TraitCategory
-from plants.util.path_utils import get_thumbnail_relative_path_for_relative_path
+# from plants.constants import TRAIT_CATEGORIES
+# from plants.models.trait_models import TraitCategory
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 
@@ -19,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 class Soil(Base, OrmUtil):
     __tablename__ = "soil"
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     description = Column(TEXT)
     mix = Column(TEXT)
-    soil_name = Column(CHAR(100))
+    soil_name = Column(VARCHAR(100))
 
     # 1:n relationship to events (no need for bidirectional relationship)
     events = relationship("Event", back_populates="soil")
@@ -30,10 +27,10 @@ class Soil(Base, OrmUtil):
 
 class Pot(Base, OrmUtil):
     __tablename__ = "pot"
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    material = Column(CHAR(50))
-    shape_top = Column(CHAR(20))  # oval, square, circle
-    shape_side = Column(CHAR(20))  # flat, very flat, high, very high
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    material = Column(VARCHAR(50))
+    shape_top = Column(VARCHAR(20))  # oval, square, circle
+    shape_side = Column(VARCHAR(20))  # flat, very flat, high, very high
     diameter_width = Column(INTEGER)  # in mm
     # pot_notes = Column(TEXT)
 
@@ -44,12 +41,12 @@ class Pot(Base, OrmUtil):
 class Observation(Base, OrmUtil):
     """formerly: Measurement"""
     __tablename__ = 'observation'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    # plant_name = Column(CHAR(60), nullable=False)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    # plant_name = Column(VARCHAR(60), nullable=False)
     diseases = Column(TEXT)
     stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
     height = Column(INTEGER)  # in mm
-    # location = Column(CHAR(30))
+    # location = Column(VARCHAR(30))
     observation_notes = Column(TEXT)
 
     # 1:1 relationship to event
@@ -59,10 +56,10 @@ class Observation(Base, OrmUtil):
 class Event(Base, OrmUtil):
     """events"""
     __tablename__ = 'event'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    date = Column(CHAR(12), nullable=False)  # e.g. 201912241645 or 201903
-    # action = Column(CHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
-    # icon = Column(CHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    date = Column(VARCHAR(12), nullable=False)  # e.g. 201912241645 or 201903
+    # action = Column(VARCHAR(60), nullable=False)  # purchase, measurement,  seeding, repotting (enum)
+    # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
     event_notes = Column(TEXT)
 
     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
@@ -71,16 +68,16 @@ class Event(Base, OrmUtil):
 
     # n:1 relationship to pot, bi-directional
     pot_id = Column(INTEGER, ForeignKey('pot.id'))
-    # pot_event_type = Column(CHAR(15))  # Repotting, Status
+    # pot_event_type = Column(VARCHAR(15))  # Repotting, Status
     pot = relationship("Pot", back_populates="events")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey('soil.id'))
-    # soil_event_type = Column(CHAR(15))  # Changing Soil, Status    # todo remove?
+    # soil_event_type = Column(VARCHAR(15))  # Changing Soil, Status    # todo remove?
     soil = relationship("Soil", back_populates="events")
 
     # event to plant: n:1, bi-directional
-    # plant_name = Column(CHAR(60), ForeignKey('plants.plant_name'), nullable=False)
+    # plant_name = Column(VARCHAR(60), ForeignKey('plants.plant_name'), nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
 
@@ -151,12 +148,12 @@ class Event(Base, OrmUtil):
         return event
 
 
-def insert_categories(db: Session):
-    # add Trait Categories if not existing upon initializing
-    for t in TRAIT_CATEGORIES:
-        trait_category = db.query(TraitCategory).filter(TraitCategory.category_name == t).first()
-        if not trait_category:
-            logger.info(f'Inserting missing trait category into db: {t}')
-            trait_category = TraitCategory(category_name=t)
-            db.add(trait_category)
-    db.commit()
+# def insert_categories(db: Session):
+#     # add Trait Categories if not existing upon initializing
+#     for t in TRAIT_CATEGORIES:
+#         trait_category = db.query(TraitCategory).filter(TraitCategory.category_name == t).first()
+#         if not trait_category:
+#             logger.info(f'Inserting missing trait category into db: {t}')
+#             trait_category = TraitCategory(category_name=t)
+#             db.add(trait_category)
+#     db.commit()

@@ -1,5 +1,5 @@
-from sqlalchemy import Column, CHAR, INTEGER, TEXT
-from sqlalchemy.dialects.sqlite import DATETIME
+from sqlalchemy import Column, VARCHAR, INTEGER, TEXT, Identity
+from sqlalchemy.types import DateTime
 
 from plants.extensions.db import Base
 
@@ -7,10 +7,10 @@ from plants.extensions.db import Base
 class History(Base):
     """history of certain events; used for error-finding et alia"""
     __tablename__ = 'history'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
 
-    timestamp = Column(DATETIME)
+    timestamp = Column(DateTime(timezone=False))
     plant_id = Column(INTEGER)
-    plant_name = Column(CHAR(100))
+    plant_name = Column(VARCHAR(100))
     description = Column(TEXT)
-    # type = Column(CHAR(40))  # Renaming, Plant Death, Gift  # implemented in plant model
+    # type = Column(VARCHAR(40))  # Renaming, Plant Death, Gift  # implemented in plant model

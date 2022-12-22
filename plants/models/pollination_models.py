@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from enum import Enum
 
-from sqlalchemy import Column, CHAR, INTEGER, ForeignKey, TEXT, DATETIME, DATE, FLOAT, BOOLEAN
+from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity
+from sqlalchemy.types import DateTime
 import logging
 
 from sqlalchemy.orm import relationship
@@ -86,7 +87,7 @@ class FlorescenceStatus(Enum):
 class Florescence(Base, OrmUtil):
     """flowering period of a plant"""
     __tablename__ = 'florescence'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)  # table name is 'plants'
     plant = relationship("Plant", back_populates="florescences")  # class name is 'Plant'
 
@@ -97,7 +98,7 @@ class Florescence(Base, OrmUtil):
     last_flower_closing_date = Column(DATE)
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status = Column(CHAR(100))
+    florescence_status = Column(VARCHAR(100))
 
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date = Column(DATE)
@@ -107,10 +108,10 @@ class Florescence(Base, OrmUtil):
 
     comment = Column(TEXT)  # limited to max 40 chars in frontend, longer only for imported data
 
-    last_update_at = Column(DATETIME)
-    last_update_context = Column(CHAR(30))
-    creation_at = Column(DATETIME, nullable=False)
-    creation_context = Column(CHAR(30), nullable=False)
+    last_update_at = Column(DateTime(timezone=False))
+    last_update_context = Column(VARCHAR(30))
+    creation_at = Column(DateTime(timezone=False), nullable=False)
+    creation_context = Column(VARCHAR(30), nullable=False)
 
     # pollinations of this florescence (with plant as mother plant)
     pollinations = relationship("Pollination",
@@ -130,7 +131,7 @@ class Pollination(Base, OrmUtil):
     note: we don't make a composite key of inflorence_id and pollen_donor_id because we might have multiple
     differing attempts to pollinate for the same inflorence and pollen donor"""
     __tablename__ = 'pollination'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
 
     florescence_id = Column(INTEGER, ForeignKey('florescence.id'))
     florescence = relationship("Florescence", back_populates="pollinations", foreign_keys=[florescence_id])
@@ -143,14 +144,14 @@ class Pollination(Base, OrmUtil):
     pollen_donor_plant = relationship("Plant",  # back_populates="pollinations_as_donor_plant",
                                       foreign_keys=[pollen_donor_plant_id])
 
-    pollen_type = Column(CHAR(20), nullable=False)  # PollenType (fresh | frozen | unknown)
+    pollen_type = Column(VARCHAR(20), nullable=False)  # PollenType (fresh | frozen | unknown)
     # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))
-    location = Column(CHAR(100), nullable=False)
+    location = Column(VARCHAR(100), nullable=False)
 
-    pollination_timestamp = Column(DATETIME)
-    label_color = Column(CHAR(60))
+    pollination_timestamp = Column(DateTime(timezone=False))
+    label_color = Column(VARCHAR(60))
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
-    pollination_status = Column(CHAR(40), nullable=False)
+    pollination_status = Column(VARCHAR(40), nullable=False)
     ongoing = Column(BOOLEAN, nullable=False)
 
     # first harvest in case of multiple harvests
@@ -170,10 +171,10 @@ class Pollination(Base, OrmUtil):
 
     comment = Column(TEXT)
 
-    last_update_at = Column(DATETIME)
-    last_update_context = Column(CHAR(30))
-    creation_at = Column(DATETIME, nullable=False)
-    creation_context = Column(CHAR(30), nullable=False)
+    last_update_at = Column(DateTime(timezone=False))
+    last_update_context = Column(VARCHAR(30))
+    creation_at = Column(DateTime(timezone=False), nullable=False)
+    creation_context = Column(VARCHAR(30), nullable=False)
 
     # todo via 1:n association table: plants
 

@@ -3,7 +3,7 @@ from pathlib import PurePath
 from datetime import datetime
 from typing import Sequence
 
-from sqlalchemy import Column, INTEGER, CHAR, ForeignKey, TEXT, TIMESTAMP
+from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Identity
 from sqlalchemy.orm import relationship, Session
 
 from plants import config
@@ -18,7 +18,7 @@ class ImageKeyword(Base):
     """keywords tagged at images"""
     __tablename__ = 'image_keywords'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True, nullable=False)
-    keyword = Column(CHAR(100), primary_key=True, nullable=False)
+    keyword = Column(VARCHAR(100), primary_key=True, nullable=False)
 
     image = relationship(
         "Image",
@@ -55,10 +55,10 @@ class Image(Base):
     # images themselves are stored in file system
     # this table is only used to link events to images
     __tablename__ = 'image'
-    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
-    filename = Column(CHAR(150), unique=True, nullable=False)  # pseudo-key
-    relative_path = Column(CHAR(240))  # relative path to the original image file incl. file name
-    description = Column(CHAR(500))
+    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    filename = Column(VARCHAR(150), unique=True, nullable=False)  # pseudo-key
+    relative_path = Column(VARCHAR(240))  # relative path to the original image file incl. file name
+    description = Column(VARCHAR(500))
     record_date_time = Column(TIMESTAMP, nullable=False)
     last_update = Column(TIMESTAMP, nullable=False)  # update (description)
     created_at = Column(TIMESTAMP, nullable=False)  # upload
