@@ -1,5 +1,6 @@
 services:
     plants-backend:
+      container_name: plants-backend-container
       restart: unless-stopped
       labels:
         - traefik.http.routers.plants-backend.entrypoints=https-ep
