@@ -15,7 +15,7 @@ services:
   #        set LOG_LEVEL for Gunicorn, default is "info"
           - LOG_LEVEL=info
 #          - CONNECTION_STRING=sqlite:////common//plants//db//database.db
-          - CONNECTION_STRING=postgresql+psycopg2:////plants:M6uLdDsjRhua@postgres:5432//plants
+          - CONNECTION_STRING=${POSTGRES_CONNECTION_STRING:?err}
           - ENVIRONMENT=prod
           - MAX_WORKERS=3
 
