@@ -8,7 +8,6 @@ services:
       environment:
 #        set LOG_LEVEL for Gunicorn, default is "info"
         - LOG_LEVEL=debug
-        - CONNECTION_STRING=sqlite:////common//plants//db//database.db
         - ENVIRONMENT=dev
         - MAX_WORKERS=3
 

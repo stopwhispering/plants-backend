@@ -5,7 +5,7 @@ from pydantic import validator, Extra
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import PMessage
-from plants.validation.trait_validation import PTraitCategoryWithTraits
+# from plants.validation.trait_validation import PTraitCategoryWithTraits
 
 
 class PTaxonInfoRequest(BaseModel):
@@ -147,7 +147,7 @@ class PTaxon(BaseModel):
     ipni_id_short: str
     distribution: Optional[PDistribution]  # not filled for each request
     images: Optional[List[PTaxonImage]]  # not filled for each request
-    trait_categories: Optional[List[PTraitCategoryWithTraits]]  # not filled for each request
+    # trait_categories: Optional[List[PTraitCategoryWithTraits]]  # not filled for each request
     occurrenceImages: Optional[List[PTaxonOccurrenceImage]]
 
     class Config:

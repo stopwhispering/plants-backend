@@ -37,26 +37,33 @@ IDs are determined.
 
 ## Deployment
 Git Clone
-
-    git clone https://github.com/stopwhispering/plants-backend.git
-    cd plants-backend
-
+```
+git clone https://github.com/stopwhispering/plants-backend.git
+cd plants-backend
+```
 Create folder for images, db, and models
+```
+# linux
+mkdir -p /common/plants/db
 
-    # linux
-    mkdir -p /common/plants/db
-
-    # windows
-    mkdir /common/plants/db
-
+# windows
+mkdir /common/plants/db
+```
 Adjust hostnames in docker-compose.prod.yml (prod only)
 
+Create .env in same folder as docker-compose files file and insert connection string.
+Example:
+```
+# postgres
+CONNECTION_STRING="postgresql+psycopg2://plants:mypassword@postgres:5432/plants"
+```
+
 Create & Run Docker Container
+```
+# dev
+docker-compose -f ./docker-compose.base.yml -f ./docker-compose.dev.yml up --build --detach
 
-    # dev
-    docker compose -f ./docker-compose.base.yml -f ./docker-compose.dev.yml up --build --detach
-    
-    # prod
-    docker compose -f ./docker-compose.base.yml -f ./docker-compose.prod.yml up --build --detach
-
+# prod
+docker-compose -f ./docker-compose.base.yml -f ./docker-compose.prod.yml up --build --detach
+```
 Test API (dev): Open in Browser - http://plants.localhost/api/plants/

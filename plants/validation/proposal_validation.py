@@ -5,7 +5,7 @@ from pydantic.main import BaseModel
 from typing import List, Optional
 
 from plants.validation.message_validation import PMessage
-from plants.validation.trait_validation import PTraitCategory, PTrait
+# from plants.validation.trait_validation import PTraitCategory, PTrait
 
 
 class ProposalEntity(str, Enum):
@@ -44,8 +44,8 @@ class PResultsProposals(BaseModel):
 
     NurseriesSourcesCollection: Optional[List[PNurseryName]]
     KeywordsCollection: Optional[List[PKeywordName]]
-    TraitCategoriesCollection: Optional[List[PTraitCategory]]
-    TraitsCollection: Optional[List[PTrait]]
+    # TraitCategoriesCollection: Optional[List[PTraitCategory]]
+    # TraitsCollection: Optional[List[PTrait]]
 
     class Config:
         extra = Extra.forbid

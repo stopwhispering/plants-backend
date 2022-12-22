@@ -16,6 +16,9 @@ services:
       # and any other service that needs to be publicly available
       - traefik-public
 
+    environment:
+        - CONNECTION_STRING=${CONNECTION_STRING:?err}
+
 networks:
   # use the previously created public network "traefik-public"
   # create at first time via "docker network create traefik-public"

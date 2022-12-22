@@ -8,11 +8,9 @@ from plants import config
 
 Base = declarative_base()
 if config.db_type == DBType.SQLITE:
-    print(f"TODO REMOVE. Using SQLITE: {os.getenv('CONNECTION_STRING')}.")
     engine = create_engine(os.getenv('CONNECTION_STRING'), connect_args={'check_same_thread': False})
     # 'connect_timeout': 10
 else:
-    print(f"TODO REMOVE. Using POSTGRES: {os.getenv('CONNECTION_STRING')}.")
     engine = create_engine(os.getenv('CONNECTION_STRING'))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -26,7 +24,7 @@ def init_database_tables(engine_, session: Session = None):
     import plants.models.property_models  # noqa
     import plants.models.tag_models  # noqa
     import plants.models.taxon_models  # noqa
-    import plants.models.trait_models  # noqa
+    # import plants.models.trait_models  # noqa
     import plants.models.pollination_models  # noqa
 
     # create db tables if not existing
