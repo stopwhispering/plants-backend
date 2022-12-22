@@ -3,6 +3,7 @@ import ManagedObject from "sap/ui/base/ManagedObject";
 /**
  * @namespace plants.ui.definitions
  */
+export type PImages = PImage[];
 export type MessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface GenerateMissingThumbnails {
@@ -25,7 +26,7 @@ export interface PImagePlantTag {
   text: string;
 }
 export interface PImageUpdated {
-  ImagesCollection: PImage[];
+  ImagesCollection: PImages;
 }
 export interface PImageUploadedMetadata {
   plants: number[];
@@ -37,12 +38,12 @@ export interface PResultsImageDeleted {
   message: PMessage;
 }
 export interface PResultsImageResource {
-  ImagesCollection: PImage[];
+  ImagesCollection: PImages;
   message: PMessage;
 }
 export interface PResultsImagesUploaded {
   action: string;
   resource: string;
   message: PMessage;
-  images: PImage[];
+  images: PImages;
 }

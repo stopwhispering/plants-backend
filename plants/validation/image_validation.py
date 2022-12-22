@@ -35,15 +35,19 @@ class PImage(BaseModel):
         allow_population_by_field_name = True
 
 
+class PImages(BaseModel):
+    __root__: list[PImage]
+
+
 class PImageUpdated(BaseModel):
-    ImagesCollection: List[PImage]
+    ImagesCollection: PImages
 
     class Config:
         extra = Extra.forbid
 
 
 class PResultsImageResource(BaseModel):
-    ImagesCollection: List[PImage]
+    ImagesCollection: PImages
     message: PMessage
 
     class Config:
@@ -54,7 +58,7 @@ class PResultsImagesUploaded(BaseModel):
     action: str
     resource: str
     message: PMessage
-    images: List[PImage]
+    images: PImages
 
     class Config:
         extra = Extra.forbid

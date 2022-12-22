@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, subqueryload
@@ -28,13 +27,16 @@ async def get_taxa(
         db: Session = Depends(get_db)
 ):
     """returns taxa from taxon database table"""
-    taxa: List[Taxon] = db.query(Taxon).options(
-        # subqueryload(Taxon.taxon_to_trait_associations)
-        # .subqueryload(TaxonToTraitAssociation.trait),
+    taxa: list[Taxon] = db.query(Taxon).options(
+        subqueryload(Taxon.distribution),
+        subqueryload(Taxon.occurrence_images),
         subqueryload(Taxon.images),
+
+        # subqueryload(Taxon.plants),  # not required
+        # subqueryload(Taxon.property_values_taxon),  # not required
+
         subqueryload(Taxon.image_to_taxon_associations)
         .subqueryload(ImageToTaxonAssociation.image),
-        subqueryload(Taxon.occurrence_images)
     ).all()
     taxon_dict = {}
     for taxon in taxa:

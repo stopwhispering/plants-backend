@@ -19,7 +19,7 @@ class PropertyCategory(Base, OrmUtil):
     category_name = Column(VARCHAR(80), unique=True, nullable=False)
     sort = Column(INTEGER)
 
-    property_names = relationship("PropertyName", back_populates="property_category")
+    property_names: list = relationship("PropertyName", back_populates="property_category")
 
     # static query methods
     @staticmethod

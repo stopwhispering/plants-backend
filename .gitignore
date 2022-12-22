@@ -6,3 +6,4 @@
 /pollination_estimator.pkl
 /package-lock.json
 /package.json
+/plants/scripts/migrate_db.py

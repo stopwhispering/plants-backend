@@ -16,7 +16,7 @@ from plants.util.ui_utils import MessageType, get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
-                                                PImagePlantTag, PResultsImagesUploaded)
+                                                PImagePlantTag, PResultsImagesUploaded, PImages)
 from plants.services.image_services_simple import remove_files_already_existing
 from plants.validation.event_validation import PImagesDelete
 from plants.validation.image_validation import PResultsImageDeleted
@@ -30,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.get("/plants/{plant_id}/images/", response_model=List[PImage])
+@router.get("/plants/{plant_id}/images/", response_model=PImages)
 async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     """
     get photo_file information for requested plant_id including (other) plants and keywords

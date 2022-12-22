@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, subqueryload
 
 from plants.util.ui_utils import get_message
 from plants.validation.property_validation import PResultsPropertyNames
@@ -18,7 +18,8 @@ router = APIRouter(
 
 @router.get("/", response_model=PResultsPropertyNames)
 async def get_property_names(db: Session = Depends(get_db)):
-    category_obj = db.query(PropertyCategory).all()
+    query = db.query(PropertyCategory).options(subqueryload(PropertyCategory.property_names))
+    category_obj = query.all()
     categories = {}
     for cat in category_obj:
         categories[cat.category_name] = [{'property_name':    p.property_name,

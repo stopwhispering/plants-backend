@@ -160,23 +160,33 @@ async def get_plants(db: Session = Depends(get_db)):
     if config.n_plants:
         query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
-    # todo subqueryload more?
-    # save around 30% of time using subqueryload instead of lazyload (default)
+    # early-load all relationship tables for Plant model relevant for PResultsPlants
+    # to save around 90% (postgres) of the time in comparison to lazy loading (80% for sqlite)
     query = query.options(
-            # subqueryload(Plant.parent_plant).subqueryload(Plant.descendant_plants),
-            subqueryload(Plant.parent_plant),
-            # subqueryload(Plant.parent_plant_pollen).subqueryload(Plant.descendant_plants),
-            subqueryload(Plant.parent_plant_pollen),
-            # subqueryload(Plant.taxon).subqueryload(Taxon.plants),
-            subqueryload(Plant.descendant_plants),
-            subqueryload(Plant.descendant_plants_pollen),
-            subqueryload(Plant.taxon),
-            subqueryload(Plant.tags),
-            subqueryload(Plant.events),
-            subqueryload(Plant.images),
-            subqueryload(Plant.same_taxon_plants),
-            subqueryload(Plant.sibling_plants),
-            )
+        subqueryload(Plant.parent_plant),
+        subqueryload(Plant.parent_plant_pollen),
+
+        subqueryload(Plant.tags),
+        subqueryload(Plant.same_taxon_plants),
+        subqueryload(Plant.sibling_plants),
+
+        subqueryload(Plant.descendant_plants),
+        subqueryload(Plant.descendant_plants_pollen),
+        # subqueryload(Plant.descendant_plants_all),  # property
+
+        subqueryload(Plant.taxon),
+        # subqueryload(Plant.taxon_authors),  # property
+
+        subqueryload(Plant.events),
+        # subqueryload(Plant.current_soil),  # property
+
+        subqueryload(Plant.images),
+        # subqueryload(Plant.latest_image),  # property
+
+        # subqueryload(Plant.property_values_plant),  # not required
+        # subqueryload(Plant.image_to_plant_associations),  # not required
+        # subqueryload(Plant.florescences),  # not required
+    )
     plants_obj = query.all()
     results = {'action':           'Get plants',
                'resource':         'PlantResource',

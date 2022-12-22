@@ -15,7 +15,7 @@ services:
   #        set LOG_LEVEL for Gunicorn, default is "info"
           - LOG_LEVEL=info
           - ENVIRONMENT=prod
-          - MAX_WORKERS=3
+          - MAX_WORKERS=5
 
       volumes:
         - type: bind
