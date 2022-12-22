@@ -9,7 +9,7 @@ services:
         - traefik.http.routers.plants-backend.tls.certresolver=le
 
         # enable basic auth as defined in traefik's docker compose file
-        - traefik.http.routers.plants-backend.middlewares=my-basic-auth
+#        - traefik.http.routers.plants-backend.middlewares=my-basic-auth
 
       environment:
   #        set LOG_LEVEL for Gunicorn, default is "info"
