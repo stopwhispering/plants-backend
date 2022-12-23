@@ -55,7 +55,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     files: List[UploadFile] = form.getlist('files[]')
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
+    duplicate_filenames, warnings = remove_files_already_existing(files, RESIZE_SUFFIX, db=db)
 
     images: List[Image] = await save_image_files(files=files,
                                                  db=db,
@@ -63,10 +63,14 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
                                                  )
     images_ext = [_to_response_image(i) for i in images]
 
+    desc = (f'Saved: {[p.filename for p in files]}.'
+            f'\nSkipped Duplicates: {duplicate_filenames}.')
+    if warnings:
+        warnings_s = '\n'.join(warnings)
+        desc += f'\n{warnings_s}'
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
                       message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,
-                      description=f'Saved: {[p.filename for p in files]}.'
-                                  f'\nSkipped Duplicates: {duplicate_filenames}.')
+                      description=desc)
     logger.info(msg['message'])
     results = {'action': 'Uploaded',
                'resource': 'ImageResource',
@@ -140,13 +144,19 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
         throw_exception(str(err), request=request)
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames = remove_files_already_existing(files, RESIZE_SUFFIX)
+    duplicate_filenames, warnings = remove_files_already_existing(files, RESIZE_SUFFIX, db=db)
 
     images: List[Image] = await save_image_files(files=files,
                                                  db=db,
                                                  plant_ids=additional_data['plants'],
                                                  keywords=additional_data['keywords'])
     images_ext = [_to_response_image(i) for i in images]
+
+    desc = (f'Saved: {[p.filename for p in files]}.'
+            f'\nSkipped Duplicates: {duplicate_filenames}.')
+    if warnings:
+        warnings_s = '\n'.join(warnings)
+        desc += f'\n{warnings_s}'
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
                       message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,

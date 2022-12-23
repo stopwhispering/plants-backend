@@ -23,3 +23,4 @@ pandas
 python-dotenv
 scikit-learn
 psycopg2
+pytz

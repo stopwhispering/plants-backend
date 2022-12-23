@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import List, Tuple
-
-from PIL import Image
 import logging
 import os
 import datetime
+
+import pytz
+from PIL import Image
 import piexif
 from piexif import InvalidImageDataError
 
@@ -169,7 +170,9 @@ def read_record_datetime_from_exif_tags(absolute_path: Path) -> datetime.datetim
     except ValueError as e:
         raise e
 
-    try:  # record date+time
+    if 36867 in exif_dict["Exif"]:  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
-    except KeyError:
-        return None
+    else:
+        # get creation date from file system (todo linux has only modifed date, does this still work or abort?)
+        ts = absolute_path.stat().st_ctime
+        return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
