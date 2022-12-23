@@ -36,7 +36,7 @@ class PImage(BaseModel):
 
 
 class PImages(BaseModel):
-    __root__: list[PImage]
+    __root__: List[PImage]
 
 
 class PImageUpdated(BaseModel):

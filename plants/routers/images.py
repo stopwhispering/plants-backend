@@ -100,8 +100,8 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 @router.put("/images/", response_model=PConfirmation)
 async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_db)):
     """modify existing photo_file's metadata"""
-    logger.info(f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and exif tags.")
-    for image_ext in modified_ext.ImagesCollection:
+    logger.info(f"Saving updates for {len(modified_ext.ImagesCollection.__root__)} images in db and exif tags.")
+    for image_ext in modified_ext.ImagesCollection.__root__:
         # alter metadata in jpg exif tags
         logger.info(f'Updating {image_ext.filename}')
         PhotoMetadataAccessExifTags().save_photo_metadata(filename=image_ext.filename,
@@ -119,7 +119,7 @@ async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_d
 
     results = {'action': 'Saved',
                'resource': 'ImageResource',
-               'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images.")
+               'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection.__root__)} images.")
                }
 
     return results
