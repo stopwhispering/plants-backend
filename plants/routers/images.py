@@ -18,7 +18,7 @@ from plants.models.plant_models import Plant
 from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
                                                 PImagePlantTag, PResultsImagesUploaded, PImages)
 from plants.services.image_services_simple import remove_files_already_existing
-from plants.validation.event_validation import PImagesDelete
+from plants.validation.event_validation import RImagesToDelete
 from plants.validation.image_validation import PResultsImageDeleted
 from plants.validation.message_validation import PConfirmation, PMessage
 
@@ -173,26 +173,31 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 
 
 @router.delete("/images/", response_model=PResultsImageDeleted)
-async def delete_image(image_container: PImagesDelete, db: Session = Depends(get_db)):
+async def delete_image(image_container: RImagesToDelete, db: Session = Depends(get_db)):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
-    for photo in image_container.images:
-        # relative_path = get_relative_path(photo.absolute_path)
-        # image = get_image_by_relative_path(relative_path=relative_path, db=db, raise_exception=True)
-        image = Image.get_image_by_filename(filename=photo.filename, db=db)
+    for image_to_delete in image_container.images:
+        image = Image.get_image_by_id(id_=image_to_delete.id, db=db)
+        if image.filename != image_to_delete.filename:
+            logger.error(err_msg := f'Image {image.id} has unexpected filename: {image.filename}. '
+                                    f'Expected filename: {image_to_delete.filename}. Analyze this inconsistency!')
+            throw_exception(err_msg)
+
         delete_image_file_and_db_entries(image=image, db=db)
 
     deleted = [image.filename for image in image_container.images]
-    results = {'action': 'Deleted',
-               'resource': 'ImageResource',
-               'message': get_message(f'Deleted image(s)',
-                                      description=f'Filenames: {deleted}')
-               }
+    results = {
+        'action': 'Deleted',
+        'resource': 'ImageResource',
+        'message': get_message(f'Deleted {len(image_container.images)} image(s)',
+                               description=f'Filenames: {deleted}')
+    }
     return results
 
 
 def _to_response_image(image: Image) -> PImage:
     k: ImageKeyword
     return PImage(
+        id=image.id,
         filename=image.filename or '',
         keywords=[{'keyword': k.keyword} for k in image.keywords],
         plants=[PImagePlantTag(

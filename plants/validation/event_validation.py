@@ -64,13 +64,14 @@ class PImage(BaseModel):
 
 
 class PImageDelete(BaseModel):
+    id: int
     filename: str
 
     class Config:
         extra = Extra.forbid
 
 
-class PImagesDelete(BaseModel):
+class RImagesToDelete(BaseModel):
     images: list[PImageDelete]
 
     class Config:

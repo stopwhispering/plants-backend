@@ -112,6 +112,15 @@ class Image(Base):
         return image
 
     @staticmethod
+    def get_image_by_id(id_: int, db: Session) -> "Image":
+        """returns image by filename"""
+        image = db.query(Image).filter(Image.id == id_).first()
+        if not image:
+            logger.error(err_msg := f'Image not found in db: {id_}')
+            throw_exception(err_msg)
+        return image
+
+    @staticmethod
     def exists(filename: str, db: Session) -> bool:
         """returns True if image exists in db"""
         return db.query(Image).filter(Image.filename == filename).first() is not None

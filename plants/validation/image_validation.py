@@ -24,6 +24,7 @@ class PImagePlantTag(BaseModel):
 
 
 class PImage(BaseModel):
+    id: int
     filename: str
     keywords: List[PKeyword]
     plants: List[PImagePlantTag]
