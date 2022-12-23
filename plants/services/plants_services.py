@@ -127,7 +127,7 @@ def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
                 # new tag
                 tag_object: Tag = Tag(text=tag.text,
                                       # icon=tag.icon,
-                                      state=tag.state.value(),
+                                      state=tag.state,  # noqa  use_enum_values option used
                                       plant=plant_obj,
                                       # last_update=datetime.datetime.now()
                                       last_update=datetime.now()

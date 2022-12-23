@@ -9,7 +9,9 @@ The sample architecture uses NGINX and uWSGI as middleware. uWSGI can use the fl
 the factory method in *app.py*. On local system one can use the Flask development server
 instead (*python wsgi.py*).
 
-![Architecture](static/architecture.png?raw=true "Architecture")
+*(todo update text)*
+
+![Architecture](static/plants-architecture.png?raw=true "Architecture")
 
 ## Configuration
 see *config.py* and *config_local.py*, the latter used to set environment-specific
