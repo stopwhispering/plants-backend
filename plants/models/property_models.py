@@ -104,7 +104,7 @@ class PropertyValue(Base, OrmUtil):
         as_dict['property_name_id'] = self.property_name.id
         as_dict['category_name'] = self.property_name.property_category.category_name
         as_dict['category_id'] = self.property_name.property_category.id
-        as_dict['sort'] = self.property_name.property_category.sort
+        # as_dict['sort'] = self.property_name.property_category.sort
 
         return as_dict
 

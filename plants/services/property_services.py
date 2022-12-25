@@ -33,7 +33,7 @@ class LoadProperties:
             category_obj = PropertyCategory.get_cat_by_name(default_category, db)
             categories.append({'category_name': category_obj.category_name,
                                'category_id':   category_obj.id,
-                               'sort':          category_obj.sort,
+                               # 'sort':          category_obj.sort,
                                'properties':    []})
 
     @staticmethod
@@ -43,7 +43,7 @@ class LoadProperties:
             category_obj = PropertyCategory.get_cat_by_name(default_category, db)
             categories[category_obj.id] = {'category_name': category_obj.category_name,
                                            'category_id':   category_obj.id,
-                                           'sort':          category_obj.sort,
+                                           # 'sort':          category_obj.sort,
                                            'properties':    []}
 
     def get_properties_for_plant(self, plant_id: int, db: Session) -> List:
