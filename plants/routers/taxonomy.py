@@ -12,7 +12,7 @@ from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
 # from plants.services.trait_services import update_traits
 from plants.validation.message_validation import BConfirmation
-from plants.validation.taxon_validation import BResultsGetTaxa, FModifiedTaxa, FBTaxon, FBTaxonImage, BResultsGetTaxon
+from plants.validation.taxon_validation import FModifiedTaxa, FBTaxon, FBTaxonImage, BResultsGetTaxon
 
 logger = logging.getLogger(__name__)
 

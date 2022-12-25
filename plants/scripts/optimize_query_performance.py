@@ -18,12 +18,11 @@ from plants.models.taxon_models import Taxon
 from plants.routers.images import _to_response_image
 from plants.util.ui_utils import get_message
 from plants.validation.message_validation import BMessageType
-from plants.validation.event_validation import BResultsEventResource, PImage
+from plants.validation.event_validation import BResultsEventResource
 from plants.validation.image_validation import FBImages, BResultsImageResource
 from plants.validation.plant_validation import BResultsPlants
 from plants.validation.property_validation import BResultsPropertyNames
 from plants.validation.proposal_validation import BResultsProposals, FProposalEntity
-from plants.validation.taxon_validation import BResultsGetTaxa
 
 # from plants.models.pollination_models import Florescence, Pollination
 # from plants.models.property_models import PropertyCategory, PropertyName, PropertyValue
