@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from plants.models.tag_models import Tag
-from plants.validation.plant_validation import PPlantTag
+from plants.validation.plant_validation import FBPlantTag
 
 
-def tag_modified(tag_current: Tag, tag_updated: PPlantTag):
+def tag_modified(tag_current: Tag, tag_updated: FBPlantTag):
     """returns true if dict values are different from orm object properties"""
     return (  # tag_current.icon != tag_updated.icon or
             tag_current.text != tag_updated.text
@@ -12,7 +12,7 @@ def tag_modified(tag_current: Tag, tag_updated: PPlantTag):
             or tag_current.plant_id != tag_updated.plant_id)
 
 
-def update_tag(tag_obj: Tag, tag_dict: PPlantTag):
+def update_tag(tag_obj: Tag, tag_dict: FBPlantTag):
     """updates the orm object from dict values"""
     tag_obj.text = tag_dict.text
     # tag_obj.icon = tag_dict.icon

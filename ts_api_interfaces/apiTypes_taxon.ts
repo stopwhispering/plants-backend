@@ -1,26 +1,7 @@
-import ManagedObject from "sap/ui/base/ManagedObject";
 
-/**
- * @namespace plants.ui.definitions
- */
-export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
-export interface PAssignTaxonRequest {
-  fqId?: string;
-  hasCustomName: boolean;
-  id?: number;
-  nameInclAddition: string;
-  plant_id: number;
-  source: string;
-}
-export interface PDistribution {
-  native: string[];
-  introduced: string[];
-}
-export interface PFetchTaxonImages {
-  gbif_id: number;
-}
-export interface PKewSearchResultEntry {
+export interface BKewSearchResultEntry {
   source: string;
   id?: number;
   count: number;
@@ -40,10 +21,35 @@ export interface PKewSearchResultEntry {
   synonyms_concat?: string;
   distribution_concat?: string;
 }
-export interface PModifiedTaxa {
-  ModifiedTaxaCollection: PTaxon[];
+export interface BResultsFetchTaxonImages {
+  action: string;
+  resource: string;
+  message: BMessage;
+  occurrenceImages?: FBTaxonOccurrenceImage[];
 }
-export interface PTaxon {
+export interface FBTaxonOccurrenceImage {
+  occurrence_id: number;
+  img_no: number;
+  gbif_id: number;
+  scientific_name: string;
+  basis_of_record: string;
+  verbatim_locality?: string;
+  date: string;
+  creator_identifier: string;
+  publisher_dataset?: string;
+  references?: string;
+  href: string;
+  filename_thumbnail: string;
+}
+export interface BResultsGetTaxa {
+  action: string;
+  resource: string;
+  message?: BMessage;
+  TaxaDict: {
+    [k: string]: FBTaxon;
+  };
+}
+export interface FBTaxon {
   id: number;
   name: string;
   is_custom: boolean;
@@ -69,57 +75,47 @@ export interface PTaxon {
   powo_id?: string;
   custom_notes?: string;
   ipni_id_short: string;
-  distribution?: PDistribution;
-  images?: PTaxonImage[];
-  occurrenceImages?: PTaxonOccurrenceImage[];
+  distribution?: FBDistribution;
+  images?: FBTaxonImage[];
+  occurrenceImages?: FBTaxonOccurrenceImage[];
 }
-export interface PTaxonImage {
+export interface FBDistribution {
+  native: string[];
+  introduced: string[];
+}
+export interface FBTaxonImage {
   id?: number;
   filename: string;
   description?: string;
 }
-export interface PTaxonOccurrenceImage {
-  occurrence_id: number;
-  img_no: number;
-  gbif_id: number;
-  scientific_name: string;
-  basis_of_record: string;
-  verbatim_locality?: string;
-  date: string;
-  creator_identifier: string;
-  publisher_dataset?: string;
-  references?: string;
-  href: string;
-  filename_thumbnail: string;
-}
-export interface PResultsFetchTaxonImages {
+export interface BResultsSaveTaxonRequest {
   action: string;
   resource: string;
-  message: PMessage;
-  occurrenceImages?: PTaxonOccurrenceImage[];
-}
-export interface PResultsGetTaxa {
-  action: string;
-  resource: string;
-  message?: PMessage;
-  TaxaDict: {
-    [k: string]: PTaxon;
-  };
-}
-export interface PResultsSaveTaxonRequest {
-  action: string;
-  resource: string;
-  message: PMessage;
+  message: BMessage;
   botanical_name: string;
-  taxon_data: PTaxon;
+  taxon_data: FBTaxon;
 }
-export interface PResultsTaxonInfoRequest {
+export interface BResultsTaxonInfoRequest {
   action: string;
   resource: string;
-  message: PMessage;
-  ResultsCollection: PKewSearchResultEntry[];
+  message: BMessage;
+  ResultsCollection: BKewSearchResultEntry[];
 }
-export interface PTaxonInfoRequest {
+export interface FAssignTaxonRequest {
+  fqId?: string;
+  hasCustomName: boolean;
+  id?: number;
+  nameInclAddition: string;
+  plant_id: number;
+  source: string;
+}
+export interface FFetchTaxonImages {
+  gbif_id: number;
+}
+export interface FModifiedTaxa {
+  ModifiedTaxaCollection: FBTaxon[];
+}
+export interface FTaxonInfoRequest {
   includeKew: boolean;
   searchForGenus: boolean;
   species: string;

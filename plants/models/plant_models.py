@@ -17,7 +17,7 @@ from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
-from plants.validation.plant_validation import PPlant
+from plants.validation.plant_validation import FBPlant
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +157,7 @@ class Plant(Base, OrmUtil):
         merge descendant_plants_pollen into descendant_plants"""
         raise NotImplementedError('use get_plant_as_dict() instead')
 
-    def set_filename_previewimage(self, plant: Optional[PPlant] = None):
+    def set_filename_previewimage(self, plant: Optional[FBPlant] = None):
         """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
         the photos-subdir part of the uri
         """

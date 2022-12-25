@@ -11,10 +11,10 @@ from plants.models.plant_models import Plant
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
-from plants.validation.message_validation import PConfirmation
-from plants.validation.plant_validation import (PPlantsDeleteRequest,
-                                                PPlantsRenameRequest, PResultsPlants, PPlantsUpdateRequest,
-                                                PResultsPlantsUpdate, PResultsPlantCloned)
+from plants.validation.message_validation import BConfirmation
+from plants.validation.plant_validation import (FPlantsDeleteRequest,
+                                                BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
+                                                BResultsPlantsUpdate, BResultsPlantCloned)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ router = APIRouter(
         )
 
 
-@router.post("/{plant_id}/clone", response_model=PResultsPlantCloned)
+@router.post("/{plant_id}/clone", response_model=BResultsPlantCloned)
 def clone_plant(
         request: Request,
         plant_id: int,
@@ -63,8 +63,8 @@ def clone_plant(
 
 
 # @router.post("/", response_model=PResultsPlantsUpdate)
-@router.post("/", response_model=PResultsPlantsUpdate)
-def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(get_db)):
+@router.post("/", response_model=BResultsPlantsUpdate)
+def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(get_db)):
     """
     update existing or create new plants
     if no id is supplied, a new plant is created having the supplied attributes (only
@@ -84,8 +84,8 @@ def create_or_update_plants(data: PPlantsUpdateRequest, db: Session = Depends(ge
     return results
 
 
-@router.delete("/", response_model=PConfirmation)
-def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Depends(get_db)):
+@router.delete("/", response_model=BConfirmation)
+def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Depends(get_db)):
     """tag deleted plant as 'deleted' in database"""
 
     args = data
@@ -107,9 +107,9 @@ def delete_plant(request: Request, data: PPlantsDeleteRequest, db: Session = Dep
     return results
 
 
-@router.put("/", response_model=PConfirmation)
-def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Depends(get_db)):
-    """we use the put method to rename a plant"""
+@router.put("/", response_model=BConfirmation)
+def rename_plant(request: Request, data: BPlantsRenameRequest, db: Session = Depends(get_db)):
+    """we use the put method to rename a plant"""  # todo use id
     args = data
 
     plant_obj = db.query(Plant).filter(Plant.plant_name == args.OldPlantName).first()
@@ -146,7 +146,7 @@ def rename_plant(request: Request, data: PPlantsRenameRequest, db: Session = Dep
 
 
 # todo test and maybe replace current method with this
-@router.get("/", response_model=PResultsPlants)
+@router.get("/", response_model=BResultsPlants)
 async def get_plants(db: Session = Depends(get_db)):
     """read (almost unfiltered) plants information from db"""
     # select plants from database

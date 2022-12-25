@@ -11,12 +11,12 @@ from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
 from plants.services.tag_services import tag_modified, update_tag
 from plants.util.ui_utils import throw_exception
-from plants.validation.plant_validation import PPlantTag, PPlant
+from plants.validation.plant_validation import FBPlantTag, FBPlant
 
 logger = logging.getLogger(__name__)
 
 
-def update_plants_from_list_of_dicts(plants: List[PPlant], db: Session) -> List[Plant]:
+def update_plants_from_list_of_dicts(plants: List[FBPlant], db: Session) -> List[Plant]:
     new_list = []
     plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")
@@ -118,7 +118,7 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     db.commit()  # saves changes in existing records, too
 
 
-def _update_tags(plant_obj: Plant, tags: List[PPlantTag], db: Session):
+def _update_tags(plant_obj: Plant, tags: List[FBPlantTag], db: Session):
     """update modified tags; returns list of new tags (not yet added or committed); removes deleted tags"""
     new_list = []
     if tags:

@@ -31,8 +31,8 @@ class Taxon(Base, OrmUtil):
     __tablename__ = 'taxon'
 
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
-    name = Column(VARCHAR(100))
-    is_custom = Column(BOOLEAN)
+    name = Column(VARCHAR(100), nullable=False)
+    is_custom = Column(BOOLEAN, nullable=False)
     subsp = Column(VARCHAR(100))
     species = Column(VARCHAR(100))
     subgen = Column(VARCHAR(100))
@@ -40,19 +40,18 @@ class Taxon(Base, OrmUtil):
     family = Column(VARCHAR(100))
     phylum = Column(VARCHAR(100))
     kingdom = Column(VARCHAR(100))
-    rank = Column(VARCHAR(30))
+    rank = Column(VARCHAR(30), nullable=False)
     taxonomic_status = Column(VARCHAR(100))
     name_published_in_year = Column(INTEGER)
     synonym = Column(BOOLEAN)
-    fq_id = Column(VARCHAR(50))
+    lsid = Column(VARCHAR(50), nullable=False)
     authors = Column(VARCHAR(100))
     basionym = Column(VARCHAR(100))
     synonyms_concat = Column(VARCHAR(200))
     distribution_concat = Column(VARCHAR(200))
-    hybrid = Column(BOOLEAN)
+    hybrid = Column(BOOLEAN, nullable=False)
     hybridgenus = Column(BOOLEAN)
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
-    powo_id = Column(VARCHAR(50))
     custom_notes = Column(TEXT)  # may be updated on web frontend
 
     plants = relationship("Plant", back_populates="taxon")
@@ -114,7 +113,7 @@ class Taxon(Base, OrmUtil):
         if not as_dict['synonym']:  # overwrite None with False
             as_dict['synonym'] = False
 
-        as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
+        # as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
 
         return as_dict
 

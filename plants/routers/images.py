@@ -12,15 +12,15 @@ from plants.models.image_models import Image, update_image_if_altered, ImageKeyw
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.util.ui_utils import PMessageType, get_message, throw_exception
+from plants.util.ui_utils import get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
-from plants.validation.image_validation import (PResultsImageResource, PImageUpdated, PImageUploadedMetadata, PImage,
-                                                PImagePlantTag, PResultsImagesUploaded, PImages)
+from plants.validation.image_validation import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata, FBImage,
+                                                FBImagePlantTag, BResultsImagesUploaded, FBImages)
 from plants.services.image_services_simple import remove_files_already_existing
-from plants.validation.event_validation import RImagesToDelete
-from plants.validation.image_validation import PResultsImageDeleted
-from plants.validation.message_validation import PConfirmation, PMessage
+from plants.validation.event_validation import FImagesToDelete
+from plants.validation.image_validation import BResultsImageDeleted
+from plants.validation.message_validation import BConfirmation, BMessage, BMessageType
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.get("/plants/{plant_id}/images/", response_model=PImages)
+@router.get("/plants/{plant_id}/images/", response_model=FBImages)
 async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     """
     get photo_file information for requested plant_id including (other) plants and keywords
@@ -42,7 +42,7 @@ async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
     return photo_files_ext
 
 
-@router.post("/plants/{plant_id}/images/", response_model=PResultsImagesUploaded)
+@router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
 async def upload_images_plant(plant_id: int, request: Request, db: Session = Depends(get_db)):
     """
     upload images and directly assign them to supplied plant; no keywords included
@@ -69,7 +69,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
         warnings_s = '\n'.join(warnings)
         desc += f'\n{warnings_s}'
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
-                      message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,
+                      message_type=BMessageType.WARNING if duplicate_filenames else BMessageType.INFORMATION,
                       description=desc)
     logger.info(msg['message'])
     results = {'action': 'Uploaded',
@@ -81,7 +81,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     return results
 
 
-@router.get("/images/untagged/", response_model=PResultsImageResource)
+@router.get("/images/untagged/", response_model=BResultsImageResource)
 async def get_untagged_images(db: Session = Depends(get_db)):
     """
     get images with no plants assigned, yet
@@ -97,14 +97,14 @@ async def get_untagged_images(db: Session = Depends(get_db)):
     return results
 
 
-@router.put("/images/", response_model=PConfirmation)
-async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_db)):
+@router.put("/images/", response_model=BConfirmation)
+async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_db)):
     """modify existing photo_file's metadata"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection.__root__)} images in db and exif tags.")
     for image_ext in modified_ext.ImagesCollection.__root__:
         # alter metadata in jpg exif tags
         logger.info(f'Updating {image_ext.filename}')
-        PhotoMetadataAccessExifTags().save_photo_metadata(filename=image_ext.filename,
+        PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image_ext.id,
                                                           plant_names=[p.key for p in image_ext.plants],
                                                           keywords=[k.keyword for k in image_ext.keywords],
                                                           description=image_ext.description or '',
@@ -125,10 +125,9 @@ async def update_images(modified_ext: PImageUpdated, db: Session = Depends(get_d
     return results
 
 
-@router.post("/images/", response_model=PResultsImagesUploaded)
+@router.post("/images/", response_model=BResultsImagesUploaded)
 async def upload_images(request: Request, db: Session = Depends(get_db)):
-    """upload new photo_file(s)
-    todo: switch key in supplied plants list to id"""
+    """upload new photo_file(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
@@ -139,7 +138,7 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 
     # validate arguments manually as pydantic doesn't trigger here
     try:
-        PImageUploadedMetadata(**additional_data)
+        FImageUploadedMetadata(**additional_data)
     except ValidationError as err:
         throw_exception(str(err), request=request)
 
@@ -159,7 +158,7 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
         desc += f'\n{warnings_s}'
 
     msg = get_message(f'Saved {len(files)} images.' + (' Duplicates found.' if duplicate_filenames else ''),
-                      message_type=PMessageType.WARNING if duplicate_filenames else PMessageType.INFORMATION,
+                      message_type=BMessageType.WARNING if duplicate_filenames else BMessageType.INFORMATION,
                       description=f'Saved: {[p.filename for p in files]}.'
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])
@@ -172,8 +171,8 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
     return results
 
 
-@router.delete("/images/", response_model=PResultsImageDeleted)
-async def delete_image(image_container: RImagesToDelete, db: Session = Depends(get_db)):
+@router.delete("/images/", response_model=BResultsImageDeleted)
+async def delete_image(image_container: FImagesToDelete, db: Session = Depends(get_db)):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
     for image_to_delete in image_container.images:
         image = Image.get_image_by_id(id_=image_to_delete.id, db=db)
@@ -194,13 +193,13 @@ async def delete_image(image_container: RImagesToDelete, db: Session = Depends(g
     return results
 
 
-def _to_response_image(image: Image) -> PImage:
+def _to_response_image(image: Image) -> FBImage:
     k: ImageKeyword
-    return PImage(
+    return FBImage(
         id=image.id,
         filename=image.filename or '',
         keywords=[{'keyword': k.keyword} for k in image.keywords],
-        plants=[PImagePlantTag(
+        plants=[FBImagePlantTag(
             plant_id=p.id,
             key=p.plant_name,
             text=p.plant_name,
@@ -234,7 +233,7 @@ def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: 
     return Response(content=image_bytes, media_type="image/png")
 
 
-@router.post("/generate_missing_thumbnails", response_model=PMessage)
+@router.post("/generate_missing_thumbnails", response_model=BMessage)
 async def trigger_generate_missing_thumbnails(background_tasks: BackgroundTasks,
                                               db: Session = Depends(get_db)):
     """trigger the generation of missing thumbnails for occurrences"""

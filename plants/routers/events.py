@@ -8,15 +8,15 @@ import logging
 from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
-from plants.util.ui_utils import throw_exception, get_message, PMessageType
+from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.models.image_models import Image, ImageToEventAssociation
 from plants.services.event_services import create_soil, update_soil
-from plants.validation.message_validation import PConfirmation
+from plants.validation.message_validation import BConfirmation, BMessageType
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import (PResultsEventResource, PRSoil, PResultsUpdateCreateSoil,
-                                                PResultsSoilsResource, PSoilCreate, RRequestCreateOrUpdateEvent)
+from plants.validation.event_validation import (BResultsEventResource, FBSoil, BPResultsUpdateCreateSoil,
+                                                BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ router = APIRouter(
 )
 
 
-@router.get("/soils", response_model=PResultsSoilsResource)
+@router.get("/soils", response_model=BResultsSoilsResource)
 async def get_soils(db: Session = Depends(get_db)):
     soils = []
 
@@ -51,31 +51,31 @@ async def get_soils(db: Session = Depends(get_db)):
     return {'SoilsCollection': soils}
 
 
-@router.post("/soils", response_model=PResultsUpdateCreateSoil)
-async def create_new_soil(new_soil: PSoilCreate, db: Session = Depends(get_db)):
+@router.post("/soils", response_model=BPResultsUpdateCreateSoil)
+async def create_new_soil(new_soil: FSoilCreate, db: Session = Depends(get_db)):
     """create new soil and return it with (newly assigned) id"""
     soil_obj = create_soil(soil=new_soil, db=db)
     msg = f'Created soil with new ID {soil_obj.id}'
 
     logger.info(msg)
     results = {'soil': soil_obj,  # soil_obj.as_dict(),
-               'message': get_message(msg, message_type=PMessageType.DEBUG)}
+               'message': get_message(msg, message_type=BMessageType.DEBUG)}
     return results
 
 
-@router.put("/soils", response_model=PResultsUpdateCreateSoil)
-async def update_existing_soil(updated_soil: PRSoil, db: Session = Depends(get_db)):
+@router.put("/soils", response_model=BPResultsUpdateCreateSoil)
+async def update_existing_soil(updated_soil: FBSoil, db: Session = Depends(get_db)):
     """update soil attributes"""
     soil_obj = update_soil(soil=updated_soil, db=db)
     msg = f'Updated soil with ID {soil_obj.id}'
 
     logger.info(msg)
     results = {'soil': soil_obj.as_dict(),
-               'message': get_message(msg, message_type=PMessageType.DEBUG)}
+               'message': get_message(msg, message_type=BMessageType.DEBUG)}
     return results
 
 
-@router.get("/{plant_id}", response_model=PResultsEventResource)
+@router.get("/{plant_id}", response_model=BResultsEventResource)
 async def get_events(plant_id: int, db: Session = Depends(get_db)):
     """returns events from event database table
     imports: plant_id
@@ -89,14 +89,14 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
     logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id, db)}.')
     results = {'events': results,
                'message': get_message(m,
-                                      message_type=PMessageType.DEBUG)}
+                                      message_type=BMessageType.DEBUG)}
 
     return results
 
 
-@router.post("/", response_model=PConfirmation)
+@router.post("/", response_model=BConfirmation)
 async def create_or_update_events(request: Request,
-                                  events_request: RRequestCreateOrUpdateEvent,
+                                  events_request: FRequestCreateOrUpdateEvent,
                                   db: Session = Depends(get_db)):
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has been changed, added, or

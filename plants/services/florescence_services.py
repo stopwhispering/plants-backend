@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from plants.models.plant_models import Plant
 from plants.models.pollination_models import Florescence, FlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB
 from plants.util.ui_utils import parse_api_date, format_api_date
-from plants.validation.pollination_validation import PActiveFlorescence, PRequestEditedFlorescence, \
-    PPlantForNewFlorescence, PRequestNewFlorescence
+from plants.validation.pollination_validation import BActiveFlorescence, FRequestEditedFlorescence, \
+    BPlantForNewFlorescence, FRequestNewFlorescence
 
 
 def _read_available_colors_rgb(plant: Plant, db: Session):
@@ -20,21 +20,21 @@ def _read_available_colors_rgb(plant: Plant, db: Session):
     return available_colors_rgb
 
 
-def read_plants_for_new_florescence(db: Session) -> list[PPlantForNewFlorescence]:
+def read_plants_for_new_florescence(db: Session) -> list[BPlantForNewFlorescence]:
     # query = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
     query = db.query(Plant).filter(Plant.deleted.is_(False))
     plants: list[Plant] = query.all()
 
     plants_for_new_florescence = []
     for p in plants:
-        plants_for_new_florescence.append(PPlantForNewFlorescence(
+        plants_for_new_florescence.append(BPlantForNewFlorescence(
                                             plant_id=p.id,
                                             plant_name=p.plant_name,
                                             genus=p.taxon.genus if p.taxon else None))
     return plants_for_new_florescence
 
 
-def read_active_florescences(db: Session) -> list[PActiveFlorescence]:
+def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
     query = (db.query(Florescence)
              .filter(Florescence.florescence_status.in_({FlorescenceStatus.FLOWERING.value,
                                                          FlorescenceStatus.INFLORESCENCE_APPEARED.value}))
@@ -58,12 +58,12 @@ def read_active_florescences(db: Session) -> list[PActiveFlorescence]:
 
             'available_colors_rgb': _read_available_colors_rgb(plant=f.plant, db=db),
         }
-        florescences.append(PActiveFlorescence.parse_obj(f_dict))
+        florescences.append(BActiveFlorescence.parse_obj(f_dict))
 
     return florescences
 
 
-def update_active_florescence(edited_florescence_data: PRequestEditedFlorescence, db: Session):
+def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence, db: Session):
     florescence: Florescence = db.query(Florescence).filter(
         Florescence.id == edited_florescence_data.id).first()
 
@@ -88,7 +88,7 @@ def update_active_florescence(edited_florescence_data: PRequestEditedFlorescence
     db.commit()
 
 
-def create_new_florescence(new_florescence_data: PRequestNewFlorescence, db: Session):
+def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Session):
 
     assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)
     plant = Plant.get_plant_by_plant_id(plant_id=new_florescence_data.plant_id, db=db, raise_exception=True)

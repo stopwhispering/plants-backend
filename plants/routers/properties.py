@@ -3,11 +3,11 @@ import logging
 from sqlalchemy.orm import Session
 
 from plants.util.ui_utils import get_message, make_list_items_json_serializable
-from plants.validation.property_validation import (PResultsPropertiesForPlant, PPropertiesModifiedPlant,
-                                                   PPropertiesModifiedTaxon)
+from plants.validation.property_validation import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,
+                                                   FPropertiesModifiedTaxon)
 from plants.services.property_services import SaveProperties, SavePropertiesTaxa, LoadProperties
 from plants.dependencies import get_db
-from plants.validation.message_validation import PConfirmation
+from plants.validation.message_validation import BConfirmation
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +18,9 @@ router = APIRouter(
         )
 
 
-@router.post("/taxon_properties/", response_model=PConfirmation)
+@router.post("/taxon_properties/", response_model=BConfirmation)
 async def modify_taxon_properties(
-        data: PPropertiesModifiedTaxon,
+        data: FPropertiesModifiedTaxon,
         db: Session = Depends(get_db)):
     """taxon properties; note: there's no get method for taxon properties; they are read with the plant's
         properties
@@ -35,9 +35,9 @@ async def modify_taxon_properties(
     return results
 
 
-@router.post("/plant_properties/", response_model=PConfirmation)
+@router.post("/plant_properties/", response_model=BConfirmation)
 async def modify_plant_properties(
-        data: PPropertiesModifiedPlant,
+        data: FPropertiesModifiedPlant,
         db: Session = Depends(get_db)):
     """save plant properties"""
 
@@ -50,7 +50,7 @@ async def modify_plant_properties(
     return results
 
 
-@router.get("/plant_properties/{plant_id}", response_model=PResultsPropertiesForPlant)
+@router.get("/plant_properties/{plant_id}", response_model=BResultsPropertiesForPlant)
 def get_plant_properties(
         plant_id: int,
         taxon_id: int = None,

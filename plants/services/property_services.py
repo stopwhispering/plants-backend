@@ -5,7 +5,7 @@ from plants.constants import PROPERTY_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyValue, PropertyCategory, PropertyName
 from plants.models.taxon_models import Taxon
-from plants.validation.property_validation import PPropertiesInCategory, PProperty, PPropertyCollectionPlant
+from plants.validation.property_validation import FBPropertiesInCategory, FBProperty, FBPropertyCollectionPlant
 
 
 class MixinShared:
@@ -106,7 +106,7 @@ class LoadProperties:
 class SaveProperties(MixinShared):
 
     @staticmethod
-    def _is_newly_used_for_plant(property_new: PProperty, properties_current: List[PropertyValue]) -> bool:
+    def _is_newly_used_for_plant(property_new: FBProperty, properties_current: List[PropertyValue]) -> bool:
         property_current = [p for p in properties_current if p.property_name_id == property_new.property_name_id]
         if not property_current:
             return True
@@ -114,7 +114,7 @@ class SaveProperties(MixinShared):
             return False
 
     @staticmethod
-    def _is_modified(property_new: PProperty, properties_current: List[PropertyValue]) -> bool:
+    def _is_modified(property_new: FBProperty, properties_current: List[PropertyValue]) -> bool:
         # if not property_new.get('property_name_id'):
         #     # new property name
         #     return True
@@ -125,7 +125,7 @@ class SaveProperties(MixinShared):
             return False
 
     @staticmethod
-    def _new_property_for_plant(plant_id: int, property_modified: PProperty):
+    def _new_property_for_plant(plant_id: int, property_modified: FBProperty):
         property_object = PropertyValue(
                 property_name_id=property_modified.property_name_id,
                 property_value=property_modified.property_value,
@@ -134,7 +134,7 @@ class SaveProperties(MixinShared):
         return property_object
 
     @staticmethod
-    def _modify_existing_property_value(property_modified: PProperty, db: Session):
+    def _modify_existing_property_value(property_modified: FBProperty, db: Session):
         # todo is this code outdated? seems to make no sense as there is no prop value id here
         # todo check
         property_value_object = PropertyValue.get_by_id(property_modified.property_value_id,
@@ -143,7 +143,7 @@ class SaveProperties(MixinShared):
         property_value_object.property_value = property_modified.property_value
 
     @staticmethod
-    def _remove_taxon_properties(categories_modified: List[PPropertiesInCategory]):
+    def _remove_taxon_properties(categories_modified: List[FBPropertiesInCategory]):
         """the frontend sends taxon properties within the plants properties; remove them"""
         for category_modified in [c for c in categories_modified if c.properties]:
             for i, property_name in enumerate(category_modified.properties):
@@ -159,7 +159,7 @@ class SaveProperties(MixinShared):
                         # therefore, delete the whole property name node
                         category_modified.properties.pop(i)
 
-    def _save_categories(self, plant_id, categories_modified: List[PPropertiesInCategory], db: Session) -> List:
+    def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory], db: Session) -> List:
         # get current properties for the plant
         self._remove_taxon_properties(categories_modified)
         plant = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
@@ -196,7 +196,7 @@ class SaveProperties(MixinShared):
 
         return new_list
 
-    def save_properties(self, properties_modified: Dict[int, PPropertyCollectionPlant], db: Session):
+    def save_properties(self, properties_modified: Dict[int, FBPropertyCollectionPlant], db: Session):
         for plant_id, plant_values in properties_modified.items():
             new_list = self._save_categories(plant_id, plant_values.categories, db)
             if new_list:
@@ -217,7 +217,7 @@ class SavePropertiesTaxa(MixinShared):
         if property_values:
             return property_values[0]
 
-    def _flatten_property(self, property_name_dict: PProperty) -> Optional[PProperty]:
+    def _flatten_property(self, property_name_dict: FBProperty) -> Optional[FBProperty]:
         """pick the taxon property value among the plant_name property values and set it in property name dict """
         property_value_taxon = self._get_taxon_property_value(property_name_dict.property_values)
         if property_value_taxon:
@@ -227,7 +227,7 @@ class SavePropertiesTaxa(MixinShared):
         else:
             return None
 
-    def save_properties(self, properties_modified: Dict[int, Dict[int, PPropertiesInCategory]], db: Session):
+    def save_properties(self, properties_modified: Dict[int, Dict[int, FBPropertiesInCategory]], db: Session):
         # loop at taxa
         new_list = []
         del_list = []
@@ -279,13 +279,13 @@ class SavePropertiesTaxa(MixinShared):
         return[p for p in property_values_current if p.property_name_id not in new_property_name_ids]
 
     @staticmethod
-    def _modify_existing_property_value(property_modified: PProperty, property_values_current):
+    def _modify_existing_property_value(property_modified: FBProperty, property_values_current):
         property_value_object = [p for p in property_values_current if p.property_name_id ==
                                  property_modified.property_name_id][0]
         property_value_object.property_value = property_modified.property_value
 
     @staticmethod
-    def _new_property_value_object(taxon: Taxon, property_value_modified: PProperty):
+    def _new_property_value_object(taxon: Taxon, property_value_modified: FBProperty):
         property_value_object = PropertyValue(
                 property_name_id=property_value_modified.property_name_id,
                 property_value=property_value_modified.property_value,
@@ -294,14 +294,14 @@ class SavePropertiesTaxa(MixinShared):
         return property_value_object
 
     @staticmethod
-    def _is_newly_used_for_taxon(property_new: PProperty, property_values_current: List[PropertyValue]) -> bool:
+    def _is_newly_used_for_taxon(property_new: FBProperty, property_values_current: List[PropertyValue]) -> bool:
         if [p for p in property_values_current if p.property_name_id == property_new.property_name_id]:
             return False
         else:
             return True
 
     @staticmethod
-    def _is_modified(property_new: PProperty, property_values_current: List[PropertyValue]) -> bool:
+    def _is_modified(property_new: FBProperty, property_values_current: List[PropertyValue]) -> bool:
         property_current = [p for p in property_values_current if p.property_name_id ==
                             property_new.property_name_id][0]
         if property_current.property_value != property_new.property_value:

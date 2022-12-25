@@ -90,7 +90,7 @@ async def save_image_files(files: List[UploadFile],
                                path_thumbnail=config.path_generated_thumbnails)
 
         # save metadata in jpg exif tags
-        PhotoMetadataAccessExifTags().save_photo_metadata(filename=path.name,
+        PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
                                                           plant_names=[p.plant_name for p in plants],
                                                           keywords=list(keywords),
                                                           description='',

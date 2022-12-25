@@ -1,4 +1,3 @@
-from enum import Enum
 from pathlib import Path
 
 from fastapi import HTTPException
@@ -6,19 +5,11 @@ from starlette.requests import Request
 import json
 from datetime import date, datetime, timedelta
 
-
-class PMessageType(Enum):
-    """message types processed by error/success handlers in ui5 web frontend"""
-    INFORMATION = 'Information'
-    NONE = 'None'
-    SUCCESS = 'Success'
-    WARNING = 'Warning'
-    ERROR = 'Error'
-    DEBUG = 'Debug'  # not known by UI5 message processor, only showed in frontend console log
+from plants.validation.message_validation import BMessageType
 
 
 def throw_exception(message: str = None,
-                    message_type: PMessageType = PMessageType.ERROR,
+                    message_type: BMessageType = BMessageType.ERROR,
                     additional_text: str = None,
                     status_code: int = 520,
                     description: str = None,
@@ -42,7 +33,7 @@ def throw_exception(message: str = None,
 
 
 def get_message(message: str = None,
-                message_type: PMessageType = PMessageType.INFORMATION,
+                message_type: BMessageType = BMessageType.INFORMATION,
                 additional_text: str = None,
                 description: str = None):
     """generates a message to be userd in a ui5 frontend; uses flask request which is not required as a paramter"""

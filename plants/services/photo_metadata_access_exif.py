@@ -32,7 +32,7 @@ class PhotoMetadataAccessExifTags:
         return self._parse_exif_tags(absolute_path=absolute_path)
 
     def save_photo_metadata(self,
-                            filename: str,
+                            image_id: int,
                             plant_names: list[str],
                             keywords: list[str],
                             description: str,
@@ -40,7 +40,7 @@ class PhotoMetadataAccessExifTags:
                             ) -> None:
         """save/update photo_file metadata"""
         # get file system path to the image
-        image = Image.get_image_by_filename(db=db, filename=filename)
+        image = Image.get_image_by_id(id_=image_id, db=db)
 
         metadata = MetadataDTO(plant_names=plant_names,
                                keywords=keywords,

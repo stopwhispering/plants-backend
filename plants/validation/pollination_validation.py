@@ -3,10 +3,106 @@ from typing import Optional, List
 from pydantic import Extra
 from pydantic.main import BaseModel
 
-from plants.validation.message_validation import PMessage
+from plants.validation.message_validation import BMessage
 
 
-class PActiveFlorescence(BaseModel):
+####################################################################################################
+# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
+####################################################################################################
+class FBPollenContainer(BaseModel):
+    plant_id: int
+    plant_name: str
+    genus: str | None
+    count_stored_pollen_containers: int  # mandatory in this case
+
+    class Config:
+        extra = Extra.forbid
+
+
+class FRequestNewPollination(BaseModel):
+    florescenceId: int
+    seedCapsulePlantId: int
+    # florescencePlantId: int
+    pollenDonorPlantId: int
+    pollenType: str  # PollenType (fresh | frozen | unknown)
+    pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
+    labelColorRgb: str  # e.g. 'FFFF00'
+    location: str  # e.g. 'outside_led'
+
+    class Config:
+        extra = Extra.ignore
+
+
+class FRequestEditedPollination(BaseModel):
+    id: int
+    seed_capsule_plant_id: int
+    pollen_donor_plant_id: int
+
+    pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
+    pollen_type: str
+    location: str | None
+    label_color_rgb: str  # e.g. '#FFFF00'
+
+    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
+    pollination_status: str
+    ongoing: bool
+
+    harvest_date: str | None  # e.g. '2022-11-16'
+    seed_capsule_length: float | None
+    seed_capsule_width: float | None
+    seed_length: float | None
+    seed_width: float | None
+    seed_count: int | None
+    seed_capsule_description: str | None
+    seed_description: str | None
+    days_until_first_germination: int | None
+    first_seeds_sown: int | None
+    first_seeds_germinated: int | None
+
+    class Config:
+        extra = Extra.ignore
+
+
+class FRequestEditedFlorescence(BaseModel):
+    id: int  # florescence id
+    plant_id: int
+    plant_name: str
+    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
+    comment: str | None  # e.g. location if multiple plants in one container
+    branches_count: int | None
+    flowers_count: int | None
+    first_flower_opening_date: str | None  # e.g. '2022-11-16'
+    last_flower_closing_date: str | None  # e.g. '2022-11-16'
+
+    class Config:
+        extra = Extra.ignore
+
+
+class FRequestNewFlorescence(BaseModel):
+    plant_id: int
+    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
+    comment: str | None  # max 40 chars
+
+    class Config:
+        extra = Extra.forbid
+
+
+####################################################################################################
+# Entities used only in API Requests from Frontend (F...)
+####################################################################################################
+class FRequestPollenContainers(BaseModel):
+    pollenContainerCollection: list[FBPollenContainer]
+
+    class Config:
+        extra = Extra.forbid
+
+
+####################################################################################################
+# Entities used only in API Responses from Backend (B...)
+####################################################################################################
+class BActiveFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
     plant_name: str  # from as_dict
@@ -25,7 +121,7 @@ class PActiveFlorescence(BaseModel):
         extra = Extra.forbid
 
 
-class POngoingPollination(BaseModel):
+class BOngoingPollination(BaseModel):
     seed_capsule_plant_id: int
     seed_capsule_plant_name: str
     pollen_donor_plant_id: int
@@ -57,7 +153,7 @@ class POngoingPollination(BaseModel):
         extra = Extra.forbid
 
 
-class PPollinationAttempt(BaseModel):
+class BPollinationAttempt(BaseModel):
     reverse: bool
     pollination_status: str  # PollinationStatus
     pollination_at: str | None
@@ -69,7 +165,7 @@ class PPollinationAttempt(BaseModel):
         extra = Extra.forbid
 
 
-class PPollinationResultingPlant(BaseModel):
+class BPollinationResultingPlant(BaseModel):
     plant_id: int
     plant_name: str
     reverse: bool
@@ -78,7 +174,7 @@ class PPollinationResultingPlant(BaseModel):
         extra = Extra.forbid
 
 
-class PPotentialPollenDonor(BaseModel):
+class BPotentialPollenDonor(BaseModel):
 
     plant_id: int
     plant_name: str  # from as_dict
@@ -88,25 +184,25 @@ class PPotentialPollenDonor(BaseModel):
     # pollen_harvest_month: str | None  # only relevant for frozen
     probability_pollination_to_seed: int | None  # None only in error case
 
-    pollination_attempts: list[PPollinationAttempt]
-    resulting_plants: list[PPollinationResultingPlant]
+    pollination_attempts: list[BPollinationAttempt]
+    resulting_plants: list[BPollinationResultingPlant]
 
     class Config:
         # orm_mode = True
         extra = Extra.forbid
 
 
-class PResultsOngoingPollinations(BaseModel):
+class BResultsOngoingPollinations(BaseModel):
     action: str
     # resource: str
-    message: Optional[PMessage]
-    ongoingPollinationCollection: List[POngoingPollination]
+    message: Optional[BMessage]
+    ongoingPollinationCollection: List[BOngoingPollination]
 
     class Config:
         extra = Extra.forbid
 
 
-class PPollinationStatus(BaseModel):
+class BPollinationStatus(BaseModel):
     # PollinationStatus ['attempt', 'seed_capsule', 'seed', 'germinated', 'unknown', 'self_pollinated']
     key: str
     # PollinationStatus ['attempt', 'seed_capsule', 'seed', 'germinated', 'unknown', 'self_pollinated']
@@ -116,44 +212,34 @@ class PPollinationStatus(BaseModel):
         extra = Extra.forbid
 
 
-class PResultsSettings(BaseModel):
+class BResultsSettings(BaseModel):
     colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
-    pollination_status: list[PPollinationStatus]
+    pollination_status: list[BPollinationStatus]
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsActiveFlorescences(BaseModel):
+class BResultsActiveFlorescences(BaseModel):
     action: str
-    message: Optional[PMessage]
-    activeFlorescenceCollection: List[PActiveFlorescence]
+    message: Optional[BMessage]
+    activeFlorescenceCollection: List[BActiveFlorescence]
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsPotentialPollenDonors(BaseModel):
+class BResultsPotentialPollenDonors(BaseModel):
     action: str
     # resource: str
-    message: Optional[PMessage]
-    potentialPollenDonorCollection: List[PPotentialPollenDonor]
+    message: Optional[BMessage]
+    potentialPollenDonorCollection: List[BPotentialPollenDonor]
 
     class Config:
         extra = Extra.forbid
 
 
-class PPollenContainer(BaseModel):
-    plant_id: int
-    plant_name: str
-    genus: str | None
-    count_stored_pollen_containers: int  # mandatory in this case
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PPlantWithoutPollenContainer(BaseModel):
+class BPlantWithoutPollenContainer(BaseModel):
     plant_id: int
     plant_name: str
     genus: str | None
@@ -162,7 +248,7 @@ class PPlantWithoutPollenContainer(BaseModel):
         extra = Extra.forbid
 
 
-class PPlantForNewFlorescence(BaseModel):
+class BPlantForNewFlorescence(BaseModel):
     plant_id: int
     plant_name: str
     genus: str | None
@@ -171,99 +257,22 @@ class PPlantForNewFlorescence(BaseModel):
         extra = Extra.forbid
 
 
-class PResultsPlantsForNewFlorescence(BaseModel):
-    plantsForNewFlorescenceCollection: List[PPlantForNewFlorescence]
+class BResultsPlantsForNewFlorescence(BaseModel):
+    plantsForNewFlorescenceCollection: List[BPlantForNewFlorescence]
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsPollenContainers(BaseModel):
-    pollenContainerCollection: list[PPollenContainer]
-    plantsWithoutPollenContainerCollection: list[PPlantWithoutPollenContainer]
+class BResultsPollenContainers(BaseModel):
+    pollenContainerCollection: list[FBPollenContainer]
+    plantsWithoutPollenContainerCollection: list[BPlantWithoutPollenContainer]
 
     class Config:
         extra = Extra.forbid
 
 
-class PRequestPollenContainers(BaseModel):
-    pollenContainerCollection: list[PPollenContainer]
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PRequestNewPollination(BaseModel):
-    florescenceId: int
-    seedCapsulePlantId: int
-    # florescencePlantId: int
-    pollenDonorPlantId: int
-    pollenType: str  # PollenType (fresh | frozen | unknown)
-    pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
-    labelColorRgb: str  # e.g. 'FFFF00'
-    location: str  # e.g. 'outside_led'
-
-    class Config:
-        extra = Extra.ignore
-
-
-class PRequestEditedPollination(BaseModel):
-    id: int
-    seed_capsule_plant_id: int
-    pollen_donor_plant_id: int
-
-    pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
-    pollen_type: str
-    location: str | None
-    label_color_rgb: str  # e.g. '#FFFF00'
-
-    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
-    pollination_status: str
-    ongoing: bool
-
-    harvest_date: str | None  # e.g. '2022-11-16'
-    seed_capsule_length: float | None
-    seed_capsule_width: float | None
-    seed_length: float | None
-    seed_width: float | None
-    seed_count: int | None
-    seed_capsule_description: str | None
-    seed_description: str | None
-    days_until_first_germination: int | None
-    first_seeds_sown: int | None
-    first_seeds_germinated: int | None
-
-    class Config:
-        extra = Extra.ignore
-
-
-class PRequestEditedFlorescence(BaseModel):
-    id: int  # florescence id
-    plant_id: int
-    plant_name: str
-    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
-    comment: str | None  # e.g. location if multiple plants in one container
-    branches_count: int | None
-    flowers_count: int | None
-    first_flower_opening_date: str | None  # e.g. '2022-11-16'
-    last_flower_closing_date: str | None  # e.g. '2022-11-16'
-
-    class Config:
-        extra = Extra.ignore
-
-
-class PRequestNewFlorescence(BaseModel):
-    plant_id: int
-    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
-    comment: str | None  # max 40 chars
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PResultsTrainingPollinationModel(BaseModel):
+class BResultsTrainingPollinationModel(BaseModel):
     mean_f1_score: float
     model: str
 

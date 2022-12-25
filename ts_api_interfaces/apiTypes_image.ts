@@ -1,49 +1,42 @@
-import ManagedObject from "sap/ui/base/ManagedObject";
 
-/**
- * @namespace plants.ui.definitions
- */
-export type PImages = PImage[];
-export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type FBImages = FBImage[];
+export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
-export interface GenerateMissingThumbnails {
-  count_already_existed: number;
-  count_generated: number;
+export interface BImageUpdated {
+  ImagesCollection: FBImages;
 }
-export interface PImage {
+export interface FBImage {
+  id: number;
   filename: string;
-  keywords: PKeyword[];
-  plants: PImagePlantTag[];
+  keywords: FBKeyword[];
+  plants: FBImagePlantTag[];
   description?: string;
   record_date_time?: string;
 }
-export interface PKeyword {
+export interface FBKeyword {
   keyword: string;
 }
-export interface PImagePlantTag {
+export interface FBImagePlantTag {
   plant_id?: number;
   key: string;
   text: string;
 }
-export interface PImageUpdated {
-  ImagesCollection: PImages;
+export interface BResultsImageDeleted {
+  action: string;
+  resource: string;
+  message: BMessage;
 }
-export interface PImageUploadedMetadata {
+export interface BResultsImageResource {
+  ImagesCollection: FBImages;
+  message: BMessage;
+}
+export interface BResultsImagesUploaded {
+  action: string;
+  resource: string;
+  message: BMessage;
+  images: FBImages;
+}
+export interface FImageUploadedMetadata {
   plants: number[];
   keywords: string[];
-}
-export interface PResultsImageDeleted {
-  action: string;
-  resource: string;
-  message: PMessage;
-}
-export interface PResultsImageResource {
-  ImagesCollection: PImages;
-  message: PMessage;
-}
-export interface PResultsImagesUploaded {
-  action: string;
-  resource: string;
-  message: PMessage;
-  images: PImages;
 }

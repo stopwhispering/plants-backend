@@ -4,14 +4,26 @@ from typing import Optional, List
 from pydantic import Extra
 from pydantic.main import BaseModel
 
-from plants.validation.message_validation import PMessage
+from plants.validation.message_validation import BMessage
+
+####################################################################################################
+# Entities used in <<both>> API Requests from Frontend <<and>> Responses from Backend (FB...)
+####################################################################################################
 
 
-class PTaxonTreeNode(BaseModel):
+####################################################################################################
+# Entities used only in API <<Requests>> from <<Frontend>> (F...)
+####################################################################################################
+
+
+####################################################################################################
+# Entities used only in API <<Responses>> from <<Backend>> B...)
+####################################################################################################
+class BTaxonTreeNode(BaseModel):
     key: str
     level: int
     count: int
-    nodes: Optional[List[PTaxonTreeNode]]  # missing on lowest level
+    nodes: Optional[List[BTaxonTreeNode]]  # missing on lowest level
     plant_ids: Optional[List[int]]  # plants themselves on lowest level
 
     class Config:
@@ -19,21 +31,21 @@ class PTaxonTreeNode(BaseModel):
 
 
 # this is required (plus importing annotations) to allow for self-references
-PTaxonTreeNode.update_forward_refs()
+BTaxonTreeNode.update_forward_refs()
 
 
-class PTaxonTreeRoot(BaseModel):
-    TaxonTree: List[PTaxonTreeNode]
+class BTaxonTreeRoot(BaseModel):
+    TaxonTree: List[BTaxonTreeNode]
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsSelection(BaseModel):
+class BResultsSelection(BaseModel):
     action: str
     resource: str
-    message: PMessage
-    Selection: PTaxonTreeRoot
+    message: BMessage
+    Selection: BTaxonTreeRoot
 
     class Config:
         extra = Extra.forbid

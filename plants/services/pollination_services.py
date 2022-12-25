@@ -10,10 +10,10 @@ from plants.models.pollination_models import (Florescence, FlorescenceStatus, Po
 from plants.services.ml_prediction import predict_probability_of_seed_production
 from plants.util.ui_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date, \
     FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
-from plants.validation.pollination_validation import (PRequestNewPollination, POngoingPollination,
-                                                      PPotentialPollenDonor, PPollinationAttempt,
-                                                      PPollinationResultingPlant, PRequestEditedPollination,
-                                                      PPollenContainer, PPlantWithoutPollenContainer)  # noqa
+from plants.validation.pollination_validation import (FRequestNewPollination, BOngoingPollination,
+                                                      BPotentialPollenDonor, BPollinationAttempt,
+                                                      BPollinationResultingPlant, FRequestEditedPollination,
+                                                      FBPollenContainer, BPlantWithoutPollenContainer)  # noqa
 
 LOCATION_TEXTS = {
     'indoor': 'indoor',
@@ -23,7 +23,7 @@ LOCATION_TEXTS = {
 }
 
 
-def _read_pollination_attempts(plant: Plant, pollen_donor: Plant, db: Session) -> list[PPollinationAttempt]:
+def _read_pollination_attempts(plant: Plant, pollen_donor: Plant, db: Session) -> list[BPollinationAttempt]:
     """ Read all pollination attempts for a plant and a pollen donor plus the other way around"""
     attempts_orm = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == plant.id,
                                                 Pollination.pollen_donor_plant_id == pollen_donor.id).all()
@@ -41,11 +41,11 @@ def _read_pollination_attempts(plant: Plant, pollen_donor: Plant, db: Session) -
             'germination_rate': pollination.germination_rate,
             'ongoing': pollination.ongoing,
         }
-        attempts.append(PPollinationAttempt.parse_obj(attempt_dict))
+        attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
     return attempts
 
 
-def _read_resulting_plants(plant: Plant, pollen_donor: Plant, db: Session) -> list[PPollinationResultingPlant]:
+def _read_resulting_plants(plant: Plant, pollen_donor: Plant, db: Session) -> list[BPollinationResultingPlant]:
     resulting_plants_orm = db.query(Plant).filter(Plant.parent_plant_id == plant.id,
                                                   Plant.parent_plant_pollen_id == pollen_donor.id).all()
     resulting_plants_orm_reverse = db.query(Plant).filter(Plant.parent_plant_id == pollen_donor.id,
@@ -58,7 +58,7 @@ def _read_resulting_plants(plant: Plant, pollen_donor: Plant, db: Session) -> li
             'plant_id': plant.id,
             'plant_name': plant.plant_name,
         }
-        resulting_plants.append(PPollinationResultingPlant.parse_obj(resulting_plant_dict))
+        resulting_plants.append(BPollinationResultingPlant.parse_obj(resulting_plant_dict))
     return resulting_plants
 
 
@@ -72,7 +72,7 @@ def get_probability_pollination_to_seed(florescence: Florescence,
     return probability
 
 
-def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[PPotentialPollenDonor]:
+def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[BPotentialPollenDonor]:
     """ Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen"""
     florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
@@ -109,7 +109,7 @@ def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[PPote
                                                        pollen_donor=f.plant,
                                                        db=db),
         }
-        potential_pollen_donors.append(PPotentialPollenDonor.parse_obj(potential_pollen_donor_flowering))
+        potential_pollen_donors.append(BPotentialPollenDonor.parse_obj(potential_pollen_donor_flowering))
 
     # 2. frozen pollen
     query = (db.query(Plant).filter(  # Plant.florescence_status == FlorescenceStatus.FINISHED.value,
@@ -139,12 +139,12 @@ def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[PPote
                                                        pollen_donor=frozen_pollen_plant,
                                                        db=db),
         }
-        potential_pollen_donors.append(PPotentialPollenDonor.parse_obj(potential_pollen_donor_frozen))
+        potential_pollen_donors.append(BPotentialPollenDonor.parse_obj(potential_pollen_donor_frozen))
 
     return potential_pollen_donors
 
 
-def save_new_pollination(new_pollination_data: PRequestNewPollination, db: Session):
+def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Session):
     """ Save a new pollination attempt """
     # validate data quality
     florescence: Florescence = db.query(Florescence).filter(
@@ -201,7 +201,7 @@ def remove_pollination(pollination_id: int, db: Session):
     db.commit()
 
 
-def update_pollination(pollination_data: PRequestEditedPollination, db: Session):
+def update_pollination(pollination_data: FRequestEditedPollination, db: Session):
     """ Update a pollination attempt """
 
     pollination: Pollination = db.query(Pollination).filter(
@@ -257,7 +257,7 @@ def update_pollination(pollination_data: PRequestEditedPollination, db: Session)
     db.commit()
 
 
-def read_ongoing_pollinations(db: Session) -> list[POngoingPollination]:
+def read_ongoing_pollinations(db: Session) -> list[BOngoingPollination]:
     query = (db.query(Pollination)
              .filter(Pollination.ongoing)
              )
@@ -295,17 +295,17 @@ def read_ongoing_pollinations(db: Session) -> list[POngoingPollination]:
             'germination_rate': p.germination_rate,
         }
         # POngoingPollination.validate(ongoing_pollination_dict)
-        ongoing_pollinations.append(POngoingPollination.parse_obj(ongoing_pollination_dict))
+        ongoing_pollinations.append(BOngoingPollination.parse_obj(ongoing_pollination_dict))
     return ongoing_pollinations
 
 
-def read_pollen_containers(db: Session) -> list[PPollenContainer]:
+def read_pollen_containers(db: Session) -> list[FBPollenContainer]:
     query = db.query(Plant).filter(Plant.count_stored_pollen_containers >= 1)
     plants: list[Plant] = query.all()
 
     pollen_containers = []
     for p in plants:
-        pollen_containers.append(PPollenContainer(
+        pollen_containers.append(FBPollenContainer(
             plant_id=p.id,
             plant_name=p.plant_name,
             genus=p.taxon.genus if p.taxon else None,
@@ -315,7 +315,7 @@ def read_pollen_containers(db: Session) -> list[PPollenContainer]:
     return pollen_containers
 
 
-def read_plants_without_pollen_containers(db: Session) -> list[PPlantWithoutPollenContainer]:
+def read_plants_without_pollen_containers(db: Session) -> list[BPlantWithoutPollenContainer]:
     query = (db.query(Plant).filter((Plant.count_stored_pollen_containers == 0) |
                                     Plant.count_stored_pollen_containers.is_(None))
              # .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))))
@@ -324,7 +324,7 @@ def read_plants_without_pollen_containers(db: Session) -> list[PPlantWithoutPoll
 
     plants_without_pollen_containers = []
     for p in plants:
-        plants_without_pollen_containers.append(PPlantWithoutPollenContainer(
+        plants_without_pollen_containers.append(BPlantWithoutPollenContainer(
             plant_id=p.id,
             plant_name=p.plant_name,
             genus=p.taxon.genus if p.taxon else None,
@@ -332,7 +332,7 @@ def read_plants_without_pollen_containers(db: Session) -> list[PPlantWithoutPoll
     return plants_without_pollen_containers
 
 
-def update_pollen_containers(pollen_containers_data: list[PPollenContainer], db: Session):
+def update_pollen_containers(pollen_containers_data: list[FBPollenContainer], db: Session):
     for pollen_container_data in pollen_containers_data:
         plant = Plant.get_plant_by_plant_id(pollen_container_data.plant_id, db, raise_exception=True)
         plant.count_stored_pollen_containers = pollen_container_data.count_stored_pollen_containers

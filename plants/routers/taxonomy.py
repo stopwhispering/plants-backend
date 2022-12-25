@@ -10,8 +10,8 @@ from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
 # from plants.services.trait_services import update_traits
-from plants.validation.message_validation import PConfirmation
-from plants.validation.taxon_validation import PResultsGetTaxa, PModifiedTaxa, PTaxon, PTaxonImage
+from plants.validation.message_validation import BConfirmation
+from plants.validation.taxon_validation import BResultsGetTaxa, FModifiedTaxa, FBTaxon, FBTaxonImage
 
 logger = logging.getLogger(__name__)
 
@@ -22,46 +22,21 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=PResultsGetTaxa)
-async def get_taxa(
-        db: Session = Depends(get_db)
-):
+@router.get("/", response_model=BResultsGetTaxa)
+async def get_taxa(db: Session = Depends(get_db)):
     """returns taxa from taxon database table"""
-    taxa: list[Taxon] = db.query(Taxon).options(
+    taxa: list[Taxon] = db.query(Taxon).options(  # noqa
         subqueryload(Taxon.distribution),
         subqueryload(Taxon.occurrence_images),
         subqueryload(Taxon.images),
-
         # subqueryload(Taxon.plants),  # not required
         # subqueryload(Taxon.property_values_taxon),  # not required
-
         subqueryload(Taxon.image_to_taxon_associations)
         .subqueryload(ImageToTaxonAssociation.image),
     ).all()
     taxon_dict = {}
     for taxon in taxa:
         taxon_dict[taxon.id] = taxon.as_dict()
-        # if taxon.taxon_to_trait_associations:
-        #
-        #     # build a dict of trait categories
-        #     categories = {}
-        #     for link in taxon.taxon_to_trait_associations:
-        #         if link.trait.trait_category.id not in categories:
-        #             categories[link.trait.trait_category.id] = {
-        #                 'id': link.trait.trait_category.id,
-        #                 'category_name': link.trait.trait_category.category_name,
-        #                 'sort_flag': link.trait.trait_category.sort_flag,
-        #                 'traits': []
-        #             }
-        #         categories[link.trait.trait_category.id]['traits'].append({
-        #             'id': link.trait.id,
-        #             'trait': link.trait.trait,
-        #             # 'observed': link.observed,
-        #             'status': link.status
-        #         })
-        #
-        #     # ui5 frontend requires a list for the json model
-        #     taxon_dict[taxon.id]['trait_categories'] = list(categories.values())
 
         # images
         taxon_dict[taxon.id]['images'] = []
@@ -95,15 +70,15 @@ async def get_taxa(
     return results
 
 
-@router.put("/", response_model=PConfirmation)
-async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Session = Depends(get_db)):
+@router.put("/", response_model=BConfirmation)
+async def update_taxa(request: Request, modified_taxa: FModifiedTaxa, db: Session = Depends(get_db)):
     """two things can be changed in the taxon model, and these are modified in extensions here:
         - modified custom fields
         - traits"""
     modified_taxa = modified_taxa.ModifiedTaxaCollection
 
     for taxon_modified in modified_taxa:
-        taxon_modified: PTaxon
+        taxon_modified: FBTaxon
         taxon: Taxon = db.query(Taxon).filter(Taxon.id == taxon_modified.id).first()
         if not taxon:
             logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
@@ -115,7 +90,7 @@ async def update_taxa(request: Request, modified_taxa: PModifiedTaxa, db: Sessio
         # changes to images attached to the taxon
         # deleted images
         # path_originals_saved = [image.path_original for image in taxon_modified.images] if \
-        image: PTaxonImage
+        image: FBTaxonImage
         filenames_saved = ([image.filename for image in taxon_modified.images]
                            if taxon_modified.images else [])
         for image_obj in taxon.images:

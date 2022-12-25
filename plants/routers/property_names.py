@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.orm import Session, subqueryload
 
 from plants.util.ui_utils import get_message
-from plants.validation.property_validation import PResultsPropertyNames
+from plants.validation.property_validation import BResultsPropertyNames
 from plants.models.property_models import PropertyCategory
 from plants.dependencies import get_db
 
@@ -16,7 +16,7 @@ router = APIRouter(
         )
 
 
-@router.get("/", response_model=PResultsPropertyNames)
+@router.get("/", response_model=BResultsPropertyNames)
 async def get_property_names(db: Session = Depends(get_db)):
     query = db.query(PropertyCategory).options(subqueryload(PropertyCategory.property_names))
     category_obj = query.all()

@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 from datetime import datetime, date
@@ -5,13 +6,24 @@ from datetime import datetime, date
 from pydantic import Field, Extra
 from pydantic.main import BaseModel
 
-from plants.models.enums import PropagationType, CancellationReason, TagState
-from plants.validation.message_validation import PMessage
+from plants.validation.message_validation import BMessage
 
 
-class PPlantTag(BaseModel):
+####################################################################################################
+# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
+####################################################################################################
+class FBTagState(Enum):
+    NONE = 'None'
+    INDICATION01 = 'Indication01'
+    SUCCESS = 'Success'
+    INFORMATION = 'Information'
+    ERROR = 'Error'
+    WARNING = 'Warning'
+
+
+class FBPlantTag(BaseModel):
     id: Optional[int]
-    state: TagState
+    state: FBTagState
     text: str
     last_update: Optional[datetime]
     plant_id: int
@@ -22,22 +34,17 @@ class PPlantTag(BaseModel):
         orm_mode = True
 
 
-class PPlantsDeleteRequest(BaseModel):
-    plant_id: int
+class FBAssociatedPlantExtractForPlant(BaseModel):
+    id: int
+    plant_name: str
+    active: bool
 
     class Config:
         extra = Extra.forbid
+        orm_mode = True
 
 
-class PPlantsRenameRequest(BaseModel):
-    OldPlantName: str
-    NewPlantName: str
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PPlantCurrentSoil(BaseModel):
+class FBPlantCurrentSoil(BaseModel):
     soil_name: str
     date: date
 
@@ -45,7 +52,7 @@ class PPlantCurrentSoil(BaseModel):
         extra = Extra.forbid
 
 
-class PPlantLatestImage(BaseModel):
+class FBPlantLatestImage(BaseModel):
     relative_path: Path = Field(alias='path')
     record_date_time: datetime = Field(alias='date')
 
@@ -55,54 +62,59 @@ class PPlantLatestImage(BaseModel):
         orm_mode = True
 
 
-class PAssociatedPlantExtractForPlant(BaseModel):
-    id: int
-    plant_name: str
-    active: bool
-
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
-
-# todo required?
-# class PAssociatedPlantExtractForPlantOptional(BaseModel):
-#     id: int | None
-#     plant_name: str | None
-#     active: bool | None
-#
-#     class Config:
-#         extra = Extra.forbid
-#         orm_mode = True
+class FBPropagationType(Enum):
+    SEED_COLLECTED = 'seed (collected)'
+    OFFSET = 'offset'
+    ACQUIRED_AS_PLANT = 'acquired as plant'
+    BULBIL = 'bulbil'
+    HEAD_CUTTING = 'head cutting'
+    LEAF_CUTTING = 'leaf cutting'
+    SEED_PURCHASED = 'seed (purchased)'
+    UNKNOWN = 'unknown'
+    NONE = ''
 
 
-class PPlant(BaseModel):
+class FBCancellationReason(Enum):
+    WINTER_DAMAGE = 'Winter Damage'
+    DRIEDOUT = 'Dried Out'
+    MOULD = 'Mould'
+    MITES = 'Mites'
+    OTHER_INSECTS = 'Other Insects'
+    ABANDONMENT = 'Abandonment'
+    GIFT = 'Gift'
+    SALE = 'Sale'
+    OTHERS = 'Others'
+    # NONE = ''
+
+
+class FBPlant(BaseModel):
     id: int | None  # None for new plants
     plant_name: str
     field_number: str | None
     geographic_origin: str | None
     nursery_source: str | None
-    propagation_type: PropagationType | None
+    propagation_type: FBPropagationType | None
     active: bool
-    cancellation_reason: CancellationReason | None
+    cancellation_reason: FBCancellationReason | None
     cancellation_date: date | None
     generation_notes: str | None
     taxon_id: int | None
     taxon_authors: str | None
     botanical_name: str | None
 
-    parent_plant: PAssociatedPlantExtractForPlant | None
-    parent_plant_pollen: PAssociatedPlantExtractForPlant | None
+    parent_plant: FBAssociatedPlantExtractForPlant | None
+    parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
     plant_notes: str | None
     filename_previewimage: Path | None
     last_update: datetime | None  # None for new plants
 
-    descendant_plants_all: list[PAssociatedPlantExtractForPlant]
-    sibling_plants: list[PAssociatedPlantExtractForPlant]
-    same_taxon_plants: list[PAssociatedPlantExtractForPlant]
+    descendant_plants_all: list[FBAssociatedPlantExtractForPlant]
+    sibling_plants: list[FBAssociatedPlantExtractForPlant]
+    same_taxon_plants: list[FBAssociatedPlantExtractForPlant]
 
-    current_soil: PPlantCurrentSoil | None
-    latest_image: PPlantLatestImage | None
-    tags: list[PPlantTag]
+    current_soil: FBPlantCurrentSoil | None
+    latest_image: FBPlantLatestImage | None
+    tags: list[FBPlantTag]
 
     class Config:
         extra = Extra.forbid
@@ -111,38 +123,59 @@ class PPlant(BaseModel):
         allow_population_by_field_name = True
 
 
-class PResultsPlants(BaseModel):
-    action: str
-    resource: str
-    message: PMessage
-    PlantsCollection: list[PPlant]
+####################################################################################################
+# Entities used only in API Requests from Frontend (F...)
+####################################################################################################
+class FPlantsDeleteRequest(BaseModel):
+    plant_id: int
 
     class Config:
         extra = Extra.forbid
 
 
-class PPlantsUpdateRequest(BaseModel):
-    PlantsCollection: list[PPlant]
+class FPlantsUpdateRequest(BaseModel):
+    PlantsCollection: list[FBPlant]
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsPlantsUpdate(BaseModel):
-    action: str
-    resource: str
-    message: PMessage
-    plants: list[PPlant]
+####################################################################################################
+# Entities used only in API Responses from Backend (B...)
+####################################################################################################
+class BPlantsRenameRequest(BaseModel):
+    OldPlantName: str
+    NewPlantName: str
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsPlantCloned(BaseModel):
+class BResultsPlants(BaseModel):
     action: str
     resource: str
-    message: PMessage
-    plant: PPlant
+    message: BMessage
+    PlantsCollection: list[FBPlant]
+
+    class Config:
+        extra = Extra.forbid
+
+
+class BResultsPlantsUpdate(BaseModel):
+    action: str
+    resource: str
+    message: BMessage
+    plants: list[FBPlant]
+
+    class Config:
+        extra = Extra.forbid
+
+
+class BResultsPlantCloned(BaseModel):
+    action: str
+    resource: str
+    message: BMessage
+    plant: FBPlant
 
     class Config:
         extra = Extra.forbid

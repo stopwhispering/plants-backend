@@ -4,46 +4,48 @@ from pydantic import Extra
 from pydantic.main import BaseModel
 from typing import List, Optional
 
-from plants.validation.message_validation import PMessage
-# from plants.validation.trait_validation import PTraitCategory, PTrait
+from plants.validation.message_validation import BMessage
 
 
-class ProposalEntity(str, Enum):
+####################################################################################################
+# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
+####################################################################################################
+
+
+####################################################################################################
+# Entities used only in API <<Requests>> from <<Frontend>> (F...)
+####################################################################################################
+class FProposalEntity(str, Enum):
     """proposal entities that may be requested by frontend"""
     SOIL = 'SoilProposals'
     NURSERY = 'NurserySourceProposals'
     KEYWORD = 'KeywordProposals'
-    # TRAIT_CATEGORY = 'TraitCategoryProposals'
 
 
-class PComponentName(BaseModel):
-    component_name: str
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PNurseryName(BaseModel):
-    name: str
-
-    class Config:
-        extra = Extra.forbid
-
-
-class PKeywordName(BaseModel):
+####################################################################################################
+# Entities used only in API <<Responses>> from <<Backend>> (B...)
+####################################################################################################
+class BKeywordName(BaseModel):
     keyword: str
 
     class Config:
         extra = Extra.forbid
 
 
-class PResultsProposals(BaseModel):
+class BNurseryName(BaseModel):
+    name: str
+
+    class Config:
+        extra = Extra.forbid
+
+
+class BResultsProposals(BaseModel):
     action: str
     resource: str
-    message: PMessage
+    message: BMessage
 
-    NurseriesSourcesCollection: Optional[List[PNurseryName]]
-    KeywordsCollection: Optional[List[PKeywordName]]
+    NurseriesSourcesCollection: Optional[List[BNurseryName]]
+    KeywordsCollection: Optional[List[BKeywordName]]
     # TraitCategoriesCollection: Optional[List[PTraitCategory]]
     # TraitsCollection: Optional[List[PTrait]]
 

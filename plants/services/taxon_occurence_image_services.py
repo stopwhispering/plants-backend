@@ -12,7 +12,7 @@ from plants import config
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import TaxonOccurrenceImage, Taxon
 from plants.util.image_utils import generate_thumbnail
-from plants.validation.taxon_validation import PTaxonOccurrenceImage
+from plants.validation.taxon_validation import FBTaxonOccurrenceImage
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ def get_occurrence_thumbnail_filename(gbif_id: int, occurrence_id: int, img_no: 
     filename = f"{gbif_id}_{occurrence_id}_{img_no}." \
                f"{size_x}_{size_y}.jpg"
     return filename
+
 
 class TaxonOccurencesLoader:
     @staticmethod
@@ -135,7 +136,7 @@ class TaxonOccurencesLoader:
 
                     # validate (don't convert as this would validate datetime to str
                     try:
-                        PTaxonOccurrenceImage(**d).dict()
+                        FBTaxonOccurrenceImage(**d).dict()
                     except ValidationError as err:
                         throw_exception(str(err))
                         # logger.warning(str(err))

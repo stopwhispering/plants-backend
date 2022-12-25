@@ -7,7 +7,7 @@ from starlette.requests import Request
 # from plants.constants import TRAIT_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.services.plants_services import get_distinct_image_keywords
-from plants.validation.proposal_validation import ProposalEntity, PResultsProposals
+from plants.validation.proposal_validation import FProposalEntity, BResultsProposals
 # from plants.models.trait_models import Trait, TraitCategory
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
@@ -21,13 +21,13 @@ router = APIRouter(
 )
 
 
-@router.get("/{entity_id}", response_model=PResultsProposals)
-def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Depends(get_db)):
+@router.get("/{entity_id}", response_model=BResultsProposals)
+def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = Depends(get_db)):
     """returns proposals for selection tables"""
 
     results = {}
 
-    if entity_id == ProposalEntity.NURSERY:
+    if entity_id == FProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
         nurseries_tuples = (db.query(Plant.nursery_source)
                             # .order_by(Plant.last_update.desc())
@@ -38,7 +38,7 @@ def get_proposals(request: Request, entity_id: ProposalEntity, db: Session = Dep
         else:
             results = {'NurseriesSourcesCollection': [{'name': n[0]} for n in nurseries_tuples]}
 
-    elif entity_id == ProposalEntity.KEYWORD:
+    elif entity_id == FProposalEntity.KEYWORD:
         # return collection of all distinct keywords used in images
         # keywords_set = get_distinct_keywords_from_image_files()
         keywords_set = get_distinct_image_keywords(db=db)

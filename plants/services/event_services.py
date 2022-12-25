@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 
 from plants.models.event_models import Soil
 from plants.util.ui_utils import throw_exception
-from plants.validation.event_validation import PRSoil, PSoilCreate
+from plants.validation.event_validation import FBSoil, FSoilCreate
 
 logger = logging.getLogger(__name__)
 
 
-def create_soil(soil: PSoilCreate, db: Session) -> Soil:
+def create_soil(soil: FSoilCreate, db: Session) -> Soil:
     """create new soil in database"""
     if soil.id:
         throw_exception(f'Soil already exists: {soil.id}')
@@ -27,7 +27,7 @@ def create_soil(soil: PSoilCreate, db: Session) -> Soil:
     return soil_obj
 
 
-def update_soil(soil: PRSoil, db: Session) -> Soil:
+def update_soil(soil: FBSoil, db: Session) -> Soil:
     """update existing soil in database"""
     # make sure there isn't another soil with same name
     soil_obj_same_name = db.query(Soil).filter((Soil.soil_name == soil.soil_name.strip()) & (Soil.id != soil.id)).all()

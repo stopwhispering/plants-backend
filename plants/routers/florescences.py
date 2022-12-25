@@ -9,9 +9,9 @@ from plants.services.florescence_services import (
 from plants.services.pollination_services import read_potential_pollen_donors
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
-from plants.validation.pollination_validation import (PResultsActiveFlorescences,
-                                                      PResultsPotentialPollenDonors, PRequestEditedFlorescence,
-                                                      PResultsPlantsForNewFlorescence, PRequestNewFlorescence,
+from plants.validation.pollination_validation import (BResultsActiveFlorescences,
+                                                      BResultsPotentialPollenDonors, FRequestEditedFlorescence,
+                                                      BResultsPlantsForNewFlorescence, FRequestNewFlorescence,
                                                       )
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ router = APIRouter(
 )
 
 
-@router.get("/active_florescences", response_model=PResultsActiveFlorescences)
+@router.get("/active_florescences", response_model=BResultsActiveFlorescences)
 async def get_active_florescences(db: Session = Depends(get_db), ):
     """read active florescences, either after inflorescence appeared or flowering"""
     florescences = read_active_florescences(db)
@@ -37,7 +37,7 @@ async def get_active_florescences(db: Session = Depends(get_db), ):
     return results
 
 
-@router.get("/plants_for_new_florescence", response_model=PResultsPlantsForNewFlorescence)
+@router.get("/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence)
 async def get_active_florescences(db: Session = Depends(get_db), ):
     """read all plants available for new florescence"""
     plants = read_plants_for_new_florescence(db)
@@ -48,7 +48,7 @@ async def get_active_florescences(db: Session = Depends(get_db), ):
 @router.put('/active_florescences/{florescence_id}')
 async def put_active_florescence(
         florescence_id: int,
-        edited_florescence_data: PRequestEditedFlorescence,
+        edited_florescence_data: FRequestEditedFlorescence,
         db: Session = Depends(get_db)):
     assert florescence_id == edited_florescence_data.id
 
@@ -56,7 +56,7 @@ async def put_active_florescence(
 
 
 @router.post("/active_florescences")
-async def post_active_florescence(new_florescence_data: PRequestNewFlorescence,
+async def post_active_florescence(new_florescence_data: FRequestNewFlorescence,
                                   db: Session = Depends(get_db), ):
     """create new florescence for a plant"""
     create_new_florescence(new_florescence_data=new_florescence_data, db=db)
@@ -70,7 +70,7 @@ async def delete_florescence(
 
 
 @router.get("/potential_pollen_donors/{florescence_id}",
-            response_model=PResultsPotentialPollenDonors)
+            response_model=BResultsPotentialPollenDonors)
 async def get_potential_pollen_donors(florescence_id: int,
                                       db: Session = Depends(get_db), ):
     potential_pollen_donors = read_potential_pollen_donors(florescence_id=florescence_id, db=db)

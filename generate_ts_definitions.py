@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, Sequence
+from typing import Tuple
 
 from pydantic2ts import generate_typescript_defs
 
@@ -18,7 +18,7 @@ class PydanticModel:
     exclude: Tuple[str, ...]
 
 
-shared_message: Tuple[str, ...] = ('PMessage', 'PConfirmation')
+shared_message: Tuple[str, ...] = ('BMessage', 'BConfirmation')
 exclude = shared_message
 
 
@@ -48,7 +48,7 @@ models = [
 
 
 def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
-    lines_start = [l for l in lines if l.startswith('export interface ' + model_name)]
+    lines_start = [l for l in lines if l.startswith('export interface ' + model_name + ' ')]
     if not lines_start:
         return lines
     if len(lines_start) > 1:
@@ -91,19 +91,45 @@ def remove_comments(model: PydanticModel):
             f.writelines(new_lines)
 
 
-def insert_header(model: PydanticModel):
+# def insert_header(model: PydanticModel):
+#     with open(model.path_ts) as f:
+#         lines = f.readlines()
+#     lines.insert(0, HEADER)
+#     with open(model.path_ts, 'w') as f:
+#         f.writelines(lines)
+
+
+def _get_models_in_pydantic_file(model: PydanticModel) -> set[str]:
+    with open(model.path_pydantic) as f:
+        lines = f.readlines()
+    lines_without_spaces = [l.strip() for l in lines]
+    lines_with_models = [l for l in lines_without_spaces if l.startswith('class')]
+    models_with_basemodel = [l.split(' ')[1] for l in lines_with_models]
+    models = [m[:(m.find('(') or m.find(':'))] for m in models_with_basemodel]
+    return set([m for m in models if m != 'Config'])
+
+
+def _get_created_definitions_in_ts_file(model: PydanticModel) -> set[str]:
     with open(model.path_ts) as f:
         lines = f.readlines()
-    lines.insert(0, HEADER)
-    with open(model.path_ts, 'w') as f:
-        f.writelines(lines)
+    exports = [l for l in lines if l.strip().startswith('export')]
+    if ex := [l for l in exports if not l.startswith('export type') and not l.startswith('export interface')]:
+        raise ValueError(f"Found non type or interface export in {model.path_ts}; {ex}")
+    exports_without_brackets = [l.replace('{', ' ') for l in exports]
+    class_names = [l.split(' ')[2] for l in exports_without_brackets]
+    return set(class_names)
+
+
+def get_surplus_models_to_remove(model: PydanticModel) -> tuple[str]:
+    actual_models = _get_models_in_pydantic_file(model)
+    created_definitions = _get_created_definitions_in_ts_file(model)
+    return tuple(created_definitions - actual_models)
 
 
 for model in models:
-    if model.exclude:
-        generate_typescript_defs(model.path_pydantic, model.path_ts, exclude=exclude)
-        remove_shared_models(model)
-    else:
-        generate_typescript_defs(model.path_pydantic, model.path_ts)
+    models_to_remove = get_surplus_models_to_remove(model)
+    generate_typescript_defs(model.path_pydantic, model.path_ts)  # doesn't work anyway:, exclude=models_to_remove)
+    model.exclude = models_to_remove
+    remove_shared_models(model)
     remove_comments(model)
-    insert_header(model)
+    # insert_header(model)

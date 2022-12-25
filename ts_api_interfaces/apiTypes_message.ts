@@ -1,17 +1,13 @@
-import ManagedObject from "sap/ui/base/ManagedObject";
 
-/**
- * @namespace plants.ui.definitions
- */
-export type PMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
-export interface PConfirmation {
+export interface BConfirmation {
   action: string;
   resource: string;
-  message: PMessage;
+  message: BMessage;
 }
-export interface PMessage {
-  type: PMessageType;
+export interface BMessage {
+  type: BMessageType;
   message: string;
   additionalText?: string;
   description?: string;
