@@ -11,7 +11,7 @@ instead (*python wsgi.py*).
 
 *(todo update text)*
 
-![Architecture](static/plants-architecture.png?raw=true "Architecture")
+![Architecture](static/plants_backend_deployment_architecture.png?raw=true "Architecture")
 
 ## Configuration
 see *config.py* and *config_local.py*, the latter used to set environment-specific

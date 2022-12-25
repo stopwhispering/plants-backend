@@ -9,9 +9,9 @@ from plants.services.taxonomy_lookup_details import TaxonomyLookupDetails
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
-from plants.services.taxon_occurence_image_services import TaxonOccurencesLoader
+from plants.services.taxonomy_occurence_images import TaxonOccurencesLoader
 from plants.validation.taxon_validation import (FTaxonInfoRequest, BResultsTaxonInfoRequest,
-                                                FAssignTaxonRequest, BResultsSaveTaxonRequest, FFetchTaxonImages,
+                                                FAssignTaxonRequest, BResultsSaveTaxonRequest, FFetchTaxonOccurrenceImagesRequest,
                                                 BResultsFetchTaxonImages, BSearchResultSource)
 from plants.services.taxonomy_search import TaxonomySearch
 from plants.services.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
@@ -115,8 +115,8 @@ async def retrieve_details_for_selected_taxon(
             db.commit()
 
             # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
-            loader = TaxonOccurencesLoader()
-            thread = Thread(target=loader.scrape_occurrences_for_taxon, args=(gbif_id, db))
+            loader = TaxonOccurencesLoader(db=db)
+            thread = Thread(target=loader.scrape_occurrences_for_taxon, args=gbif_id)
             logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
             thread.start()
 
@@ -141,22 +141,22 @@ async def retrieve_details_for_selected_taxon(
 @router.post("/fetch_taxon_occurrence_images", response_model=BResultsFetchTaxonImages)
 async def fetch_taxon_occurrence_images(
         request: Request,
-        args: FFetchTaxonImages,
+        fetch_taxon_occurrence_images_request: FFetchTaxonOccurrenceImagesRequest,
         db: Session = Depends(get_db)):
     """(re)fetch taxon images from gbif and create thumbnails"""
 
     # lookup ocurrences & images at gbif and generate thumbnails
-    loader = TaxonOccurencesLoader()
-    loader.scrape_occurrences_for_taxon(gbif_id=args.gbif_id, db=db)
+    loader = TaxonOccurencesLoader(db=db)
+    loader.scrape_occurrences_for_taxon(gbif_id=fetch_taxon_occurrence_images_request.gbif_id)
 
-    taxon = db.query(Taxon).filter(Taxon.gbif_id == args.gbif_id).first()
+    taxon = db.query(Taxon).filter(Taxon.gbif_id == fetch_taxon_occurrence_images_request.gbif_id).first()
     if not taxon:
         # would probably have raised earlier
-        logger.error(f"Can't find taxon for GBIF ID {args.gbif_id} in database.")
-        throw_exception(f"Can't find taxon for GBIF ID {args.gbif_id} in database.", request=request)
+        logger.error(f"Can't find taxon for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id} in database.")
+        throw_exception(f"Can't find taxon for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id} in database.", request=request)
     occurrence_images = [o.as_dict() for o in taxon.occurrence_images]
 
-    message = f'Refetched occurences for GBIF ID {args.gbif_id}'
+    message = f'Refetched occurences for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id}'
     logger.info(message)
 
     results = {'action': 'Save Taxon',

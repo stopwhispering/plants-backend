@@ -1,0 +1,84 @@
+@startuml plants-backend-deployment-architecture
+
+skinparam arrow {
+    Color #23a3dd
+}
+
+skinparam component {
+    BackgroundColor #23a3dd
+    BorderColor #16688d
+    FontColor #FFFFFF
+}
+
+
+interface "Inbound" as inbound
+
+node "Backend Server" {
+
+    rectangle "traefik-container <img:"./docker.40_29.png">" as traefik_container #line.dashed {
+
+        package "Traefik Reverse Proxy" {
+            label traefik_logo [
+                <img:"./traefik.50_69.png">
+            ]
+            component "Traefik" as traefik
+            inbound -down-> traefik
+        }
+
+        package "Traefik Endpoint Routing" {
+
+            component  "plants.astroloba.net/api" as plants_be_ep
+            component "plants.astroloba.net" as plants_fe_ep
+            component "traefik.astroloba.net" as dashboard_ep
+            component "pgadmin.astroloba.net" as pgadmin_ep
+            traefik -down-> plants_be_ep: "443"
+            traefik -down-> plants_fe_ep: "443"
+            traefik -down-> dashboard_ep: "443"
+            traefik -down-> pgadmin_ep: "443"
+        }
+        package "Traefik Dashboard"{
+            component "Traefik Dashboard" as dashboard
+            dashboard_ep -down-> dashboard
+        }
+
+    }
+
+
+    rectangle "plants-frontend-container <img:"./docker.40_29.png">" as plants_frontend_container #line.dashed {
+        package "nginx Web Server" {
+            component "UI5 Plants Frontend" as plants_fe
+            plants_fe_ep -down-> plants_fe
+        }
+    }
+
+    rectangle "plants-backend-container <img:"./docker.40_29.png">" as plants_backend_container #line.dashed {
+        package "Uvicorn-Gunicorn " {
+            component "FastAPI Python Plants Backend" as plants_be
+
+            plants_be_ep -down-> plants_be
+        }
+    }
+
+    rectangle "pgadmin-container <img:"./docker.40_29.png">" as pgadmin_container #line.dashed {
+        package "pgAdmin" {
+            component "pgAdmin Database Administraion" as pgadmin
+            pgadmin_ep -down-> pgadmin
+        }
+    }
+
+    rectangle "postgres-container <img:"./docker.40_29.png">" as postgres_container #line.dashed {
+        package "PostgreSQL" {
+            component "PostgreSQL Database" as postgres
+            traefik -down-> postgres : 5432
+        }
+    }
+
+}
+
+/' for placement '/
+pgadmin_ep -[hidden]down-> postgres
+traefik_container -[hidden]---> plants_frontend_container  /' for placement '/
+traefik_container -[hidden]---> plants_backend_container  /' for placement '/
+traefik_container -[hidden]---> pgadmin_container  /' for placement '/
+traefik_container -[hidden]---> postgres_container  /' for placement '/
+@enduml

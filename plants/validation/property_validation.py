@@ -33,7 +33,6 @@ class FBProperty(BaseModel):
 class FBPropertiesInCategory(BaseModel):
     category_name: str
     category_id: int
-    sort: Optional[int]  # todo remove?
     properties: List[FBProperty]
     property_value: Optional[str]  # used in some request to add new property to category
 

@@ -59,7 +59,7 @@ class FBObservation(BaseModel):
 
 
 class FBImageAssignedToEvent(BaseModel):
-    id: int  # empty if new # todo really empty?
+    id: int
     filename: str
 
     class Config:
@@ -126,8 +126,8 @@ class FCreateOrUpdateEvent(FBEvent):
     soil: FBSoil | None
     pot: FBPot | None
 
-    # class Config:
-    #     extra = Extra.forbid  # todo
+    class Config:
+        extra = Extra.forbid  # todo works?
 
 
 class FRequestCreateOrUpdateEvent(BaseModel):

@@ -117,7 +117,7 @@ class FModifiedTaxa(BaseModel):
         extra = Extra.forbid
 
 
-class FFetchTaxonImages(BaseModel):
+class FFetchTaxonOccurrenceImagesRequest(BaseModel):
     gbif_id: int
 
     class Config:
@@ -156,8 +156,7 @@ class BKewSearchResultEntry(BaseModel):
     family: str
     name: str
     rank: str
-    lsid: str | None  # IPNI Life Sciences Identifier
-    # powo_id: str | None
+    lsid: str  # IPNI/POWO Life Sciences Identifier
     genus: str
     species: str | None  # None for genus search
     namePublishedInYear: str | None

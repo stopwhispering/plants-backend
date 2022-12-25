@@ -85,11 +85,8 @@ async def update_taxa(request: Request, modified_taxa: FModifiedTaxa, db: Sessio
             throw_exception(f'Taxon not found: {taxon.name}. Saving canceled.', request=request)
 
         taxon.custom_notes = taxon_modified.custom_notes
-        # update_traits(taxon, taxon_modified.trait_categories, db)  # todo still required?
 
         # changes to images attached to the taxon
-        # deleted images
-        # path_originals_saved = [image.path_original for image in taxon_modified.images] if \
         image: FBTaxonImage
         filenames_saved = ([image.filename for image in taxon_modified.images]
                            if taxon_modified.images else [])
