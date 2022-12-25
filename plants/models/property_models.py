@@ -17,7 +17,7 @@ class PropertyCategory(Base, OrmUtil):
     __tablename__ = 'property_category'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     category_name = Column(VARCHAR(80), unique=True, nullable=False)
-    sort = Column(INTEGER)
+    # sort = Column(INTEGER)
 
     property_names: list = relationship("PropertyName", back_populates="property_category")
 
