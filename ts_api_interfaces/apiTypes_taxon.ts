@@ -1,22 +1,25 @@
 
+export type BSearchResultSource =
+  | "Local DB"
+  | "Plants of the World"
+  | "International Plant Names Index + Plants of the World";
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface BKewSearchResultEntry {
-  source: string;
+  source: BSearchResultSource;
   id?: number;
   count: number;
   count_inactive: number;
   is_custom: boolean;
-  synonym: boolean;
+  synonym?: boolean;
   authors: string;
   family: string;
   name: string;
   rank: string;
-  fqId?: string;
-  powo_id?: string;
+  lsid: string;
   genus: string;
   species?: string;
-  namePublishedInYear: string;
+  namePublishedInYear?: string;
   phylum?: string;
   synonyms_concat?: string;
   distribution_concat?: string;
@@ -41,13 +44,10 @@ export interface FBTaxonOccurrenceImage {
   href: string;
   filename_thumbnail: string;
 }
-export interface BResultsGetTaxa {
+export interface BResultsGetTaxon {
   action: string;
-  resource: string;
-  message?: BMessage;
-  TaxaDict: {
-    [k: string]: FBTaxon;
-  };
+  message: BMessage;
+  taxon: FBTaxon;
 }
 export interface FBTaxon {
   id: number;
@@ -64,7 +64,7 @@ export interface FBTaxon {
   taxonomic_status?: string;
   name_published_in_year?: number;
   synonym: boolean;
-  fq_id?: string;
+  lsid?: string;
   authors?: string;
   basionym?: string;
   synonyms_concat?: string;
@@ -72,9 +72,7 @@ export interface FBTaxon {
   hybrid: boolean;
   hybridgenus: boolean;
   gbif_id?: string;
-  powo_id?: string;
   custom_notes?: string;
-  ipni_id_short: string;
   distribution?: FBDistribution;
   images?: FBTaxonImage[];
   occurrenceImages?: FBTaxonOccurrenceImage[];
@@ -97,26 +95,25 @@ export interface BResultsSaveTaxonRequest {
 }
 export interface BResultsTaxonInfoRequest {
   action: string;
-  resource: string;
   message: BMessage;
   ResultsCollection: BKewSearchResultEntry[];
 }
 export interface FAssignTaxonRequest {
-  fqId?: string;
+  lsid?: string;
   hasCustomName: boolean;
-  id?: number;
+  taxon_id?: number;
   nameInclAddition: string;
   plant_id: number;
   source: string;
 }
-export interface FFetchTaxonImages {
+export interface FFetchTaxonOccurrenceImagesRequest {
   gbif_id: number;
 }
 export interface FModifiedTaxa {
   ModifiedTaxaCollection: FBTaxon[];
 }
 export interface FTaxonInfoRequest {
-  includeKew: boolean;
-  searchForGenus: boolean;
-  species: string;
+  include_external_apis: boolean;
+  taxon_name_pattern: string;
+  search_for_genus_not_species: boolean;
 }

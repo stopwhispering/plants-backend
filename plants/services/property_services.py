@@ -51,13 +51,14 @@ class LoadProperties:
         property_dicts = [p.as_dict() for p in property_objects]
 
         # build category / property hierarchy
-        distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts])
+        # distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts])
+        distinct_categories = set([(p['category_name'], p['category_id'],) for p in property_dicts])
         categories = []
         for c in distinct_categories:
             categories.append(cat := {
                 'category_name': c[0],
                 'category_id':   c[1],
-                'sort':          c[2],
+                # 'sort':          c[2],
                 })
             cat['properties'] = [{
                 'property_name':    p['property_name'],
@@ -79,13 +80,14 @@ class LoadProperties:
         property_objects_taxon = taxon.property_values_taxon
         property_dicts_taxon = [p.as_dict() for p in property_objects_taxon]
 
-        distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts_taxon])
+        # distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts_taxon])
+        distinct_categories = set([(p['category_name'], p['category_id'],) for p in property_dicts_taxon])
         categories_taxon = {}
         for c in distinct_categories:
             categories_taxon[c[1]] = (cat := {
                 'category_name': c[0],
                 'category_id':   c[1],
-                'sort':          c[2],
+                # 'sort':          c[2],
                 })
             cat['properties'] = [{
                 'property_name':    p['property_name'],

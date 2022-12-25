@@ -5,6 +5,7 @@ import datetime
 from pydantic import validator, Extra
 from pydantic.main import BaseModel
 
+from plants.util.ui_utils import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.validation.message_validation import BMessage
 
 
@@ -49,13 +50,14 @@ class FBTaxonOccurrenceImage(BaseModel):
         extra = Extra.forbid
         anystr_strip_whitespace = True
         # alias_generator = humps.camelize
-        allow_population_by_field_name = True  # populate model by both alias (default) and field name
+        # allow_population_by_field_name = True  # populate model by both alias (default) and field name
 
     @validator("date")
     def datetime_to_string(cls, v):  # noqa
         """validator decorator makes this a class method and enforces cls param"""
         # return v.isoformat()
-        return v.strftime("%Y-%m-%d")
+        # return v.strftime("%Y-%m-%d")
+        return v.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
 
     # @validator("filename_thumbnail")
     # def get_path(cls, v):  # noqa
@@ -200,11 +202,21 @@ class BResultsFetchTaxonImages(BaseModel):
         extra = Extra.forbid
 
 
-class BResultsGetTaxa(BaseModel):
+# class BResultsGetTaxa(BaseModel):
+#     action: str
+#     resource: str
+#     message: Optional[BMessage]
+#     TaxaDict: Dict[int, FBTaxon]
+#
+#     class Config:
+#         extra = Extra.forbid
+
+
+class BResultsGetTaxon(BaseModel):
     action: str
-    resource: str
-    message: Optional[BMessage]
-    TaxaDict: Dict[int, FBTaxon]
+    message: BMessage
+    taxon: FBTaxon
 
     class Config:
         extra = Extra.forbid
+

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, subqueryload
 from starlette.requests import Request
 
+from plants.services.taxon_services import get_taxon_for_api_by_taxon_id
 # from plants.models.trait_models import TaxonToTraitAssociation
 from plants.util.ui_utils import throw_exception, get_message
 from plants.models.taxon_models import Taxon
@@ -11,7 +12,7 @@ from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
 # from plants.services.trait_services import update_traits
 from plants.validation.message_validation import BConfirmation
-from plants.validation.taxon_validation import BResultsGetTaxa, FModifiedTaxa, FBTaxon, FBTaxonImage
+from plants.validation.taxon_validation import BResultsGetTaxa, FModifiedTaxa, FBTaxon, FBTaxonImage, BResultsGetTaxon
 
 logger = logging.getLogger(__name__)
 
@@ -22,51 +23,16 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=BResultsGetTaxa)
-async def get_taxa(db: Session = Depends(get_db)):
-    """returns taxa from taxon database table"""
-    taxa: list[Taxon] = db.query(Taxon).options(  # noqa
-        subqueryload(Taxon.distribution),
-        subqueryload(Taxon.occurrence_images),
-        subqueryload(Taxon.images),
-        # subqueryload(Taxon.plants),  # not required
-        # subqueryload(Taxon.property_values_taxon),  # not required
-        subqueryload(Taxon.image_to_taxon_associations)
-        .subqueryload(ImageToTaxonAssociation.image),
-    ).all()
-    taxon_dict = {}
-    for taxon in taxa:
-        taxon_dict[taxon.id] = taxon.as_dict()
+@router.get("/{taxon_id}", response_model=BResultsGetTaxon)
+async def get_taxon(taxon_id: int, db: Session = Depends(get_db)):
+    """
+    returns taxon with requested taxon_id
+    """
+    taxon: dict = get_taxon_for_api_by_taxon_id(taxon_id=taxon_id, db=db)
+    results = BResultsGetTaxon.parse_obj({'action': 'Get taxa',
+                                          'message': get_message(f'Read taxon {taxon_id} from database.'),
+                                          'taxon': taxon})
 
-        # images
-        taxon_dict[taxon.id]['images'] = []
-        if taxon.images:
-            for link_obj in taxon.image_to_taxon_associations:
-                image_obj: Image = link_obj.image
-                taxon_dict[taxon.id]['images'].append({'id': image_obj.id,
-                                                       'filename': image_obj.filename,
-                                                       'description': link_obj.description})
-
-        # distribution codes according to WGSRPD (level 3)
-        taxon_dict[taxon.id]['distribution'] = {'native': [],
-                                                'introduced': []}
-        for distribution_obj in taxon.distribution:
-            if distribution_obj.establishment == 'Native':
-                taxon_dict[taxon.id]['distribution']['native'].append(distribution_obj.tdwg_code)
-            elif distribution_obj.establishment == 'Introduced':
-                taxon_dict[taxon.id]['distribution']['introduced'].append(distribution_obj.tdwg_code)
-
-        # occurence images
-        taxon_dict[taxon.id]['occurrenceImages'] = [o.as_dict() for o in taxon.occurrence_images]
-
-    logger.info(message := f'Received {len(taxon_dict)} taxa from database.')
-    results = {'action': 'Get taxa',
-               'resource': 'TaxonResource',
-               'message': get_message(message),
-               'TaxaDict': taxon_dict}
-
-    # snake_case is converted to camelCase and date is converted to isoformat
-    # results = PResultsGetTaxa(**results).dict(by_alias=True)
     return results
 
 

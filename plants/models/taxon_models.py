@@ -47,7 +47,7 @@ class Taxon(Base, OrmUtil):
     lsid = Column(VARCHAR(50), nullable=False)
     authors = Column(VARCHAR(100))
     basionym = Column(VARCHAR(100))
-    synonyms_concat = Column(VARCHAR(200))
+    synonyms_concat = Column(VARCHAR(300))
     distribution_concat = Column(VARCHAR(200))
     hybrid = Column(BOOLEAN, nullable=False)
     hybridgenus = Column(BOOLEAN)
@@ -129,7 +129,7 @@ class TaxonOccurrenceImage(Base, OrmUtil):
     scientific_name = Column(VARCHAR(100))
     basis_of_record = Column(VARCHAR(25))
     verbatim_locality = Column(VARCHAR(120))
-    date = Column(DateTime(timezone=False))
+    date = Column(DateTime(timezone=False))  # todo rename datetime or timestamp
     creator_identifier = Column(VARCHAR(100))
     publisher_dataset = Column(VARCHAR(100))
     references = Column(VARCHAR(120))
