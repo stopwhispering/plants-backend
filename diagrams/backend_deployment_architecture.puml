@@ -10,12 +10,18 @@ skinparam component {
     FontColor #FFFFFF
 }
 
+skinparam database {
+    BackgroundColor #23a3dd
+    BorderColor #16688d
+    FontColor #FFFFFF
+}
+
 
 interface "Inbound" as inbound
 
 node "Backend Server" {
 
-    rectangle "traefik-container <img:"./docker.40_29.png">" as traefik_container #line.dashed {
+    rectangle "traefik-container                                                                                                                                                                                         <img:"./docker.40_29.png">" as traefik_container #line.dashed {
 
         package "Traefik Reverse Proxy" {
             label traefik_logo [
@@ -36,40 +42,40 @@ node "Backend Server" {
             traefik -down-> dashboard_ep: "443"
             traefik -down-> pgadmin_ep: "443"
         }
-        package "Traefik Dashboard"{
+        package "Traefik Dashboard" as traefik_dashboard {
             component "Traefik Dashboard" as dashboard
-            dashboard_ep -down-> dashboard
+            dashboard_ep -down-> traefik_dashboard
         }
 
     }
 
 
-    rectangle "plants-frontend-container <img:"./docker.40_29.png">" as plants_frontend_container #line.dashed {
-        package "nginx Web Server" {
+    rectangle "plants-frontend-container                  <img:"./docker.40_29.png">" as plants_frontend_container #line.dashed {
+        package "<img:"./nginx.139_29.png"> <img:"./openui5.80_29.png">" as plants_frontend_nginx_webserver {
             component "UI5 Plants Frontend" as plants_fe
-            plants_fe_ep -down-> plants_fe
+            plants_fe_ep -down-> plants_frontend_container
         }
     }
 
-    rectangle "plants-backend-container <img:"./docker.40_29.png">" as plants_backend_container #line.dashed {
-        package "Uvicorn-Gunicorn " {
-            component "FastAPI Python Plants Backend" as plants_be
+    rectangle "plants-backend-container                        <img:"./docker.40_29.png">" as plants_backend_container #line.dashed {
+        package "<img:"./uvicorn.29_29.png"> <img:"./gunicorn.133_29.png"> <img:"./fastapi.80_29.png">" as uvicorn_unicorn_fastapi {
+            component "Python Plants Backend " as plants_be
 
-            plants_be_ep -down-> plants_be
+            plants_be_ep -down-> plants_backend_container
         }
     }
 
-    rectangle "pgadmin-container <img:"./docker.40_29.png">" as pgadmin_container #line.dashed {
-        package "pgAdmin" {
-            component "pgAdmin Database Administraion" as pgadmin
-            pgadmin_ep -down-> pgadmin
+    rectangle "pgadmin-container                               <img:"./docker.40_29.png">" as pgadmin_container #line.dashed {
+        package "pgAdmin <img:"./postgres.28_29.png">" as pgadmin_{
+            component "pgAdmin DB Administraion" as pgadmin
+            pgadmin_ep -down-> pgadmin_container
         }
     }
 
-    rectangle "postgres-container <img:"./docker.40_29.png">" as postgres_container #line.dashed {
-        package "PostgreSQL" {
-            component "PostgreSQL Database" as postgres
-            traefik -down-> postgres : 5432
+    rectangle "postgres-container             <img:"./docker.40_29.png">" as postgres_container #line.dashed {
+        package "PostgreSQL <img:"./postgres.28_29.png">" as postgres_{
+            database "PostgreSQL DB" as postgres
+            traefik -down-> postgres_container : 5432
         }
     }
 
