@@ -11,12 +11,12 @@ from starlette.requests import Request
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.models.image_models import Image, ImageToEventAssociation
-from plants.services.event_services import create_soil, update_soil
+from plants.services.event_services import create_soil, update_soil, read_events_for_plant
 from plants.validation.message_validation import BConfirmation, BMessageType
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
-from plants.validation.event_validation import (BResultsEventResource, FBSoil, BPResultsUpdateCreateSoil,
-                                                BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent)
+from plants.validation.event_validation import (BResultsEventResource, BPResultsUpdateCreateSoil,
+                                                BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent, FSoil)
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ async def create_new_soil(new_soil: FSoilCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/soils", response_model=BPResultsUpdateCreateSoil)
-async def update_existing_soil(updated_soil: FBSoil, db: Session = Depends(get_db)):
+async def update_existing_soil(updated_soil: FSoil, db: Session = Depends(get_db)):
     """update soil attributes"""
     soil_obj = update_soil(soil=updated_soil, db=db)
     msg = f'Updated soil with ID {soil_obj.id}'
@@ -81,10 +81,10 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
     imports: plant_id
     exports: see PResultsEventResource
     """
-    results = []
-    event_objs = Event.get_events_by_plant_id(plant_id, db)
-    for event_obj in event_objs:
-        results.append(event_obj.as_dict())
+    results = read_events_for_plant(plant_id=plant_id, db=db)
+    # event_objs = Event.get_events_by_plant_id(plant_id, db)
+    # for event_obj in event_objs:
+    #     results.append(event_obj.as_dict())
 
     logger.info(m := f'Receiving {len(results)} events for {Plant.get_plant_name_by_plant_id(plant_id, db)}.')
     results = {'events': results,

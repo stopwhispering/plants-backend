@@ -1,10 +1,13 @@
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import List, Optional
 import datetime
 
+from ecdsa.numbertheory import order_mod
 from pydantic import validator, Extra
 from pydantic.main import BaseModel
 
+from plants.models.image_models import Image
+from plants.models.taxon_models import Distribution
 from plants.util.ui_utils import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.validation.message_validation import BMessage
 
@@ -12,16 +15,6 @@ from plants.validation.message_validation import BMessage
 ####################################################################################################
 # Entities used in <<both>> API Requests from Frontend <<and>> Responses from Backend (FB...)
 ####################################################################################################
-class FBTaxonImage(BaseModel):
-    id: Optional[int]  # empty if initially assigned to taxon
-    filename: str
-    description: Optional[str]
-
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
-
-
 class FBDistribution(BaseModel):
     native: List[str]
     introduced: List[str]
@@ -30,7 +23,10 @@ class FBDistribution(BaseModel):
         extra = Extra.forbid
 
 
-class FBTaxonOccurrenceImage(BaseModel):
+####################################################################################################
+# Entities used only in API <<Requests>> from <<Frontend>> (F...)
+####################################################################################################
+class FTaxonOccurrenceImage(BaseModel):
     occurrence_id: int
     img_no: int
     gbif_id: int
@@ -55,9 +51,7 @@ class FBTaxonOccurrenceImage(BaseModel):
     @validator("date")
     def datetime_to_string(cls, v):  # noqa
         """validator decorator makes this a class method and enforces cls param"""
-        # return v.isoformat()
-        # return v.strftime("%Y-%m-%d")
-        return v.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
+        return v.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)  # todo required for Frontend variant?
 
     # @validator("filename_thumbnail")
     # def get_path(cls, v):  # noqa
@@ -65,7 +59,17 @@ class FBTaxonOccurrenceImage(BaseModel):
     #     return get_path_for_taxon_thumbnail(v)
 
 
-class FBTaxon(BaseModel):
+class FTaxonImage(BaseModel):
+    id: Optional[int]  # empty if initially assigned to taxon  // todo fix this in frontend
+    filename: str
+    description: Optional[str]
+
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
+
+
+class FTaxon(BaseModel):
     id: int
     name: str
     is_custom: bool
@@ -88,21 +92,15 @@ class FBTaxon(BaseModel):
     hybrid: bool
     hybridgenus: bool
     gbif_id: Optional[str]
-    # powo_id: Optional[str]
     custom_notes: Optional[str]
-    # ipni_id_short: str
     distribution: Optional[FBDistribution]  # not filled for each request
-    images: Optional[List[FBTaxonImage]]  # not filled for each request
-    # trait_categories: Optional[List[PTraitCategoryWithTraits]]  # not filled for each request
-    occurrenceImages: Optional[List[FBTaxonOccurrenceImage]]
+    images: Optional[List[FTaxonImage]]  # not filled for each request
+    occurrence_images: Optional[List[FTaxonOccurrenceImage]]
 
     class Config:
-        extra = Extra.forbid
+        extra = Extra.ignore
 
 
-####################################################################################################
-# Entities used only in API <<Requests>> from <<Frontend>> (F...)
-####################################################################################################
 class FTaxonInfoRequest(BaseModel):
     include_external_apis: bool
     taxon_name_pattern: str
@@ -113,7 +111,7 @@ class FTaxonInfoRequest(BaseModel):
 
 
 class FModifiedTaxa(BaseModel):
-    ModifiedTaxaCollection: List[FBTaxon]
+    ModifiedTaxaCollection: List[FTaxon]
 
     class Config:
         extra = Extra.forbid
@@ -141,10 +139,105 @@ class FAssignTaxonRequest(BaseModel):
 ####################################################################################################
 # Entities used only in API <<Responses>> from <<Backend>> B...)
 ####################################################################################################
+class BTaxonOccurrenceImage(BaseModel):
+    occurrence_id: int
+    img_no: int
+    gbif_id: int
+    scientific_name: str
+    basis_of_record: str
+    verbatim_locality: Optional[str]
+    date: datetime.datetime
+    creator_identifier: str
+    publisher_dataset: Optional[str]
+    references: Optional[str]
+    href: str  # link to iamge at inaturalist etc.
+    filename_thumbnail: str  # filename for generated thumbnails
+
+    # filename_thumbnail: Path = Field(alias='path_thumbnail')
+
+    class Config:
+        extra = Extra.ignore
+        anystr_strip_whitespace = True
+        orm_mode = True
+
+    @validator("date")
+    def datetime_to_string(cls, v):  # noqa
+        """validator decorator makes this a class method and enforces cls param"""
+        return v.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)  # todo required for Backend variant?
+
+
+class BTaxonImage(BaseModel):
+    id: int
+    filename: str
+    description: Optional[str]
+
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
+
+
 class BSearchResultSource(Enum):
     SOURCE_PLANTS_DB = 'Local DB'
     SOURCE_IPNI = 'Plants of the World'
     SOURCE_IPNI_POWO = 'International Plant Names Index + Plants of the World'
+
+
+def _transform_distribution(distribution: list[Distribution]) -> FBDistribution:
+    # distribution codes according to WGSRPD (level 3)
+    results = {'native': [], 'introduced': []}
+    for dist in distribution:
+        if dist.establishment == 'Native':
+            results['native'].append(dist.tdwg_code)
+        elif dist.establishment == 'Introduced':
+            results['introduced'].append(dist.tdwg_code)
+    return FBDistribution.parse_obj(results)
+
+
+def _transform_images(images: list[Image]) -> list[BTaxonImage]:
+    """extract major information from Image model"""
+    results = []
+    for image in images:
+        results.append(BTaxonImage.parse_obj({
+            'id': image.id,
+            'filename': image.filename,
+            'description': image.description
+        }))
+    return results
+
+
+class BTaxon(BaseModel):
+    id: int
+    name: str
+    is_custom: bool
+    subsp: Optional[str]
+    species: Optional[str]  # empty for custom cultivars
+    subgen: Optional[str]
+    genus: str
+    family: str
+    phylum: Optional[str]
+    kingdom: Optional[str]
+    rank: str
+    taxonomic_status: Optional[str]
+    name_published_in_year: Optional[int]
+    synonym: bool
+    lsid: Optional[str]
+    authors: Optional[str]
+    basionym: Optional[str]
+    synonyms_concat: Optional[str]
+    distribution_concat: Optional[str]
+    hybrid: bool
+    hybridgenus: bool
+    gbif_id: Optional[str]
+    custom_notes: Optional[str]
+    distribution: Optional[FBDistribution]  # not filled for each request
+    _extract_distribution = validator("distribution", pre=True)(_transform_distribution)
+    images: Optional[List[BTaxonImage]]  # not filled for each request
+    _extract_images = validator("images", pre=True)(_transform_images)
+    occurrence_images: list[BTaxonOccurrenceImage]
+
+    class Config:
+        extra = Extra.forbid
+        orm_mode = True
 
 
 class BKewSearchResultEntry(BaseModel):
@@ -181,42 +274,32 @@ class BResultsTaxonInfoRequest(BaseModel):
         extra = Extra.forbid
 
 
-class BResultsSaveTaxonRequest(BaseModel):
+class BResultsRetrieveTaxonDetailsRequest(BaseModel):
     action: str
     resource: str
     message: BMessage
     botanical_name: str
-    taxon_data: FBTaxon
+    taxon_data: BTaxon
 
     class Config:
         extra = Extra.forbid
+        orm_mode = True
 
 
 class BResultsFetchTaxonImages(BaseModel):
     action: str
     resource: str
     message: BMessage
-    occurrenceImages: Optional[List[FBTaxonOccurrenceImage]]
+    occurrence_images: List[BTaxonOccurrenceImage]
 
     class Config:
         extra = Extra.forbid
-
-
-# class BResultsGetTaxa(BaseModel):
-#     action: str
-#     resource: str
-#     message: Optional[BMessage]
-#     TaxaDict: Dict[int, FBTaxon]
-#
-#     class Config:
-#         extra = Extra.forbid
 
 
 class BResultsGetTaxon(BaseModel):
     action: str
     message: BMessage
-    taxon: FBTaxon
+    taxon: BTaxon
 
     class Config:
         extra = Extra.forbid
-

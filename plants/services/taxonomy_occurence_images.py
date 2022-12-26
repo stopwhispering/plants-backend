@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 
 from plants import config
 from plants.util.ui_utils import throw_exception
-from plants.models.taxon_models import TaxonOccurrenceImage, Taxon
+from plants.models.taxon_models import TaxonOccurrenceImage, Taxon, TaxonToOccurrenceAssociation
 from plants.util.image_utils import generate_thumbnail
-from plants.validation.taxon_validation import FBTaxonOccurrenceImage
+from plants.validation.taxon_validation import BTaxonOccurrenceImage
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ class TaxonOccurencesLoader:
 
                     # validate (don't convert as this would validate datetime to str
                     try:
-                        FBTaxonOccurrenceImage(**d).dict()
+                        BTaxonOccurrenceImage(**d).dict()
                     except ValidationError as err:
                         throw_exception(str(err))
                         # logger.warning(str(err))
@@ -142,6 +142,7 @@ class TaxonOccurencesLoader:
     @staticmethod
     def _save_to_db(image_dicts: List[Dict], gbif_id: int, db: Session):
         # cleanup existing entries for taxon
+        db.query(TaxonToOccurrenceAssociation).filter(TaxonToOccurrenceAssociation.gbif_id == gbif_id).delete()
         db.query(TaxonOccurrenceImage).filter(TaxonOccurrenceImage.gbif_id == gbif_id).delete()
 
         # insert new entries
@@ -149,6 +150,15 @@ class TaxonOccurencesLoader:
         for img in image_dicts:
             record = TaxonOccurrenceImage(**img)
             new_list.append(record)
+
+            # assign occurrence image to each taxon with that gbif id (usually only one)
+            taxa = db.query(Taxon).filter(Taxon.gbif_id == gbif_id).all()
+            taxon_ids = [t.id for t in taxa]
+            record_associations = [TaxonToOccurrenceAssociation(taxon_id=taxon_id,
+                                                                occurrence_id=img['occurrence_id'],
+                                                                img_no=img['img_no'],
+                                                                gbif_id=gbif_id) for taxon_id in taxon_ids]
+            new_list.extend(record_associations)
 
         if new_list:
             try:
@@ -158,7 +168,7 @@ class TaxonOccurencesLoader:
                 logger.error(str(err))
                 print(err)
 
-    def scrape_occurrences_for_taxon(self, gbif_id: int) -> List:
+    def scrape_occurrences_for_taxon(self, gbif_id: int) -> list[TaxonOccurrenceImage]:
         logger.info(f'Searching occurrence immages for  {gbif_id}.')
         occ_search = occ_api.search(taxonKey=gbif_id, mediaType='StillImage')
         if not occ_search['results']:
@@ -177,6 +187,4 @@ class TaxonOccurencesLoader:
         self._save_to_db(image_dicts, gbif_id, self.db)
 
         taxon: Taxon = self.db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
-        occurrence_images = [o.as_dict() for o in taxon.occurrence_images]
-
-        return occurrence_images
+        return taxon.occurrence_images

@@ -1,11 +1,20 @@
 import logging
 from sqlalchemy.orm import Session
 
-from plants.models.event_models import Soil
+from plants.models.event_models import Soil, Event
 from plants.util.ui_utils import throw_exception
-from plants.validation.event_validation import FBSoil, FSoilCreate
+from plants.validation.event_validation import FSoilCreate, BEvents, FSoil
 
 logger = logging.getLogger(__name__)
+
+
+def read_events_for_plant(plant_id: int, db: Session) -> list[dict]:
+    """
+    read events from event database table
+    """
+    events = Event.get_events_by_plant_id(plant_id, db)
+    BEvents.validate(events)
+    return events
 
 
 def create_soil(soil: FSoilCreate, db: Session) -> Soil:
@@ -27,7 +36,7 @@ def create_soil(soil: FSoilCreate, db: Session) -> Soil:
     return soil_obj
 
 
-def update_soil(soil: FBSoil, db: Session) -> Soil:
+def update_soil(soil: FSoil, db: Session) -> Soil:
     """update existing soil in database"""
     # make sure there isn't another soil with same name
     soil_obj_same_name = db.query(Soil).filter((Soil.soil_name == soil.soil_name.strip()) & (Soil.id != soil.id)).all()

@@ -1,18 +1,15 @@
 import logging
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session, subqueryload
+from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from plants.services.taxon_services import get_taxon_for_api_by_taxon_id
-# from plants.models.trait_models import TaxonToTraitAssociation
 from plants.util.ui_utils import throw_exception, get_message
 from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
 from plants.models.image_models import ImageToTaxonAssociation, Image
-# from plants.services.trait_services import update_traits
 from plants.validation.message_validation import BConfirmation
-from plants.validation.taxon_validation import FModifiedTaxa, FBTaxon, FBTaxonImage, BResultsGetTaxon
+from plants.validation.taxon_validation import FModifiedTaxa, BResultsGetTaxon, FTaxon, FTaxonImage
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +25,10 @@ async def get_taxon(taxon_id: int, db: Session = Depends(get_db)):
     """
     returns taxon with requested taxon_id
     """
-    taxon: dict = get_taxon_for_api_by_taxon_id(taxon_id=taxon_id, db=db)
-    results = BResultsGetTaxon.parse_obj({'action': 'Get taxa',
-                                          'message': get_message(f'Read taxon {taxon_id} from database.'),
-                                          'taxon': taxon})
+    taxon: Taxon = Taxon.get_taxon_by_taxon_id(taxon_id=taxon_id, db=db)
+    results = {'action': 'Get taxa',
+               'message': get_message(f'Read taxon {taxon_id} from database.'),
+               'taxon': taxon}
 
     return results
 
@@ -44,7 +41,7 @@ async def update_taxa(request: Request, modified_taxa: FModifiedTaxa, db: Sessio
     modified_taxa = modified_taxa.ModifiedTaxaCollection
 
     for taxon_modified in modified_taxa:
-        taxon_modified: FBTaxon
+        taxon_modified: FTaxon
         taxon: Taxon = db.query(Taxon).filter(Taxon.id == taxon_modified.id).first()
         if not taxon:
             logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
@@ -53,7 +50,7 @@ async def update_taxa(request: Request, modified_taxa: FModifiedTaxa, db: Sessio
         taxon.custom_notes = taxon_modified.custom_notes
 
         # changes to images attached to the taxon
-        image: FBTaxonImage
+        image: FTaxonImage
         filenames_saved = ([image.filename for image in taxon_modified.images]
                            if taxon_modified.images else [])
         for image_obj in taxon.images:

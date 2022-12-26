@@ -10,9 +10,11 @@ from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.validation.taxon_validation import (FTaxonInfoRequest, BResultsTaxonInfoRequest,
-                                                FAssignTaxonRequest, BResultsSaveTaxonRequest, FFetchTaxonOccurrenceImagesRequest,
-                                                BResultsFetchTaxonImages, BSearchResultSource)
+from plants.validation.taxon_validation import (
+    FTaxonInfoRequest, BResultsTaxonInfoRequest,
+    FAssignTaxonRequest, BResultsRetrieveTaxonDetailsRequest, FFetchTaxonOccurrenceImagesRequest,
+    BResultsFetchTaxonImages, BSearchResultSource
+)
 from plants.services.taxonomy_search import TaxonomySearch
 from plants.services.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.models.taxon_models import Taxon
@@ -62,10 +64,10 @@ async def search_taxa_by_name(
     return results
 
 
-@router.post("/retrieve_details_for_selected_taxon", response_model=BResultsSaveTaxonRequest)
+@router.post("/retrieve_details_for_selected_taxon", response_model=BResultsRetrieveTaxonDetailsRequest)
 async def retrieve_details_for_selected_taxon(
         request: Request,
-        assign_taxon_request: FAssignTaxonRequest,
+        retrieve_taxon_details_request: FAssignTaxonRequest,
         db: Session = Depends(get_db)):
     """
     retrieve taxon details from kew databases "POWO" and "IPNI" (sync.) and occurrence images
@@ -76,31 +78,31 @@ async def retrieve_details_for_selected_taxon(
     taxon = None
 
     # easy case: taxon is already in database and no custom taxon is to be created
-    if (assign_taxon_request.source == BSearchResultSource.SOURCE_PLANTS_DB
-            and not assign_taxon_request.hasCustomName):
-        taxon = db.query(Taxon).filter(Taxon.id == assign_taxon_request.taxon_id).first()
+    if (retrieve_taxon_details_request.source == BSearchResultSource.SOURCE_PLANTS_DB
+            and not retrieve_taxon_details_request.hasCustomName):
+        taxon = db.query(Taxon).filter(Taxon.id == retrieve_taxon_details_request.taxon_id).first()
         if not taxon:
-            logger.error(f"Can't find {assign_taxon_request.taxon_id} / "
-                         f"{assign_taxon_request.nameInclAddition} in database.")
-            throw_exception(f"Can't find {assign_taxon_request.taxon_id} / "
-                            f"{assign_taxon_request.nameInclAddition} in database.", request=request)
+            logger.error(f"Can't find {retrieve_taxon_details_request.taxon_id} / "
+                         f"{retrieve_taxon_details_request.nameInclAddition} in database.")
+            throw_exception(f"Can't find {retrieve_taxon_details_request.taxon_id} / "
+                            f"{retrieve_taxon_details_request.nameInclAddition} in database.", request=request)
 
     # taxon is already in database, but the user entered a custom name
     # that custom name might already exist in database as well
-    elif (assign_taxon_request.source == BSearchResultSource.SOURCE_PLANTS_DB
-          and assign_taxon_request.hasCustomName):
-        taxon = db.query(Taxon).filter(Taxon.name == assign_taxon_request.nameInclAddition,
+    elif (retrieve_taxon_details_request.source == BSearchResultSource.SOURCE_PLANTS_DB
+          and retrieve_taxon_details_request.hasCustomName):
+        taxon = db.query(Taxon).filter(Taxon.name == retrieve_taxon_details_request.nameInclAddition,
                                        Taxon.is_custom).first()
         if taxon:
-            logger.info(f'Found custom name in database: {assign_taxon_request.nameInclAddition}')
+            logger.info(f'Found custom name in database: {retrieve_taxon_details_request.nameInclAddition}')
 
     # either taxon data was requested from kew databases or the local db does not contain the taxon
     # retrieve information from Kew databases POWO and IPNI and create new taxon db record
     if not taxon:
         taxonomy_lookup_details = TaxonomyLookupDetails(db=db)
-        taxon = taxonomy_lookup_details.lookup(assign_taxon_request.lsid,
-                                               assign_taxon_request.hasCustomName,
-                                               assign_taxon_request.nameInclAddition)
+        taxon = taxonomy_lookup_details.lookup(retrieve_taxon_details_request.lsid,
+                                               retrieve_taxon_details_request.hasCustomName,
+                                               retrieve_taxon_details_request.nameInclAddition)
         taxonomy_lookup_details.save_taxon(taxon)
 
     # The (meta-)database "Global Biodiversity Information Facility" (GBIF) has distribution information,
@@ -109,31 +111,24 @@ async def retrieve_details_for_selected_taxon(
     if not taxon.is_custom:
         gbif_identifier_lookup = GBIFIdentifierLookup()
         gbif_id = gbif_identifier_lookup.lookup(taxon_name=taxon.name, lsid=taxon.lsid)
-        # gbif_id = gbif_id_from_gbif_api(taxon.name, taxon.fq_id) or get_gbif_id_from_wikidata(taxon.fq_id)
         if gbif_id:
             taxon.gbif_id = gbif_id
             db.commit()
 
             # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
             loader = TaxonOccurencesLoader(db=db)
-            thread = Thread(target=loader.scrape_occurrences_for_taxon, args=gbif_id)
+            thread = Thread(target=loader.scrape_occurrences_for_taxon, args=[gbif_id])
             logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
             thread.start()
 
-    # we will return the taxon's data to be directly added to the model in the frontend
-    # only upon saving in the frontend, the assignment is persisted
-    # the data returned should be the same as in TaxonResource's get method (which returns all the taxa)
-    taxon_dict = taxon.as_dict()
-    # taxon_dict['ipni_id_short'] = taxon_dict['fq_id'][24:]
-
-    message = f'Assigned botanical name "{taxon.name}" to plant id {assign_taxon_request.plant_id}.'
+    message = f'Assigned botanical name "{taxon.name}" to plant id {retrieve_taxon_details_request.plant_id}.'
     logger.info(message)
 
     results = {'action': 'Save Taxon',
                'resource': 'TaxonSearchDatabaseResource',
                'message': get_message(message),
                'botanical_name': taxon.name,
-               'taxon_data': taxon_dict}
+               'taxon_data': taxon}
 
     return results
 
@@ -147,14 +142,7 @@ async def fetch_taxon_occurrence_images(
 
     # lookup ocurrences & images at gbif and generate thumbnails
     loader = TaxonOccurencesLoader(db=db)
-    loader.scrape_occurrences_for_taxon(gbif_id=fetch_taxon_occurrence_images_request.gbif_id)
-
-    taxon = db.query(Taxon).filter(Taxon.gbif_id == fetch_taxon_occurrence_images_request.gbif_id).first()
-    if not taxon:
-        # would probably have raised earlier
-        logger.error(f"Can't find taxon for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id} in database.")
-        throw_exception(f"Can't find taxon for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id} in database.", request=request)
-    occurrence_images = [o.as_dict() for o in taxon.occurrence_images]
+    occurrence_images = loader.scrape_occurrences_for_taxon(gbif_id=fetch_taxon_occurrence_images_request.gbif_id)
 
     message = f'Refetched occurences for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id}'
     logger.info(message)
@@ -162,6 +150,6 @@ async def fetch_taxon_occurrence_images(
     results = {'action': 'Save Taxon',
                'resource': 'TaxonSearchDatabaseResource',
                'message': get_message(message),
-               'occurrenceImages': occurrence_images}
+               'occurrence_images': occurrence_images}
 
     return results
