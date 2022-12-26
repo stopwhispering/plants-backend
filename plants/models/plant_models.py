@@ -71,6 +71,8 @@ class Plant(Base, OrmUtil):
     # generation_origin = Column(VARCHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(VARCHAR(240))  # original filename of the photo_file that is set as preview photo_file
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
 
     # plant to taxon: n:1

@@ -17,10 +17,12 @@ class Tag(Base, OrmUtil):
     text = Column(VARCHAR(20))
     # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
     state = Column(VARCHAR(12))  # Error, Information, None, Success, Warning
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     # tag to plant: n:1
     plant_id = Column(INTEGER, ForeignKey('plants.id'))
     plant = relationship("Plant", back_populates="tags")
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # static query methods
     @staticmethod

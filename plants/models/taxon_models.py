@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from datetime import datetime
+
 from sqlalchemy import (Column, INTEGER, VARCHAR, ForeignKey,
                         BOOLEAN, TEXT, Identity, ForeignKeyConstraint,
                         )
@@ -21,6 +24,9 @@ class Distribution(Base):
     feature_id = Column(VARCHAR(5))
     tdwg_code = Column(VARCHAR(10))
     tdwg_level = Column(INTEGER)
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="distribution")
@@ -53,6 +59,9 @@ class Taxon(Base, OrmUtil):
     hybridgenus = Column(BOOLEAN)
     gbif_id = Column(INTEGER)  # Global Biodiversity Information Facility
     custom_notes = Column(TEXT)  # may be updated on web frontend
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     plants = relationship("Plant", back_populates="taxon")
     distribution: list = relationship("Distribution", back_populates="taxon")
@@ -136,6 +145,9 @@ class TaxonOccurrenceImage(Base, OrmUtil):
     href = Column(VARCHAR(150))
     filename_thumbnail = Column(VARCHAR(120))
 
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
     # relationship to taxa (m:n) via gbif_id
     # taxon = relationship("Taxon",
     #                      back_populates="occurrence_images",
@@ -160,6 +172,9 @@ class TaxonToOccurrenceAssociation(Base, OrmUtil):
     occurrence_id = Column(BIGINT, primary_key=True, nullable=False)
     img_no = Column(INTEGER, primary_key=True, nullable=False)
     gbif_id = Column(INTEGER, primary_key=True, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
     __table_args__ = (ForeignKeyConstraint((occurrence_id, img_no, gbif_id),
                                            (TaxonOccurrenceImage.occurrence_id,
                                             TaxonOccurrenceImage.img_no,

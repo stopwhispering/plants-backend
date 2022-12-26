@@ -1,7 +1,8 @@
 from __future__ import annotations
 import logging
+from datetime import datetime
 from typing import List
-from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity
+from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
@@ -18,6 +19,9 @@ class PropertyCategory(Base, OrmUtil):
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     category_name = Column(VARCHAR(80), unique=True, nullable=False)
     # sort = Column(INTEGER)
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     property_names: list = relationship("PropertyName", back_populates="property_category")
 
@@ -43,6 +47,9 @@ class PropertyName(Base, OrmUtil):
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     property_name = Column(VARCHAR(240), nullable=False)  # eg."Epidermis texture"
 
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
     # NamedPropertyName to Category: n:1
     category_id = Column(INTEGER, ForeignKey('property_category.id'), nullable=False)
     property_category = relationship("PropertyCategory", back_populates="property_names")
@@ -59,6 +66,9 @@ class PropertyValue(Base, OrmUtil):
     property_name = relationship("PropertyName", back_populates="property_values")
 
     property_value = Column(VARCHAR(240))  # e.g. "tuberculate/asperulous"
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'))

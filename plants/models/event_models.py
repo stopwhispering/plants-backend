@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List
-from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR
+from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, DateTime
 from sqlalchemy.orm import relationship, Session
 import logging
 
 from plants.util.ui_utils import throw_exception
-# from plants.constants import TRAIT_CATEGORIES
-# from plants.models.trait_models import TraitCategory
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 
@@ -21,6 +20,9 @@ class Soil(Base, OrmUtil):
     description = Column(TEXT)
     mix = Column(TEXT)
 
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
     # 1:n relationship to events (no need for bidirectional relationship)
     events = relationship("Event", back_populates="soil")
 
@@ -33,6 +35,9 @@ class Pot(Base, OrmUtil):
     shape_side = Column(VARCHAR(20))  # flat, very flat, high, very high
     diameter_width = Column(INTEGER)  # in mm
     # pot_notes = Column(TEXT)
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # 1:n relationship to events
     events = relationship("Event", back_populates="pot")
@@ -48,6 +53,9 @@ class Observation(Base, OrmUtil):
     height = Column(INTEGER)  # in mm
     # location = Column(VARCHAR(30))
     observation_notes = Column(TEXT)
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # 1:1 relationship to event
     event = relationship("Event", back_populates="observation", uselist=False)
@@ -75,6 +83,9 @@ class Event(Base, OrmUtil):
     # event to plant: n:1, bi-directional
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)
     plant = relationship("Plant", back_populates="events")
+
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # 1:n relationship to the photo_file/event link table
     images = relationship(
@@ -149,14 +160,3 @@ class Event(Base, OrmUtil):
         if not event and raise_exception:
             throw_exception(f'Event not found in db: {event_id}')
         return event
-
-
-# def insert_categories(db: Session):
-#     # add Trait Categories if not existing upon initializing
-#     for t in TRAIT_CATEGORIES:
-#         trait_category = db.query(TraitCategory).filter(TraitCategory.category_name == t).first()
-#         if not trait_category:
-#             logger.info(f'Inserting missing trait category into db: {t}')
-#             trait_category = TraitCategory(category_name=t)
-#             db.add(trait_category)
-#     db.commit()

@@ -172,10 +172,10 @@ class Pollination(Base, OrmUtil):
 
     comment = Column(TEXT)
 
-    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
-    creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
-    creation_context = Column(VARCHAR(30), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    creation_at_context = Column(VARCHAR(30), nullable=False)
 
     # todo via 1:n association table: plants
 
