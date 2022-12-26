@@ -2,7 +2,6 @@ from enum import Enum
 from typing import List, Optional
 import datetime
 
-from ecdsa.numbertheory import order_mod
 from pydantic import validator, Extra
 from pydantic.main import BaseModel
 
