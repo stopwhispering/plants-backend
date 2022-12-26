@@ -45,32 +45,11 @@ def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = De
         keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
         results = {'KeywordsCollection': keywords_collection}
 
-    # elif entity_id == ProposalEntity.TRAIT_CATEGORY:
-    #     # trait categories
-    #     trait_categories = []
-    #     t: Trait
-    #     for t in TRAIT_CATEGORIES:
-    #         # note: trait categories from config file are created in orm_tables.py if not existing upon start
-    #         trait_category_obj = TraitCategory.get_cat_by_name(t, db, raise_exception=True)
-    #         trait_categories.append(trait_category_obj.as_dict())
-    #     results = {'TraitCategoriesCollection': trait_categories}
-    #
-    #     # traits
-    #     traits_query: List[Trait] = db.query(Trait).filter(Trait.trait_category.has(
-    #             TraitCategory.category_name.in_(TRAIT_CATEGORIES)))
-    #     traits = []
-    #     for t in traits_query:
-    #         t_dict = t.as_dict()
-    #         t_dict['trait_category_id'] = t.trait_category_id
-    #         t_dict['trait_category'] = t.trait_category.category_name
-    #         traits.append(t_dict)
-    #     results['TraitsCollection'] = traits
 
     else:
         throw_exception(f'Proposal entity {entity_id} not expected.', request=request)
 
     results.update({'action': 'Get',
-                    'resource': 'ProposalResource',
                     'message': get_message(f'Receiving proposal values for entity {entity_id} from backend.')})
 
     return results

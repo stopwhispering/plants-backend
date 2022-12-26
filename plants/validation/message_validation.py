@@ -40,8 +40,30 @@ class BMessage(BaseModel):
 
 class BConfirmation(BaseModel):
     action: str
-    resource: str
     message: BMessage
 
     class Config:
+        extra = Extra.forbid
+
+
+class FBMajorResource(Enum):
+    PLANT = "PlantResource"
+    IMAGE = "ImageResource"
+    TAXON = "TaxonResource"
+    EVENT = "EventResource"
+    PLANT_PROPERTIES = "PlantPropertyResource"
+    TAXON_PROPERTIES = "TaxonPropertyResource"
+
+
+class BSaveConfirmation(BaseModel):
+    """
+    for the major resources (plants, images, taxa, events, palnt properties, taxon properties,
+    we need to return the updated resource to the frontend
+    to enable the frontend to identify when all resources have been saved
+    """
+    resource: FBMajorResource
+    message: BMessage
+
+    class Config:
+        use_enum_values = True
         extra = Extra.forbid

@@ -23,7 +23,6 @@ async def get_selection_data(db: Session = Depends(get_db)):
     make_list_items_json_serializable(taxon_tree)
 
     results = {'action':    'Get taxon tree',
-               'resource':  'SelectionResource',
                'message':   get_message(f"Loaded selection data."),
                'Selection': {'TaxonTree': taxon_tree}}
 

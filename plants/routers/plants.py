@@ -11,7 +11,7 @@ from plants.models.plant_models import Plant
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
-from plants.validation.message_validation import BConfirmation
+from plants.validation.message_validation import BConfirmation, FBMajorResource
 from plants.validation.plant_validation import (FPlantsDeleteRequest,
                                                 BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
                                                 BResultsPlantsUpdate, BResultsPlantCloned)
@@ -55,7 +55,6 @@ def clone_plant(
     logger.info(msg := f"Cloned {plant_original.plant_name} ({plant_original.id}) "
                        f"into {plant_clone.plant_name} ({plant_clone.id})")
     results = {'action':   'Renamed plant',
-               'resource': 'PlantResource',
                'message':  get_message(msg, description=msg),
                'plant':   plant_clone}
 
@@ -77,7 +76,7 @@ def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(ge
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
     results = {'action': 'Saved Plants',
-               'resource': 'PlantResource',
+               'resource': FBMajorResource.PLANT,
                'message': get_message(message),
                'plants': plants_saved}  # return the updated/created plants
 
@@ -99,7 +98,6 @@ def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Dep
 
     logger.info(message := f'Deleted plant {record_update.plant_name}')
     results = {'action':   'Deleted plant',
-               'resource': 'PlantResource',
                'message':  get_message(message,
                                        description=f'Plant name: {record_update.plant_name}\nDeleted: True')
                }
@@ -138,7 +136,6 @@ def rename_plant(request: Request, data: BPlantsRenameRequest, db: Session = Dep
 
     logger.info(f'Modified {count_modified_images} images.')
     results = {'action':   'Renamed plant',
-               'resource': 'PlantResource',
                'message':  get_message(f'Renamed {args.OldPlantName} to {args.NewPlantName}',
                                        description=f'Modified {count_modified_images} images.')}
 
@@ -189,7 +186,6 @@ async def get_plants(db: Session = Depends(get_db)):
     )
     plants_obj = query.all()
     results = {'action':           'Get plants',
-               'resource':         'PlantResource',
                'message':          get_message(f"Loaded {len(plants_obj)} plants from database."),
                'PlantsCollection': plants_obj}
 

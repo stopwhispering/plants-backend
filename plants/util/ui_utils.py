@@ -5,7 +5,7 @@ from starlette.requests import Request
 import json
 from datetime import date, datetime, timedelta
 
-from plants.validation.message_validation import BMessageType
+from plants.validation.message_validation import BMessageType, BMessage
 
 
 def throw_exception(message: str = None,
@@ -20,6 +20,7 @@ def throw_exception(message: str = None,
     """
     description_text = ''
     if request:
+        # todo remove? !
         description_text = f'Resource: {parse_resource_from_request(request)}'
     if description:
         description_text = description + '\n' + description_text
@@ -37,16 +38,15 @@ def get_message(message: str = None,
                 additional_text: str = None,
                 description: str = None):
     """generates a message to be userd in a ui5 frontend; uses flask request which is not required as a paramter"""
-    # description_text = f'Resource: {parse_resource_from_request(request)}'
-    description_text = f'Resource: todo'
-    if description and description.strip():
-        description_text = description + '\n' + description_text
-    return {
+    msg = {
         'type':           message_type.value,
         'message':        message,
         'additionalText': additional_text,
-        'description':    description_text
+        'description':    description
         }
+    BMessage.validate(msg)
+    return msg
+
 
 
 def parse_resource_from_request(req: Request):

@@ -6,7 +6,7 @@ from datetime import datetime, date
 from pydantic import Field, Extra
 from pydantic.main import BaseModel
 
-from plants.validation.message_validation import BMessage
+from plants.validation.message_validation import BMessage, FBMajorResource
 
 
 ####################################################################################################
@@ -153,7 +153,6 @@ class BPlantsRenameRequest(BaseModel):
 
 class BResultsPlants(BaseModel):
     action: str
-    resource: str
     message: BMessage
     PlantsCollection: list[FBPlant]
 
@@ -163,17 +162,17 @@ class BResultsPlants(BaseModel):
 
 class BResultsPlantsUpdate(BaseModel):
     action: str
-    resource: str
+    resource: FBMajorResource
     message: BMessage
     plants: list[FBPlant]
 
     class Config:
         extra = Extra.forbid
+        use_enum_values = True
 
 
 class BResultsPlantCloned(BaseModel):
     action: str
-    resource: str
     message: BMessage
     plant: FBPlant
 

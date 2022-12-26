@@ -20,7 +20,8 @@ from plants.validation.image_validation import (BResultsImageResource, BImageUpd
 from plants.services.image_services_simple import remove_files_already_existing
 from plants.validation.event_validation import FImagesToDelete
 from plants.validation.image_validation import BResultsImageDeleted
-from plants.validation.message_validation import BConfirmation, BMessage, BMessageType
+from plants.validation.message_validation import BMessage, BMessageType, BSaveConfirmation, \
+    FBMajorResource
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,6 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
                       description=desc)
     logger.info(msg['message'])
     results = {'action': 'Uploaded',
-               'resource': 'ImageResource',
                'message': msg,
                'images': images_ext
                }
@@ -97,7 +97,7 @@ async def get_untagged_images(db: Session = Depends(get_db)):
     return results
 
 
-@router.put("/images/", response_model=BConfirmation)
+@router.put("/images/", response_model=BSaveConfirmation)
 async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_db)):
     """modify existing photo_file's metadata"""
     logger.info(f"Saving updates for {len(modified_ext.ImagesCollection.__root__)} images in db and exif tags.")
@@ -118,7 +118,7 @@ async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_d
                                 db=db)
 
     results = {'action': 'Saved',
-               'resource': 'ImageResource',
+               'resource': FBMajorResource.IMAGE,
                'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection.__root__)} images.")
                }
 
@@ -163,7 +163,6 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
                                   f'\nSkipped Duplicates: {duplicate_filenames}.')
     logger.info(msg['message'])
     results = {'action': 'Uploaded',
-               'resource': 'ImageResource',
                'message': msg,
                'images': images_ext
                }
@@ -186,7 +185,6 @@ async def delete_image(image_container: FImagesToDelete, db: Session = Depends(g
     deleted = [image.filename for image in image_container.images]
     results = {
         'action': 'Deleted',
-        'resource': 'ImageResource',
         'message': get_message(f'Deleted {len(image_container.images)} image(s)',
                                description=f'Filenames: {deleted}')
     }

@@ -32,7 +32,6 @@ export interface BResultsImageResource {
 }
 export interface BResultsImagesUploaded {
   action: string;
-  resource: string;
   message: BMessage;
   images: FBImages;
 }

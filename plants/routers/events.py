@@ -12,7 +12,7 @@ from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.models.image_models import Image, ImageToEventAssociation
 from plants.services.event_services import create_soil, update_soil, read_events_for_plant
-from plants.validation.message_validation import BConfirmation, BMessageType
+from plants.validation.message_validation import BMessageType, FBMajorResource, BSaveConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Pot, Observation, Event, Soil
 from plants.validation.event_validation import (BResultsEventResource, BPResultsUpdateCreateSoil,
@@ -94,7 +94,7 @@ async def get_events(plant_id: int, db: Session = Depends(get_db)):
     return results
 
 
-@router.post("/", response_model=BConfirmation)
+@router.post("/", response_model=BSaveConfirmation)
 async def create_or_update_events(request: Request,
                                   events_request: FRequestCreateOrUpdateEvent,
                                   db: Session = Depends(get_db)):
@@ -254,7 +254,7 @@ async def create_or_update_events(request: Request,
 
     logger.info(' Saving Events: ' + (description := ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])))
     results = {'action': 'Saved events',
-               'resource': 'EventResource',
+               'resource': FBMajorResource.EVENT,
                'message': get_message(f'Updated events in database.',
                                       description=description)}
 

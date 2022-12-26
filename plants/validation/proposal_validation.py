@@ -41,7 +41,6 @@ class BNurseryName(BaseModel):
 
 class BResultsProposals(BaseModel):
     action: str
-    resource: str
     message: BMessage
 
     NurseriesSourcesCollection: Optional[List[BNurseryName]]

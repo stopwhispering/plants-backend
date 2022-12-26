@@ -31,7 +31,6 @@ export interface BPropertyName {
 }
 export interface BResultsPropertiesForPlant {
   action: string;
-  resource: string;
   message: BMessage;
   propertyCollections: FBPropertyCollectionPlant;
   plant_id: number;
@@ -43,7 +42,6 @@ export interface FBPropertyCollectionPlant {
 }
 export interface BResultsPropertyNames {
   action: string;
-  resource: string;
   message: BMessage;
   propertiesAvailablePerCategory: {
     [k: string]: BPropertyName[];

@@ -63,7 +63,6 @@ class BResultsImageResource(BaseModel):
 
 class BResultsImagesUploaded(BaseModel):
     action: str
-    resource: str
     message: BMessage
     images: FBImages
 

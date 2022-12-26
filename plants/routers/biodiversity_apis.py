@@ -55,7 +55,6 @@ async def search_taxa_by_name(
         throw_exception(f'No search result for search term "{taxon_info_request.taxon_name_pattern}".', request=request)
 
     results = {'action': 'Search Taxa',
-               # 'resource': 'TaxonSearchDatabaseResource',  # todo remove
                'ResultsCollection': results,
                'message': get_message('Received species search results',
                                       additional_text=f'Search term "{taxon_info_request.taxon_name_pattern}"',
@@ -125,7 +124,6 @@ async def retrieve_details_for_selected_taxon(
     logger.info(message)
 
     results = {'action': 'Save Taxon',
-               'resource': 'TaxonSearchDatabaseResource',
                'message': get_message(message),
                'botanical_name': taxon.name,
                'taxon_data': taxon}
@@ -148,7 +146,6 @@ async def fetch_taxon_occurrence_images(
     logger.info(message)
 
     results = {'action': 'Save Taxon',
-               'resource': 'TaxonSearchDatabaseResource',
                'message': get_message(message),
                'occurrence_images': occurrence_images}
 

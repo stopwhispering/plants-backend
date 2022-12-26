@@ -79,7 +79,6 @@ class BPropertyName(BaseModel):
 
 class BResultsPropertyNames(BaseModel):
     action: str
-    resource: str
     message: BMessage
     propertiesAvailablePerCategory: Dict[str, List[BPropertyName]]
 
@@ -96,7 +95,6 @@ class BPropertyCollectionTaxon(BaseModel):  # todo useless with only one key
 
 class BResultsPropertiesForPlant(BaseModel):
     action: str
-    resource: str
     message: BMessage
     propertyCollections: FBPropertyCollectionPlant
     plant_id: int

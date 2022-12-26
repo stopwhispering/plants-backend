@@ -29,7 +29,6 @@ async def get_property_names(db: Session = Depends(get_db)):
 
     results = {
         'action':                         'Get',
-        'resource':                       'PropertyNameResource',
         'propertiesAvailablePerCategory': categories,
         'message':                        get_message(f"Receiving Property Names from database.")
         }

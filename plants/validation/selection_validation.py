@@ -43,7 +43,6 @@ class BTaxonTreeRoot(BaseModel):
 
 class BResultsSelection(BaseModel):
     action: str
-    resource: str
     message: BMessage
     Selection: BTaxonTreeRoot
 

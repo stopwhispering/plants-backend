@@ -1,33 +1,33 @@
 
 export type FBShapeTop = "square" | "round" | "oval" | "hexagonal";
 export type FBShapeSide = "very flat" | "flat" | "high" | "very high";
-export type BEvents = FBEvent[];
+export type BEvents = BEvent[];
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
-export interface FBEvent {
+export interface BEvent {
   id: number;
   plant_id: number;
   date: string;
   event_notes?: string;
-  observation?: FBObservation;
-  soil?: FBSoil;
-  pot?: FBPot;
+  observation?: BObservation;
+  soil?: BSoil;
+  pot?: BPot;
   images?: FBImageAssignedToEvent[];
 }
-export interface FBObservation {
+export interface BObservation {
   id?: number;
   diseases?: string;
   stem_max_diameter?: number;
   height?: number;
   observation_notes?: string;
 }
-export interface FBSoil {
+export interface BSoil {
   id: number;
   soil_name: string;
   mix?: string;
   description?: string;
 }
-export interface FBPot {
+export interface BPot {
   id?: number;
   material: string;
   shape_top: FBShapeTop;
@@ -39,7 +39,7 @@ export interface FBImageAssignedToEvent {
   filename: string;
 }
 export interface BPResultsUpdateCreateSoil {
-  soil: FBSoil;
+  soil: BSoil;
   message: BMessage;
 }
 export interface BResultsEventResource {
@@ -61,10 +61,40 @@ export interface FCreateOrUpdateEvent {
   plant_id: number;
   date: string;
   event_notes?: string;
-  observation?: FBObservation;
-  soil?: FBSoil;
-  pot?: FBPot;
-  images: FBImage[];
+  observation?: FObservation;
+  soil?: FSoil;
+  pot?: FPot;
+  images: FBImageAssignedToEvent[];
+}
+export interface FObservation {
+  id?: number;
+  diseases?: string;
+  stem_max_diameter?: number;
+  height?: number;
+  observation_notes?: string;
+}
+export interface FSoil {
+  id: number;
+  soil_name: string;
+  mix?: string;
+  description?: string;
+}
+export interface FPot {
+  id?: number;
+  material: string;
+  shape_top: FBShapeTop;
+  shape_side: FBShapeSide;
+  diameter_width: number;
+}
+export interface FEvent {
+  id: number;
+  plant_id: number;
+  date: string;
+  event_notes?: string;
+  observation?: FObservation;
+  soil?: FSoil;
+  pot?: FPot;
+  images?: FBImageAssignedToEvent[];
 }
 export interface FImageDelete {
   id: number;

@@ -3,7 +3,6 @@ export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Err
 
 export interface BResultsSelection {
   action: string;
-  resource: string;
   message: BMessage;
   Selection: BTaxonTreeRoot;
 }

@@ -59,7 +59,7 @@ class FTaxonOccurrenceImage(BaseModel):
 
 
 class FTaxonImage(BaseModel):
-    id: Optional[int]  # empty if initially assigned to taxon  // todo fix this in frontend
+    id: int
     filename: str
     description: Optional[str]
 
@@ -173,6 +173,7 @@ class BTaxonImage(BaseModel):
     class Config:
         extra = Extra.forbid
         allow_population_by_field_name = True
+        orm_mode = True
 
 
 class BSearchResultSource(Enum):
@@ -190,18 +191,6 @@ def _transform_distribution(distribution: list[Distribution]) -> FBDistribution:
         elif dist.establishment == 'Introduced':
             results['introduced'].append(dist.tdwg_code)
     return FBDistribution.parse_obj(results)
-
-
-def _transform_images(images: list[Image]) -> list[BTaxonImage]:
-    """extract major information from Image model"""
-    results = []
-    for image in images:
-        results.append(BTaxonImage.parse_obj({
-            'id': image.id,
-            'filename': image.filename,
-            'description': image.description
-        }))
-    return results
 
 
 class BTaxon(BaseModel):
@@ -228,11 +217,35 @@ class BTaxon(BaseModel):
     hybridgenus: bool
     gbif_id: Optional[str]
     custom_notes: Optional[str]
-    distribution: Optional[FBDistribution]  # not filled for each request
-    _extract_distribution = validator("distribution", pre=True)(_transform_distribution)
-    images: Optional[List[BTaxonImage]]  # not filled for each request
-    _extract_images = validator("images", pre=True)(_transform_images)
+    distribution: FBDistribution  # not filled for each request
+    images: list[BTaxonImage]
     occurrence_images: list[BTaxonOccurrenceImage]
+
+    @validator("images", pre=True)
+    def _transform_images(cls, images: list[Image], values, **kwargs) -> list[BTaxonImage]:  # noqa
+        """extract major information from Image model; and read the description from
+        taxon-to-image link table, not from image itself"""
+        results = []
+        taxon_id = values['id']
+        for image in images:
+            image_to_taxon_assignment = next(i for i in image.image_to_taxon_associations if i.taxon_id == taxon_id)
+            results.append(BTaxonImage.parse_obj({
+                'id': image.id,
+                'filename': image.filename,
+                'description': image_to_taxon_assignment.description  # !
+            }))
+        return results
+
+    @validator("distribution", pre=True)
+    def _transform_distribution(cls, distribution: list[Distribution]) -> FBDistribution:  # noqa
+        # distribution codes according to WGSRPD (level 3)
+        results = {'native': [], 'introduced': []}
+        for dist in distribution:
+            if dist.establishment == 'Native':
+                results['native'].append(dist.tdwg_code)
+            elif dist.establishment == 'Introduced':
+                results['introduced'].append(dist.tdwg_code)
+        return FBDistribution.parse_obj(results)
 
     class Config:
         extra = Extra.forbid
@@ -265,7 +278,6 @@ class BKewSearchResultEntry(BaseModel):
 
 class BResultsTaxonInfoRequest(BaseModel):
     action: str
-    # resource: str
     message: BMessage
     ResultsCollection: list[BKewSearchResultEntry]
 
@@ -275,7 +287,6 @@ class BResultsTaxonInfoRequest(BaseModel):
 
 class BResultsRetrieveTaxonDetailsRequest(BaseModel):
     action: str
-    resource: str
     message: BMessage
     botanical_name: str
     taxon_data: BTaxon
@@ -287,7 +298,6 @@ class BResultsRetrieveTaxonDetailsRequest(BaseModel):
 
 class BResultsFetchTaxonImages(BaseModel):
     action: str
-    resource: str
     message: BMessage
     occurrence_images: List[BTaxonOccurrenceImage]
 
@@ -302,3 +312,4 @@ class BResultsGetTaxon(BaseModel):
 
     class Config:
         extra = Extra.forbid
+        orm_mode = True

@@ -194,7 +194,6 @@ class BPotentialPollenDonor(BaseModel):
 
 class BResultsOngoingPollinations(BaseModel):
     action: str
-    # resource: str
     message: Optional[BMessage]
     ongoingPollinationCollection: List[BOngoingPollination]
 
@@ -231,7 +230,6 @@ class BResultsActiveFlorescences(BaseModel):
 
 class BResultsPotentialPollenDonors(BaseModel):
     action: str
-    # resource: str
     message: Optional[BMessage]
     potentialPollenDonorCollection: List[BPotentialPollenDonor]
 

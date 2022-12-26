@@ -7,7 +7,7 @@ from plants.validation.property_validation import (BResultsPropertiesForPlant, F
                                                    FPropertiesModifiedTaxon)
 from plants.services.property_services import SaveProperties, SavePropertiesTaxa, LoadProperties
 from plants.dependencies import get_db
-from plants.validation.message_validation import BConfirmation
+from plants.validation.message_validation import BSaveConfirmation, FBMajorResource
 
 logger = logging.getLogger(__name__)
 
@@ -18,24 +18,23 @@ router = APIRouter(
         )
 
 
-@router.post("/taxon_properties/", response_model=BConfirmation)
-async def modify_taxon_properties(
+@router.post("/taxon_properties/", response_model=BSaveConfirmation)
+async def create_or_update_taxon_properties(
         data: FPropertiesModifiedTaxon,
         db: Session = Depends(get_db)):
-    """taxon properties; note: there's no get method for taxon properties; they are read with the plant's
-        properties
-        save taxon properties"""
+    """note: there's no get method for taxon properties; they are read with the plant's
+        properties; save new and modified taxon properties"""
 
     SavePropertiesTaxa().save_properties(properties_modified=data.modifiedPropertiesTaxa, db=db)
     results = {'action':   'Update',
-               'resource': 'PropertyTaxaResource',
+               'resource': FBMajorResource.TAXON_PROPERTIES,
                'message':  get_message(f'Updated properties for taxa in database.')
                }
 
     return results
 
 
-@router.post("/plant_properties/", response_model=BConfirmation)
+@router.post("/plant_properties/", response_model=BSaveConfirmation)
 async def modify_plant_properties(
         data: FPropertiesModifiedPlant,
         db: Session = Depends(get_db)):
@@ -43,7 +42,7 @@ async def modify_plant_properties(
 
     SaveProperties().save_properties(data.modifiedPropertiesPlants, db=db)
     results = {'action':   'Update',
-               'resource': 'PropertyResource',
+               'resource': FBMajorResource.PLANT_PROPERTIES,
                'message':  get_message(f'Updated properties in database.')
                }
 
@@ -71,7 +70,6 @@ def get_plant_properties(
         'propertyCollectionsTaxon': {"categories": categories_taxon},
         'taxon_id':                 taxon_id,
         'action':                   'Get',
-        'resource':                 'PropertyTaxaResource',
         'message':                  get_message(f"Receiving properties for plant {plant_id} from database.")
         }
     return results

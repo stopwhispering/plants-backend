@@ -21,6 +21,13 @@ export type FBCancellationReason =
   | "Sale"
   | "Others";
 export type FBTagState = "None" | "Indication01" | "Success" | "Information" | "Error" | "Warning";
+export type FBMajorResource =
+  | "PlantResource"
+  | "ImageResource"
+  | "TaxonResource"
+  | "EventResource"
+  | "PlantPropertyResource"
+  | "TaxonPropertyResource";
 
 export interface BPlantsRenameRequest {
   OldPlantName: string;
@@ -28,7 +35,6 @@ export interface BPlantsRenameRequest {
 }
 export interface BResultsPlantCloned {
   action: string;
-  resource: string;
   message: BMessage;
   plant: FBPlant;
 }
@@ -80,13 +86,12 @@ export interface FBPlantTag {
 }
 export interface BResultsPlants {
   action: string;
-  resource: string;
   message: BMessage;
   PlantsCollection: FBPlant[];
 }
 export interface BResultsPlantsUpdate {
   action: string;
-  resource: string;
+  resource: FBMajorResource;
   message: BMessage;
   plants: FBPlant[];
 }
