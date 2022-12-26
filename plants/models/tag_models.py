@@ -1,5 +1,8 @@
 from __future__ import annotations
-from sqlalchemy import Column, INTEGER, VARCHAR, TIMESTAMP, ForeignKey, Identity
+
+from datetime import datetime
+
+from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
@@ -14,7 +17,7 @@ class Tag(Base, OrmUtil):
     text = Column(VARCHAR(20))
     # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
     state = Column(VARCHAR(12))  # Error, Information, None, Success, Warning
-    last_update = Column(TIMESTAMP)
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     # tag to plant: n:1
     plant_id = Column(INTEGER, ForeignKey('plants.id'))
     plant = relationship("Plant", back_populates="tags")

@@ -17,5 +17,5 @@ def update_tag(tag_obj: Tag, tag_dict: FBPlantTag):
     tag_obj.text = tag_dict.text
     # tag_obj.icon = tag_dict.icon
     tag_obj.state = tag_dict.state
-    tag_obj.last_update = datetime.now()
+    # tag_obj.last_update = datetime.now()
     tag_obj.plant_id = tag_dict.plant_id

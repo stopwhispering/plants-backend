@@ -3,7 +3,7 @@ from pathlib import PurePath
 from datetime import datetime
 from typing import Sequence
 
-from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Identity
+from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
 from plants import config
@@ -60,8 +60,8 @@ class Image(Base):
     relative_path = Column(VARCHAR(240))  # relative path to the original image file incl. file name
     description = Column(VARCHAR(500))
     record_date_time = Column(TIMESTAMP, nullable=False)
-    last_update = Column(TIMESTAMP, nullable=False)  # update (description)
-    created_at = Column(TIMESTAMP, nullable=False)  # upload
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     @property
     def absolute_path(self):
@@ -206,8 +206,8 @@ def create_image(db: Session,
                   filename=relative_path.name,
                   record_date_time=record_date_time,
                   description=description,
-                  last_update=datetime.now(),
-                  created_at=datetime.now(),
+                  # last_update=datetime.now(),
+                  # created_at=datetime.now(),
                   plants=plants if plants else [],
                   )
     # get the image id
@@ -232,7 +232,7 @@ def update_image_if_altered(db: Session,
     # description
     if description != image.description and not (not description and not image.description):
         image.description = description
-        image.last_update = datetime.now()
+        # image.last_update = datetime.now()
 
     # plants
     new_plants = set(Plant.get_plant_by_plant_id(plant_id, db=db, raise_exception=True) for plant_id in plant_ids)

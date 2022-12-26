@@ -184,7 +184,7 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Sessi
         ongoing=True,
         label_color=COLORS_MAP[new_pollination_data.labelColorRgb],  # save the name of color, not the hex value
         pollination_status=PollinationStatus.ATTEMPT.value,  # noqa
-        creation_at=datetime.now(),
+        # creation_at=datetime.now(),
         creation_context=Context.API.value  # noqa
     )
 
@@ -251,7 +251,7 @@ def update_pollination(pollination_data: FRequestEditedPollination, db: Session)
     pollination.first_seeds_germinated = pollination_data.first_seeds_germinated
     pollination.germination_rate = germination_rate
 
-    pollination.last_update_at = datetime.now()
+    # pollination.last_update_at = datetime.now()
     pollination.last_update_context = Context.API.value
 
     db.commit()

@@ -25,7 +25,7 @@ class FBPlantTag(BaseModel):
     id: Optional[int]
     state: FBTagState
     text: str
-    last_update: Optional[datetime]
+    last_update: datetime | None
     plant_id: int
 
     class Config:

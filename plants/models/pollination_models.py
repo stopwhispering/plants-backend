@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity
@@ -108,9 +109,9 @@ class Florescence(Base, OrmUtil):
 
     comment = Column(TEXT)  # limited to max 40 chars in frontend, longer only for imported data
 
-    last_update_at = Column(DateTime(timezone=False))
+    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
-    creation_at = Column(DateTime(timezone=False), nullable=False)
+    creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     creation_context = Column(VARCHAR(30), nullable=False)
 
     # pollinations of this florescence (with plant as mother plant)
@@ -148,7 +149,7 @@ class Pollination(Base, OrmUtil):
     # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))
     location = Column(VARCHAR(100), nullable=False)
 
-    pollination_timestamp = Column(DateTime(timezone=False))
+    pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
     label_color = Column(VARCHAR(60))
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
     pollination_status = Column(VARCHAR(40), nullable=False)
@@ -171,9 +172,9 @@ class Pollination(Base, OrmUtil):
 
     comment = Column(TEXT)
 
-    last_update_at = Column(DateTime(timezone=False))
+    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
-    creation_at = Column(DateTime(timezone=False), nullable=False)
+    creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     creation_context = Column(VARCHAR(30), nullable=False)
 
     # todo via 1:n association table: plants

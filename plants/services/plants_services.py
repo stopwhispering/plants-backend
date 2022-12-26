@@ -52,7 +52,7 @@ def update_plants_from_list_of_dicts(plants: List[FBPlant], db: Session) -> List
         record_update.parent_plant_pollen_id = plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         record_update.set_filename_previewimage(plant=plant)
         record_update.set_taxon(db=db, taxon_id=plant.taxon_id)
-        record_update.set_last_update()
+        # record_update.set_last_update()
 
         # create new, update existing and remove deleted tags
         new_tags = _update_tags(record_update, plant.tags, db)
@@ -91,12 +91,14 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     cloned = []
 
     plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,  # noqa
-                                                         'last_update': datetime.now()})
-    plant_clone.set_last_update()
+                                                         # 'last_update': datetime.now()
+                                                          })
+    # plant_clone.set_last_update()
     cloned.append(plant_clone)
 
     for tag in plant_original.tags:
-        tag_clone = _clone_instance(tag, {'last_update': datetime.now()})  # noqa
+        # tag_clone = _clone_instance(tag, {'last_update': datetime.now()})  # noqa
+        tag_clone = _clone_instance(tag, {})  # noqa
         tag_clone.plant = plant_clone
         cloned.append(tag_clone)
 
@@ -130,7 +132,7 @@ def _update_tags(plant_obj: Plant, tags: List[FBPlantTag], db: Session):
                                       state=tag.state,  # noqa  use_enum_values option used
                                       plant=plant_obj,
                                       # last_update=datetime.datetime.now()
-                                      last_update=datetime.now()
+                                      # last_update=datetime.now()
                                       )
                 new_list.append(tag_object)
             else:

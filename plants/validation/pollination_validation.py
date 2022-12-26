@@ -83,7 +83,7 @@ class FRequestNewFlorescence(BaseModel):
     plant_id: int
     florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
-    comment: str | None  # max 40 chars
+    comment: str | None  # max 110 chars
 
     class Config:
         extra = Extra.forbid
@@ -109,7 +109,7 @@ class BActiveFlorescence(BaseModel):
     florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
 
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
-    comment: str | None  # e.g. location if multiple plants in one container
+    comment: str | None  # max 110 chars, e.g. location if multiple plants in one container
     branches_count: int | None
     flowers_count: int | None
     first_flower_opening_date: str | None  # e.g. '2022-11-16'

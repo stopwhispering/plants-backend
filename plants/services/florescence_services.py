@@ -82,7 +82,7 @@ def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence
     florescence.branches_count = edited_florescence_data.branches_count
     florescence.flowers_count = edited_florescence_data.flowers_count
 
-    florescence.last_update_at = datetime.now()
+    # florescence.last_update_at = datetime.now()
     florescence.last_update_context = Context.API.value
 
     db.commit()
@@ -100,7 +100,7 @@ def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Ses
         inflorescence_appearance_date=parse_api_date(new_florescence_data.inflorescence_appearance_date),
         comment=new_florescence_data.comment,
 
-        creation_at=datetime.now(),
+        # creation_at=datetime.now(),
         creation_context=Context.API.value  # noqa
     )
 

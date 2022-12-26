@@ -21,11 +21,11 @@ interface "Inbound" as inbound
 
 node "Backend Server" {
 
-    rectangle "traefik-container                                                                                                                                                                                         <img:"./docker.40_29.png">" as traefik_container #line.dashed {
+    rectangle "traefik-container                                                                                                                                                                                         <img:"./img/docker.40_29.png">" as traefik_container #line.dashed {
 
         package "Traefik Reverse Proxy" {
             label traefik_logo [
-                <img:"./traefik.50_69.png">
+                <img:"./img/traefik.50_69.png">
             ]
             component "Traefik" as traefik
             inbound -down-> traefik
@@ -50,30 +50,30 @@ node "Backend Server" {
     }
 
 
-    rectangle "plants-frontend-container                  <img:"./docker.40_29.png">" as plants_frontend_container #line.dashed {
-        package "<img:"./nginx.139_29.png"> <img:"./openui5.80_29.png">" as plants_frontend_nginx_webserver {
+    rectangle "plants-frontend-container                  <img:"./img/docker.40_29.png">" as plants_frontend_container #line.dashed {
+        package "<img:"./img/nginx.139_29.png"> <img:"./img/openui5.80_29.png">" as plants_frontend_nginx_webserver {
             component "UI5 Plants Frontend" as plants_fe
             plants_fe_ep -down-> plants_frontend_container
         }
     }
 
-    rectangle "plants-backend-container                        <img:"./docker.40_29.png">" as plants_backend_container #line.dashed {
-        package "<img:"./uvicorn.29_29.png"> <img:"./gunicorn.133_29.png"> <img:"./fastapi.80_29.png">" as uvicorn_unicorn_fastapi {
+    rectangle "plants-backend-container                        <img:"./img/docker.40_29.png">" as plants_backend_container #line.dashed {
+        package "<img:"./img/uvicorn.29_29.png"> <img:"./img/gunicorn.133_29.png"> <img:"./img/fastapi.80_29.png">" as uvicorn_unicorn_fastapi {
             component "Python Plants Backend " as plants_be
 
             plants_be_ep -down-> plants_backend_container
         }
     }
 
-    rectangle "pgadmin-container                               <img:"./docker.40_29.png">" as pgadmin_container #line.dashed {
-        package "pgAdmin <img:"./postgres.28_29.png">" as pgadmin_{
+    rectangle "pgadmin-container                               <img:"./img/docker.40_29.png">" as pgadmin_container #line.dashed {
+        package "pgAdmin <img:"./img/postgres.28_29.png">" as pgadmin_{
             component "pgAdmin DB Administraion" as pgadmin
             pgadmin_ep -down-> pgadmin_container
         }
     }
 
-    rectangle "postgres-container             <img:"./docker.40_29.png">" as postgres_container #line.dashed {
-        package "PostgreSQL <img:"./postgres.28_29.png">" as postgres_{
+    rectangle "postgres-container             <img:"./img/docker.40_29.png">" as postgres_container #line.dashed {
+        package "PostgreSQL <img:"./img/postgres.28_29.png">" as postgres_{
             database "PostgreSQL DB" as postgres
             traefik -down-> postgres_container : 5432
         }

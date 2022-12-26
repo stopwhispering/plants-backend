@@ -15,7 +15,7 @@ def create_history_entry(description: str,
     elif plant_name and not plant_id:
         plant_id = db.query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
 
-    entry = History(timestamp=datetime.now(),
+    entry = History(timestamp=datetime.utcnow(),
                     plant_id=plant_id,
                     plant_name=plant_name,
                     description=description)

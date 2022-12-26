@@ -121,7 +121,7 @@ def rename_plant(request: Request, data: BPlantsRenameRequest, db: Session = Dep
 
     # rename plant name
     plant_obj.plant_name = args.NewPlantName
-    plant_obj.last_update = datetime.datetime.now()
+    # plant_obj.last_update = datetime.datetime.now()
 
     # most difficult task: jpg exif tags use plant name not id; we need to change each plant name occurence
     count_modified_images = rename_plant_in_image_files(plant=plant_obj,

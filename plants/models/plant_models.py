@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from operator import attrgetter
 from typing import Optional, List
-from sqlalchemy import Column, VARCHAR, INTEGER, BOOLEAN, ForeignKey, TEXT, TIMESTAMP, Identity, VARCHAR
+from sqlalchemy import Column, INTEGER, BOOLEAN, ForeignKey, TEXT, Identity, VARCHAR
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.orm import foreign, remote  # noqa
 from sqlalchemy.types import DateTime
@@ -36,7 +36,7 @@ class Plant(Base, OrmUtil):
     active = Column(BOOLEAN)
     deleted = Column(BOOLEAN)
     cancellation_reason = Column(VARCHAR(60))  # only set if active == False
-    cancellation_date = Column(DateTime(timezone=False))
+    cancellation_date = Column(DateTime(timezone=True))  # todo rename to datetime or make it date type
 
     generation_notes = Column(VARCHAR(250))
 
@@ -71,7 +71,7 @@ class Plant(Base, OrmUtil):
     # generation_origin = Column(VARCHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(VARCHAR(240))  # original filename of the photo_file that is set as preview photo_file
-    last_update = Column(TIMESTAMP, nullable=False)
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
 
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
@@ -179,8 +179,8 @@ class Plant(Base, OrmUtil):
         else:
             self.taxon = None
 
-    def set_last_update(self, last_update=None):
-        self.last_update = last_update if last_update else datetime.datetime.now()
+    # def set_last_update(self, last_update=None):
+    #     self.last_update = last_update if last_update else datetime.datetime.now()
 
     # static query methods
     @staticmethod

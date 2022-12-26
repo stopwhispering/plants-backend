@@ -9,7 +9,7 @@ class History(Base):
     __tablename__ = 'history'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
 
-    timestamp = Column(DateTime(timezone=False))
+    timestamp = Column(DateTime(timezone=True))  # todo rename
     plant_id = Column(INTEGER)
     plant_name = Column(VARCHAR(100))
     description = Column(TEXT)
