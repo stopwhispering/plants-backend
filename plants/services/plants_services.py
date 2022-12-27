@@ -3,7 +3,6 @@ import logging
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
-from datetime import datetime
 from datetime import date
 
 from plants.models.image_models import ImageKeyword
@@ -11,12 +10,12 @@ from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
 from plants.services.tag_services import tag_modified, update_tag
 from plants.util.ui_utils import throw_exception
-from plants.validation.plant_validation import FBPlantTag, FBPlant
+from plants.validation.plant_validation import FBPlantTag, FPlant
 
 logger = logging.getLogger(__name__)
 
 
-def update_plants_from_list_of_dicts(plants: List[FBPlant], db: Session) -> List[Plant]:
+def update_plants_from_list_of_dicts(plants: List[FPlant], db: Session) -> List[Plant]:
     new_list = []
     plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")

@@ -136,12 +136,16 @@ export interface FTaxon {
   custom_notes?: string;
   distribution?: FBDistribution;
   images?: FTaxonImage[];
-  occurrence_images?: FTaxonOccurrenceImage[];
 }
 export interface FTaxonImage {
   id: number;
   filename: string;
   description?: string;
+}
+export interface FTaxonInfoRequest {
+  include_external_apis: boolean;
+  taxon_name_pattern: string;
+  search_for_genus_not_species: boolean;
 }
 export interface FTaxonOccurrenceImage {
   occurrence_id: number;
@@ -156,9 +160,4 @@ export interface FTaxonOccurrenceImage {
   references?: string;
   href: string;
   filename_thumbnail: string;
-}
-export interface FTaxonInfoRequest {
-  include_external_apis: boolean;
-  taxon_name_pattern: string;
-  search_for_genus_not_species: boolean;
 }

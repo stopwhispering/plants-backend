@@ -42,8 +42,7 @@ async def update_taxa(modified_taxa: FModifiedTaxa, db: Session = Depends(get_db
 
     db.commit()
 
-    results = {'action': 'Save taxa',
-               'resource': FBMajorResource.TAXON,
+    results = {'resource': FBMajorResource.TAXON,
                'message': get_message(msg := f'Updated {len(modified_taxa)} taxa in database.')
                }
     logger.info(msg)

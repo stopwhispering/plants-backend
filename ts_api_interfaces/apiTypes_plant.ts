@@ -29,17 +29,8 @@ export type FBMajorResource =
   | "PlantPropertyResource"
   | "TaxonPropertyResource";
 
-export interface BPlantsRenameRequest {
-  OldPlantName: string;
-  NewPlantName: string;
-}
-export interface BResultsPlantCloned {
-  action: string;
-  message: BMessage;
-  plant: FBPlant;
-}
-export interface FBPlant {
-  id?: number;
+export interface BPlant {
+  id: number;
   plant_name: string;
   field_number?: string;
   geographic_origin?: string;
@@ -84,20 +75,55 @@ export interface FBPlantTag {
   last_update?: string;
   plant_id: number;
 }
+export interface BPlantsRenameRequest {
+  OldPlantName: string;
+  NewPlantName: string;
+}
+export interface BResultsPlantCloned {
+  action: string;
+  message: BMessage;
+  plant: BPlant;
+}
 export interface BResultsPlants {
   action: string;
   message: BMessage;
-  PlantsCollection: FBPlant[];
+  PlantsCollection: BPlant[];
 }
 export interface BResultsPlantsUpdate {
   action: string;
   resource: FBMajorResource;
   message: BMessage;
-  plants: FBPlant[];
+  plants: BPlant[];
+}
+export interface FPlant {
+  id?: number;
+  plant_name: string;
+  field_number?: string;
+  geographic_origin?: string;
+  nursery_source?: string;
+  propagation_type?: FBPropagationType;
+  active: boolean;
+  cancellation_reason?: FBCancellationReason;
+  cancellation_date?: string;
+  generation_notes?: string;
+  taxon_id?: number;
+  taxon_authors?: string;
+  botanical_name?: string;
+  parent_plant?: FBAssociatedPlantExtractForPlant;
+  parent_plant_pollen?: FBAssociatedPlantExtractForPlant;
+  plant_notes?: string;
+  filename_previewimage?: string;
+  last_update?: string;
+  descendant_plants_all: FBAssociatedPlantExtractForPlant[];
+  sibling_plants: FBAssociatedPlantExtractForPlant[];
+  same_taxon_plants: FBAssociatedPlantExtractForPlant[];
+  current_soil?: FBPlantCurrentSoil;
+  latest_image?: FBPlantLatestImage;
+  tags: FBPlantTag[];
 }
 export interface FPlantsDeleteRequest {
   plant_id: number;
 }
 export interface FPlantsUpdateRequest {
-  PlantsCollection: FBPlant[];
+  PlantsCollection: FPlant[];
 }

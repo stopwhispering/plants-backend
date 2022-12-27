@@ -94,7 +94,7 @@ class FTaxon(BaseModel):
     custom_notes: Optional[str]
     distribution: Optional[FBDistribution]  # not filled for each request
     images: Optional[List[FTaxonImage]]  # not filled for each request
-    occurrence_images: Optional[List[FTaxonOccurrenceImage]]
+    # occurrence_images: Optional[List[FTaxonOccurrenceImage]]  # not sent from frontend (read-only anyway)
 
     class Config:
         extra = Extra.ignore

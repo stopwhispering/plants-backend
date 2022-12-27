@@ -25,7 +25,7 @@ class BMessageType(Enum):
     SUCCESS = 'Success'
     WARNING = 'Warning'
     ERROR = 'Error'
-    DEBUG = 'Debug'  # not known by UI5 message processor, only showed in frontend console log
+    DEBUG = 'Debug'  # not known by UI5 message processor, only shown in frontend console log
 
 
 class BMessage(BaseModel):

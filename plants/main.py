@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from plants import config
 from plants.extensions.db import init_database_tables, engine
 from plants.routers import (taxonomy, plants, images, events, property_names, properties, proposals,
-                            functions, selection_data, biodiversity_apis, pollinations, florescences)
+                             selection_data, biodiversity_apis, pollinations, florescences)
 from plants.util.logger_utils import configure_root_logger
 
 configure_root_logger(log_severity_console=config.log_severity_console,
@@ -29,11 +29,8 @@ origins = ["http://pollination.localhost",
 # additional CORS for development only
 if config.allow_cors:
     origins.extend([
-        # "http://localhost",
         "http://localhost:5000",
-        # "http://localhost:8000",
         "http://localhost:8080",
-        # "http://localhost:8081",
         ])
 app.add_middleware(
         CORSMiddleware,
@@ -44,12 +41,12 @@ app.add_middleware(
         )
 
 
-# override 422 request validation error (pydantic models) to log them
-# todo deprecated
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
-    logger.error(exc)
-    return await request_validation_exception_handler(request, exc)
+# # override 422 request validation error (pydantic models) to log them
+# # todo deprecated
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request, exc):
+#     logger.error(exc)
+#     return await request_validation_exception_handler(request, exc)
 
 
 app.include_router(taxonomy.router, prefix=COMMON_PREFIX)
@@ -59,7 +56,6 @@ app.include_router(events.router, prefix=COMMON_PREFIX)
 app.include_router(property_names.router, prefix=COMMON_PREFIX)
 app.include_router(properties.router, prefix=COMMON_PREFIX)
 app.include_router(proposals.router, prefix=COMMON_PREFIX)
-app.include_router(functions.router, prefix=COMMON_PREFIX)
 app.include_router(selection_data.router, prefix=COMMON_PREFIX)
 app.include_router(biodiversity_apis.router, prefix=COMMON_PREFIX)
 app.include_router(pollinations.router, prefix=COMMON_PREFIX)

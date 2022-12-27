@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
 
 router = APIRouter(
-    # prefix="/pollination",
     tags=["pollination", "inflorence"],
     responses={404: {"description": "Not found"}},
 )

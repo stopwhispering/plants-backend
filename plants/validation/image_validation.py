@@ -72,7 +72,6 @@ class BResultsImagesUploaded(BaseModel):
 
 class BResultsImageDeleted(BaseModel):
     action: str
-    resource: str
     message: BMessage
     # photo_file:  PImage
 

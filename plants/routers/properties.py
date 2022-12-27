@@ -26,8 +26,7 @@ async def create_or_update_taxon_properties(
         properties; save new and modified taxon properties"""
 
     SavePropertiesTaxa().save_properties(properties_modified=data.modifiedPropertiesTaxa, db=db)
-    results = {'action':   'Update',
-               'resource': FBMajorResource.TAXON_PROPERTIES,
+    results = {'resource': FBMajorResource.TAXON_PROPERTIES,
                'message':  get_message(f'Updated properties for taxa in database.')
                }
 
@@ -41,8 +40,7 @@ async def modify_plant_properties(
     """save plant properties"""
 
     SaveProperties().save_properties(data.modifiedPropertiesPlants, db=db)
-    results = {'action':   'Update',
-               'resource': FBMajorResource.PLANT_PROPERTIES,
+    results = {'resource': FBMajorResource.PLANT_PROPERTIES,
                'message':  get_message(f'Updated properties in database.')
                }
 

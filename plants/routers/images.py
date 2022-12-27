@@ -117,8 +117,7 @@ async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_d
                                 keywords=[k.keyword for k in image_ext.keywords],
                                 db=db)
 
-    results = {'action': 'Saved',
-               'resource': FBMajorResource.IMAGE,
+    results = {'resource': FBMajorResource.IMAGE,
                'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection.__root__)} images.")
                }
 

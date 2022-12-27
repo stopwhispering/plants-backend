@@ -87,7 +87,10 @@ class FBCancellationReason(Enum):
     # NONE = ''
 
 
-class FBPlant(BaseModel):
+####################################################################################################
+# Entities used only in API Requests from Frontend (F...)
+####################################################################################################
+class FPlant(BaseModel):
     id: int | None  # None for new plants
     plant_name: str
     field_number: str | None
@@ -123,9 +126,6 @@ class FBPlant(BaseModel):
         allow_population_by_field_name = True
 
 
-####################################################################################################
-# Entities used only in API Requests from Frontend (F...)
-####################################################################################################
 class FPlantsDeleteRequest(BaseModel):
     plant_id: int
 
@@ -134,7 +134,7 @@ class FPlantsDeleteRequest(BaseModel):
 
 
 class FPlantsUpdateRequest(BaseModel):
-    PlantsCollection: list[FBPlant]
+    PlantsCollection: list[FPlant]
 
     class Config:
         extra = Extra.forbid
@@ -143,6 +143,42 @@ class FPlantsUpdateRequest(BaseModel):
 ####################################################################################################
 # Entities used only in API Responses from Backend (B...)
 ####################################################################################################
+class BPlant(BaseModel):
+    id: int
+    plant_name: str
+    field_number: str | None
+    geographic_origin: str | None
+    nursery_source: str | None
+    propagation_type: FBPropagationType | None
+    active: bool
+    cancellation_reason: FBCancellationReason | None
+    cancellation_date: date | None
+    generation_notes: str | None
+    taxon_id: int | None
+    taxon_authors: str | None
+    botanical_name: str | None
+
+    parent_plant: FBAssociatedPlantExtractForPlant | None
+    parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
+    plant_notes: str | None
+    filename_previewimage: Path | None
+    last_update: datetime | None  # None for new plants
+
+    descendant_plants_all: list[FBAssociatedPlantExtractForPlant]
+    sibling_plants: list[FBAssociatedPlantExtractForPlant]
+    same_taxon_plants: list[FBAssociatedPlantExtractForPlant]
+
+    current_soil: FBPlantCurrentSoil | None
+    latest_image: FBPlantLatestImage | None
+    tags: list[FBPlantTag]
+
+    class Config:
+        extra = Extra.forbid
+        use_enum_values = True  # populate model with enum values, rather than the raw enum
+        orm_mode = True
+        allow_population_by_field_name = True
+
+
 class BPlantsRenameRequest(BaseModel):
     OldPlantName: str
     NewPlantName: str
@@ -154,7 +190,7 @@ class BPlantsRenameRequest(BaseModel):
 class BResultsPlants(BaseModel):
     action: str
     message: BMessage
-    PlantsCollection: list[FBPlant]
+    PlantsCollection: list[BPlant]
 
     class Config:
         extra = Extra.forbid
@@ -164,7 +200,7 @@ class BResultsPlantsUpdate(BaseModel):
     action: str
     resource: FBMajorResource
     message: BMessage
-    plants: list[FBPlant]
+    plants: list[BPlant]
 
     class Config:
         extra = Extra.forbid
@@ -174,7 +210,7 @@ class BResultsPlantsUpdate(BaseModel):
 class BResultsPlantCloned(BaseModel):
     action: str
     message: BMessage
-    plant: FBPlant
+    plant: BPlant
 
     class Config:
         extra = Extra.forbid
