@@ -36,6 +36,7 @@ class BMessage(BaseModel):
 
     class Config:
         extra = Extra.forbid
+        use_enum_values = True
 
 
 class BConfirmation(BaseModel):

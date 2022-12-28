@@ -36,7 +36,7 @@ def throw_exception(message: str = None,
 def get_message(message: str = None,
                 message_type: BMessageType = BMessageType.INFORMATION,
                 additional_text: str = None,
-                description: str = None):
+                description: str = None) -> dict:
     """generates a message to be userd in a ui5 frontend; uses flask request which is not required as a paramter"""
     msg = {
         'type':           message_type.value,

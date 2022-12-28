@@ -21,7 +21,7 @@ from plants.services.image_services_simple import remove_files_already_existing
 from plants.validation.event_validation import FImagesToDelete
 from plants.validation.image_validation import BResultsImageDeleted
 from plants.validation.message_validation import BMessage, BMessageType, BSaveConfirmation, \
-    FBMajorResource
+    FBMajorResource, BConfirmation
 
 logger = logging.getLogger(__name__)
 
@@ -230,9 +230,12 @@ def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: 
     return Response(content=image_bytes, media_type="image/png")
 
 
-@router.post("/generate_missing_thumbnails", response_model=BMessage)
+@router.post("/generate_missing_thumbnails", response_model=BConfirmation)
 async def trigger_generate_missing_thumbnails(background_tasks: BackgroundTasks,
                                               db: Session = Depends(get_db)):
     """trigger the generation of missing thumbnails for occurrences"""
     msg = trigger_generation_of_missing_thumbnails(db=db, background_tasks=background_tasks)
-    return get_message(msg)
+    return {
+        'action': 'Triggering generation of missing thumbnails',
+        'message': get_message(msg)
+    }
