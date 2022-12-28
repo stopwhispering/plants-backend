@@ -215,7 +215,7 @@ class BTaxon(BaseModel):
     distribution_concat: Optional[str]
     hybrid: bool
     hybridgenus: bool
-    gbif_id: Optional[str]
+    gbif_id: Optional[int]
     custom_notes: Optional[str]
     distribution: FBDistribution  # not filled for each request
     images: list[BTaxonImage]

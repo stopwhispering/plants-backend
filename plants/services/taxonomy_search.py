@@ -37,8 +37,8 @@ class TaxonomySearch:
         return results
 
     @staticmethod
-    def _get_search_result_from_db_taxon(taxon: Taxon) -> BKewSearchResultEntry:
-        return BKewSearchResultEntry.parse_obj({
+    def _get_search_result_from_db_taxon(taxon: Taxon) -> dict:
+        search_result_entry = {
             'source': BSearchResultSource.SOURCE_PLANTS_DB,
             'id': taxon.id,
             'count': len([p for p in taxon.plants if p.active]),
@@ -49,7 +49,7 @@ class TaxonomySearch:
             'family': taxon.family,
             'name': taxon.name,
             'rank': taxon.rank,
-            'lsid': taxon.lsid if not taxon.is_custom else None,
+            'lsid': taxon.lsid,  # if not taxon.is_custom else None,
             # 'powo_id': taxon.powo_id,
             'genus': taxon.genus,
             'species': taxon.species,
@@ -58,12 +58,14 @@ class TaxonomySearch:
             'synonyms_concat': taxon.synonyms_concat
             # if taxon.distribution_concat and len(taxon.distribution_concat) >= 150:
             #     result['distribution_concat'] = query.distribution_concat[:147] + '...'
-        })
+        }
+        BKewSearchResultEntry.validate(search_result_entry)
+        return search_result_entry
 
     def _query_taxa_in_local_database(self,
                                       taxon_name_pattern: str,
                                       search_for_genus_not_species: bool,
-                                      db: Session) -> list[BKewSearchResultEntry]:
+                                      db: Session) -> list[dict]:
         """searches term in local botany database and returns results in web-format"""
         if search_for_genus_not_species:
             taxa = db.query(Taxon).filter(Taxon.name.ilike(taxon_name_pattern),  # ilike ~ case-insensitive like
@@ -107,7 +109,7 @@ class TaxonomySearch:
             ipni_result: dict
 
             # check if that item is already included in the local results; if so, skip it
-            if [r for r in local_db_results if not r.is_custom and r.lsid == ipni_result['fqId']]:
+            if [r for r in local_db_results if not r['is_custom'] and r['lsid'] == ipni_result['fqId']]:
                 continue
 
             # build additional results from IPNI data

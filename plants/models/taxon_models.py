@@ -53,7 +53,7 @@ class Taxon(Base, OrmUtil):
     lsid = Column(VARCHAR(50), nullable=False)
     authors = Column(VARCHAR(100))
     basionym = Column(VARCHAR(100))
-    synonyms_concat = Column(VARCHAR(300))
+    synonyms_concat = Column(VARCHAR(500))  # todo adjust in database
     distribution_concat = Column(VARCHAR(200))
     hybrid = Column(BOOLEAN, nullable=False)
     hybridgenus = Column(BOOLEAN)

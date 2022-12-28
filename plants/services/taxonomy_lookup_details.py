@@ -61,6 +61,11 @@ class TaxonomyLookupDetails:
         else:
             taxon.synonyms_concat = None
 
+        # todo implement generic solution
+        max_length = Taxon.synonyms_concat.expression.type.length
+        if len(taxon.synonyms_concat) > max_length:
+            taxon.synonyms_concat = taxon.synonyms_concat[:max_length-3] + '...'
+
         # distribution
         dist = []
         if distribution := powo_lookup.get('distribution'):
