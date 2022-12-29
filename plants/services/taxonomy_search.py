@@ -4,6 +4,7 @@ from pykew import ipni as ipni, powo as powo
 from pykew.ipni_terms import Name
 from sqlalchemy.orm import Session
 
+from plants import config
 from plants.exceptions import TooManyResultsError
 from plants.models.taxon_models import Taxon
 from plants.services.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
@@ -18,21 +19,23 @@ class TaxonomySearch:
         self.search_for_genus_not_species = search_for_genus_not_species
         self.db = db
 
-    def search(self, taxon_name_pattern: str) -> list[BKewSearchResultEntry]:
+    def search(self, taxon_name_pattern: str) -> list[dict]:
         """
-        might throw TooManyResultsError or JSONDecodeError
+        search for a taxon name via pattern, first in local database, then in external APIs
+        merge results from local database and external APIs
         """
         # search for taxa already in the database
-        results = self._query_taxa_in_local_database(
-            taxon_name_pattern=f'{taxon_name_pattern}%',
+        local_results = self._query_taxa_in_local_database(
+            taxon_name_pattern=f'%{taxon_name_pattern}%',
             search_for_genus_not_species=self.search_for_genus_not_species,
             db=self.db)
+        results = local_results[:]
 
-        # optionally search in external biodiversity databases "ipni" and "powo"
+        # optionally, search in external biodiversity databases "ipni" and "powo"
         if self.include_external_apis:
             kew_results = self._search_taxa_in_external_apis(
-                plant_name_pattern=taxon_name_pattern + '*',
-                local_results=results)
+                plant_name_pattern=taxon_name_pattern,  # no %/* required here
+                local_results=local_results)
             results.extend(kew_results)
         return results
 
@@ -84,36 +87,37 @@ class TaxonomySearch:
 
     def _search_taxa_in_ipni_api(self,
                                  plant_name_pattern: str,
-                                 local_db_results: list[BKewSearchResultEntry]) -> (
-            tuple[list[BKewSearchResultEntry], set]):
+                                 ignore_local_db_results: list[dict]) -> (
+            tuple[list[dict], set]):
         """
-        search for species / genus patternin Kew's IPNI database
+        search for species / genus pattern in Kew's IPNI database
         skip if already in local database
         might raise TooManyResultsError
         """
+        results = []
+        lsid_in_powo = set()
+
         if not self.search_for_genus_not_species:
             ipni_search = ipni.search(plant_name_pattern)
         else:
             ipni_query = {Name.genus: plant_name_pattern, Name.rank: 'gen.'}
             ipni_search = ipni.search(ipni_query)
-        if ipni_search.size() > 30:
+        if ipni_search.size() > config.taxon_search_max_results:
             msg = f'Too many search results for search term "{plant_name_pattern}": {ipni_search.size()}'
             raise TooManyResultsError(msg)
 
         elif ipni_search.size() == 0:
-            return [], set()
+            return results, lsid_in_powo
 
-        results = []
-        lsid_in_powo = set()
         for ipni_result in ipni_search:
             ipni_result: dict
 
             # check if that item is already included in the local results; if so, skip it
-            if [r for r in local_db_results if not r['is_custom'] and r['lsid'] == ipni_result['fqId']]:
+            if [r for r in ignore_local_db_results if not r['is_custom'] and r['lsid'] == ipni_result['fqId']]:
                 continue
 
             # build additional results from IPNI data
-            result = BKewSearchResultEntry.parse_obj({
+            result = {
                 'source': BSearchResultSource.SOURCE_IPNI,
                 'id': None,  # taxon id determined upon saving by database
                 'count': 0,  # count of plants in the database
@@ -131,54 +135,55 @@ class TaxonomySearch:
                 'phylum': None,  # available only in POWO
                 'synonyms_concat': None,  # available only in POWO
                 'distribution_concat': None,   # available only in POWO
-            })
+            }
+            BKewSearchResultEntry.validate(result)
             if ipni_result.get('inPowo'):
-                lsid_in_powo.add(result.lsid)
+                lsid_in_powo.add(result['lsid'])
             results.append(result)
         return results, lsid_in_powo
 
     @staticmethod
-    def _update_taxon_from_powo_api(result: BKewSearchResultEntry) -> None:
+    def _update_taxon_from_powo_api(result: dict) -> None:
         """
         for the supplied search result entry, fetch additional information from "Plants of the World" API
         """
         # POWO uses LSID as ID just like IPNI
-        powo_lookup = powo.lookup(result.lsid, include=['distribution'])
+        powo_lookup = powo.lookup(result['lsid'], include=['distribution'])
         if 'error' in powo_lookup:
-            logger.error(f'No Plants of the World result for LSID {result.lsid}')
+            logger.error(f'No Plants of the World result for LSID {result["lsid"]}')
             return
 
         # overwrite as POWO has more information
-        result.source = BSearchResultSource.SOURCE_IPNI_POWO
-        result.authors = powo_lookup.get('authors')
+        result['source'] = BSearchResultSource.SOURCE_IPNI_POWO
+        result['authors'] = powo_lookup.get('authors')
         if 'namePublishedInYear' in powo_lookup:
-            result.namePublishedInYear = powo_lookup['namePublishedInYear']
-        result.synonym = powo_lookup.get('synonym')
+            result['namePublishedInYear'] = powo_lookup['namePublishedInYear']
+        result['synonym'] = powo_lookup.get('synonym')
         if powo_lookup.get('synonym'):
             if 'accepted' in powo_lookup and (accepted_name := powo_lookup['accepted'].get('name')):
-                result.synonyms_concat = create_synonym_label_if_only_a_synonym(accepted_name)
+                result['synonyms_concat'] = create_synonym_label_if_only_a_synonym(accepted_name)
             else:
-                result.synonyms_concat = 'Accepted: unknown'
+                result['synonyms_concat'] = 'Accepted: unknown'
 
         # add information only available at POWO
-        result.phylum = powo_lookup.get('phylum')
-        result.distribution_concat = create_distribution_concat(powo_lookup)
+        result['phylum'] = powo_lookup.get('phylum')
+        result['distribution_concat'] = create_distribution_concat(powo_lookup)
 
     def _search_taxa_in_external_apis(self,
                                       plant_name_pattern: str,
                                       local_results: list,
-                                      ) -> list[BKewSearchResultEntry]:
-        """searches term in kew's International Plant Name Index ("IPNI") and Plants of the World ("POWO") databases and
-        returns results in web-format; ignores entries included in the local_results list"""
-
+                                      ) -> list[dict]:
+        """searches term in kew's International Plant Name Index ("IPNI") and Plants of the World ("POWO");
+        ignores entries included in the local_results list"""
         # First step: search in the International Plant Names Index (IPNI) which has slightly more items than POWO
-        results, lsid_in_powo = self._search_taxa_in_ipni_api(plant_name_pattern, local_results)
+        results, lsid_in_powo = self._search_taxa_in_ipni_api(plant_name_pattern=plant_name_pattern,
+                                                              ignore_local_db_results=local_results)
 
         # Second step: for each IPNI result, search in POWO for more details if available
         for result in results:
 
             # for those entries without POWO data, we add a warning concerning acceptance status first
-            if result.lsid not in lsid_in_powo:
+            if result['lsid'] not in lsid_in_powo:
                 result.synonyms_concat = 'Status unknown, no entry in POWO'
 
             self._update_taxon_from_powo_api(result)

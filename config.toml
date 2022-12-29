@@ -9,6 +9,7 @@ jpg_quality = 82
 
 [plants]
 filter_hidden = true
+taxon_search_max_results = 30
 
 ########################################################################################################################
 # platform-specific configuration

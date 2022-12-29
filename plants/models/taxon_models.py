@@ -33,7 +33,11 @@ class Distribution(Base):
 
 
 class Taxon(Base, OrmUtil):
-    """botanical details"""
+    """
+    botanical details
+    non-technical key is name (unique constraint)
+    lsid is unique, too, amont those taxa with is_custom == False (no constraint, asserted programmatically)
+    """
     __tablename__ = 'taxon'
 
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -53,7 +57,7 @@ class Taxon(Base, OrmUtil):
     lsid = Column(VARCHAR(50), nullable=False)
     authors = Column(VARCHAR(100))
     basionym = Column(VARCHAR(100))
-    synonyms_concat = Column(VARCHAR(500))  # todo adjust in database
+    synonyms_concat = Column(VARCHAR(500))
     distribution_concat = Column(VARCHAR(200))
     hybrid = Column(BOOLEAN, nullable=False)
     hybridgenus = Column(BOOLEAN)

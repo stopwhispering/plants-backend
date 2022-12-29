@@ -18,6 +18,8 @@ class Configuration:
 
     filter_hidden_plants: bool
 
+    taxon_search_max_results: int
+
     log_severity_console: str  # e.g. 'DEBUG', will be mapped to int
     log_severity_file: int
     log_file_path: Path
@@ -83,6 +85,8 @@ def parse_config() -> Configuration:
         sizes=tuple(tuple(s) for s in config_global['images']['sizes']),
         jpg_quality=config_global['images']['jpg_quality'],
         filter_hidden_plants=config_global['plants']['filter_hidden'],
+
+        taxon_search_max_results=config_global['plants']['taxon_search_max_results'],
 
         log_severity_console=config_env['log_severity_console'].upper(),
         log_severity_file=config_env['log_severity_file'].upper(),
