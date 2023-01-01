@@ -37,7 +37,7 @@ async def get_active_florescences(db: Session = Depends(get_db), ):
 
 
 @router.get("/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence)
-async def get_active_florescences(db: Session = Depends(get_db), ):
+async def get_plants_for_new_florescence(db: Session = Depends(get_db), ):
     """read all plants available for new florescence"""
     plants = read_plants_for_new_florescence(db)
     results = {'plantsForNewFlorescenceCollection': plants}

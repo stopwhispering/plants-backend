@@ -1,5 +1,6 @@
 services:
     plants-backend:
+      container_name: plants-backend-container
       restart: on-failure
       labels:
         - traefik.http.routers.plants-backend-insecure.entrypoints=http-ep
@@ -10,6 +11,7 @@ services:
         - LOG_LEVEL=debug
         - ENVIRONMENT=dev
         - MAX_WORKERS=3
+        - CONNECTION_STRING=postgresql+psycopg2://plants:A6uLdDsj6hua@postgres:5432/plants
 
       volumes:
         - type: bind

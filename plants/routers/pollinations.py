@@ -14,7 +14,7 @@ from plants.validation.pollination_validation import (BResultsOngoingPollination
                                                       FRequestNewPollination,
                                                       BResultsSettings, FRequestEditedPollination,
                                                       BResultsPollenContainers, FRequestPollenContainers,
-                                                      BResultsTrainingPollinationModel)
+                                                      BResultsRetrainingPollinationToSeedsModel)
 
 logger = logging.getLogger(__name__)
 
@@ -58,15 +58,17 @@ async def get_ongoing_pollinations(db: Session = Depends(get_db)):
             response_model=BResultsSettings)
 async def get_pollination_settings():
     colors = list(COLORS_MAP.keys())
-    pollination_status = [
-        {'key': PollinationStatus.ATTEMPT.value, 'text': 'Attempt'},
-        {'key': PollinationStatus.SEED_CAPSULE.value, 'text': 'Capsule'},
-        {'key': PollinationStatus.SEED.value, 'text': 'Seed'},
-        {'key': PollinationStatus.GERMINATED.value, 'text': 'Plant'},
-    ]
+    # pollination_status = [
+    #     {'key': PollinationStatus.ATTEMPT.value, 'text': 'Attempt'},
+    #     {'key': PollinationStatus.SEED_CAPSULE.value, 'text': 'Capsule'},
+    #     {'key': PollinationStatus.SEED.value, 'text': 'Seed'},
+    #     {'key': PollinationStatus.GERMINATED.value, 'text': 'Plant'},
+    # ]
 
-    results = {'colors': colors,
-               'pollination_status': pollination_status}
+    results = {
+        'colors': colors,
+        # 'pollination_status': pollination_status
+    }
     return results
 
 
@@ -96,7 +98,7 @@ async def delete_pollination(
 
 
 @router.post('/retrain_probability_pollination_to_seed_model',
-             response_model=BResultsTrainingPollinationModel)
+             response_model=BResultsRetrainingPollinationToSeedsModel)
 async def retrain_probability_pollination_to_seed_model(db: Session = Depends(get_db)):
     """retrain the probability_pollination_to_seed ml model"""
     results = train_model_for_probability_of_seed_production(db=db)

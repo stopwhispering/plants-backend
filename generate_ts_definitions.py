@@ -4,11 +4,6 @@ from typing import Tuple
 from pydantic2ts import generate_typescript_defs
 
 REMOVE_COMMENTS_BEGIN_WITH = ['/*', '*/', '* ', ' *']
-HEADER = """import ManagedObject from "sap/ui/base/ManagedObject";
-
-/**
- * @namespace plants.ui.definitions
- */"""
 
 
 @dataclass
@@ -23,32 +18,35 @@ exclude = shared_message
 
 
 models = [
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\event_validation.py",
+    PydanticModel(r".\plants\validation\event_validation.py",
                   r"./ts_api_interfaces/apiTypes_event.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\image_validation.py",
+    PydanticModel(r".\plants\validation\image_validation.py",
                   r"./ts_api_interfaces/apiTypes_image.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\taxon_validation.py",
+    PydanticModel(r".\plants\validation\taxon_validation.py",
                   r"./ts_api_interfaces/apiTypes_taxon.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\property_validation.py",
+    PydanticModel(r".\plants\validation\property_validation.py",
                   r"./ts_api_interfaces/apiTypes_property.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\plant_validation.py",
+    PydanticModel(r".\plants\validation\plant_validation.py",
                   r"./ts_api_interfaces/apiTypes_plant.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\selection_validation.py",
+    PydanticModel(r".\plants\validation\selection_validation.py",
                   r"./ts_api_interfaces/apiTypes_selection.ts",
                   exclude),
-    PydanticModel(r"C:\workspaces\PycharmProjects\plants_backend\plants\validation\message_validation.py",
+    PydanticModel(r".\plants\validation\message_validation.py",
                   r"./ts_api_interfaces/apiTypes_message.ts",
+                  ()),
+    PydanticModel(r".\plants\validation\pollination_validation.py",
+                  r"./ts_api_interfaces/apiTypes_pollination.ts",
                   ()),
 ]
 
 
 def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
-    lines_start = [l for l in lines if l.startswith('export interface ' + model_name + ' ')]
+    lines_start = [line for line in lines if line.startswith('export interface ' + model_name + ' ')]
     if not lines_start:
         return lines
     if len(lines_start) > 1:
@@ -66,70 +64,62 @@ def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
     return lines_new
 
 
-def remove_shared_models(model: PydanticModel):
-    with open(model.path_ts) as f:
+def remove_shared_models(pydantic_model: PydanticModel):
+    with open(pydantic_model.path_ts) as f:
         lines = f.readlines()
     write = False
-    for exclude_model in model.exclude:
+    for exclude_model in pydantic_model.exclude:
         new_lines = _remove_shared_model(lines, exclude_model)
         if new_lines != lines:
-            print(f"Removed {exclude_model} from {model.path_ts}")
+            print(f"Removed {exclude_model} from {pydantic_model.path_ts}")
             lines = new_lines
             write = True
     if write:
-        with open(model.path_ts, 'w') as f:
+        with open(pydantic_model.path_ts, 'w') as f:
             f.writelines(lines)
 
 
-def remove_comments(model: PydanticModel):
-    with open(model.path_ts) as f:
+def remove_comments(pydantic_model: PydanticModel):
+    with open(pydantic_model.path_ts) as f:
         lines = f.readlines()
     # write = False
-    new_lines = [l for l in lines if not l.startswith(tuple(REMOVE_COMMENTS_BEGIN_WITH))]
+    new_lines = [line for line in lines if not line.startswith(tuple(REMOVE_COMMENTS_BEGIN_WITH))]
     if len(lines) != len(new_lines):
-        with open(model.path_ts, 'w') as f:
+        with open(pydantic_model.path_ts, 'w') as f:
             f.writelines(new_lines)
 
 
-# def insert_header(model: PydanticModel):
-#     with open(model.path_ts) as f:
-#         lines = f.readlines()
-#     lines.insert(0, HEADER)
-#     with open(model.path_ts, 'w') as f:
-#         f.writelines(lines)
-
-
-def _get_models_in_pydantic_file(model: PydanticModel) -> set[str]:
-    with open(model.path_pydantic) as f:
+def _get_models_in_pydantic_file(pydantic_model: PydanticModel) -> set[str]:
+    with open(pydantic_model.path_pydantic) as f:
         lines = f.readlines()
-    lines_without_spaces = [l.strip() for l in lines]
-    lines_with_models = [l for l in lines_without_spaces if l.startswith('class')]
-    models_with_basemodel = [l.split(' ')[1] for l in lines_with_models]
-    models = [m[:(m.find('(') or m.find(':'))] for m in models_with_basemodel]
-    return set([m for m in models if m != 'Config'])
+    lines_without_spaces = [line.strip() for line in lines]
+    lines_with_models = [line for line in lines_without_spaces if line.startswith('class')]
+    models_with_basemodel = [line.split(' ')[1] for line in lines_with_models]
+    models_ = [m[:(m.find('(') or m.find(':'))] for m in models_with_basemodel]
+    return set([m for m in models_ if m != 'Config'])
 
 
-def _get_created_definitions_in_ts_file(model: PydanticModel) -> set[str]:
-    with open(model.path_ts) as f:
+def _get_created_definitions_in_ts_file(pydantic_model: PydanticModel) -> set[str]:
+    with open(pydantic_model.path_ts) as f:
         lines = f.readlines()
-    exports = [l for l in lines if l.strip().startswith('export')]
-    if ex := [l for l in exports if not l.startswith('export type') and not l.startswith('export interface')]:
-        raise ValueError(f"Found non type or interface export in {model.path_ts}; {ex}")
-    exports_without_brackets = [l.replace('{', ' ') for l in exports]
-    class_names = [l.split(' ')[2] for l in exports_without_brackets]
+    exports = [line for line in lines if line.strip().startswith('export')]
+    if ex := [line for line in exports
+              if not line.startswith('export type') and not line.startswith('export interface')]:
+        raise ValueError(f"Found non type or interface export in {pydantic_model.path_ts}; {ex}")
+    exports_without_brackets = [line.replace('{', ' ') for line in exports]
+    class_names = [line.split(' ')[2] for line in exports_without_brackets]
     return set(class_names)
 
 
-def get_surplus_models_to_remove(model: PydanticModel) -> tuple[str]:
+def get_surplus_models_to_remove(pydantic_model: PydanticModel) -> tuple[str]:
     actual_models = _get_models_in_pydantic_file(model)
-    created_definitions = _get_created_definitions_in_ts_file(model)
+    created_definitions = _get_created_definitions_in_ts_file(pydantic_model)
     return tuple(created_definitions - actual_models)
 
 
 for model in models:
+    generate_typescript_defs(model.path_pydantic, model.path_ts)
     models_to_remove = get_surplus_models_to_remove(model)
-    generate_typescript_defs(model.path_pydantic, model.path_ts)  # doesn't work anyway:, exclude=models_to_remove)
     model.exclude = models_to_remove
     remove_shared_models(model)
     remove_comments(model)
-    # insert_header(model)

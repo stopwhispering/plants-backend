@@ -134,10 +134,12 @@ def create_or_update_event(plant_id: int, events: list[FCreateOrUpdateEvent], co
         if event.observation and event_obj.observation:
             event_obj.observation.diseases = event.observation.diseases
             event_obj.observation.observation_notes = event.observation.observation_notes
-            # cm to mm
-            event_obj.observation.height = event.observation.height * 10 if event.observation.height else None
-            event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter * 10 if \
-                event.observation.stem_max_diameter else None
+            event_obj.observation.height = event.observation.height
+            event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter
+            # # cm to mm
+            # event_obj.observation.height = event.observation.height * 10 if event.observation.height else None
+            # event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter * 10 if \
+            #     event.observation.stem_max_diameter else None
 
         if not event.pot:
             # event_obj.pot_event_type = None
@@ -156,7 +158,8 @@ def create_or_update_event(plant_id: int, events: list[FCreateOrUpdateEvent], co
             event_obj.pot.material = event.pot.material
             event_obj.pot.shape_side = event.pot.shape_side
             event_obj.pot.shape_top = event.pot.shape_top
-            event_obj.pot.diameter_width = event.pot.diameter_width * 10 if event.pot.diameter_width else None
+            event_obj.pot.diameter_width = event.pot.diameter_width
+            # event_obj.pot.diameter_width = event.pot.diameter_width * 10 if event.pot.diameter_width else None
 
         # remove soil from event
         #  (event to soil is n:1 so we don't delete the soil object but only the assignment)

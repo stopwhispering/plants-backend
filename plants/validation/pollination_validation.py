@@ -3,6 +3,7 @@ from typing import Optional, List
 from pydantic import Extra
 from pydantic.main import BaseModel
 
+from plants.models.pollination_models import PollenType, BFlorescenceStatus
 from plants.validation.message_validation import BMessage
 
 
@@ -24,13 +25,14 @@ class FRequestNewPollination(BaseModel):
     seedCapsulePlantId: int
     # florescencePlantId: int
     pollenDonorPlantId: int
-    pollenType: str  # PollenType (fresh | frozen | unknown)
+    pollenType: PollenType  # PollenType (fresh | frozen | unknown)
     pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
-    labelColorRgb: str  # e.g. 'FFFF00'
+    labelColorRgb: str  # e.g. '#FFFF00'
     location: str  # e.g. 'outside_led'
 
     class Config:
-        extra = Extra.ignore
+        extra = Extra.ignore  # some names and texts not to be inserted into DB
+        use_enum_values = True
 
 
 class FRequestEditedPollination(BaseModel):
@@ -67,7 +69,7 @@ class FRequestEditedFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
     plant_name: str
-    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    florescence_status: BFlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
     comment: str | None  # e.g. location if multiple plants in one container
     branches_count: int | None
@@ -77,16 +79,18 @@ class FRequestEditedFlorescence(BaseModel):
 
     class Config:
         extra = Extra.ignore
+        use_enum_values = True
 
 
 class FRequestNewFlorescence(BaseModel):
     plant_id: int
-    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
     comment: str | None  # max 110 chars
 
     class Config:
         extra = Extra.forbid
+        use_enum_values = True
 
 
 ####################################################################################################
@@ -106,7 +110,7 @@ class BActiveFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
     plant_name: str  # from as_dict
-    florescence_status: str  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
 
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
     comment: str | None  # max 110 chars, e.g. location if multiple plants in one container
@@ -119,6 +123,7 @@ class BActiveFlorescence(BaseModel):
 
     class Config:
         extra = Extra.forbid
+        use_enum_values = True
 
 
 class BOngoingPollination(BaseModel):
@@ -213,7 +218,7 @@ class BPollinationStatus(BaseModel):
 
 class BResultsSettings(BaseModel):
     colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
-    pollination_status: list[BPollinationStatus]
+    # pollination_status: list[BPollinationStatus]
 
     class Config:
         extra = Extra.forbid
@@ -270,7 +275,7 @@ class BResultsPollenContainers(BaseModel):
         extra = Extra.forbid
 
 
-class BResultsTrainingPollinationModel(BaseModel):
+class BResultsRetrainingPollinationToSeedsModel(BaseModel):
     mean_f1_score: float
     model: str
 

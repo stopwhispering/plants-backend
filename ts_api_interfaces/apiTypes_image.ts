@@ -23,7 +23,6 @@ export interface FBImagePlantTag {
 }
 export interface BResultsImageDeleted {
   action: string;
-  resource: string;
   message: BMessage;
 }
 export interface BResultsImageResource {

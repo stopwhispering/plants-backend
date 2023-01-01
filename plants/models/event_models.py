@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List
-from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, DateTime
+from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, DateTime, Numeric
 from sqlalchemy.orm import relationship, Session
 import logging
 
@@ -33,7 +33,7 @@ class Pot(Base, OrmUtil):
     material = Column(VARCHAR(50))
     shape_top = Column(VARCHAR(20))  # oval, square, circle
     shape_side = Column(VARCHAR(20))  # flat, very flat, high, very high
-    diameter_width = Column(INTEGER)  # in mm
+    diameter_width = Column(Numeric(5, 1))  # 5 digits, 1 decimal --> max 9999.9
     # pot_notes = Column(TEXT)
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
@@ -49,8 +49,8 @@ class Observation(Base, OrmUtil):
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     # plant_name = Column(VARCHAR(60), nullable=False)
     diseases = Column(TEXT)
-    stem_max_diameter = Column(INTEGER)  # stem or caudex (max) in mm
-    height = Column(INTEGER)  # in mm
+    stem_max_diameter = Column(Numeric(5, 1))  # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
+    height = Column(Numeric(5, 1))  # 5 digits, 1 decimal --> max 9999.9
     # location = Column(VARCHAR(30))
     observation_notes = Column(TEXT)
 
@@ -109,17 +109,17 @@ class Event(Base, OrmUtil):
         # read segments from their respective linked tables
         if self.observation:
             as_dict['observation'] = self.observation.as_dict()
-            if as_dict['observation'].get('height'):
-                as_dict['observation']['height'] = as_dict['observation']['height'] / 10  # mm to cm
-            if as_dict['observation'].get('stem_max_diameter'):
-                as_dict['observation']['stem_max_diameter'] = as_dict['observation']['stem_max_diameter'] / 10
+            # if as_dict['observation'].get('height'):
+            #     as_dict['observation']['height'] = as_dict['observation']['height'] / 10  # mm to cm
+            # if as_dict['observation'].get('stem_max_diameter'):
+            #     as_dict['observation']['stem_max_diameter'] = as_dict['observation']['stem_max_diameter'] / 10
         else:
             as_dict['observation'] = None
 
         if self.pot:
             as_dict['pot'] = self.pot.as_dict()
-            if as_dict['pot'].get('diameter_width'):
-                as_dict['pot']['diameter_width'] = as_dict['pot']['diameter_width'] / 10
+            # if as_dict['pot'].get('diameter_width'):
+            #     as_dict['pot']['diameter_width'] = as_dict['pot']['diameter_width'] / 10
         else:
             as_dict['pot'] = None
 

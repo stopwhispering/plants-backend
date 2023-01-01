@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from plants.models.plant_models import Plant
-from plants.models.pollination_models import (Florescence, FlorescenceStatus, PollenType, Pollination,
+from plants.models.pollination_models import (Florescence, BFlorescenceStatus, PollenType, Pollination,
                                               PollinationStatus, Context, Location, COLORS_MAP, COLORS_MAP_TO_RGB)
 from plants.services.ml_prediction import predict_probability_of_seed_production
 from plants.util.ui_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date, \
@@ -84,7 +84,7 @@ def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[BPote
 
     # 1. flowering plants
     query = (db.query(Florescence)
-             .filter(Florescence.florescence_status == FlorescenceStatus.FLOWERING.value,
+             .filter(Florescence.florescence_status == BFlorescenceStatus.FLOWERING.value,
                      # Florescence.plant_id != plant_id
                      ))
     fresh_pollen_donors = query.all()
@@ -185,7 +185,7 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Sessi
         label_color=COLORS_MAP[new_pollination_data.labelColorRgb],  # save the name of color, not the hex value
         pollination_status=PollinationStatus.ATTEMPT.value,  # noqa
         # creation_at=datetime.now(),
-        creation_context=Context.API.value  # noqa
+        creation_at_context=Context.API.value  # noqa
     )
 
     db.add(pollination)

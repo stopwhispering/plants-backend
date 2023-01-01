@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from plants.models.plant_models import Plant
-from plants.models.pollination_models import Florescence, FlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB
+from plants.models.pollination_models import Florescence, BFlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB
 from plants.util.ui_utils import parse_api_date, format_api_date
 from plants.validation.pollination_validation import BActiveFlorescence, FRequestEditedFlorescence, \
     BPlantForNewFlorescence, FRequestNewFlorescence
@@ -36,8 +36,8 @@ def read_plants_for_new_florescence(db: Session) -> list[BPlantForNewFlorescence
 
 def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
     query = (db.query(Florescence)
-             .filter(Florescence.florescence_status.in_({FlorescenceStatus.FLOWERING.value,
-                                                         FlorescenceStatus.INFLORESCENCE_APPEARED.value}))
+             .filter(Florescence.florescence_status.in_({BFlorescenceStatus.FLOWERING.value,
+                                                         BFlorescenceStatus.INFLORESCENCE_APPEARED.value}))
              )
     florescences_orm = query.all()
 
@@ -72,7 +72,7 @@ def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence
     assert florescence.plant_id == edited_florescence_data.plant_id
 
     # semantic validation
-    assert FlorescenceStatus.has_value(edited_florescence_data.florescence_status)
+    assert BFlorescenceStatus.has_value(edited_florescence_data.florescence_status)
 
     florescence.florescence_status = edited_florescence_data.florescence_status
     florescence.inflorescence_appearance_date = parse_api_date(edited_florescence_data.inflorescence_appearance_date)
@@ -90,7 +90,7 @@ def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence
 
 def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Session):
 
-    assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)
+    assert BFlorescenceStatus.has_value(new_florescence_data.florescence_status)
     plant = Plant.get_plant_by_plant_id(plant_id=new_florescence_data.plant_id, db=db, raise_exception=True)
 
     florescence = Florescence(

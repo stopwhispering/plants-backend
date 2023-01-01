@@ -1,3 +1,4 @@
+import decimal
 from enum import Enum
 from typing import Optional
 
@@ -5,6 +6,7 @@ from pydantic import validator, Extra, constr
 from pydantic.main import BaseModel
 
 from plants.validation.image_validation import FBImage
+from decimal import Decimal
 from plants.validation.message_validation import BMessage
 
 
@@ -53,7 +55,7 @@ class FPot(BaseModel):
     material: str
     shape_top: FBShapeTop
     shape_side: FBShapeSide
-    diameter_width: float
+    diameter_width: Decimal
 
     class Config:
         extra = Extra.forbid
@@ -63,8 +65,8 @@ class FPot(BaseModel):
 class FObservation(BaseModel):
     id: int | None
     diseases: str | None
-    stem_max_diameter: float | None
-    height: float | None
+    stem_max_diameter: Decimal | None
+    height: Decimal | None
     observation_notes: str | None
 
     class Config:
@@ -149,7 +151,7 @@ class BPot(BaseModel):
     material: str
     shape_top: FBShapeTop
     shape_side: FBShapeSide
-    diameter_width: float
+    diameter_width: Decimal
 
     class Config:
         extra = Extra.forbid
@@ -160,8 +162,8 @@ class BPot(BaseModel):
 class BObservation(BaseModel):
     id: int | None
     diseases: str | None
-    stem_max_diameter: float | None
-    height: float | None
+    stem_max_diameter: Decimal | None
+    height: Decimal | None
     observation_notes: str | None
 
     class Config:

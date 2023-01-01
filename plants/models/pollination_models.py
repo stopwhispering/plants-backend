@@ -75,7 +75,7 @@ COLORS_MAP = {
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}
 
 
-class FlorescenceStatus(Enum):
+class BFlorescenceStatus(Enum):
     INFLORESCENCE_APPEARED = "inflorescence_appeared"
     FLOWERING = "flowering"
     FINISHED = "finished"  # as soon as the last flower is closed
@@ -92,11 +92,11 @@ class Florescence(Base, OrmUtil):
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)  # table name is 'plants'
     plant = relationship("Plant", back_populates="florescences")  # class name is 'Plant'
 
-    inflorescence_appearance_date = Column(DATE)
+    inflorescence_appearance_date = Column(DATE)  # todo rename to inflorescence_appeared_at
     branches_count = Column(INTEGER)
     flowers_count = Column(INTEGER)
-    first_flower_opening_date = Column(DATE)
-    last_flower_closing_date = Column(DATE)
+    first_flower_opening_date = Column(DATE)  # todo renamed to first_flower_opened_at
+    last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status = Column(VARCHAR(100))
@@ -174,6 +174,7 @@ class Pollination(Base, OrmUtil):
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     creation_at_context = Column(VARCHAR(30), nullable=False)
 
