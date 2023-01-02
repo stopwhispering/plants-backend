@@ -42,14 +42,21 @@ class Taxon(Base, OrmUtil):
 
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     name = Column(VARCHAR(100), nullable=False)
-    is_custom = Column(BOOLEAN, nullable=False)
-    subsp = Column(VARCHAR(100))
+    full_html_name = Column(VARCHAR(120), nullable=False)  # todo populate
     species = Column(VARCHAR(100))
-    subgen = Column(VARCHAR(100))
     genus = Column(VARCHAR(100))
     family = Column(VARCHAR(100))
-    phylum = Column(VARCHAR(100))
-    kingdom = Column(VARCHAR(100))
+    # phylum = Column(VARCHAR(100))
+
+    infraspecies = Column(VARCHAR(40))
+    custom_infraspecies = Column(VARCHAR(40))
+    custom_rank = Column(VARCHAR(30))
+    cultivar = Column(VARCHAR(30))
+    affinis = Column(VARCHAR(40))
+
+    is_custom = Column(BOOLEAN, nullable=False)
+    custom_suffix = Column(VARCHAR(30))
+
     rank = Column(VARCHAR(30), nullable=False)
     taxonomic_status = Column(VARCHAR(100))
     name_published_in_year = Column(INTEGER)
@@ -129,6 +136,9 @@ class Taxon(Base, OrmUtil):
         # as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
 
         return as_dict
+
+    def __repr__(self):
+        return f'<Taxon - {self.id} - {self.name}>'
 
 
 class TaxonOccurrenceImage(Base, OrmUtil):

@@ -5,14 +5,13 @@ import logging
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from plants.services.biodiversity_services import retrieve_taxon_details
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxonomy_occurence_images import TaxonOccurencesLoader
 from plants.validation.taxon_validation import (
     FTaxonInfoRequest, BResultsTaxonInfoRequest,
-    FAssignTaxonRequest, BResultsRetrieveTaxonDetailsRequest, FFetchTaxonOccurrenceImagesRequest,
+    FRetrieveTaxonDetailsRequest, BResultsRetrieveTaxonDetailsRequest, FFetchTaxonOccurrenceImagesRequest,
     BResultsFetchTaxonImages
 )
 from plants.services.taxonomy_search import TaxonomySearch
@@ -60,27 +59,27 @@ async def search_taxa_by_name(
     return results
 
 
-@router.post("/retrieve_details_for_selected_taxon", response_model=BResultsRetrieveTaxonDetailsRequest)
-async def retrieve_details_for_selected_taxon(
-        retrieve_taxon_details_request: FAssignTaxonRequest,
-        db: Session = Depends(get_db)):
-    """
-    retrieve taxon details from kew databases "POWO" and "IPNI" (sync.) and occurrence images
-    from GBIF (async. in thread after response is sent)
-    Note: The actual assignment is persisted to the database when the plant is saved; here, we only
-    insert the taxon into the database if it is not already there.
-    """
-    taxon = retrieve_taxon_details(retrieve_taxon_details_request=retrieve_taxon_details_request, db=db)
-
-    message = f'Assigned botanical name "{taxon.name}" to plant id {retrieve_taxon_details_request.plant_id}.'
-    logger.info(message)
-
-    results = {'action': 'Save Taxon',
-               'message': get_message(message),
-               'botanical_name': taxon.name,
-               'taxon_data': taxon}
-
-    return results
+# @router.post("/retrieve_details_for_selected_taxon", response_model=BResultsRetrieveTaxonDetailsRequest)
+# async def retrieve_details_for_selected_taxon(
+#         retrieve_taxon_details_request: FRetrieveTaxonDetailsRequest,
+#         db: Session = Depends(get_db)):
+#     """
+#     retrieve taxon details from kew databases "POWO" and "IPNI" (sync.) and occurrence images
+#     from GBIF (async. in thread after response is sent)
+#     Note: The actual assignment is persisted to the database when the plant is saved; here, we only
+#     insert the taxon into the database if it is not already there.
+#     """
+#     taxon = retrieve_taxon_details(retrieve_taxon_details_request=retrieve_taxon_details_request, db=db)
+    #
+    # message = f'Assigned botanical name "{taxon.name}" to plant id {retrieve_taxon_details_request.plant_id}.'
+    # logger.info(message)
+    #
+    # results = {'action': 'Save Taxon',
+    #            'message': get_message(message),
+    #            'botanical_name': taxon.name,
+    #            'taxon_data': taxon}
+    #
+    # return results
 
 
 @router.post("/fetch_taxon_occurrence_images", response_model=BResultsFetchTaxonImages)

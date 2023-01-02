@@ -1,11 +1,13 @@
 
+export type BFlorescenceStatus = "inflorescence_appeared" | "flowering" | "finished";
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
+export type PollenType = "fresh" | "frozen" | "unknown";
 
 export interface BActiveFlorescence {
   id: number;
   plant_id: number;
   plant_name: string;
-  florescence_status: string;
+  florescence_status: BFlorescenceStatus;
   inflorescence_appearance_date?: string;
   comment?: string;
   branches_count?: number;
@@ -105,19 +107,18 @@ export interface BResultsPotentialPollenDonors {
   message?: BMessage;
   potentialPollenDonorCollection: BPotentialPollenDonor[];
 }
-export interface BResultsSettings {
-  colors: string[];
-  pollination_status: BPollinationStatus[];
-}
-export interface BResultsTrainingPollinationModel {
+export interface BResultsRetrainingPollinationToSeedsModel {
   mean_f1_score: number;
   model: string;
+}
+export interface BResultsSettings {
+  colors: string[];
 }
 export interface FRequestEditedFlorescence {
   id: number;
   plant_id: number;
   plant_name: string;
-  florescence_status: string;
+  florescence_status: BFlorescenceStatus;
   inflorescence_appearance_date?: string;
   comment?: string;
   branches_count?: number;
@@ -149,7 +150,7 @@ export interface FRequestEditedPollination {
 }
 export interface FRequestNewFlorescence {
   plant_id: number;
-  florescence_status: string;
+  florescence_status: BFlorescenceStatus;
   inflorescence_appearance_date?: string;
   comment?: string;
 }
@@ -157,7 +158,7 @@ export interface FRequestNewPollination {
   florescenceId: number;
   seedCapsulePlantId: number;
   pollenDonorPlantId: number;
-  pollenType: string;
+  pollenType: PollenType;
   pollinationTimestamp: string;
   labelColorRgb: string;
   location: string;

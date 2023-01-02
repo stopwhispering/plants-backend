@@ -72,13 +72,17 @@ class FTaxon(BaseModel):
     id: int
     name: str
     is_custom: bool
-    subsp: Optional[str]
+    # subsp: Optional[str]
     species: Optional[str]  # empty for custom cultivars
-    subgen: Optional[str]
+    # subgen: Optional[str]
     genus: str
     family: str
-    phylum: Optional[str]
-    kingdom: Optional[str]
+    # phylum: Optional[str]
+
+    infraspecies: str | None
+    cultivar: str | None
+    affinis: str | None
+
     rank: str
     taxonomic_status: Optional[str]
     name_published_in_year: Optional[int]
@@ -116,6 +120,27 @@ class FModifiedTaxa(BaseModel):
         extra = Extra.forbid
 
 
+class FBotanicalAttributes(BaseModel):
+    rank: str
+    genus: str
+    species: str | None
+    infraspecies: str | None
+    hybrid: bool
+    hybridgenus: bool
+    authors: str | None
+    name_published_in_year: int | None
+
+    is_custom: bool
+    cultivar: str | None
+    affinis: str | None
+    custom_rank: str | None
+    custom_infraspecies: str | None
+    custom_suffix: str | None
+
+    class Config:
+        extra = Extra.forbid
+
+
 class FFetchTaxonOccurrenceImagesRequest(BaseModel):
     gbif_id: int
 
@@ -123,13 +148,13 @@ class FFetchTaxonOccurrenceImagesRequest(BaseModel):
         extra = Extra.forbid  # todo okay?
 
 
-class FAssignTaxonRequest(BaseModel):
+class FRetrieveTaxonDetailsRequest(BaseModel):
     lsid: Optional[str]
     hasCustomName: bool
     taxon_id: Optional[int]  # taxon id
     nameInclAddition: str
     plant_id: int
-    source: str  # "Local DB" or ...
+    source: str  # "Local DB" or ...  # todo enum
 
     class Config:
         extra = Extra.forbid
@@ -182,6 +207,18 @@ class BSearchResultSource(Enum):
     SOURCE_IPNI_POWO = 'International Plant Names Index + Plants of the World'
 
 
+class FBRank(Enum):
+    GENUS = "gen."
+    SPECIES = "spec."
+    SUBSPECIES = "subsp."
+    VARIETY = "var."
+    FORMA = "forma"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
 def _transform_distribution(distribution: list[Distribution]) -> FBDistribution:
     # distribution codes according to WGSRPD (level 3)
     results = {'native': [], 'introduced': []}
@@ -197,13 +234,17 @@ class BTaxon(BaseModel):
     id: int
     name: str
     is_custom: bool
-    subsp: Optional[str]
+    # subsp: Optional[str]
     species: Optional[str]  # empty for custom cultivars
-    subgen: Optional[str]
+
+    infraspecies: str | None
+    cultivar: str | None
+    affinis: str | None
+
+    # subgen: Optional[str]
     genus: str
     family: str
-    phylum: Optional[str]
-    kingdom: Optional[str]
+    # phylum: Optional[str]
     rank: str
     taxonomic_status: Optional[str]
     name_published_in_year: Optional[int]
@@ -254,22 +295,78 @@ class BTaxon(BaseModel):
 
 class BKewSearchResultEntry(BaseModel):
     source: BSearchResultSource  # determined upon saving by database
-    id: int | None  # determined upon saving by database
+    id: int | None  # filled only for those already in db
     count: int
     count_inactive: int
-    is_custom: bool
-    synonym: bool | None  # available only in POWO, thus theoretically empty if taxon supplied only by IPNI
+    synonym: bool
     authors: str
     family: str
     name: str
     rank: str
+    taxonomic_status: str
     lsid: str  # IPNI/POWO Life Sciences Identifier
     genus: str
     species: str | None  # None for genus search
-    namePublishedInYear: str | None
-    phylum: str | None  # available only in POWO, thus theoretically empty if taxon supplied only by IPNI
+    infraspecies: str | None
+
+    is_custom: bool
+    custom_rank: FBRank | None
+    custom_infraspecies: str | None
+    cultivar: str | None
+    affinis: str | None
+    custom_suffix: str | None
+
+    hybrid: bool
+    hybridgenus: bool
+
+    namePublishedInYear: int | None
+    basionym: str | None
+    # phylum: str
     synonyms_concat: str | None
     distribution_concat: str | None
+
+    class Config:
+        extra = Extra.forbid
+        use_enum_values = True
+
+
+class BCreatedTaxonResponse(BaseModel):
+    action: str
+    message: BMessage
+    new_taxon: BTaxon
+
+    class Config:
+        extra = Extra.forbid
+        orm_mode = True
+
+
+class FNewTaxon(BaseModel):
+    id: int | None  # filled if taxon is already in db
+
+    rank: str
+    # phylum: str
+    family: str
+    genus: str
+    species: str | None
+    infraspecies: str | None
+
+    lsid: str  # IPNI/POWO Life Sciences Identifier
+    taxonomic_status: str
+    synonym: bool
+    authors: str
+    namePublishedInYear: int | None
+    basionym: str | None
+    hybrid: bool
+    hybridgenus: bool
+    synonyms_concat: str | None
+    distribution_concat: str | None
+
+    is_custom: bool
+    custom_rank: FBRank | None
+    custom_infraspecies: str | None
+    cultivar: str | None
+    affinis: str | None
+    custom_suffix: str | None
 
     class Config:
         extra = Extra.forbid
@@ -313,3 +410,11 @@ class BResultsGetTaxon(BaseModel):
     class Config:
         extra = Extra.forbid
         orm_mode = True
+
+
+class BResultsGetBotanicalName(BaseModel):
+    full_html_name: str
+    name: str
+
+    class Config:
+        extra = Extra.forbid

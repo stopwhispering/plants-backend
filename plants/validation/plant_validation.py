@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime, date
 
-from pydantic import Field, Extra
+from pydantic import Field, Extra, validator, root_validator
 from pydantic.main import BaseModel
 
 from plants.validation.message_validation import BMessage, FBMajorResource
@@ -104,6 +104,7 @@ class FPlant(BaseModel):
     taxon_id: int | None
     taxon_authors: str | None
     botanical_name: str | None
+    full_botanical_html_name: str | None
 
     parent_plant: FBAssociatedPlantExtractForPlant | None
     parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
@@ -157,6 +158,7 @@ class BPlant(BaseModel):
     taxon_id: int | None
     taxon_authors: str | None
     botanical_name: str | None
+    full_botanical_html_name: str | None
 
     parent_plant: FBAssociatedPlantExtractForPlant | None
     parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
@@ -172,9 +174,17 @@ class BPlant(BaseModel):
     latest_image: FBPlantLatestImage | None
     tags: list[FBPlantTag]
 
+    # formatted_botanical_name: str | None  # botanical name in html, populated in root_validator
+
+    # @root_validator(pre=False)
+    # def check_card_number_omitted(cls, values):  # noqa
+    #     species_name = values.get('botanical_name')
+    #     values['formatted_botanical_name'] = values['taxon_authors']
+    #     return values
+
     class Config:
         extra = Extra.forbid
-        use_enum_values = True  # populate model with enum values, rather than the raw enum
+        use_enum_values = True
         orm_mode = True
         allow_population_by_field_name = True
 

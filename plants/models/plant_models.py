@@ -150,6 +150,11 @@ class Plant(Base, OrmUtil):
             return self.taxon.name
 
     @property
+    def full_botanical_html_name(self) -> str:
+        if self.taxon:
+            return self.taxon.full_html_name
+
+    @property
     def taxon_authors(self) -> str:
         if self.taxon:
             return self.taxon.authors
