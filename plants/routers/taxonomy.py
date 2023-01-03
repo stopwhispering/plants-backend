@@ -68,7 +68,7 @@ async def get_taxon(taxon_id: int, db: Session = Depends(get_db)):
     return results
 
 
-@router.post("/", response_model=BCreatedTaxonResponse)
+@router.post("/new", response_model=BCreatedTaxonResponse)
 async def save_taxon(new_taxon_data: FNewTaxon, db: Session = Depends(get_db)):
     """
     save a custom or non-custom taxon from search results list; if taxon already is in db, just return it
