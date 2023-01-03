@@ -71,9 +71,9 @@ async def get_taxon(taxon_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=BCreatedTaxonResponse)
 async def save_taxon(new_taxon_data: FNewTaxon, db: Session = Depends(get_db)):
     """
-    save a custom or non-custom taxon from search results list
+    save a custom or non-custom taxon from search results list; if taxon already is in db, just return it
     """
-
+    logger.info(f'Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}')
     if new_taxon_data.id:
         taxon: Taxon = Taxon.get_taxon_by_taxon_id(taxon_id=new_taxon_data.id, db=db)
         msg = get_message(f'Loaded {taxon.name} from database.')
