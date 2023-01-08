@@ -127,6 +127,13 @@ class Taxon(Base, OrmUtil):
             throw_exception(f'Taxon not found in database: {taxon_id}')
         return taxon
 
+    @staticmethod
+    def get_taxon_by_taxon_name(taxon_name: str, db: Session, raise_exception: bool = False) -> Taxon:
+        taxon = db.query(Taxon).filter(Taxon.name == taxon_name).first()
+        if not taxon and raise_exception:
+            throw_exception(f'Taxon not found in database: {taxon_name}')
+        return taxon
+
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""
         as_dict = super(Taxon, self).as_dict()

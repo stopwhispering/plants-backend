@@ -60,6 +60,7 @@ class Image(Base):
     relative_path = Column(VARCHAR(240))  # relative path to the original image file incl. file name
     description = Column(VARCHAR(500))
     record_date_time = Column(TIMESTAMP, nullable=False)
+
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 

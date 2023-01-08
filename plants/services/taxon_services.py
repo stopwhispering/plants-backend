@@ -91,6 +91,10 @@ def save_new_taxon(new_taxon: FNewTaxon, db: Session) -> Taxon:
         gbif_identifier_lookup = GBIFIdentifierLookup()
         gbif_id = gbif_identifier_lookup.lookup(taxon_name=name, lsid=new_taxon.lsid)
 
+    existing = Taxon.get_taxon_by_taxon_name(taxon_name=name, db=db, raise_exception=False)
+    if existing:
+        throw_exception(f'Taxon with name {name} already exists.')
+
     taxon = Taxon(
         name=name,
         full_html_name=full_html_name,

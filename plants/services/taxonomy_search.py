@@ -1,6 +1,5 @@
 import logging
 
-from pydantic import ValidationError
 from pykew import ipni as ipni, powo as powo
 from pykew.ipni_terms import Name
 from sqlalchemy.orm import Session
@@ -10,7 +9,7 @@ from plants.exceptions import TooManyResultsError
 from plants.models.taxon_models import Taxon
 from plants.services.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
 from plants.util.ui_utils import throw_exception
-from plants.validation.taxon_validation import BKewSearchResultEntry, BSearchResultSource, FBRank
+from plants.validation.taxon_validation import FBRank
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +43,9 @@ class TaxonomySearch:
     @staticmethod
     def _get_search_result_from_db_taxon(taxon: Taxon) -> dict:
         search_result_entry = {
-            'source': BSearchResultSource.SOURCE_PLANTS_DB,
+            # 'source': BSearchResultSource.SOURCE_PLANTS_DB,
             'id': taxon.id,
+            'in_db': True,
             'count': len([p for p in taxon.plants if p.active]),
             'count_inactive': len([p for p in taxon.plants if not p.active]),
             'is_custom': taxon.is_custom,
@@ -149,8 +149,9 @@ class TaxonomySearch:
 
             # build additional results from IPNI data
             result = {
-                'source': BSearchResultSource.SOURCE_IPNI,
+                # 'source': BSearchResultSource.SOURCE_IPNI,
                 'id': None,  # taxon id determined upon saving by database
+                'in_db': False,
                 'lsid': ipni_result['fqId'],  # IPNI Life Sciences Identifier (used by POWO and IPNI)
                 'count': 0,  # count of plants in the database
                 'count_inactive': 0,
@@ -193,7 +194,8 @@ class TaxonomySearch:
             throw_exception(f'No Plants of the World result for LSID {result["lsid"]}')
 
         # overwrite as POWO has more information
-        result['source'] = BSearchResultSource.SOURCE_IPNI_POWO
+        # result['source'] = BSearchResultSource.SOURCE_IPNI_POWO
+        result['in_db']: False
         result['basionym'] = powo_lookup['basionym'].get('name') if 'basionym' in powo_lookup else None
         result['taxonomic_status'] = powo_lookup.get('taxonomicStatus')
         result['authors'] = powo_lookup.get('authors')

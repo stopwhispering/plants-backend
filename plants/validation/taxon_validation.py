@@ -294,8 +294,9 @@ class BTaxon(BaseModel):
 
 
 class BKewSearchResultEntry(BaseModel):
-    source: BSearchResultSource  # determined upon saving by database
+    # source: BSearchResultSource  # determined upon saving by database
     id: int | None  # filled only for those already in db
+    in_db: bool
     count: int
     count_inactive: int
     synonym: bool
