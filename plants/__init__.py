@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 from plants.extensions.config_values import parse_config
@@ -11,6 +13,7 @@ from plants.extensions.config_values import parse_config
 # # show all .env env. vars:
 # from dotenv import dotenv_values
 # print(dotenv_values())
-load_dotenv(dotenv_path='.env', override=True)
+env_path = Path(__file__).resolve().parent.parent.joinpath('.env')
+load_dotenv(dotenv_path=env_path, override=True)
 
 config = parse_config()

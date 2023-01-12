@@ -18,7 +18,7 @@ class ImageKeyword(Base):
     """keywords tagged at images"""
     __tablename__ = 'image_keywords'
     image_id = Column(INTEGER, ForeignKey('image.id'), primary_key=True, nullable=False)
-    keyword = Column(VARCHAR(100), primary_key=True, nullable=False)
+    keyword = Column(VARCHAR(100), primary_key=True, nullable=False)  # todo max 30 for new keywords
 
     image = relationship(
         "Image",

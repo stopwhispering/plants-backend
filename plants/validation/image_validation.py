@@ -11,9 +11,12 @@ from plants.validation.message_validation import BMessage
 # Entities used in both API Requests from Frontend and Responses from Backend (FB...)
 ####################################################################################################
 class FBImagePlantTag(BaseModel):
-    plant_id: int = None
-    key: str
-    text: str
+    # plant_id: int = None  # todo why None?
+    plant_id: int
+    plant_name: str
+    plant_name_short: str
+    # key: str  # todo remove
+    # text: str  # todo remove
 
     class Config:
         extra = Extra.forbid

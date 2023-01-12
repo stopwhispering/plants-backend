@@ -142,7 +142,6 @@ def rename_plant(request: Request, data: BPlantsRenameRequest, db: Session = Dep
     return results
 
 
-# todo test and maybe replace current method with this
 @router.get("/", response_model=BResultsPlants)
 async def get_plants(db: Session = Depends(get_db)):
     """read (almost unfiltered) plants information from db"""

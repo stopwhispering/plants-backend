@@ -44,7 +44,7 @@ class BResultsProposals(BaseModel):
     message: BMessage
 
     NurseriesSourcesCollection: Optional[List[BNurseryName]]
-    KeywordsCollection: Optional[List[BKeywordName]]
+    KeywordsCollection: Optional[List[BKeywordName]]  # todo remove
     # TraitCategoriesCollection: Optional[List[PTraitCategory]]
     # TraitsCollection: Optional[List[PTrait]]
 

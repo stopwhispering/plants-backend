@@ -31,8 +31,12 @@ router = APIRouter(
 )
 
 
+# keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+LENGTH_SHORTENED_PLANT_NAME_FOR_TAG = 25
+
+
 @router.get("/plants/{plant_id}/images/", response_model=FBImages)
-async def get_images_plant(plant_id: int, db: Session = Depends(get_db)):
+async def get_images_for_plant(plant_id: int, db: Session = Depends(get_db)):
     """
     get photo_file information for requested plant_id including (other) plants and keywords
     """
@@ -105,7 +109,7 @@ async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_d
         # alter metadata in jpg exif tags
         logger.info(f'Updating {image_ext.filename}')
         PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image_ext.id,
-                                                          plant_names=[p.key for p in image_ext.plants],
+                                                          plant_names=[p.plant_name for p in image_ext.plants],
                                                           keywords=[k.keyword for k in image_ext.keywords],
                                                           description=image_ext.description or '',
                                                           db=db)
@@ -190,6 +194,13 @@ async def delete_image(image_container: FImagesToDelete, db: Session = Depends(g
     return results
 
 
+def _shorten_plant_name(plant_name: str) -> str:
+    """shorten plant name to 20 chars for display in ui5 table"""
+    return (plant_name[:LENGTH_SHORTENED_PLANT_NAME_FOR_TAG-3] + '...'
+            if len(plant_name) > LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+            else plant_name)
+
+
 def _to_response_image(image: Image) -> FBImage:
     k: ImageKeyword
     return FBImage(
@@ -198,8 +209,10 @@ def _to_response_image(image: Image) -> FBImage:
         keywords=[{'keyword': k.keyword} for k in image.keywords],
         plants=[FBImagePlantTag(
             plant_id=p.id,
-            key=p.plant_name,
-            text=p.plant_name,
+            plant_name=p.plant_name,
+            plant_name_short=_shorten_plant_name(p.plant_name),
+            # key=p.plant_name,
+            # text=p.plant_name,
         ) for p in image.plants],
         description=image.description,
         record_date_time=image.record_date_time)

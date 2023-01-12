@@ -45,7 +45,6 @@ def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = De
         keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
         results = {'KeywordsCollection': keywords_collection}
 
-
     else:
         throw_exception(f'Proposal entity {entity_id} not expected.', request=request)
 
