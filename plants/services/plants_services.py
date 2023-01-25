@@ -9,7 +9,7 @@ from plants.models.plant_models import Plant
 from plants.models.tag_models import Tag
 from plants.services.tag_services import tag_modified, update_tag
 from plants.util.ui_utils import throw_exception
-from plants.validation.plant_validation import FBPlantTag, FPlant
+from plants.schemas.plant import FBPlantTag, FPlant
 
 logger = logging.getLogger(__name__)
 

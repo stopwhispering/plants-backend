@@ -10,11 +10,11 @@ from plants.services.pollination_services import (save_new_pollination, read_ong
                                                   read_plants_without_pollen_containers, remove_pollination)
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
-from plants.validation.pollination_validation import (BResultsOngoingPollinations,
-                                                      FRequestNewPollination,
-                                                      BResultsSettings, FRequestEditedPollination,
-                                                      BResultsPollenContainers, FRequestPollenContainers,
-                                                      BResultsRetrainingPollinationToSeedsModel)
+from plants.schemas.pollination import (BResultsOngoingPollinations,
+                                        FRequestNewPollination,
+                                        BResultsSettings, FRequestEditedPollination,
+                                        BResultsPollenContainers, FRequestPollenContainers,
+                                        BResultsRetrainingPollinationToSeedsModel)
 
 logger = logging.getLogger(__name__)
 

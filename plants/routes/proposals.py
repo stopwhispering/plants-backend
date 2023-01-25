@@ -7,7 +7,7 @@ from starlette.requests import Request
 # from plants.constants import TRAIT_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.services.plants_services import get_distinct_image_keywords
-from plants.validation.proposal_validation import FProposalEntity, BResultsProposals
+from plants.schemas.proposal import FProposalEntity, BResultsProposals
 # from plants.models.trait_models import Trait, TraitCategory
 from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db

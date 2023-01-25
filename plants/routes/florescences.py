@@ -6,13 +6,15 @@ import datetime
 from plants.services.florescence_services import (
     read_active_florescences, update_active_florescence, read_plants_for_new_florescence, create_new_florescence,
     remove_florescence)
+from plants.services.flower_history import generate_flower_history
 from plants.services.pollination_services import read_potential_pollen_donors
 from plants.util.ui_utils import (get_message)
 from plants.dependencies import get_db
-from plants.validation.pollination_validation import (BResultsActiveFlorescences,
-                                                      BResultsPotentialPollenDonors, FRequestEditedFlorescence,
-                                                      BResultsPlantsForNewFlorescence, FRequestNewFlorescence,
-                                                      )
+from plants.schemas.pollination import (BResultsActiveFlorescences,
+                                        BResultsPotentialPollenDonors, FRequestEditedFlorescence,
+                                        BResultsPlantsForNewFlorescence, FRequestNewFlorescence,
+                                        BPlantFlowerHistory, BResultsFlowerHistory,
+                                        )
 
 logger = logging.getLogger(__name__)
 
@@ -77,4 +79,16 @@ async def get_potential_pollen_donors(florescence_id: int,
     results = {'action': 'Get potential pollen donors',
                'message': get_message(f"Provided {len(potential_pollen_donors)} potential donors."),
                'potentialPollenDonorCollection': potential_pollen_donors}
+    return results
+
+
+@router.get("/flower_history",
+            response_model=BResultsFlowerHistory)
+async def get_flower_history(db: Session = Depends(get_db), ):
+    months, flower_history = generate_flower_history(db=db)
+
+    results = {'action': 'Generate flower history',
+               'message': get_message(f"Generated flower history for {len(months)} months."),
+               'plants': flower_history,
+               'months': months}
     return results

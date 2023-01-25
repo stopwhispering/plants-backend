@@ -8,8 +8,8 @@ from plants.services.taxonomy_name_formatter import create_formatted_botanical_n
 from plants.util.ui_utils import get_message
 from plants.models.taxon_models import Taxon
 from plants.dependencies import get_db
-from plants.validation.message_validation import BSaveConfirmation, FBMajorResource
-from plants.validation.taxon_validation import (
+from plants.schemas.shared import BSaveConfirmation, FBMajorResource
+from plants.schemas.taxon import (
     FModifiedTaxa, BResultsGetTaxon, FBotanicalAttributes,
     BResultsGetBotanicalName, FNewTaxon, BCreatedTaxonResponse)
 

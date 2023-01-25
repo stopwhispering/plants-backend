@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from plants.util.ui_utils import make_list_items_json_serializable, get_message
 from plants.dependencies import get_db
-from plants.validation.selection_validation import BResultsSelection
+from plants.schemas.selection import BResultsSelection
 from plants.services.selection_services import build_taxon_tree
 
 logger = logging.getLogger(__name__)

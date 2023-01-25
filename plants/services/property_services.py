@@ -5,7 +5,7 @@ from plants.constants import PROPERTY_CATEGORIES
 from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyValue, PropertyCategory, PropertyName
 from plants.models.taxon_models import Taxon
-from plants.validation.property_validation import FBPropertiesInCategory, FBProperty, FBPropertyCollectionPlant
+from plants.schemas.property import FBPropertiesInCategory, FBProperty, FBPropertyCollectionPlant
 
 
 class MixinShared:

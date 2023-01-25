@@ -15,12 +15,12 @@ from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTa
 from plants.util.ui_utils import get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
-from plants.validation.image_validation import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata, FBImage,
-                                                FBImagePlantTag, BResultsImagesUploaded, FBImages)
+from plants.schemas.image import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata, FBImage,
+                                  FBImagePlantTag, BResultsImagesUploaded, FBImages)
 from plants.services.image_services_simple import remove_files_already_existing
-from plants.validation.event_validation import FImagesToDelete
-from plants.validation.image_validation import BResultsImageDeleted
-from plants.validation.message_validation import BMessage, BMessageType, BSaveConfirmation, \
+from plants.schemas.event import FImagesToDelete
+from plants.schemas.image import BResultsImageDeleted
+from plants.schemas.shared import BMessage, BMessageType, BSaveConfirmation, \
     FBMajorResource, BConfirmation
 
 logger = logging.getLogger(__name__)

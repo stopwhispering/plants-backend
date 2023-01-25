@@ -1,4 +1,3 @@
-from os import getenv
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Tuple
@@ -6,6 +5,7 @@ from typing import Tuple
 import toml
 
 from ml_helpers.preprocessing.features import DBType
+from plants import secrets_config
 from plants.util.filename_utils import create_if_not_exists
 
 
@@ -53,12 +53,9 @@ def parse_config() -> Configuration:
         here, we only use the latter information
     - config.toml contains global configuration and environment-specific configuration values
     """
-    if not getenv('ENVIRONMENT'):
-        raise ValueError('Environment variable ENVIRONMENT is not set. Use .env file or set it manually.')
-    environment = getenv('ENVIRONMENT').lower()
-
-    config_global = toml.load("config.toml")
-    config_env = config_global['environments'][environment]
+    config_toml_path = Path(__file__).resolve().parent.parent.parent.joinpath('config.toml')
+    config_global = toml.load(config_toml_path)
+    config_env = config_global['environments'][secrets_config.environment]
 
     path_photos_base = Path(config_env['path_photos'])
     path_original_photos = path_photos_base.joinpath('original')
@@ -66,15 +63,14 @@ def parse_config() -> Configuration:
     path_generated_thumbnails = path_photos_base.joinpath('generated')
     path_generated_thumbnails_taxon = path_photos_base.joinpath('generated_taxon')
 
-    # subdirectory_photos = PurePath(config_env['subdirectory_photos'])
     subdirectory_photos = PurePath(path_photos_base.name)
     rel_path_photos_generated_taxon = subdirectory_photos.joinpath("generated_taxon")
     rel_path_photos_original = subdirectory_photos.joinpath("original")
     rel_path_photos_generated = subdirectory_photos.joinpath("generated")
 
-    if 'sqlite' in getenv("CONNECTION_STRING"):
+    if 'sqlite' in secrets_config.connection_string:
         db_type = DBType.SQLITE
-    elif 'postgres' in getenv("CONNECTION_STRING"):
+    elif 'postgres' in secrets_config.connection_string:
         db_type = DBType.POSTGRES
     else:
         db_type = DBType.UNKNOWN

@@ -6,7 +6,7 @@ from datetime import datetime, date
 from pydantic import Field, Extra, validator, root_validator
 from pydantic.main import BaseModel
 
-from plants.validation.message_validation import BMessage, FBMajorResource
+from plants.schemas.shared import BMessage, FBMajorResource
 
 
 ####################################################################################################

@@ -8,11 +8,11 @@ from sqlalchemy.orm import Session, subqueryload
 from plants.util.ui_utils import get_message
 from plants.dependencies import get_db
 from plants.services.event_services import create_soil, update_soil, read_events_for_plant, create_or_update_event
-from plants.validation.message_validation import BMessageType, FBMajorResource, BSaveConfirmation
+from plants.schemas.shared import BMessageType, FBMajorResource, BSaveConfirmation
 from plants.models.plant_models import Plant
 from plants.models.event_models import Soil
-from plants.validation.event_validation import (BResultsEventResource, BPResultsUpdateCreateSoil,
-                                                BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent, FSoil)
+from plants.schemas.event import (BResultsEventResource, BPResultsUpdateCreateSoil,
+                                  BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent, FSoil)
 
 logger = logging.getLogger(__name__)
 

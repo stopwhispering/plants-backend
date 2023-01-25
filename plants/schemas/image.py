@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import Extra
 from pydantic.main import BaseModel
 
-from plants.validation.message_validation import BMessage
+from plants.schemas.shared import BMessage
 
 
 ####################################################################################################

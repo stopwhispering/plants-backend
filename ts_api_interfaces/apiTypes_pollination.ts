@@ -1,5 +1,6 @@
 
 export type BFlorescenceStatus = "inflorescence_appeared" | "flowering" | "finished";
+export type BFloweringState = "inflorescence_growing" | "flowering" | "seeds_ripening" | "not_flowering";
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 export type PollenType = "fresh" | "frozen" | "unknown";
 
@@ -15,6 +16,10 @@ export interface BActiveFlorescence {
   first_flower_opening_date?: string;
   last_flower_closing_date?: string;
   available_colors_rgb: string[];
+}
+export interface BFloweringPeriodState {
+  month: string;
+  flowering_state: BFloweringState;
 }
 export interface BOngoingPollination {
   seed_capsule_plant_id: number;
@@ -41,6 +46,11 @@ export interface BOngoingPollination {
   first_seeds_sown?: number;
   first_seeds_germinated?: number;
   germination_rate?: number;
+}
+export interface BPlantFlowerHistory {
+  plant_id: number;
+  plant_name: string;
+  periods: BFloweringPeriodState[];
 }
 export interface BPlantForNewFlorescence {
   plant_id: number;
@@ -83,6 +93,12 @@ export interface BResultsActiveFlorescences {
   action: string;
   message?: BMessage;
   activeFlorescenceCollection: BActiveFlorescence[];
+}
+export interface BResultsFlowerHistory {
+  action: string;
+  message: BMessage;
+  plants: BPlantFlowerHistory[];
+  months: string[];
 }
 export interface BResultsOngoingPollinations {
   action: string;

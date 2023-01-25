@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from plants.models.taxon_models import Taxon
-from plants.validation.taxon_validation import FBRank
+from plants.schemas.taxon import FBRank
 
 
 @dataclass

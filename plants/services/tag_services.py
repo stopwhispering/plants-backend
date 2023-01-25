@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from plants.models.tag_models import Tag
-from plants.validation.plant_validation import FBPlantTag
+from plants.schemas.plant import FBPlantTag
 
 
 def tag_modified(tag_current: Tag, tag_updated: FBPlantTag):

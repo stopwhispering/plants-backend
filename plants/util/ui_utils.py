@@ -5,7 +5,7 @@ from starlette.requests import Request
 import json
 from datetime import date, datetime, timedelta
 
-from plants.validation.message_validation import BMessageType, BMessage
+from plants.schemas.shared import BMessageType, BMessage
 
 
 def throw_exception(message: str = None,

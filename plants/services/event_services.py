@@ -9,7 +9,7 @@ from plants.models.event_models import Soil, Event, Observation, Pot
 from plants.models.image_models import ImageToEventAssociation, Image
 from plants.models.plant_models import Plant
 from plants.util.ui_utils import throw_exception
-from plants.validation.event_validation import FSoilCreate, BEvents, FSoil, FCreateOrUpdateEvent
+from plants.schemas.event import FSoilCreate, BEvents, FSoil, FCreateOrUpdateEvent
 
 logger = logging.getLogger(__name__)
 

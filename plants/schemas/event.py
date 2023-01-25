@@ -5,9 +5,9 @@ from typing import Optional
 from pydantic import validator, Extra, constr
 from pydantic.main import BaseModel
 
-from plants.validation.image_validation import FBImage
+from plants.schemas.image import FBImage
 from decimal import Decimal
-from plants.validation.message_validation import BMessage
+from plants.schemas.shared import BMessage
 
 
 ####################################################################################################

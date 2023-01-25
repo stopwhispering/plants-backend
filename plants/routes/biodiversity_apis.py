@@ -1,5 +1,4 @@
 from json.decoder import JSONDecodeError
-from threading import Thread
 from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session
@@ -9,9 +8,8 @@ from plants.util.ui_utils import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.services.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.validation.taxon_validation import (
-    FTaxonInfoRequest, BResultsTaxonInfoRequest,
-    FRetrieveTaxonDetailsRequest, BResultsRetrieveTaxonDetailsRequest, FFetchTaxonOccurrenceImagesRequest,
+from plants.schemas.taxon import (
+    FTaxonInfoRequest, BResultsTaxonInfoRequest, FFetchTaxonOccurrenceImagesRequest,
     BResultsFetchTaxonImages
 )
 from plants.services.taxonomy_search import TaxonomySearch

@@ -15,14 +15,14 @@ from plants.models.image_models import ImageKeyword, Image, ImageToTaxonAssociat
 from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyCategory
 from plants.models.taxon_models import Taxon
-from plants.routers.images import _to_response_image
+from plants.routes.images import _to_response_image
 from plants.util.ui_utils import get_message
-from plants.validation.message_validation import BMessageType
-from plants.validation.event_validation import BResultsEventResource
-from plants.validation.image_validation import FBImages, BResultsImageResource
-from plants.validation.plant_validation import BResultsPlants
-from plants.validation.property_validation import BResultsPropertyNames
-from plants.validation.proposal_validation import BResultsProposals, FProposalEntity
+from plants.schemas.shared import BMessageType
+from plants.schemas.event import BResultsEventResource
+from plants.schemas.image import FBImages, BResultsImageResource
+from plants.schemas.plant import BResultsPlants
+from plants.schemas.property import BResultsPropertyNames
+from plants.schemas.proposal import BResultsProposals, FProposalEntity
 
 # from plants.models.pollination_models import Florescence, Pollination
 # from plants.models.property_models import PropertyCategory, PropertyName, PropertyValue

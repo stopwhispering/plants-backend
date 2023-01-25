@@ -17,7 +17,7 @@ from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
-from plants.validation.plant_validation import FPlant
+from plants.schemas.plant import FPlant
 
 logger = logging.getLogger(__name__)
 

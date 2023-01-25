@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from plants import config
 from plants.extensions.db import init_database_tables, engine
-from plants.routers import (taxonomy, plants, images, events, property_names, properties, proposals,
-                             selection_data, biodiversity_apis, pollinations, florescences)
+from plants.routes import (taxonomy, plants, images, events, property_names, properties, proposals,
+                           selection_data, biodiversity_apis, pollinations, florescences)
 from plants.util.logger_utils import configure_root_logger
 
 configure_root_logger(log_severity_console=config.log_severity_console,

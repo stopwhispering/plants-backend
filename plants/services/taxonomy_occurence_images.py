@@ -12,7 +12,7 @@ from plants import config
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import TaxonOccurrenceImage, Taxon, TaxonToOccurrenceAssociation
 from plants.util.image_utils import generate_thumbnail
-from plants.validation.taxon_validation import BTaxonOccurrenceImage
+from plants.schemas.taxon import BTaxonOccurrenceImage
 
 logger = logging.getLogger(__name__)
 

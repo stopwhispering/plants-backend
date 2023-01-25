@@ -99,7 +99,7 @@ class Florescence(Base, OrmUtil):
     last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status = Column(VARCHAR(100))
+    florescence_status = Column(VARCHAR(100))  # todo enum
 
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date = Column(DATE)

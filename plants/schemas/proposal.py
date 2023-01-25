@@ -1,50 +1,52 @@
-from __future__ import annotations
-from typing import Optional, List
+from enum import Enum
 
 from pydantic import Extra
 from pydantic.main import BaseModel
+from typing import List, Optional
 
-from plants.validation.message_validation import BMessage
+from plants.schemas.shared import BMessage
+
 
 ####################################################################################################
-# Entities used in <<both>> API Requests from Frontend <<and>> Responses from Backend (FB...)
+# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
 ####################################################################################################
 
 
 ####################################################################################################
 # Entities used only in API <<Requests>> from <<Frontend>> (F...)
 ####################################################################################################
+class FProposalEntity(str, Enum):
+    """proposal entities that may be requested by frontend"""
+    SOIL = 'SoilProposals'
+    NURSERY = 'NurserySourceProposals'
+    KEYWORD = 'KeywordProposals'
 
 
 ####################################################################################################
-# Entities used only in API <<Responses>> from <<Backend>> B...)
+# Entities used only in API <<Responses>> from <<Backend>> (B...)
 ####################################################################################################
-class BTaxonTreeNode(BaseModel):
-    key: str
-    level: int
-    count: int
-    nodes: Optional[List[BTaxonTreeNode]]  # missing on lowest level
-    plant_ids: Optional[List[int]]  # plants themselves on lowest level
+class BKeywordName(BaseModel):
+    keyword: str
 
     class Config:
         extra = Extra.forbid
 
 
-# this is required (plus importing annotations) to allow for self-references
-BTaxonTreeNode.update_forward_refs()
-
-
-class BTaxonTreeRoot(BaseModel):
-    TaxonTree: List[BTaxonTreeNode]
+class BNurseryName(BaseModel):
+    name: str
 
     class Config:
         extra = Extra.forbid
 
 
-class BResultsSelection(BaseModel):
+class BResultsProposals(BaseModel):
     action: str
     message: BMessage
-    Selection: BTaxonTreeRoot
+
+    NurseriesSourcesCollection: Optional[List[BNurseryName]]
+    KeywordsCollection: Optional[List[BKeywordName]]  # todo remove
+    # TraitCategoriesCollection: Optional[List[PTraitCategory]]
+    # TraitsCollection: Optional[List[PTrait]]
 
     class Config:
         extra = Extra.forbid

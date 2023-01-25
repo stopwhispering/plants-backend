@@ -9,7 +9,7 @@ from plants.exceptions import TooManyResultsError
 from plants.models.taxon_models import Taxon
 from plants.services.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
 from plants.util.ui_utils import throw_exception
-from plants.validation.taxon_validation import FBRank
+from plants.schemas.taxon import FBRank
 
 logger = logging.getLogger(__name__)
 

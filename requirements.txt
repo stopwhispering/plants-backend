@@ -20,7 +20,8 @@ python-multipart
 toml
 pandas
 # matplotlib
-python-dotenv
+# python-dotenv
+pydantic[dotenv]==1.10.4
 scikit-learn
 psycopg2
 pytz

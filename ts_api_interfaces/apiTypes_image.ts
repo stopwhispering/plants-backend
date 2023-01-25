@@ -17,9 +17,9 @@ export interface FBKeyword {
   keyword: string;
 }
 export interface FBImagePlantTag {
-  plant_id?: number;
-  key: string;
-  text: string;
+  plant_id: number;
+  plant_name: string;
+  plant_name_short: string;
 }
 export interface BResultsImageDeleted {
   action: string;

@@ -3,11 +3,11 @@ import logging
 from sqlalchemy.orm import Session
 
 from plants.util.ui_utils import get_message, make_list_items_json_serializable
-from plants.validation.property_validation import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,
-                                                   FPropertiesModifiedTaxon)
+from plants.schemas.property import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,
+                                     FPropertiesModifiedTaxon)
 from plants.services.property_services import SaveProperties, SavePropertiesTaxa, LoadProperties
 from plants.dependencies import get_db
-from plants.validation.message_validation import BSaveConfirmation, FBMajorResource
+from plants.schemas.shared import BSaveConfirmation, FBMajorResource
 
 logger = logging.getLogger(__name__)
 

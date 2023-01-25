@@ -1,10 +1,11 @@
+from enum import Enum
 from typing import Optional, List
 
 from pydantic import Extra
 from pydantic.main import BaseModel
 
 from plants.models.pollination_models import PollenType, BFlorescenceStatus
-from plants.validation.message_validation import BMessage
+from plants.schemas.shared import BMessage
 
 
 ####################################################################################################
@@ -281,3 +282,43 @@ class BResultsRetrainingPollinationToSeedsModel(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+
+class BFloweringState(Enum):
+    """state of flowering"""
+    INFLORESCENCE_GROWING = 'inflorescence_growing'
+    FLOWERING = 'flowering'
+    SEEDS_RIPENING = 'seeds_ripening'
+    NOT_FLOWERING = 'not_flowering'
+
+
+class BFloweringPeriodState(BaseModel):
+    month: str  # e.g. '2021-01'
+    flowering_state: BFloweringState
+
+    class Config:
+        extra = Extra.forbid
+        orm_mode = True
+        use_enum_values = True
+
+
+class BPlantFlowerHistory(BaseModel):
+
+    plant_id: int
+    plant_name: str
+
+    periods: list[BFloweringPeriodState]
+
+    class Config:
+        extra = Extra.forbid
+
+
+class BResultsFlowerHistory(BaseModel):
+    action: str
+    message: BMessage
+    plants: list[BPlantFlowerHistory]
+    months: list[str]
+
+    class Config:
+        extra = Extra.forbid
+

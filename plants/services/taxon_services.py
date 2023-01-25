@@ -10,7 +10,7 @@ from plants.services.taxonomy_occurence_images import TaxonOccurencesLoader
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import Taxon, Distribution
 from plants.models.image_models import ImageToTaxonAssociation, Image
-from plants.validation.taxon_validation import FTaxon, FTaxonImage, FNewTaxon
+from plants.schemas.taxon import FTaxon, FTaxonImage, FNewTaxon
 
 logger = logging.getLogger(__name__)
 

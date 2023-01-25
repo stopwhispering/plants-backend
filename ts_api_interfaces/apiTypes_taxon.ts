@@ -1,9 +1,5 @@
 
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
-export type BSearchResultSource =
-  | "Local DB"
-  | "Plants of the World"
-  | "International Plant Names Index + Plants of the World";
 export type FBRank = "gen." | "spec." | "subsp." | "var." | "forma";
 
 export interface BCreatedTaxonResponse {
@@ -62,8 +58,8 @@ export interface BTaxonOccurrenceImage {
   filename_thumbnail: string;
 }
 export interface BKewSearchResultEntry {
-  source: BSearchResultSource;
   id?: number;
+  in_db: boolean;
   count: number;
   count_inactive: number;
   synonym: boolean;

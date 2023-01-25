@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.orm import Session, subqueryload
 
 from plants.util.ui_utils import get_message
-from plants.validation.property_validation import BResultsPropertyNames
+from plants.schemas.property import BResultsPropertyNames
 from plants.models.property_models import PropertyCategory
 from plants.dependencies import get_db
 

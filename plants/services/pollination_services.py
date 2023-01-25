@@ -10,10 +10,10 @@ from plants.models.pollination_models import (Florescence, BFlorescenceStatus, P
 from plants.services.ml_prediction import predict_probability_of_seed_production
 from plants.util.ui_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date, \
     FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
-from plants.validation.pollination_validation import (FRequestNewPollination, BOngoingPollination,
-                                                      BPotentialPollenDonor, BPollinationAttempt,
-                                                      BPollinationResultingPlant, FRequestEditedPollination,
-                                                      FBPollenContainer, BPlantWithoutPollenContainer)  # noqa
+from plants.schemas.pollination import (FRequestNewPollination, BOngoingPollination,
+                                        BPotentialPollenDonor, BPollinationAttempt,
+                                        BPollinationResultingPlant, FRequestEditedPollination,
+                                        FBPollenContainer, BPlantWithoutPollenContainer)  # noqa
 
 LOCATION_TEXTS = {
     'indoor': 'indoor',

@@ -11,10 +11,10 @@ from plants.models.plant_models import Plant
 from plants.services.history_services import create_history_entry
 from plants.services.image_services import rename_plant_in_image_files
 from plants.services.plants_services import update_plants_from_list_of_dicts, deep_clone_plant
-from plants.validation.message_validation import BConfirmation, FBMajorResource
-from plants.validation.plant_validation import (FPlantsDeleteRequest,
-                                                BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
-                                                BResultsPlantsUpdate, BResultsPlantCloned)
+from plants.schemas.shared import BConfirmation, FBMajorResource
+from plants.schemas.plant import (FPlantsDeleteRequest,
+                                  BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
+                                  BResultsPlantsUpdate, BResultsPlantCloned)
 
 logger = logging.getLogger(__name__)
 
