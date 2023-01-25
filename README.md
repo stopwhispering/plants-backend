@@ -53,11 +53,30 @@ mkdir /common/plants/db
 ```
 Adjust hostnames in docker-compose.prod.yml (prod only)
 
-Create .env in same folder as docker-compose files file and insert connection string.
-Example:
+Create .env in same folder as docker-compose files file and insert environment-specific settings.
+Example DEV:
 ```
-# postgres
+ENVIRONMENT=dev
+#CONNECTION_STRING=postgresql+psycopg2://plants:mypassword@postgres:5432/plants
+# max occurrence images downloaded from inaturalist etc. per taxon (default: 20)
+MAX_IMAGES_PER_TAXON=5
+# allow CORS in FastAPI app (default: false)
+ALLOW_CORS=True
+LOG_SETTINGS__LOG_LEVEL_CONSOLE=DEBUG
+LOG_SETTINGS__LOG_LEVEL_FILE=INFO
+LOG_SETTINGS__LOG_FILE_PATH=/common/plants/plants.log
+# don't throw exception if image file is missing (default: False)
+LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES=True
+```
+
+Example PROD:
+```
+ENVIRONMENT=prod
 CONNECTION_STRING="postgresql+psycopg2://plants:mypassword@postgres:5432/plants"
+
+LOGSETTINGS__LOG_LEVEL_CONSOLE=INFO
+LOGSETTINGS__LOG_LEVEL_FILE=INFO
+LOGSETTINGS__LOG_FILE_PATH=/common/plants/plants.log
 ```
 
 Create & Run Docker Container

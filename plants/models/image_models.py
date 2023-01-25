@@ -66,7 +66,7 @@ class Image(Base):
 
     @property
     def absolute_path(self):
-        return settings.paths.path_photos_base.parent.joinpath(PurePath(self.relative_path))
+        return settings.paths.path_photos.parent.joinpath(PurePath(self.relative_path))
 
     keywords: list[ImageKeyword] = relationship(
         "ImageKeyword",

@@ -32,7 +32,7 @@ class FBImage(BaseModel):
     filename: constr(min_length=1, max_length=150)
     keywords: List[FBKeyword]
     plants: List[FBImagePlantTag]
-    description: constr(min_length=1, max_length=500, strip_whitespace=True) | None
+    description: constr(max_length=500, strip_whitespace=True) | None
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:
