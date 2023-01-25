@@ -1,8 +1,7 @@
 import logging
+from typing import Final
 
 from fastapi import FastAPI
-# from fastapi.exception_handlers import request_validation_exception_handler
-# from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from plants import local_config
@@ -16,7 +15,7 @@ configure_root_logger(log_severity_console=local_config.log_settings.log_level_c
                       log_file_path=local_config.log_settings.log_file_path)
 logger = logging.getLogger(__name__)
 
-COMMON_PREFIX = '/api'
+COMMON_PREFIX: Final[str] = '/api'
 app = FastAPI(
     docs_url=COMMON_PREFIX + "/docs",
     redoc_url=COMMON_PREFIX + "/redoc",
@@ -24,18 +23,18 @@ app = FastAPI(
 )
 
 # we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
-origins = ["http://pollination.localhost",
-           "https://pollination.astroloba.net", ]
+ORIGINS: Final[list[str]] = ["http://pollination.localhost",
+                             "https://pollination.astroloba.net", ]
 # additional CORS for development only
 if local_config.allow_cors:
     # if config.allow_cors:
-    origins.extend([
+    ORIGINS.extend([
         "http://localhost:5000",
         "http://localhost:8080",
     ])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

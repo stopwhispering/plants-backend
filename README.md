@@ -74,9 +74,9 @@ Example PROD:
 ENVIRONMENT=prod
 CONNECTION_STRING="postgresql+psycopg2://plants:mypassword@postgres:5432/plants"
 
-LOGSETTINGS__LOG_LEVEL_CONSOLE=INFO
-LOGSETTINGS__LOG_LEVEL_FILE=INFO
-LOGSETTINGS__LOG_FILE_PATH=/common/plants/plants.log
+LOG_SETTINGS__LOG_LEVEL_CONSOLE=INFO
+LOG_SETTINGS__LOG_LEVEL_FILE=INFO
+LOG_SETTINGS__LOG_FILE_PATH=/common/plants/plants.log
 ```
 
 Create & Run Docker Container

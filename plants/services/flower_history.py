@@ -1,27 +1,16 @@
 import logging
 from dataclasses import dataclass
 from datetime import date, timedelta, datetime
-from enum import Enum
-from typing import Optional
-
 from dateutil import rrule
 
-import pandas as pd
-from pydantic import BaseModel, Extra
 from sqlalchemy.orm import Session
 
-from plants.dependencies import get_db
 from plants.models.plant_models import Plant
 from plants.models.pollination_models import Florescence, BFlorescenceStatus
-from plants.extensions.db import init_database_tables, engine
 from plants.util.ui_utils import FORMAT_YYYY_MM
-from plants.schemas.shared import BMessage
 from plants.schemas.pollination import BFloweringState, BPlantFlowerHistory
 
 logger = logging.getLogger(__name__)
-# init_database_tables(engine_=engine)
-# db = next(get_db())
-
 
 AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER_OPENING = 38
 AVG_DURATION_FIRST_TO_LAST_FLOWER = 18
@@ -44,8 +33,6 @@ class FloweringPeriod:
             return self.flowering_state
         else:
             return BFloweringState.NOT_FLOWERING
-
-
 
 
 class FloweringPlant:
@@ -97,10 +84,10 @@ class FloweringPlant:
                                                timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER))
             elif florescence.first_seed_ripening_date:
                 estimated_first_flower_date = (florescence.first_seed_ripening_date -
-                                           timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
+                                               timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
             elif florescence.last_seed_ripening_date:
                 estimated_first_flower_date = (florescence.last_seed_ripening_date -
-                                                timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
+                                               timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
             else:
                 logger.warning(f'Abandoned inflorescence {florescence.id} for plant {self.plant.plant_name}')
                 return None
@@ -144,10 +131,10 @@ class FloweringPlant:
         elif florescence.first_flower_opening_date and not florescence.last_flower_closing_date:
             if florescence.first_seed_ripening_date:
                 estimated_last_flower_date = (florescence.first_seed_ripening_date -
-                                           timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
+                                              timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
             elif florescence.last_seed_ripening_date:
                 estimated_last_flower_date = (florescence.last_seed_ripening_date -
-                                                timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
+                                              timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
             else:
                 logger.warning(f'Abandoned flowering {florescence.id} for plant {self.plant.plant_name}')
                 return None
@@ -238,7 +225,8 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
 
 
 def generate_flower_history(db: Session):
-    florescences = db.query(Florescence).filter(Florescence.florescence_status == BFlorescenceStatus.FINISHED.value).all()
+    florescences = db.query(Florescence).filter(
+        Florescence.florescence_status == BFlorescenceStatus.FINISHED.value).all()
     distinct_plants = set([f.plant for f in florescences])
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
 

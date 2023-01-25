@@ -1,18 +1,19 @@
 import urllib.parse
 import logging
 from bs4 import BeautifulSoup
-from typing import Optional
+from typing import Optional, Final
 from wikidata.client import Client
 from pygbif import species
 import requests
 
-URL_PATTERN_WIKIDATA_SEARCH = r'https://www.wikidata.org/w/index.php?search={}'
-WIKIDATA_IPNI_PROPERTY_ID = 'P961'
-WIKIDATA_GBIF_PROPERTY_ID = 'P846'
-WIKIDATA_POWO_PROPERTY_ID = 'P5037'
+URL_PATTERN_WIKIDATA_SEARCH: Final[str] = r'https://www.wikidata.org/w/index.php?search={}'
+WIKIDATA_IPNI_PROPERTY_ID: Final[str] = 'P961'
+WIKIDATA_GBIF_PROPERTY_ID: Final[str] = 'P846'
+WIKIDATA_POWO_PROPERTY_ID: Final[str] = 'P5037'
 
-IPNI_DATASET_KEY = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
-GBIF_REST_API_RELATED_NAME_USAGES = "https://api.gbif.org/v1/species/{nubKey}/related?datasetKey={datasetKey}"
+IPNI_DATASET_KEY: Final[str] = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
+GBIF_REST_API_RELATED_NAME_USAGES: Final[str] = "https://api.gbif.org/v1/species/{nubKey}/related?datasetKey={" \
+                                                "datasetKey}"
 
 logger = logging.getLogger(__name__)
 

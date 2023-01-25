@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime
+from typing import Final
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -15,7 +16,7 @@ from plants.schemas.pollination import (FRequestNewPollination, BOngoingPollinat
                                         BPollinationResultingPlant, FRequestEditedPollination,
                                         FBPollenContainer, BPlantWithoutPollenContainer)  # noqa
 
-LOCATION_TEXTS = {
+LOCATION_TEXTS: Final[dict] = {
     'indoor': 'indoor',
     'outdoor': 'outdoor',
     'indoor_led': 'indoor LED',

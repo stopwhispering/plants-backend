@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from plants.models.taxon_models import Taxon
 from plants.schemas.taxon import FBRank
@@ -81,10 +80,6 @@ def _disassemble_taxon_name(botanical_name_input: BotanicalNameInput) -> list[Pa
     if botanical_name_input.custom_suffix:
         assert botanical_name_input.is_custom
         parts.append(PartOfBotanicalName(name=botanical_name_input.custom_suffix, italics=False))
-
-
-    # if len(parts) == 1:
-    #     parts.append(PartOfBotanicalName(name='spec.', italics=False))
 
     return parts
 

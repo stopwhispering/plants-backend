@@ -11,10 +11,6 @@ from plants import local_config
 logger = logging.getLogger(__name__)
 
 
-# keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
-LENGTH_SHORTENED_PLANT_NAME_FOR_TAG = 25
-
-
 def get_thumbnail_name(filename: str, size: Tuple[int, int]) -> str:
     suffix = f'{size[0]}_{size[1]}'
     filename_thumb_list = filename.split('.')

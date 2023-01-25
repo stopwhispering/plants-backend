@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from plants import LogLevel
+from plants.extensions.config_values import LogLevel
 
 
 def configure_root_logger(log_severity_console: LogLevel,

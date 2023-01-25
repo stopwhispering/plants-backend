@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import Extra, constr
 from pydantic.main import BaseModel
 
-from plants.util.image_utils import LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+from plants import settings
 from plants.schemas.shared import BMessage
 
 
@@ -14,7 +14,8 @@ from plants.schemas.shared import BMessage
 class FBImagePlantTag(BaseModel):
     plant_id: int
     plant_name: constr(min_length=1, max_length=100)
-    plant_name_short: constr(min_length=1, max_length=LENGTH_SHORTENED_PLANT_NAME_FOR_TAG)
+    plant_name_short: constr(min_length=1,
+                             max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag)
 
     class Config:
         extra = Extra.forbid
