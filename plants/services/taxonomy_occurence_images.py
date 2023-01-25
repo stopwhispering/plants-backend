@@ -8,7 +8,7 @@ import dateutil
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from plants import config
+from plants import local_config, settings
 from plants.util.ui_utils import throw_exception
 from plants.models.taxon_models import TaxonOccurrenceImage, Taxon, TaxonToOccurrenceAssociation
 from plants.util.image_utils import generate_thumbnail
@@ -78,10 +78,10 @@ class TaxonOccurencesLoader:
     @staticmethod
     def _download_and_generate_thumbnail(info: Dict) -> Optional[str]:
         filename = (f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}."
-                    f"{config.size_thumbnail_image_taxon[0]}_"
-                    f"{config.size_thumbnail_image_taxon[1]}.jpg")
+                    f"{settings.images.size_thumbnail_image_taxon[0]}_"
+                    f"{settings.images.size_thumbnail_image_taxon[1]}.jpg")
 
-        if config.path_generated_thumbnails_taxon.joinpath(filename).is_file():
+        if settings.paths.path_generated_thumbnails_taxon.joinpath(filename).is_file():
             logger.debug(f'File already downloaded. Skipping download - {info["href"]}')
             return filename
 
@@ -94,8 +94,8 @@ class TaxonOccurencesLoader:
         image_bytes_io = BytesIO(result.content)
         try:
             path_thumbnail = generate_thumbnail(image=image_bytes_io,
-                                                size=config.size_thumbnail_image_taxon,
-                                                path_thumbnail=config.path_generated_thumbnails_taxon,
+                                                size=settings.images.size_thumbnail_image_taxon,
+                                                path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
                                                 filename_thumb=filename)
         except OSError as err:
             logger.warning(f"Could not load as image: {info['href']} ({str(err)}")
@@ -109,12 +109,12 @@ class TaxonOccurencesLoader:
     def _treat_occurences(self, occs: List, gbif_id: int) -> List[Dict]:
         image_dicts = []
         for occ in occs:
-            if len(image_dicts) >= config.max_images_per_taxon:
+            if len(image_dicts) >= local_config.max_images_per_taxon:
                 break
 
             media = [m for m in occ['media'] if 'format' in m]  # some entries are not parseable
             for j, m in enumerate(media, 1):
-                if len(image_dicts) >= config.max_images_per_taxon:
+                if len(image_dicts) >= local_config.max_images_per_taxon:
                     break
 
                 d = self._get_image_metadata(occ, m, gbif_id)

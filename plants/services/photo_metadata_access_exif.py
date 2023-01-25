@@ -7,7 +7,7 @@ import piexif
 from piexif import InvalidImageDataError
 from sqlalchemy.orm import Session
 
-from plants import config
+from plants import local_config
 from plants.models.image_models import Image
 from plants.util.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                     encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
@@ -122,7 +122,7 @@ class PhotoMetadataAccessExifTags:
             tag_authors_plants = b''
 
         if not absolute_path.is_file():
-            if config.ignore_missing_image_files:
+            if local_config.ignore_missing_image_files:
                 logger.warning(f'File {absolute_path} not found. Can''t write EXIF Tags. Ignoring.')
                 return
             else:
@@ -171,7 +171,7 @@ class PhotoMetadataAccessExifTags:
         rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called
         in context of renaming)
         """
-        if not absolute_path.is_file() and config.ignore_missing_image_files:
+        if not absolute_path.is_file() and local_config.ignore_missing_image_files:
             return
 
         # we want to preserve the file's last-change-date

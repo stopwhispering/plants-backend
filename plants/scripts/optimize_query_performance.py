@@ -3,7 +3,6 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import subqueryload, Query
 
-from plants import config
 from plants.dependencies import get_db
 from plants.extensions.db import init_database_tables, engine
 from plants.models.event_models import Event
@@ -216,7 +215,7 @@ def property_names():
     BResultsPropertyNames.parse_obj(results)
 
 
-print(config.db_type)
+# print(config.db_type)
 functions = [
     # plants_no_subqueryload,
     # plants_subqueryload,

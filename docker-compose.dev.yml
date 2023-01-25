@@ -9,9 +9,16 @@ services:
       environment:
 #        set LOG_LEVEL for Gunicorn, default is "info"
         - LOG_LEVEL=debug
-        - ENVIRONMENT=dev
         - MAX_WORKERS=3
+
         - CONNECTION_STRING=postgresql+psycopg2://plants:A6uLdDsj6hua@postgres:5432/plants
+        - ENVIRONMENT=dev
+        - MAX_IMAGES_PER_TAXON=5
+        - ALLOW_CORS=True
+        - LOG_SETTINGS__LOG_LEVEL_CONSOLE=DEBUG
+        - LOG_SETTINGS__LOG_LEVEL_FILE=INFO
+        - LOG_SETTINGS__LOG_FILE_PATH=/common/plants/plants.log
+        - LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES=True
 
       volumes:
         - type: bind

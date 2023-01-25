@@ -1,8 +1,9 @@
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseSettings
-from dotenv import load_dotenv
+from pydantic import BaseSettings, constr
+
+from plants.extensions.config_values import parse_settings
 
 
 class Environment(str, Enum):
@@ -10,31 +11,34 @@ class Environment(str, Enum):
     PROD = 'prod'
 
 
-class SecretsConfig(BaseSettings):
-    """Secrets are specified in environment variables (or .env file)
+class LogLevel(str, Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARNING = 'WARNING'
+    ERROR = 'ERROR'
+
+
+class LogSettings(BaseSettings):
+    log_level_console: LogLevel
+    log_level_file: LogLevel
+    log_file_path: Path
+    ignore_missing_image_files: bool = False  # if True, missing image files will not result in Error; set in DEV only
+
+
+class LocalConfig(BaseSettings):
+    """Secrets and other environment-specific settings are specified in environment variables (or .env file)
     they are case-insensitive by default"""
     environment: Environment
-    connection_string: str
+    connection_string: constr(min_length=1, strip_whitespace=True)
+    max_images_per_taxon: int = 20
+    allow_cors: bool = False
+    log_settings: LogSettings
 
     class Config:
-        env_file = '.env'
+        env_file = Path(__file__).resolve().parent.parent.joinpath('.env')
         env_file_encoding = 'utf-8'
+        env_nested_delimiter = '__'
 
 
-# override environment variables with values from .env file if
-# available, otherwise keep system env. vars
-# # example:
-# import os
-# os.getenv('CONNECTION_STRING')
-#
-# # show all .env env. vars:
-# from dotenv import dotenv_values
-# print(dotenv_values())
-secrets_config = SecretsConfig()
-
-
-from plants.extensions.config_values import parse_config  # noqa
-env_path = Path(__file__).resolve().parent.parent.joinpath('.env')
-load_dotenv(dotenv_path=env_path, override=True)
-
-config = parse_config()
+local_config = LocalConfig()
+settings = parse_settings()

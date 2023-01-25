@@ -18,7 +18,7 @@ from pydantic.main import BaseModel
 ####################################################################################################
 # Entities used only in API <<Responses>> from <<Backend>> B...)
 ####################################################################################################
-class BMessageType(Enum):
+class BMessageType(str, Enum):
     """message types processed by error/success handlers in ui5 web frontend"""
     INFORMATION = 'Information'
     NONE = 'None'
@@ -47,7 +47,7 @@ class BConfirmation(BaseModel):
         extra = Extra.forbid
 
 
-class FBMajorResource(Enum):
+class FBMajorResource(str, Enum):
     PLANT = "PlantResource"
     IMAGE = "ImageResource"
     TAXON = "TaxonResource"

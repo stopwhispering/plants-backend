@@ -4,7 +4,7 @@ import logging
 import datetime
 from starlette.requests import Request
 
-from plants import config
+from plants import settings
 from plants.util.ui_utils import (get_message, throw_exception)
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
@@ -148,13 +148,13 @@ async def get_plants(db: Session = Depends(get_db)):
     # select plants from database
     # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
     query = db.query(Plant)
-    if config.filter_hidden_plants:
+    if settings.plants.filter_hidden:
         # sqlite does not like "is None" and pylint doesn't like "== None"
         # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
         query = query.filter(Plant.deleted.is_(False))
 
-    if config.n_plants:
-        query = query.order_by(Plant.plant_name).limit(config.n_plants)
+    # if config.n_plants:
+    #     query = query.order_by(Plant.plant_name).limit(config.n_plants)
 
     # early-load all relationship tables for Plant model relevant for PResultsPlants
     # to save around 90% (postgres) of the time in comparison to lazy loading (80% for sqlite)

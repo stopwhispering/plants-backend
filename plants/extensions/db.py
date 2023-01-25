@@ -2,17 +2,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
-from ml_helpers.preprocessing.features import DBType
-from plants import config, secrets_config
+from plants import local_config
+
 
 Base = declarative_base()
-if config.db_type == DBType.SQLITE:
+if 'sqlite' in local_config.connection_string:
     # engine = create_engine(os.getenv('CONNECTION_STRING'), connect_args={'check_same_thread': False})
-    engine = create_engine(secrets_config.connection_string, connect_args={'check_same_thread': False})
+    engine = create_engine(local_config.connection_string, connect_args={'check_same_thread': False})
     # 'connect_timeout': 10
 else:
     # engine = create_engine(os.getenv('CONNECTION_STRING'))
-    engine = create_engine(secrets_config.connection_string)
+    engine = create_engine(local_config.connection_string)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

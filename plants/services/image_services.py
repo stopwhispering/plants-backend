@@ -7,7 +7,7 @@ import aiofiles
 from fastapi import UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from plants import config
+from plants import local_config, settings
 from plants.models.image_models import Image, create_image, ImageToPlantAssociation, ImageToEventAssociation, \
     ImageToTaxonAssociation
 from plants.models.plant_models import Plant
@@ -52,7 +52,7 @@ async def save_image_files(files: List[UploadFile],
     images = []
     for photo_upload in files:
         # save to file system
-        path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
+        path = settings.paths.path_original_photos_uploaded.joinpath(photo_upload.filename)
         logger.info(f'Saving {path}.')
 
         async with aiofiles.open(path, 'wb') as out_file:
@@ -62,16 +62,16 @@ async def save_image_files(files: List[UploadFile],
         # photo_upload.save(path)  # we can't use object first and then save as this alters file object
 
         # resize file by lowering resolution if required
-        if not config.resizing_size:
+        if not settings.images.resizing_size:
             pass
-        elif not resizing_required(path, config.resizing_size):
+        elif not resizing_required(path, settings.images.resizing_size):
             logger.info(f'No resizing required.')
         else:
             logger.info(f'Saving and resizing {path}.')
             resize_image(path=path,
                          save_to_path=with_suffix(path, RESIZE_SUFFIX),
-                         size=config.resizing_size,
-                         quality=config.jpg_quality)
+                         size=settings.images.resizing_size,
+                         quality=settings.images.jpg_quality)
             path = with_suffix(path, RESIZE_SUFFIX)
 
         # add to db
@@ -84,10 +84,10 @@ async def save_image_files(files: List[UploadFile],
                                     plants=plants)
 
         # generate thumbnails for frontend display
-        for size in config.sizes:
+        for size in settings.images.sizes:
             generate_thumbnail(image=path,
                                size=size,
-                               path_thumbnail=config.path_generated_thumbnails)
+                               path_thumbnail=settings.paths.path_generated_thumbnails)
 
         # save metadata in jpg exif tags
         PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
@@ -127,14 +127,14 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
 
     old_path = image.absolute_path
     if not old_path.is_file():
-        if config.ignore_missing_image_files:
+        if local_config.ignore_missing_image_files:
             logger.warning(f'Image file {old_path} to be deleted not found.')
             return
         else:
             logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
             throw_exception(err_msg)
 
-    new_path = config.path_deleted_photos.joinpath(old_path.name)
+    new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
         os.replace(src=old_path,
                    dst=new_path)  # silently overwrites if privileges are sufficient
@@ -188,7 +188,7 @@ def read_image_by_size(filename: str, db: Session, width: int | None, height: in
 
     if not path.is_file():
         # return default image on dev environment where most photos are missing
-        if config.ignore_missing_image_files:
+        if local_config.ignore_missing_image_files:
             path = get_dummy_image_path_by_size(width=width, height=height)
         else:
             logger.error(err_msg := f'Image file not found: {path}')
@@ -209,12 +209,12 @@ def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db:
         logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
         throw_exception(err_msg)
 
-    path = config.path_generated_thumbnails_taxon.joinpath(taxon_occurrence_image.filename_thumbnail)
+    path = settings.paths.path_generated_thumbnails_taxon.joinpath(taxon_occurrence_image.filename_thumbnail)
     if not path.is_file():
         # return default image on dev environment where most photos are missing
-        if config.ignore_missing_image_files:
-            path = get_dummy_image_path_by_size(width=config.size_thumbnail_image_taxon[0],
-                                                height=config.size_thumbnail_image_taxon[1])
+        if local_config.ignore_missing_image_files:
+            path = get_dummy_image_path_by_size(width=settings.images.size_thumbnail_image_taxon[0],
+                                                height=settings.images.size_thumbnail_image_taxon[1])
         else:
             logger.error(err_msg := f'Occurence thumbnail file not found: {path}')
             throw_exception(err_msg)
@@ -237,14 +237,14 @@ def _generate_missing_thumbnails(images: list[Image]):
             continue
 
         image: Image
-        for size in config.sizes:
-            path_thumbnail = config.path_generated_thumbnails.joinpath(get_thumbnail_name(image.filename, size))
+        for size in settings.images.sizes:
+            path_thumbnail = settings.paths.path_generated_thumbnails.joinpath(get_thumbnail_name(image.filename, size))
             if path_thumbnail.is_file():
                 count_already_existed += 1
             else:
                 generate_thumbnail(image=image.absolute_path,
                                    size=size,
-                                   path_thumbnail=config.path_generated_thumbnails)
+                                   path_thumbnail=settings.paths.path_generated_thumbnails)
                 count_generated += 1
                 logger.info(f'Generated thumbnail in size {size} for {image.absolute_path}')
 
@@ -255,6 +255,7 @@ def _generate_missing_thumbnails(images: list[Image]):
 
 def trigger_generation_of_missing_thumbnails(db: Session, background_tasks: BackgroundTasks) -> str:
     images: list[Image] = db.query(Image).all()
-    logger.info(msg := f"Generating thumbnails for {len(images)} images in sizes: {config.sizes} in background.")
+    logger.info(msg := f"Generating thumbnails for {len(images)} images in "
+                       f"sizes: {settings.images.sizes} in background.")
     background_tasks.add_task(_generate_missing_thumbnails, images)
     return msg

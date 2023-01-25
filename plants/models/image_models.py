@@ -6,7 +6,7 @@ from typing import Sequence
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
-from plants import config
+from plants import settings
 from plants.extensions.db import Base
 from plants.models.plant_models import Plant
 from plants.util.ui_utils import throw_exception
@@ -66,7 +66,7 @@ class Image(Base):
 
     @property
     def absolute_path(self):
-        return config.path_photos_base.parent.joinpath(PurePath(self.relative_path))
+        return settings.paths.path_photos_base.parent.joinpath(PurePath(self.relative_path))
 
     keywords: list[ImageKeyword] = relationship(
         "ImageKeyword",

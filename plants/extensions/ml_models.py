@@ -4,7 +4,7 @@ import pickle
 from sklearn.pipeline import Pipeline
 
 from ml_helpers.preprocessing.features import FeatureContainer
-from plants import config
+from plants import settings
 from plants.util.ui_utils import throw_exception
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ pipeline, feature_container = None, None
 
 
 def _unpickle_pipeline() -> tuple[Pipeline, FeatureContainer]:
-    path = config.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
+    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
     if not path.is_file():
         throw_exception(f'Pipeline not found at {path.as_posix()}')
     logger.info(f'Unpickling pipeline from {path.as_posix()}.')
@@ -31,7 +31,7 @@ def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContain
 
 def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer):
     """called from manually executed script, not used in application/frontend/automatically"""
-    path = config.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
+    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
     logger.info(f'Pickling pipeline to {path.as_posix()}.')
     dump = {'pipeline': pipeline,
             'feature_container': feature_container}

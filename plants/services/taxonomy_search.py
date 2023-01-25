@@ -4,7 +4,7 @@ from pykew import ipni as ipni, powo as powo
 from pykew.ipni_terms import Name
 from sqlalchemy.orm import Session
 
-from plants import config
+from plants import settings
 from plants.exceptions import TooManyResultsError
 from plants.models.taxon_models import Taxon
 from plants.services.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
@@ -116,7 +116,7 @@ class TaxonomySearch:
         else:
             ipni_query = {Name.genus: plant_name_pattern, Name.rank: 'gen.'}
             ipni_search = ipni.search(ipni_query)
-        if ipni_search.size() > config.taxon_search_max_results:
+        if ipni_search.size() > settings.plants.taxon_search_max_results:
             msg = f'Too many search results for search term "{plant_name_pattern}": {ipni_search.size()}'
             raise TooManyResultsError(msg)
 

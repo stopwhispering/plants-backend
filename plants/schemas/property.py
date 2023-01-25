@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import Extra
+from pydantic import Extra, constr
 from pydantic.main import BaseModel
 
 from plants.schemas.shared import BMessage
@@ -11,7 +11,7 @@ from plants.schemas.shared import BMessage
 ####################################################################################################
 class FBPropertyValue(BaseModel):
     type: str
-    property_value: str
+    property_value: constr(min_length=1, max_length=240, strip_whitespace=True)
     property_value_id: Optional[int]  # missing if new
 
     class Config:
@@ -20,10 +20,10 @@ class FBPropertyValue(BaseModel):
 
 # todo make all this flatter and easier
 class FBProperty(BaseModel):
-    property_name: str
+    property_name: constr(min_length=1, max_length=240, strip_whitespace=True)
     property_name_id: Optional[int]  # empty if new
     property_values: List[FBPropertyValue]
-    property_value: Optional[str]  # after flattening
+    property_value: Optional[constr(min_length=1, max_length=240, strip_whitespace=True)]  # after flattening
     property_value_id: Optional[int]  # set at certain point from property values list
 
     class Config:
@@ -31,10 +31,11 @@ class FBProperty(BaseModel):
 
 
 class FBPropertiesInCategory(BaseModel):
-    category_name: str
+    category_name: constr(min_length=1, max_length=80, strip_whitespace=True)
     category_id: int
     properties: List[FBProperty]
-    property_value: Optional[str]  # used in some request to add new property to category
+    # used in some request to add new property to category
+    property_value: Optional[constr(min_length=1, max_length=240, strip_whitespace=True)]
 
     class Config:
         extra = Extra.forbid

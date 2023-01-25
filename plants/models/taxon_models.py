@@ -164,7 +164,7 @@ class TaxonOccurrenceImage(Base, OrmUtil):
     publisher_dataset = Column(VARCHAR(100))
     references = Column(VARCHAR(120))
     href = Column(VARCHAR(150))
-    filename_thumbnail = Column(VARCHAR(120))
+    filename_thumbnail = Column(VARCHAR(120))  # todo switch to other id
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

@@ -1,9 +1,11 @@
 import logging
 from pathlib import Path
 
+from plants import LogLevel
 
-def configure_root_logger(log_severity_console,
-                          log_severity_file,
+
+def configure_root_logger(log_severity_console: LogLevel,
+                          log_severity_file: LogLevel,
                           log_file_path: Path = Path('./plants.log'),
                           log_filter: logging.Filter = None):
     """configure the root logger; each module's default (__name__) logger will inherit these settings"""
@@ -17,7 +19,7 @@ def configure_root_logger(log_severity_console,
     format_fh = '%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s'
     formatter = logging.Formatter(format_fh)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(log_severity_file)
+    file_handler.setLevel(log_severity_file.value)
     # format_file = '%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s'
     # file_handler.setFormatter(logging.Formatter(format_file))
     logger.handlers = []
@@ -27,7 +29,7 @@ def configure_root_logger(log_severity_console,
     stream_handler = logging.StreamHandler()
     formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(log_severity_console)
+    stream_handler.setLevel(log_severity_console.value)
 
     # format_stream = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     # format_stream = '%(levelname)s:%(message)s'

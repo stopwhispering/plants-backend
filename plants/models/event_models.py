@@ -30,9 +30,9 @@ class Soil(Base, OrmUtil):
 class Pot(Base, OrmUtil):
     __tablename__ = "pot"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
-    material = Column(VARCHAR(50))
-    shape_top = Column(VARCHAR(20))  # oval, square, circle
-    shape_side = Column(VARCHAR(20))  # flat, very flat, high, very high
+    material = Column(VARCHAR(50))  # todo enum
+    shape_top = Column(VARCHAR(20))  # todo enum   # oval, square, circle
+    shape_side = Column(VARCHAR(20))  # todo enum  # flat, very flat, high, very high
     diameter_width = Column(Numeric(5, 1))  # 5 digits, 1 decimal --> max 9999.9
     # pot_notes = Column(TEXT)
 

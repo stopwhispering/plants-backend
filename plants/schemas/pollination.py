@@ -1,11 +1,13 @@
 from enum import Enum
 from typing import Optional, List
 
-from pydantic import Extra
+from pydantic import Extra, constr
+from pydantic.color import Color
 from pydantic.main import BaseModel
 
-from plants.models.pollination_models import PollenType, BFlorescenceStatus
+from plants.models.pollination_models import PollenType, BFlorescenceStatus, PollinationStatus
 from plants.schemas.shared import BMessage
+from plants.util.schema_util import REGEX_DATE
 
 
 ####################################################################################################
@@ -13,8 +15,8 @@ from plants.schemas.shared import BMessage
 ####################################################################################################
 class FBPollenContainer(BaseModel):
     plant_id: int
-    plant_name: str
-    genus: str | None
+    plant_name: constr(min_length=1, max_length=100)
+    genus: constr(min_length=1, max_length=100) | None
     count_stored_pollen_containers: int  # mandatory in this case
 
     class Config:
@@ -28,8 +30,8 @@ class FRequestNewPollination(BaseModel):
     pollenDonorPlantId: int
     pollenType: PollenType  # PollenType (fresh | frozen | unknown)
     pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
-    labelColorRgb: str  # e.g. '#FFFF00'
-    location: str  # e.g. 'outside_led'
+    labelColorRgb: Color  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
+    location: constr(min_length=1, max_length=100)  # todo enum  # e.g. 'outside_led'
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
@@ -42,15 +44,15 @@ class FRequestEditedPollination(BaseModel):
     pollen_donor_plant_id: int
 
     pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
-    pollen_type: str
-    location: str | None
-    label_color_rgb: str  # e.g. '#FFFF00'
+    pollen_type: PollenType
+    location: constr(min_length=1, max_length=100) | None  # todo enum  # e.g. 'outside_led'
+    label_color_rgb: Color  # e.g. '#FFFF00'
 
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
-    pollination_status: str
+    pollination_status: PollinationStatus
     ongoing: bool
 
-    harvest_date: str | None  # e.g. '2022-11-16'
+    harvest_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     seed_capsule_length: float | None
     seed_capsule_width: float | None
     seed_length: float | None
@@ -64,19 +66,20 @@ class FRequestEditedPollination(BaseModel):
 
     class Config:
         extra = Extra.ignore
+        use_enum_values = True
 
 
 class FRequestEditedFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
-    plant_name: str
+    plant_name: constr(min_length=1, max_length=100)
     florescence_status: BFlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
+    inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: str | None  # e.g. location if multiple plants in one container
     branches_count: int | None
     flowers_count: int | None
-    first_flower_opening_date: str | None  # e.g. '2022-11-16'
-    last_flower_closing_date: str | None  # e.g. '2022-11-16'
+    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
 
     class Config:
         extra = Extra.ignore
@@ -86,8 +89,8 @@ class FRequestEditedFlorescence(BaseModel):
 class FRequestNewFlorescence(BaseModel):
     plant_id: int
     florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
-    inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
-    comment: str | None  # max 110 chars
+    inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    comment: constr(max_length=110) | None
 
     class Config:
         extra = Extra.forbid

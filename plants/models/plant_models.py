@@ -9,7 +9,7 @@ from sqlalchemy.types import DateTime
 import logging
 import datetime
 
-from plants import config
+from plants import settings
 from plants.models.event_models import Event
 from plants.models.property_models import PropertyValue
 from plants.models.tag_models import Tag
@@ -31,11 +31,11 @@ class Plant(Base, OrmUtil):
     field_number = Column(VARCHAR(20))
     geographic_origin = Column(VARCHAR(100))
     nursery_source = Column(VARCHAR(100))
-    propagation_type = Column(VARCHAR(30))
+    propagation_type = Column(VARCHAR(30))  # todo enum
 
     active = Column(BOOLEAN)
     deleted = Column(BOOLEAN)
-    cancellation_reason = Column(VARCHAR(60))  # only set if active == False
+    cancellation_reason = Column(VARCHAR(60))  # todo enum,  only set if active == False
     cancellation_date = Column(DateTime(timezone=True))  # todo rename to datetime or make it date type
 
     generation_notes = Column(VARCHAR(250))
@@ -175,8 +175,9 @@ class Plant(Base, OrmUtil):
         # generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
 
         # rmeove photos-subdir from path if required (todo: still required somewhere?)
-        if plant.filename_previewimage.is_relative_to(config.subdirectory_photos):
-            self.filename_previewimage = plant.filename_previewimage.relative_to(config.subdirectory_photos).as_posix()
+        if plant.filename_previewimage.is_relative_to(settings.paths.subdirectory_photos):
+            self.filename_previewimage = plant.filename_previewimage.relative_to(
+                settings.paths.subdirectory_photos).as_posix()
         else:
             self.filename_previewimage = plant.filename_previewimage.as_posix()
 

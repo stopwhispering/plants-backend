@@ -12,6 +12,7 @@ from plants.models.image_models import Image, update_image_if_altered, ImageKeyw
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.util.image_utils import LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
 from plants.util.ui_utils import get_message, throw_exception
 from plants.dependencies import get_db
 from plants.models.plant_models import Plant
@@ -20,7 +21,7 @@ from plants.schemas.image import (BResultsImageResource, BImageUpdated, FImageUp
 from plants.services.image_services_simple import remove_files_already_existing
 from plants.schemas.event import FImagesToDelete
 from plants.schemas.image import BResultsImageDeleted
-from plants.schemas.shared import BMessage, BMessageType, BSaveConfirmation, \
+from plants.schemas.shared import BMessageType, BSaveConfirmation, \
     FBMajorResource, BConfirmation
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,6 @@ router = APIRouter(
     tags=["images"],
     responses={404: {"description": "Not found"}},
 )
-
-
-# keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
-LENGTH_SHORTENED_PLANT_NAME_FOR_TAG = 25
 
 
 @router.get("/plants/{plant_id}/images/", response_model=FBImages)
@@ -196,7 +193,7 @@ async def delete_image(image_container: FImagesToDelete, db: Session = Depends(g
 
 def _shorten_plant_name(plant_name: str) -> str:
     """shorten plant name to 20 chars for display in ui5 table"""
-    return (plant_name[:LENGTH_SHORTENED_PLANT_NAME_FOR_TAG-3] + '...'
+    return (plant_name[:LENGTH_SHORTENED_PLANT_NAME_FOR_TAG - 3] + '...'
             if len(plant_name) > LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
             else plant_name)
 

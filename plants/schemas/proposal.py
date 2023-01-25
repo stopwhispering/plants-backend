@@ -45,8 +45,6 @@ class BResultsProposals(BaseModel):
 
     NurseriesSourcesCollection: Optional[List[BNurseryName]]
     KeywordsCollection: Optional[List[BKeywordName]]  # todo remove
-    # TraitCategoriesCollection: Optional[List[PTraitCategory]]
-    # TraitsCollection: Optional[List[PTrait]]
 
     class Config:
         extra = Extra.forbid

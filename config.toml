@@ -1,6 +1,3 @@
-########################################################################################################################
-# global configuration
-########################################################################################################################
 [images]
 size_thumbnail_image_taxon = [220, 220]  # constant width on details site for occurrence images from inat.
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
@@ -11,31 +8,10 @@ jpg_quality = 82
 filter_hidden = true
 taxon_search_max_results = 30
 
-########################################################################################################################
-# platform-specific configuration
-########################################################################################################################
-[environments.dev]
-log_severity_console = "DEBUG"
-log_severity_file = "INFO"
-log_file_path = "/common/plants/plants.log"
-ignore_missing_image_files = true  # ignore missing photo_file files after db transfer prod to dev without images
-max_images_per_taxon = 10  # max. number of images scraped from biodiv. db occurrences for each taxon
-allow_cors = true  # allow cors on development system if no reverse proxy available
-n_plants = 0  # return only n plants, no matter how many plants the database has
-#path_photos = "C:\\Workspaces\\VS Code Projects\\plants_frontend\\webapp\\photos"
-#path_photos = "/Workspaces/VS Code Projects/plants_frontend/webapp/photos"
+[frontend.restrictions]  # todo use
+length_shortened_plant_name_for_tag = 25  # # keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+
+[paths]
 path_photos = "/common/plants/photos"
 path_deleted_photos = "/common/plants/photos/deleted"
-path_pickled_ml_models = '/common/plants/pickled'
-
-[environments.prod]
-log_severity_console = "INFO"
-log_severity_file = "INFO"
-log_file_path = "/common/plants/plants.log"
-ignore_missing_image_files = false  # ignore missing photo_file files after db transfer prod to dev without images
-max_images_per_taxon = 20  # max. number of images scraped from biodiv. db occurrences for each taxon
-allow_cors = false  # allow cors on development system if no reverse proxy available
-n_plants = 0  # return only n plants, no matter how many plants the database has
-path_photos = "/common/plants/photos"
-path_deleted_photos = '/common/plants/photos/deleted'
 path_pickled_ml_models = '/common/plants/pickled'

@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Optional
 import datetime
 
-from pydantic import validator, Extra
+from pydantic import validator, Extra, constr, HttpUrl
 from pydantic.main import BaseModel
 
 from plants.models.image_models import Image
@@ -15,8 +15,8 @@ from plants.schemas.shared import BMessage
 # Entities used in <<both>> API Requests from Frontend <<and>> Responses from Backend (FB...)
 ####################################################################################################
 class FBDistribution(BaseModel):
-    native: List[str]
-    introduced: List[str]
+    native: List[constr(min_length=1, max_length=40)]
+    introduced: List[constr(min_length=1, max_length=40)]
 
     class Config:
         extra = Extra.forbid
@@ -29,23 +29,19 @@ class FTaxonOccurrenceImage(BaseModel):
     occurrence_id: int
     img_no: int
     gbif_id: int
-    scientific_name: str
-    basis_of_record: str
-    verbatim_locality: Optional[str]
+    scientific_name: constr(min_length=1, max_length=100)
+    basis_of_record: constr(min_length=1, max_length=25)
+    verbatim_locality: Optional[constr(min_length=1, max_length=125)]
     date: datetime.datetime
-    creator_identifier: str
-    publisher_dataset: Optional[str]
-    references: Optional[str]
-    href: str  # link to iamge at inaturalist etc.
-    filename_thumbnail: str  # filename for generated thumbnails
-
-    # filename_thumbnail: Path = Field(alias='path_thumbnail')
+    creator_identifier: constr(min_length=1, max_length=100)
+    publisher_dataset: Optional[constr(min_length=1, max_length=100)]
+    references: Optional[HttpUrl]
+    href: HttpUrl  # link to iamge at inaturalist etc.
+    filename_thumbnail: constr(min_length=1, max_length=120)  # filename for generated thumbnails  # todo switch to other id
 
     class Config:
         extra = Extra.forbid
         anystr_strip_whitespace = True
-        # alias_generator = humps.camelize
-        # allow_population_by_field_name = True  # populate model by both alias (default) and field name
 
     @validator("date")
     def datetime_to_string(cls, v):  # noqa
@@ -60,7 +56,7 @@ class FTaxonOccurrenceImage(BaseModel):
 
 class FTaxonImage(BaseModel):
     id: int
-    filename: str
+    filename: constr(min_length=1, max_length=150)
     description: Optional[str]
 
     class Config:
@@ -70,31 +66,28 @@ class FTaxonImage(BaseModel):
 
 class FTaxon(BaseModel):
     id: int
-    name: str
+    name: constr(min_length=1, max_length=100)
     is_custom: bool
-    # subsp: Optional[str]
-    species: Optional[str]  # empty for custom cultivars
-    # subgen: Optional[str]
-    genus: str
-    family: str
-    # phylum: Optional[str]
+    species: Optional[constr(min_length=1, max_length=100)]  # empty for custom cultivars
+    genus: constr(min_length=1, max_length=100)
+    family: constr(min_length=1, max_length=100)
 
-    infraspecies: str | None
-    cultivar: str | None
-    affinis: str | None
+    infraspecies: constr(min_length=1, max_length=40) | None
+    cultivar: constr(min_length=1, max_length=30) | None
+    affinis: constr(min_length=1, max_length=40) | None
 
-    rank: str
-    taxonomic_status: Optional[str]
+    rank: constr(min_length=1, max_length=30)
+    taxonomic_status: Optional[constr(min_length=1, max_length=100)]
     name_published_in_year: Optional[int]
     synonym: bool
-    lsid: Optional[str]
-    authors: Optional[str]
-    basionym: Optional[str]
-    synonyms_concat: Optional[str]
-    distribution_concat: Optional[str]
+    lsid: Optional[constr(min_length=1, max_length=50)]
+    authors: Optional[constr(min_length=1, max_length=100)]
+    basionym: Optional[constr(min_length=1, max_length=100)]
+    synonyms_concat: Optional[constr(min_length=1, max_length=500)]
+    distribution_concat: Optional[constr(min_length=1, max_length=200)]
     hybrid: bool
     hybridgenus: bool
-    gbif_id: Optional[str]
+    gbif_id: Optional[int]
     custom_notes: Optional[str]
     distribution: Optional[FBDistribution]  # not filled for each request
     images: Optional[List[FTaxonImage]]  # not filled for each request
@@ -149,7 +142,7 @@ class FFetchTaxonOccurrenceImagesRequest(BaseModel):
 
 
 class FRetrieveTaxonDetailsRequest(BaseModel):
-    lsid: Optional[str]
+    lsid: Optional[constr(min_length=1, max_length=50)]
     hasCustomName: bool
     taxon_id: Optional[int]  # taxon id
     nameInclAddition: str
@@ -207,7 +200,7 @@ class BSearchResultSource(Enum):
     SOURCE_IPNI_POWO = 'International Plant Names Index + Plants of the World'
 
 
-class FBRank(Enum):
+class FBRank(str, Enum):
     GENUS = "gen."
     SPECIES = "spec."
     SUBSPECIES = "subsp."
@@ -344,22 +337,22 @@ class BCreatedTaxonResponse(BaseModel):
 class FNewTaxon(BaseModel):
     id: int | None  # filled if taxon is already in db
 
-    rank: str
+    rank: constr(min_length=1, max_length=30)
     # phylum: str
-    family: str
-    genus: str
-    species: str | None
-    infraspecies: str | None
+    family: constr(min_length=1, max_length=100)
+    genus: constr(min_length=1, max_length=100)
+    species: constr(min_length=1, max_length=100) | None
+    infraspecies: constr(min_length=1, max_length=40, strip_whitespace=True) | None
 
-    lsid: str  # IPNI/POWO Life Sciences Identifier
-    taxonomic_status: str
+    lsid: constr(min_length=1, max_length=50)  # IPNI/POWO Life Sciences Identifier
+    taxonomic_status: constr(min_length=1, max_length=100)
     synonym: bool
-    authors: str
+    authors: constr(min_length=1, max_length=100)
     namePublishedInYear: int | None
-    basionym: str | None
+    basionym: constr(min_length=1, max_length=100) | None
     hybrid: bool
     hybridgenus: bool
-    synonyms_concat: str | None
+    synonyms_concat: constr(min_length=1, max_length=500) | None
     distribution_concat: str | None
 
     is_custom: bool

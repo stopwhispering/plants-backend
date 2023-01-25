@@ -1,9 +1,10 @@
 from typing import List, Optional
 from datetime import datetime
 
-from pydantic import Extra
+from pydantic import Extra, constr
 from pydantic.main import BaseModel
 
+from plants.util.image_utils import LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
 from plants.schemas.shared import BMessage
 
 
@@ -11,19 +12,16 @@ from plants.schemas.shared import BMessage
 # Entities used in both API Requests from Frontend and Responses from Backend (FB...)
 ####################################################################################################
 class FBImagePlantTag(BaseModel):
-    # plant_id: int = None  # todo why None?
     plant_id: int
-    plant_name: str
-    plant_name_short: str
-    # key: str  # todo remove
-    # text: str  # todo remove
+    plant_name: constr(min_length=1, max_length=100)
+    plant_name_short: constr(min_length=1, max_length=LENGTH_SHORTENED_PLANT_NAME_FOR_TAG)
 
     class Config:
         extra = Extra.forbid
 
 
 class FBKeyword(BaseModel):
-    keyword: str
+    keyword: constr(min_length=1, max_length=100, strip_whitespace=True)
 
     class Config:
         extra = Extra.forbid
@@ -31,10 +29,10 @@ class FBKeyword(BaseModel):
 
 class FBImage(BaseModel):
     id: int
-    filename: str
+    filename: constr(min_length=1, max_length=150)
     keywords: List[FBKeyword]
     plants: List[FBImagePlantTag]
-    description: str | None
+    description: constr(min_length=1, max_length=500, strip_whitespace=True) | None
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
     class Config:
@@ -87,7 +85,7 @@ class BResultsImageDeleted(BaseModel):
 ####################################################################################################
 class FImageUploadedMetadata(BaseModel):
     plants: list[int]
-    keywords: list[str]
+    keywords: list[constr(min_length=1, max_length=100, strip_whitespace=True)]
 
     class Config:
         extra = Extra.forbid

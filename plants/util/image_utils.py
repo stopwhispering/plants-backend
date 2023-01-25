@@ -1,14 +1,18 @@
 from pathlib import Path, PurePath
-from typing import Union, Optional, Sequence, Tuple
+from typing import Union, Optional, Tuple
 import piexif
 from PIL import Image
 import logging
 from io import BytesIO
 from PIL.JpegImagePlugin import JpegImageFile
 
-from plants import config
+from plants import local_config
 
 logger = logging.getLogger(__name__)
+
+
+# keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+LENGTH_SHORTENED_PLANT_NAME_FOR_TAG = 25
 
 
 def get_thumbnail_name(filename: str, size: Tuple[int, int]) -> str:
@@ -29,12 +33,12 @@ def generate_thumbnail(image: Union[Path, BytesIO],
     supply original photo_file either as filename or i/o stream
     if Image is supplied as BytesIO, a filename_thumb <<must>> be supplied
     """
-    if not config.ignore_missing_image_files:
+    if not local_config.ignore_missing_image_files:
         logger.debug(f'Generating resized photo_file of {image} in size {size}.')
     # suffix = f'{size[0]}_{size[1]}'
 
     if isinstance(image, Path) and not image.is_file():
-        if not config.ignore_missing_image_files:
+        if not local_config.ignore_missing_image_files:
             logger.error(f"Original Image of default photo_file does not exist. Can't generate thumbnail. {image}")
         return
     im = Image.open(image)
@@ -100,3 +104,5 @@ def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality:
 
     if path != save_to_path:
         path.unlink()  # delete file
+
+

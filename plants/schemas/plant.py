@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime, date
 
-from pydantic import Field, Extra, validator, root_validator
+from pydantic import Field, Extra, validator, root_validator, constr
 from pydantic.main import BaseModel
 
 from plants.schemas.shared import BMessage, FBMajorResource
@@ -12,7 +12,7 @@ from plants.schemas.shared import BMessage, FBMajorResource
 ####################################################################################################
 # Entities used in both API Requests from Frontend and Responses from Backend (FB...)
 ####################################################################################################
-class FBTagState(Enum):
+class FBTagState(str, Enum):
     NONE = 'None'
     INDICATION01 = 'Indication01'
     SUCCESS = 'Success'
@@ -24,7 +24,7 @@ class FBTagState(Enum):
 class FBPlantTag(BaseModel):
     id: Optional[int]
     state: FBTagState
-    text: str
+    text: constr(min_length=1, max_length=20, strip_whitespace=True)
     last_update: datetime | None
     plant_id: int
 
@@ -36,7 +36,7 @@ class FBPlantTag(BaseModel):
 
 class FBAssociatedPlantExtractForPlant(BaseModel):
     id: int
-    plant_name: str
+    plant_name: constr(min_length=1, max_length=100)
     active: bool
 
     class Config:
@@ -45,7 +45,7 @@ class FBAssociatedPlantExtractForPlant(BaseModel):
 
 
 class FBPlantCurrentSoil(BaseModel):
-    soil_name: str
+    soil_name: constr(min_length=1, max_length=100, strip_whitespace=True)
     date: date
 
     class Config:
@@ -62,7 +62,7 @@ class FBPlantLatestImage(BaseModel):
         orm_mode = True
 
 
-class FBPropagationType(Enum):
+class FBPropagationType(str, Enum):
     SEED_COLLECTED = 'seed (collected)'
     OFFSET = 'offset'
     ACQUIRED_AS_PLANT = 'acquired as plant'
@@ -74,7 +74,7 @@ class FBPropagationType(Enum):
     NONE = ''
 
 
-class FBCancellationReason(Enum):
+class FBCancellationReason(str, Enum):
     WINTER_DAMAGE = 'Winter Damage'
     DRIEDOUT = 'Dried Out'
     MOULD = 'Mould'
@@ -92,19 +92,19 @@ class FBCancellationReason(Enum):
 ####################################################################################################
 class FPlant(BaseModel):
     id: int | None  # None for new plants
-    plant_name: str
-    field_number: str | None
-    geographic_origin: str | None
-    nursery_source: str | None
+    plant_name: constr(min_length=1, max_length=100)
+    field_number: constr(min_length=1, max_length=20, strip_whitespace=True) | None
+    geographic_origin: constr(min_length=1, max_length=100, strip_whitespace=True) | None
+    nursery_source: constr(min_length=1, max_length=100, strip_whitespace=True) | None
     propagation_type: FBPropagationType | None
     active: bool
     cancellation_reason: FBCancellationReason | None
     cancellation_date: date | None
-    generation_notes: str | None
+    generation_notes: constr(min_length=1, max_length=250, strip_whitespace=True) | None
     taxon_id: int | None
-    taxon_authors: str | None
-    botanical_name: str | None
-    full_botanical_html_name: str | None
+    taxon_authors: str | None  # irrelevant from frontend
+    botanical_name: str | None  # irrelevant from frontend
+    full_botanical_html_name: str | None  # irrelevant from frontend
 
     parent_plant: FBAssociatedPlantExtractForPlant | None
     parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
@@ -190,8 +190,8 @@ class BPlant(BaseModel):
 
 
 class BPlantsRenameRequest(BaseModel):
-    OldPlantName: str
-    NewPlantName: str
+    OldPlantName: constr(min_length=1, max_length=100)
+    NewPlantName: constr(min_length=1, max_length=100)
 
     class Config:
         extra = Extra.forbid

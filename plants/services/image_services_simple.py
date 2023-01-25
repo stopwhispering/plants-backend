@@ -5,15 +5,14 @@ import logging
 from PIL import Image
 from sqlalchemy.orm import Session
 
-from plants import config
+from plants import settings
 from plants.models.image_models import Image as ImageModel
-from plants.util.filename_utils import with_suffix
 
 logger = logging.getLogger(__name__)
 
 
 def _original_image_file_exists(filename: str) -> bool:
-    return config.path_original_photos_uploaded.joinpath(filename).is_file()
+    return settings.paths.path_original_photos_uploaded.joinpath(filename).is_file()
 
 
 def _image_exists_in_db(filename: str, db: Session) -> bool:
@@ -27,7 +26,7 @@ def _remove_image_from_db(filename: str, db: Session):
 
 
 def _remove_image_from_filesystem(filename: str) -> None:
-    config.path_original_photos_uploaded.joinpath(filename).unlink()
+    settings.paths.path_original_photos_uploaded.joinpath(filename).unlink()
 
 
 def remove_files_already_existing(files: List, suffix: str, db: Session) -> Tuple[list[str], list[str]]:
@@ -79,7 +78,7 @@ def resizing_required(path: str, size: Tuple[int, int]) -> bool:
 
 
 def get_path_for_taxon_thumbnail(filename: Path):
-    return config.rel_path_photos_generated_taxon.joinpath(filename)
+    return settings.paths.rel_path_photos_generated_taxon.joinpath(filename)
 
 
 # def generate_previewimage_if_not_exists(original_image_rel_path: PurePath):
@@ -100,6 +99,6 @@ def get_path_for_taxon_thumbnail(filename: Path):
 
 def get_relative_path(absolute_path: Path) -> PurePath:
     # todo better with .parent?
-    rel_path_photos_original = config.rel_path_photos_original.as_posix()
+    rel_path_photos_original = settings.paths.rel_path_photos_original.as_posix()
     absolute_path_str = absolute_path.as_posix()
     return PurePath(absolute_path_str[absolute_path_str.find(rel_path_photos_original):])

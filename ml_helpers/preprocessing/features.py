@@ -9,12 +9,6 @@ class Scale(Enum):
     BOOLEAN = 'boolean'  # True / False, requires no one-hot-encoding
 
 
-class DBType(Enum):
-    POSTGRES = 'postgres'
-    SQLITE = 'sqlite'
-    UNKNOWN = 'unknown'
-
-
 class Feature:
     def __init__(self, scale: Scale, column: str):
         self.column = column

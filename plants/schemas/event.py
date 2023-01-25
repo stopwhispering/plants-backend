@@ -1,26 +1,25 @@
-import decimal
 from enum import Enum
 from typing import Optional
 
 from pydantic import validator, Extra, constr
 from pydantic.main import BaseModel
 
-from plants.schemas.image import FBImage
 from decimal import Decimal
 from plants.schemas.shared import BMessage
+from plants.util.schema_util import REGEX_DATE
 
 
 ####################################################################################################
 # Entities used in both API Requests from Frontend and Responses from Backend (FB...)
 ####################################################################################################
-class FBShapeTop(Enum):
+class FBShapeTop(str, Enum):
     SQUARE = 'square'
     ROUND = 'round'
     OVAL = 'oval'
     HEXAGONAL = 'hexagonal'
 
 
-class FBShapeSide(Enum):
+class FBShapeSide(str, Enum):
     VERY_FLAT = 'very flat'
     FLAT = 'flat'
     HIGH = 'high'
@@ -29,7 +28,7 @@ class FBShapeSide(Enum):
 
 class FBImageAssignedToEvent(BaseModel):
     id: int
-    filename: str
+    filename: constr(min_length=1, max_length=150)
 
     class Config:
         extra = Extra.forbid
@@ -42,7 +41,7 @@ class FBImageAssignedToEvent(BaseModel):
 ####################################################################################################
 class FSoil(BaseModel):
     id: int
-    soil_name: str
+    soil_name: constr(min_length=1, max_length=100, strip_whitespace=True)
     mix: str | None
     description: str | None
 
@@ -52,7 +51,7 @@ class FSoil(BaseModel):
 
 class FPot(BaseModel):
     id: Optional[int]  # missing if new  # todo remove id
-    material: str
+    material: constr(min_length=1, max_length=50)  # todo enum?
     shape_top: FBShapeTop
     shape_side: FBShapeSide
     diameter_width: Decimal
@@ -99,7 +98,7 @@ class FSoilCreate(FSoil):
 
 class FImageDelete(BaseModel):
     id: int
-    filename: str
+    filename: constr(min_length=1, max_length=150)
 
     class Config:
         extra = Extra.forbid
@@ -114,7 +113,7 @@ class FImagesToDelete(BaseModel):
 
 class FCreateOrUpdateEvent(FEvent):
     id: Optional[int]  # empty for new, filled for updated events
-    date: constr(regex=r'^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$')  # string yyyy-mm-dd
+    date: constr(regex=REGEX_DATE)  # string yyyy-mm-dd
     event_notes: str | None
     images: list[FBImageAssignedToEvent]
     observation: FObservation | None
