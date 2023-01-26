@@ -5,8 +5,8 @@ from typing import List
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
+from plants import constants
 from plants.util.ui_utils import throw_exception
-from plants.constants import PROPERTY_CATEGORIES
 from plants.util.OrmUtilMixin import OrmUtil
 from plants.extensions.db import Base
 
@@ -121,7 +121,7 @@ class PropertyValue(Base, OrmUtil):
 
 def insert_property_categories(db: Session):
     # add Trait Categories if not existing upon initializing
-    for t in PROPERTY_CATEGORIES:
+    for t in constants.PROPERTY_CATEGORIES:
         property_category = db.query(PropertyCategory).filter(PropertyCategory.category_name == t).first()
         if not property_category:
             logger.info(f'Inserting missing trait category into db: {t}')

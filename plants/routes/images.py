@@ -7,8 +7,7 @@ from fastapi import UploadFile, BackgroundTasks
 from fastapi import APIRouter, Depends, Request
 from starlette.responses import Response
 
-from plants import settings
-from plants.constants import RESIZE_SUFFIX
+from plants import settings, constants
 from plants.models.image_models import Image, update_image_if_altered, ImageKeyword
 from plants.services.image_services import save_image_files, delete_image_file_and_db_entries, read_image_by_size, \
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails
@@ -57,7 +56,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
     files: List[UploadFile] = form.getlist('files[]')
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = remove_files_already_existing(files, RESIZE_SUFFIX, db=db)
+    duplicate_filenames, warnings = remove_files_already_existing(files, constants.RESIZE_SUFFIX, db=db)
 
     images: List[Image] = await save_image_files(files=files,
                                                  db=db,
@@ -143,7 +142,7 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
         throw_exception(str(err), request=request)
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = remove_files_already_existing(files, RESIZE_SUFFIX, db=db)
+    duplicate_filenames, warnings = remove_files_already_existing(files, constants.RESIZE_SUFFIX, db=db)
 
     images: List[Image] = await save_image_files(files=files,
                                                  db=db,

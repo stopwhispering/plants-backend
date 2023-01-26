@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 
-from plants.constants import PROPERTY_CATEGORIES
+from plants import constants
 from plants.models.plant_models import Plant
 from plants.models.property_models import PropertyValue, PropertyCategory, PropertyName
 from plants.models.taxon_models import Taxon
@@ -29,7 +29,7 @@ class LoadProperties:
     @staticmethod
     def _add_empty_categories(categories: List, db: Session):
         category_names = [c['category_name'] for c in categories]
-        for default_category in [p for p in PROPERTY_CATEGORIES if p not in category_names]:
+        for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
             category_obj = PropertyCategory.get_cat_by_name(default_category, db)
             categories.append({'category_name': category_obj.category_name,
                                'category_id':   category_obj.id,
@@ -39,7 +39,7 @@ class LoadProperties:
     @staticmethod
     def _add_empty_categories_to_dict(categories: Dict, db: Session):
         category_names = [c['category_name'] for c in categories.values()]
-        for default_category in [p for p in PROPERTY_CATEGORIES if p not in category_names]:
+        for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
             category_obj = PropertyCategory.get_cat_by_name(default_category, db)
             categories[category_obj.id] = {'category_name': category_obj.category_name,
                                            'category_id':   category_obj.id,

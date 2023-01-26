@@ -7,11 +7,10 @@ import aiofiles
 from fastapi import UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from plants import local_config, settings
+from plants import local_config, settings, constants
 from plants.models.image_models import Image, create_image, ImageToPlantAssociation, ImageToEventAssociation, \
     ImageToTaxonAssociation
 from plants.models.plant_models import Plant
-from plants.constants import RESIZE_SUFFIX
 from plants.models.taxon_models import TaxonOccurrenceImage
 
 from plants.services.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -69,10 +68,10 @@ async def save_image_files(files: List[UploadFile],
         else:
             logger.info(f'Saving and resizing {path}.')
             resize_image(path=path,
-                         save_to_path=with_suffix(path, RESIZE_SUFFIX),
+                         save_to_path=with_suffix(path, constants.RESIZE_SUFFIX),
                          size=settings.images.resizing_size,
                          quality=settings.images.jpg_quality)
-            path = with_suffix(path, RESIZE_SUFFIX)
+            path = with_suffix(path, constants.RESIZE_SUFFIX)
 
         # add to db
         record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
