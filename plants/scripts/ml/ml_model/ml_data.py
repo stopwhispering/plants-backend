@@ -2,11 +2,11 @@ import sqlalchemy
 import pandas as pd
 
 from ml_helpers.preprocessing.features import FeatureContainer
-from plants.models.plant_models import Plant
+from plants.modules.plant.models import Plant
 from plants.dependencies import get_db
 from plants.extensions.db import init_database_tables, engine
-from plants.models.pollination_models import Pollination, Florescence
-from plants.models.taxon_models import Taxon
+from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.taxon.models import Taxon
 
 init_database_tables(engine_=engine)
 db = next(get_db())

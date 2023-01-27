@@ -1,27 +1,26 @@
 import time
-from contextlib import contextmanager
 
-from sqlalchemy.orm import subqueryload, Query
+from sqlalchemy.orm import subqueryload
 
 from plants.dependencies import get_db
 from plants.extensions.db import init_database_tables, engine
-from plants.models.event_models import Event
-from plants.models.image_models import ImageKeyword, Image, ImageToTaxonAssociation
+from plants.modules.event.models import Event
+from plants.modules.image.models import ImageKeyword, Image, ImageToTaxonAssociation
 # from plants.models.event_models import Soil, Pot, Observation, Event
 # from plants.models.history_model import History
 # from plants.models.image_models import ImageKeyword, ImageToPlantAssociation, Image, ImageToEventAssociation, \
 #     ImageToTaxonAssociation
-from plants.models.plant_models import Plant
-from plants.models.property_models import PropertyCategory
-from plants.models.taxon_models import Taxon
-from plants.routes.images import _to_response_image
+from plants.modules.plant.models import Plant
+from plants.modules.property.models import PropertyCategory
+from plants.modules.taxon.models import Taxon
+from plants.modules.image.services import _to_response_image
 from plants.util.ui_utils import get_message
-from plants.schemas.shared import BMessageType
-from plants.schemas.event import BResultsEventResource
-from plants.schemas.image import FBImages, BResultsImageResource
-from plants.schemas.plant import BResultsPlants
-from plants.schemas.property import BResultsPropertyNames
-from plants.schemas.proposal import BResultsProposals, FProposalEntity
+from plants.shared.message_schemas import BMessageType
+from plants.modules.event.schemas import BResultsEventResource
+from plants.modules.image.schemas import FBImages, BResultsImageResource
+from plants.modules.plant.schemas import BResultsPlants
+from plants.modules.property.schemas import BResultsPropertyNames
+from plants.shared.proposal_schemas import BResultsProposals, FProposalEntity
 
 # from plants.models.pollination_models import Florescence, Pollination
 # from plants.models.property_models import PropertyCategory, PropertyName, PropertyValue

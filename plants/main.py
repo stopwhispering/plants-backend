@@ -6,8 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from plants import local_config
 from plants.extensions.db import init_database_tables, engine
-from plants.routes import (taxonomy, plants, images, events, property_names, properties, proposals,
-                           selection_data, biodiversity_apis, pollinations, florescences)
+from plants.modules.event.routes import router as event_router
+from plants.modules.image.routes import router as image_router
+from plants.modules.plant import routes as plant_router
+from plants.modules.pollination.routes import router as pollination_router
+from plants.modules.taxon.routes import router as taxon_router
+from plants.shared.routes import router as shared_router
+from plants.modules.biodiversity.routes import router as biodiversity_router
+from plants.modules.property.routes import router as properties_router
 from plants.util.logger_utils import configure_root_logger
 
 configure_root_logger(log_severity_console=local_config.log_settings.log_level_console,
@@ -48,16 +54,14 @@ app.add_middleware(
 #     return await request_validation_exception_handler(request, exc)
 
 
-app.include_router(taxonomy.router, prefix=COMMON_PREFIX)
-app.include_router(plants.router, prefix=COMMON_PREFIX)
-app.include_router(images.router, prefix=COMMON_PREFIX)
-app.include_router(events.router, prefix=COMMON_PREFIX)
-app.include_router(property_names.router, prefix=COMMON_PREFIX)
-app.include_router(properties.router, prefix=COMMON_PREFIX)
-app.include_router(proposals.router, prefix=COMMON_PREFIX)
-app.include_router(selection_data.router, prefix=COMMON_PREFIX)
-app.include_router(biodiversity_apis.router, prefix=COMMON_PREFIX)
-app.include_router(pollinations.router, prefix=COMMON_PREFIX)
-app.include_router(florescences.router, prefix=COMMON_PREFIX)
+app.include_router(taxon_router, prefix=COMMON_PREFIX)
+app.include_router(plant_router.router, prefix=COMMON_PREFIX)
+app.include_router(image_router, prefix=COMMON_PREFIX)
+app.include_router(event_router, prefix=COMMON_PREFIX)
+app.include_router(pollination_router, prefix=COMMON_PREFIX)
+app.include_router(properties_router, prefix=COMMON_PREFIX)
+app.include_router(shared_router, prefix=COMMON_PREFIX)
+
+app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 
 init_database_tables(engine_=engine)

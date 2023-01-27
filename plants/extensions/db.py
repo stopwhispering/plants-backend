@@ -18,21 +18,19 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_database_tables(engine_, session: Session = None):
     # import all orm tables. don't remove!
-    import plants.models.event_models  # noqa
-    import plants.models.history_model  # noqa
-    import plants.models.image_models  # noqa
-    import plants.models.plant_models  # noqa
-    import plants.models.property_models  # noqa
-    import plants.models.tag_models  # noqa
-    import plants.models.taxon_models  # noqa
-    # import plants.models.trait_models  # noqa
-    import plants.models.pollination_models  # noqa
+    import plants.modules.event.models  # noqa
+    import plants.shared.history_models  # noqa
+    import plants.modules.image.models  # noqa
+    import plants.modules.plant.models  # noqa
+    import plants.modules.property.models  # noqa
+    import plants.modules.taxon.models  # noqa
+    import plants.modules.pollination.models  # noqa
 
     # create db tables if not existing
     Base.metadata.create_all(bind=engine_)
 
     # initially populate tables with default data
     # from plants.models.event_models import insert_categories
-    from plants.models.property_models import insert_property_categories
+    from plants.modules.property.models import insert_property_categories
     # insert_categories(SessionLocal() if not session else session)
     insert_property_categories(SessionLocal() if not session else session)
