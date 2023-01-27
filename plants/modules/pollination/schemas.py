@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Optional, List
 
 from pydantic import Extra, constr
-from pydantic.color import Color
 from pydantic.main import BaseModel
 
 from plants.modules.pollination.models import PollenType, BFlorescenceStatus, PollinationStatus
@@ -30,7 +29,7 @@ class FRequestNewPollination(BaseModel):
     pollenDonorPlantId: int
     pollenType: PollenType  # PollenType (fresh | frozen | unknown)
     pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
-    labelColorRgb: Color  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
+    labelColorRgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     location: constr(min_length=1, max_length=100)  # todo enum  # e.g. 'outside_led'
 
     class Config:
@@ -46,7 +45,7 @@ class FRequestEditedPollination(BaseModel):
     pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
     pollen_type: PollenType
     location: constr(min_length=1, max_length=100) | None  # todo enum  # e.g. 'outside_led'
-    label_color_rgb: Color  # e.g. '#FFFF00'
+    label_color_rgb: str  # e.g. '#FFFF00'
 
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
     pollination_status: PollinationStatus

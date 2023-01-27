@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
+from pydantic.color import Color
 from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity
 from sqlalchemy.types import DateTime
 import logging

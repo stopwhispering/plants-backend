@@ -38,8 +38,8 @@ router = APIRouter(
 async def post_pollination(
         new_pollination_data: FRequestNewPollination,
         db: Session = Depends(get_db)):
-    db.commit()
     save_new_pollination(new_pollination_data=new_pollination_data, db=db)
+    db.commit()
 
 
 @router.put('/pollinations/{pollination_id}')
@@ -48,8 +48,8 @@ async def put_pollination(
         edited_pollination_data: FRequestEditedPollination,
         db: Session = Depends(get_db), ):
     assert pollination_id == edited_pollination_data.id
-    db.commit()
     update_pollination(pollination_data=edited_pollination_data, db=db)
+    db.commit()
 
 
 @router.get("/ongoing_pollinations",
