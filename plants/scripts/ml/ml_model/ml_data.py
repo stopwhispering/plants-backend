@@ -2,19 +2,22 @@ import sqlalchemy
 import pandas as pd
 
 from ml_helpers.preprocessing.features import FeatureContainer
+from plants import local_config
 from plants.modules.plant.models import Plant
 from plants.dependencies import get_db
-from plants.extensions.db import init_database_tables, engine
+from plants.extensions.db import create_db_engine
+from plants.extensions.orm import init_orm
 from plants.modules.pollination.models import Pollination, Florescence
 from plants.modules.taxon.models import Taxon
 
-init_database_tables(engine_=engine)
+init_orm(engine=create_db_engine(local_config.connection_string))
 db = next(get_db())
 
 
 def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe
     # i feel more comfortable with joining dataframes than with sqlalchemy...
+    engine = create_db_engine(local_config.connection_string)
     df_pollination = (pd.read_sql_query(sql=sqlalchemy.select(Pollination)
                                         .filter(~Pollination.ongoing,
                                                 Pollination.pollination_status != 'self_pollinated')  # noqa

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from operator import attrgetter
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy import Column, INTEGER, BOOLEAN, ForeignKey, TEXT, Identity, VARCHAR
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.orm import foreign, remote  # noqa
@@ -10,12 +10,10 @@ import logging
 import datetime
 
 from plants import settings
-from plants.modules.event.models import Event
-from plants.modules.property.models import PropertyValue
 from plants.util.ui_utils import throw_exception
 from plants.modules.taxon.models import Taxon
 from plants.util.OrmUtilMixin import OrmUtil
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 from plants.modules.plant.schemas import FPlant
 
 logger = logging.getLogger(__name__)
@@ -79,13 +77,13 @@ class Plant(Base, OrmUtil):
     taxon = relationship("Taxon", back_populates="plants")
 
     # plant to tag: 1:n
-    tags: List[Tag] = relationship("Tag", back_populates="plant")
+    tags = relationship("Tag", back_populates="plant")
 
     # plant to event: 1:n
-    events: List[Event] = relationship("Event", back_populates="plant")
+    events = relationship("Event", back_populates="plant")
 
     # plant to plant property values: 1:n
-    property_values_plant: List[PropertyValue] = relationship("PropertyValue", back_populates="plant")
+    property_values_plant = relationship("PropertyValue", back_populates="plant")
 
     # plant to florescences: 1:n
     florescences = relationship("Florescence", back_populates="plant")
@@ -96,7 +94,7 @@ class Plant(Base, OrmUtil):
     def descendant_plants_all(self) -> list[Plant]:
         return self.descendant_plants + self.descendant_plants_pollen
 
-    sibling_plants: list[Plant] = relationship(
+    sibling_plants = relationship(
             "Plant",
             primaryjoin="(foreign(Plant.parent_plant_id) == remote(Plant.parent_plant_id)) & "
                         "("
@@ -113,7 +111,7 @@ class Plant(Base, OrmUtil):
             uselist=True
             )
 
-    same_taxon_plants: list[Plant] = relationship(
+    same_taxon_plants = relationship(
             "Plant",
             # primaryjoin="Plant.taxon_id == Plant.taxon_id",  # works
             # primaryjoin="foreign(Plant.taxon_id) == remote(Plant.taxon_id)",  # works
@@ -191,14 +189,14 @@ class Plant(Base, OrmUtil):
 
     # static query methods
     @staticmethod
-    def get_plant_by_plant_name(plant_name: str, db: Session, raise_exception: bool = False) -> Plant:
+    def get_plant_by_plant_name(plant_name: str, db: Session, raise_exception: bool = False) -> Plant | None:
         plant = db.query(Plant).filter(Plant.plant_name == plant_name).first()
         if not plant and raise_exception:
             throw_exception(f'Plant not found in database: {plant_name}')
         return plant
 
     @staticmethod
-    def get_plant_by_plant_id(plant_id: int, db: Session, raise_exception: bool = False) -> Plant:
+    def get_plant_by_plant_id(plant_id: int, db: Session, raise_exception: bool = False) -> Plant | None:
         plant = db.query(Plant).filter(Plant.id == plant_id).first()
         if not plant and raise_exception:
             throw_exception(f'Plant ID not found in database: {plant_id}')
@@ -235,7 +233,7 @@ class Tag(Base, OrmUtil):
 
     # static query methods
     @staticmethod
-    def get_tag_by_tag_id(tag_id: int, db: Session, raise_exception: bool = False) -> Tag:
+    def get_tag_by_tag_id(tag_id: int, db: Session, raise_exception: bool = False) -> Tag | None:
         tag = db.query(Tag).filter(Tag.id == tag_id).first()
         if not tag and raise_exception:
             throw_exception(f'Tag not found in database: {tag_id}')

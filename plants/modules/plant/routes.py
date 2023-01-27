@@ -106,9 +106,9 @@ def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Dep
 
 
 @router.put("/", response_model=BConfirmation)
-def rename_plant(request: Request, data: BPlantsRenameRequest, db: Session = Depends(get_db)):
+def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Depends(get_db)):
     """we use the put method to rename a plant"""  # todo use id
-    args = data
+    # args = data
 
     plant_obj = db.query(Plant).filter(Plant.plant_name == args.OldPlantName).first()
     if not plant_obj:

@@ -8,7 +8,7 @@ import logging
 
 from plants.util.ui_utils import throw_exception
 from plants.util.OrmUtilMixin import OrmUtil
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 

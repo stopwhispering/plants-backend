@@ -10,7 +10,7 @@ import logging
 from sqlalchemy.orm import relationship
 
 from plants.util.OrmUtilMixin import OrmUtil
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
@@ -57,19 +57,19 @@ class Location(Enum):
 
 
 COLORS_MAP = {
-    '#F2F600': 'yellow',
-    '#D21D26': 'red',
-    '#FFFFFF': 'white',
-    '#F5BFD9': 'pale rose',
-    '#9A5ABF': 'purple',
-    '#008B3C': 'green',
-    '#FF7C09': 'orange',
-    '#16161B': 'black',
+    '#f2f600': 'yellow',
+    '#d21d26': 'red',
+    '#ffffff': 'white',
+    '#f5bfd9': 'pale rose',
+    '#9a5abf': 'purple',
+    '#008b3c': 'green',
+    '#ff7c09': 'orange',
+    '#16161b': 'black',
     '#909090': 'gray',
-    '#6B492B': 'brown',
-    '#104E8B': 'dark blue',
-    '#B0E2FF': 'light blue',
-    '#46F953': 'neon green',
+    '#6b492b': 'brown',
+    '#104e8b': 'dark blue',
+    '#b0e2ff': 'light blue',
+    '#46f953': 'neon green',
 }
 
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}

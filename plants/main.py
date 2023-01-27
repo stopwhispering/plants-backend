@@ -5,7 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from plants import local_config
-from plants.extensions.db import init_database_tables, engine
+from plants.extensions.db import create_db_engine
+from plants.extensions.orm import init_orm
 from plants.modules.event.routes import router as event_router
 from plants.modules.image.routes import router as image_router
 from plants.modules.plant import routes as plant_router
@@ -61,7 +62,7 @@ app.include_router(event_router, prefix=COMMON_PREFIX)
 app.include_router(pollination_router, prefix=COMMON_PREFIX)
 app.include_router(properties_router, prefix=COMMON_PREFIX)
 app.include_router(shared_router, prefix=COMMON_PREFIX)
-
 app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 
-init_database_tables(engine_=engine)
+engine = create_db_engine(local_config.connection_string)
+init_orm(engine=engine)

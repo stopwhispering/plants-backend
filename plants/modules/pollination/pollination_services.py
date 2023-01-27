@@ -165,7 +165,8 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Sessi
     label_color = COLORS_MAP[new_pollination_data.labelColorRgb]
     same_color_pollination = db.query(Pollination).filter(
         Pollination.seed_capsule_plant_id == new_pollination_data.seedCapsulePlantId,
-        Pollination.label_color == label_color).first()
+        Pollination.label_color == label_color
+    ).first()
     if same_color_pollination:
         raise HTTPException(500, detail={
             'message': 'There is already an ongoing pollination for that plant with the same thread color',

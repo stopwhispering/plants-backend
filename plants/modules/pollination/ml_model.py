@@ -13,7 +13,8 @@ from sklearn.utils._testing import ignore_warnings  # noqa
 from sqlalchemy.orm import Session
 
 from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
-from plants.extensions.db import engine
+from plants import local_config
+from plants.extensions.db import create_db_engine
 from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Pollination, Florescence
@@ -63,6 +64,7 @@ def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
 def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe  # noqa
     # i feel more comfortable with joining dataframes than with sqlalchemy...
+    engine = create_db_engine(local_config.connection_string)
     df_pollination = (pd.read_sql_query(sql=sqlalchemy.select(Pollination)
                                         .filter(~Pollination.ongoing,
                                                 Pollination.pollination_status != 'self_pollinated')  # noqa

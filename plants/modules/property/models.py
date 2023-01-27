@@ -5,10 +5,9 @@ from typing import List
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
-from plants import constants
 from plants.util.ui_utils import throw_exception
 from plants.util.OrmUtilMixin import OrmUtil
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ class PropertyCategory(Base, OrmUtil):
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
-    property_names: list = relationship("PropertyName", back_populates="property_category")
+    property_names = relationship("PropertyName", back_populates="property_category")
 
     # static query methods
     @staticmethod
@@ -117,14 +116,3 @@ class PropertyValue(Base, OrmUtil):
         # as_dict['sort'] = self.property_name.property_category.sort
 
         return as_dict
-
-
-def insert_property_categories(db: Session):
-    # add Trait Categories if not existing upon initializing
-    for t in constants.PROPERTY_CATEGORIES:
-        property_category = db.query(PropertyCategory).filter(PropertyCategory.category_name == t).first()
-        if not property_category:
-            logger.info(f'Inserting missing trait category into db: {t}')
-            property_category = PropertyCategory(category_name=t)
-            db.add(property_category)
-    db.commit()

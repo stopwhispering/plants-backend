@@ -1,7 +1,7 @@
 from sqlalchemy import Column, VARCHAR, INTEGER, TEXT, Identity
 from sqlalchemy.types import DateTime
 
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 
 
 class History(Base):

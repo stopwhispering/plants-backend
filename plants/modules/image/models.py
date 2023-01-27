@@ -7,7 +7,7 @@ from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Id
 from sqlalchemy.orm import relationship, Session
 
 from plants import settings
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 from plants.modules.plant.models import Plant
 from plants.util.ui_utils import throw_exception
 
@@ -68,7 +68,7 @@ class Image(Base):
     def absolute_path(self):
         return settings.paths.path_photos.parent.joinpath(PurePath(self.relative_path))
 
-    keywords: list[ImageKeyword] = relationship(
+    keywords = relationship(
         "ImageKeyword",
         back_populates="image"
     )
@@ -77,7 +77,7 @@ class Image(Base):
         "Plant",
         secondary='image_to_plant_association',
     )
-    image_to_plant_associations: list = relationship("ImageToPlantAssociation",
+    image_to_plant_associations = relationship("ImageToPlantAssociation",
                                                      back_populates="image",
                                                      overlaps="plants"  # silence warnings
                                                      )
@@ -87,7 +87,7 @@ class Image(Base):
         "Event",
         secondary='image_to_event_association'
     )
-    image_to_event_associations: list = relationship("ImageToEventAssociation",
+    image_to_event_associations = relationship("ImageToEventAssociation",
                                                      back_populates="image",
                                                      overlaps="events"  # silence warnings
                                                      )
@@ -98,7 +98,7 @@ class Image(Base):
         secondary='image_to_taxon_association',
         overlaps="image_to_taxon_associations,images"  # silence warnings
     )
-    image_to_taxon_associations: list = relationship("ImageToTaxonAssociation",
+    image_to_taxon_associations = relationship("ImageToTaxonAssociation",
                                                      back_populates="image",
                                                      overlaps="images,taxa"  # silence warnings
                                                      )

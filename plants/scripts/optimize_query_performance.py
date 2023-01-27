@@ -3,7 +3,8 @@ import time
 from sqlalchemy.orm import subqueryload
 
 from plants.dependencies import get_db
-from plants.extensions.db import init_database_tables, engine
+from plants.extensions.db import engine
+from plants.extensions.orm import init_orm
 from plants.modules.event.models import Event
 from plants.modules.image.models import ImageKeyword, Image, ImageToTaxonAssociation
 # from plants.models.event_models import Soil, Pot, Observation, Event
@@ -27,7 +28,7 @@ from plants.shared.proposal_schemas import BResultsProposals, FProposalEntity
 # from plants.models.tag_models import Tag
 # from plants.models.taxon_models import Distribution, Taxon, TaxonOccurrenceImage, TaxonToOccurrenceAssociation
 
-init_database_tables(engine_=engine)
+init_orm(engine=engine)
 db = next(get_db())
 
 

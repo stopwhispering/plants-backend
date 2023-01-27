@@ -1,5 +1,4 @@
 /plants.log
-/.env
 *.prof
 /deploy.bat
 /database.db
@@ -8,3 +7,4 @@
 /package.json
 /plants/scripts/migrate_db.py
 /backup/
+*.env

@@ -11,7 +11,7 @@ from sqlalchemy.orm import relationship, Session
 
 from plants.util.ui_utils import throw_exception
 from plants.util.OrmUtilMixin import OrmUtil
-from plants.extensions.db import Base
+from plants.extensions.orm import Base
 
 
 class Distribution(Base):
@@ -75,7 +75,7 @@ class Taxon(Base, OrmUtil):
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     plants = relationship("Plant", back_populates="taxon")
-    distribution: list = relationship("Distribution", back_populates="taxon")
+    distribution = relationship("Distribution", back_populates="taxon")
 
     # # 1:n relationship to the taxon/traits link table
     # traits = relationship(
@@ -98,7 +98,7 @@ class Taxon(Base, OrmUtil):
                                                )
 
     # taxon to occurence images (n:m)
-    occurrence_images: list = relationship("TaxonOccurrenceImage",
+    occurrence_images = relationship("TaxonOccurrenceImage",
                                            back_populates="taxa",
                                            secondary='taxon_to_occurrence_association'
                                            )

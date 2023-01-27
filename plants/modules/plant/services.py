@@ -185,4 +185,4 @@ def fetch_plants(db: Session) -> list[Plant]:
         # subqueryload(Plant.image_to_plant_associations),  # not required
         # subqueryload(Plant.florescences),  # not required
     )
-    return query.all()
+    return query.all()  # noqa

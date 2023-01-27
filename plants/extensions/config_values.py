@@ -99,6 +99,7 @@ class LogLevel(str, Enum):
     INFO = 'INFO'
     WARNING = 'WARNING'
     ERROR = 'ERROR'
+    NONE = None
 
 
 class LogSettings(BaseSettings):
