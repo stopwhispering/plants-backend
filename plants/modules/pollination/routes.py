@@ -120,7 +120,7 @@ async def get_plants_for_new_florescence(db: Session = Depends(get_db), ):
     return {'plantsForNewFlorescenceCollection': plants}
 
 
-@router.put('/active_florescences/{florescence_id}')
+@router.put('/active_florescences/{florescence_id}')  # no response required (full reload after post)
 async def put_active_florescence(
         florescence_id: int,
         edited_florescence_data: FRequestEditedFlorescence,
@@ -130,7 +130,7 @@ async def put_active_florescence(
     db.commit()
 
 
-@router.post("/active_florescences")
+@router.post("/active_florescences")  # no response required (full reload after post)
 async def post_active_florescence(new_florescence_data: FRequestNewFlorescence,
                                   db: Session = Depends(get_db), ):
     """create new florescence for a plant"""

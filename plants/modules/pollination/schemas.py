@@ -1,10 +1,12 @@
 from enum import Enum
 from typing import Optional, List
+from decimal import Decimal
 
-from pydantic import Extra, constr
+from pydantic import Extra, constr, condecimal
 from pydantic.main import BaseModel
 
-from plants.modules.pollination.models import PollenType, BFlorescenceStatus, PollinationStatus
+from plants.modules.pollination.models import PollenType, BFlorescenceStatus, PollinationStatus, \
+    FlowerColorDifferentiation, StigmaPosition
 from plants.shared.message_schemas import BMessage
 from plants.constants import REGEX_DATE
 
@@ -71,25 +73,33 @@ class FRequestEditedPollination(BaseModel):
 class FRequestEditedFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
-    plant_name: constr(min_length=1, max_length=100)
+    # plant_name: constr(min_length=1, max_length=100)
     florescence_status: BFlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: str | None  # e.g. location if multiple plants in one container
     branches_count: int | None
     flowers_count: int | None
+
+    perianth_length: condecimal(ge=Decimal(0.1), le=Decimal(99.9)) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: condecimal(ge=Decimal(0.1), le=Decimal(9.9)) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
+    flower_color_second: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
+    flower_colors_differentiation: FlowerColorDifferentiation | None  # if flower_color_second set
+    stigma_position: StigmaPosition | None
+
     first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     last_flower_closing_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
 
     class Config:
         extra = Extra.ignore
-        use_enum_values = True
+        use_enum_values = True  # todo remove
 
 
 class FRequestNewFlorescence(BaseModel):
     plant_id: int
     florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
-    comment: constr(max_length=110) | None
+    comment: constr(max_length=110, strip_whitespace=True) | None
 
     class Config:
         extra = Extra.forbid
@@ -119,6 +129,14 @@ class BActiveFlorescence(BaseModel):
     comment: str | None  # max 110 chars, e.g. location if multiple plants in one container
     branches_count: int | None
     flowers_count: int | None
+
+    perianth_length: Decimal | None
+    perianth_diameter: Decimal | None
+    flower_color: str | None
+    flower_color_second: str | None
+    flower_colors_differentiation: FlowerColorDifferentiation | None
+    stigma_position: StigmaPosition | None
+
     first_flower_opening_date: str | None  # e.g. '2022-11-16'
     last_flower_closing_date: str | None  # e.g. '2022-11-16'
 
@@ -323,4 +341,3 @@ class BResultsFlowerHistory(BaseModel):
 
     class Config:
         extra = Extra.forbid
-

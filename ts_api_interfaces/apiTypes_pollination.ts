@@ -1,5 +1,7 @@
 
 export type BFlorescenceStatus = "inflorescence_appeared" | "flowering" | "finished";
+export type FlowerColorDifferentiation = "top_bottom" | "ovary_mouth" | "uniform";
+export type StigmaPosition = "exserted" | "mouth" | "inserted" | "deeply_inserted";
 export type BFloweringState = "inflorescence_growing" | "flowering" | "seeds_ripening" | "not_flowering";
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 export type PollenType = "fresh" | "frozen" | "unknown";
@@ -14,6 +16,12 @@ export interface BActiveFlorescence {
   comment?: string;
   branches_count?: number;
   flowers_count?: number;
+  perianth_length?: number;
+  perianth_diameter?: number;
+  flower_color?: string;
+  flower_color_second?: string;
+  flower_colors_differentiation?: FlowerColorDifferentiation;
+  stigma_position?: StigmaPosition;
   first_flower_opening_date?: string;
   last_flower_closing_date?: string;
   available_colors_rgb: string[];
@@ -134,12 +142,17 @@ export interface BResultsSettings {
 export interface FRequestEditedFlorescence {
   id: number;
   plant_id: number;
-  plant_name: string;
   florescence_status: BFlorescenceStatus;
   inflorescence_appearance_date?: string;
   comment?: string;
   branches_count?: number;
   flowers_count?: number;
+  perianth_length?: number;
+  perianth_diameter?: number;
+  flower_color?: string;
+  flower_color_second?: string;
+  flower_colors_differentiation?: FlowerColorDifferentiation;
+  stigma_position?: StigmaPosition;
   first_flower_opening_date?: string;
   last_flower_closing_date?: string;
 }

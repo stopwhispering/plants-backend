@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+import enum
 
-from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity
+from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric
+import sqlalchemy
+
 from sqlalchemy.types import DateTime
 import logging
 
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 
+from plants.shared.message__services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -16,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 # keep in sync with formatter.js in frontend
-class PollinationStatus(Enum):
+class PollinationStatus(str, enum.Enum):
     ATTEMPT = "attempt"
     SEED_CAPSULE = "seed_capsule"
     SEED = "seed"
@@ -29,7 +32,7 @@ class PollinationStatus(Enum):
         return value in cls._value2member_map_
 
 
-class PollenType(Enum):
+class PollenType(str, enum.Enum):
     FRESH = "fresh"
     FROZEN = "frozen"
     UNKNOWN = "unknown"
@@ -39,13 +42,13 @@ class PollenType(Enum):
         return value in cls._value2member_map_
 
 
-class Context(Enum):
+class Context(str, enum.Enum):
     IMPORT = "import"
     MANUAL = "manual"  # manual db corrections
     API = "api"  # api calls from frontend
 
 
-class Location(Enum):
+class Location(str, enum.Enum):
     UNKNOWN = "unknown"
     INDOOR = "indoor"
     OUTDOOR = "outdoor"
@@ -75,7 +78,7 @@ COLORS_MAP = {
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}
 
 
-class BFlorescenceStatus(Enum):
+class BFlorescenceStatus(str, enum.Enum):
     INFLORESCENCE_APPEARED = "inflorescence_appeared"
     FLOWERING = "flowering"
     FINISHED = "finished"  # as soon as the last flower is closed
@@ -83,6 +86,19 @@ class BFlorescenceStatus(Enum):
     @classmethod
     def has_value(cls, value):
         return value in cls._value2member_map_
+
+
+class FlowerColorDifferentiation(str, enum.Enum):
+    TOP_BOTTOM = "top_bottom"
+    OVARY_MOUTH = "ovary_mouth"
+    UNIFORM = "uniform"
+
+
+class StigmaPosition(str, enum.Enum):
+    EXSERTED = "exserted"
+    MOUTH = "mouth"
+    INSERTED = "inserted"
+    DEEPLY_INSERTED = "deeply_inserted"
 
 
 class Florescence(Base, OrmAsDict):
@@ -95,6 +111,14 @@ class Florescence(Base, OrmAsDict):
     inflorescence_appearance_date = Column(DATE)  # todo rename to inflorescence_appeared_at
     branches_count = Column(INTEGER)
     flowers_count = Column(INTEGER)
+
+    perianth_length = Column(Numeric(3, 1))  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter = Column(Numeric(2, 1))  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color = Column(VARCHAR(7))  # hex color code, e.g. #f2f600
+    flower_color_second = Column(VARCHAR(7))  # hex color code, e.g. #f2f600
+    flower_colors_differentiation = Column(sqlalchemy.Enum(FlowerColorDifferentiation))
+    stigma_position = Column(sqlalchemy.Enum(StigmaPosition))
+
     first_flower_opening_date = Column(DATE)  # todo renamed to first_flower_opened_at
     last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
 
@@ -125,6 +149,13 @@ class Florescence(Base, OrmAsDict):
         as_dict['plant_name'] = (self.plant.plant_name
                                  if self.plant else None)
         return as_dict
+
+    @staticmethod
+    def by_id(florescence_id: int, db: Session, raise_exception: bool = True) -> Florescence | None:
+        florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
+        if not florescence and raise_exception:
+            throw_exception(f'Florescence ID not found in database: {florescence_id}')
+        return florescence
 
 
 class Pollination(Base, OrmAsDict):

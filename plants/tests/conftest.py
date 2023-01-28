@@ -69,7 +69,7 @@ def db(connection: Connection) -> OrmSession:
     yield next(get_db())
 
     # connection.execute(text(f"TRUNCATE plants CASCADE;"))  # freezes sometimes
-    connection.execute(text(f"DELETE FROM plants;"))
+    connection.execute(text(f"DELETE FROM florescence; DELETE FROM plants;"))
     # TRUNCATE table_a, table_b, …, table_z;
     connection.commit()
 
@@ -109,6 +109,17 @@ def valid_simple_plant_dict(app) -> dict:
                  'same_taxon_plants': [],
                  'tags': []}
     return new_plant
+
+
+@pytest.fixture(scope="function")
+def valid_florescence_dict(app) -> dict:
+    valid_florescence = {
+        'plant_id': 1,
+        'florescence_status': 'flowering',
+        'inflorescence_appearance_date': '2022-11-16',
+        'comment': ' large & new',
+    }
+    return valid_florescence
 
 
 @pytest.fixture(scope="function")

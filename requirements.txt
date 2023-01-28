@@ -27,3 +27,4 @@ psycopg2
 pytz==2022.7.1
 pytest
 httpx
+alembic
