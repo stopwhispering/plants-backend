@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, subqueryload
 from plants import settings
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.tag_services import tag_modified, update_tag
+from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
 from plants.util.ui_utils import throw_exception
 from plants.modules.plant.schemas import FBPlantTag, FPlant
 
@@ -186,3 +187,16 @@ def fetch_plants(db: Session) -> list[Plant]:
         # subqueryload(Plant.florescences),  # not required
     )
     return query.all()  # noqa
+
+
+def generate_subsequent_plant_name(original_plant_name: str) -> str:
+    """
+    derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa V"
+    """
+    if has_roman_plant_index(original_plant_name):
+        plant_name, roman_plant_index = parse_roman_plant_index(original_plant_name)
+        plant_index = roman_to_int(roman_plant_index)
+    else:
+        plant_name, plant_index = original_plant_name, 1
+
+    return f"{plant_name} {int_to_roman(plant_index + 1)}"

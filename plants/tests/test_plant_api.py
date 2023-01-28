@@ -68,3 +68,26 @@ def test_plant_rename_source_not_exists(db, test_client, valid_simple_plant_dict
     response = test_client.put("/api/plants/", json=payload)
     assert response.status_code != 200
     assert response.json().get('detail').get('message').startswith("Can't find plant")
+
+
+def test_propose_subsequent_plant_name(test_client):
+    original_plant_name = 'Aloe ferox'
+    response = test_client.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}")
+    assert response.status_code == 200
+    assert response.json().get('subsequent_plant_name') == 'Aloe ferox II'
+
+    original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana II"
+    response = test_client.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}/")
+    assert response.status_code == 200
+    assert response.json().get('subsequent_plant_name') == "× Aloe rauhii 'Demi' × Gasteria batesiana III"
+
+    original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana V"
+    response = test_client.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}/")
+    assert response.status_code == 200
+    assert response.json().get('subsequent_plant_name') == "× Aloe rauhii 'Demi' × Gasteria batesiana VI"
+
+    original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana VIII"
+    response = test_client.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}/")
+    assert response.status_code == 200
+    assert response.json().get('subsequent_plant_name') == "× Aloe rauhii 'Demi' × Gasteria batesiana IX"
+

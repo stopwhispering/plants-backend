@@ -3,6 +3,7 @@ export type BFlorescenceStatus = "inflorescence_appeared" | "flowering" | "finis
 export type BFloweringState = "inflorescence_growing" | "flowering" | "seeds_ripening" | "not_flowering";
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 export type PollenType = "fresh" | "frozen" | "unknown";
+export type PollinationStatus = "attempt" | "seed_capsule" | "seed" | "germinated" | "unknown" | "self_pollinated";
 
 export interface BActiveFlorescence {
   id: number;
@@ -147,10 +148,10 @@ export interface FRequestEditedPollination {
   seed_capsule_plant_id: number;
   pollen_donor_plant_id: number;
   pollination_timestamp?: string;
-  pollen_type: string;
+  pollen_type: PollenType;
   location?: string;
   label_color_rgb: string;
-  pollination_status: string;
+  pollination_status: PollinationStatus;
   ongoing: boolean;
   harvest_date?: string;
   seed_capsule_length?: number;

@@ -9,11 +9,12 @@ from plants.dependencies import get_db
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry
 from plants.modules.image.services import rename_plant_in_image_files
-from plants.modules.plant.services import update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants
+from plants.modules.plant.services import update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants, \
+    generate_subsequent_plant_name
 from plants.shared.message_schemas import BConfirmation, FBMajorResource
 from plants.modules.plant.schemas import (FPlantsDeleteRequest,
                                           BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
-                                          BResultsPlantsUpdate, BResultsPlantCloned)
+                                          BResultsPlantsUpdate, BResultsPlantCloned, BResultsProposeSubsequentPlantName)
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +90,7 @@ def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Dep
     """tag deleted plant as 'deleted' in database"""
 
     args = data
-
-    record_update: Plant = db.query(Plant).filter_by(id=args.plant_id).first()
+    record_update: Plant = Plant.get_plant_by_plant_id(args.plant_id, db, raise_exception=True)
     if not record_update:
         throw_exception(f'Plant to be deleted not found in database: {args.plant_id}.', request=request)
     record_update.deleted = True
@@ -110,7 +110,7 @@ def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Dep
     """we use the put method to rename a plant"""  # todo use id
     # args = data
 
-    plant_obj = db.query(Plant).filter(Plant.plant_name == args.OldPlantName).first()
+    plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
     if not plant_obj:
         throw_exception(f"Can't find plant {args.OldPlantName}", request=request)
 
@@ -150,3 +150,15 @@ async def get_plants(db: Session = Depends(get_db)):
                'PlantsCollection': plants}
 
     return results
+
+
+@router.post("/propose_subsequent_plant_name/{original_plant_name}", response_model=BResultsProposeSubsequentPlantName)
+async def propose_subsequent_plant_name(original_plant_name: str):
+    """
+    derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa V"
+    """
+    subsequent_plant_name = generate_subsequent_plant_name(original_plant_name)
+    return {
+        'original_plant_name': original_plant_name,
+        'subsequent_plant_name': subsequent_plant_name
+    }

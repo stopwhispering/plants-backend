@@ -96,6 +96,10 @@ export interface BResultsPlantsUpdate {
   message: BMessage;
   plants: BPlant[];
 }
+export interface BResultsProposeSubsequentPlantName {
+  original_plant_name: string;
+  subsequent_plant_name: string;
+}
 export interface FPlant {
   id?: number;
   plant_name: string;

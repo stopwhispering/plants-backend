@@ -224,3 +224,11 @@ class BResultsPlantCloned(BaseModel):
 
     class Config:
         extra = Extra.forbid
+
+
+class BResultsProposeSubsequentPlantName(BaseModel):
+    original_plant_name: str
+    subsequent_plant_name: constr(min_length=1, max_length=100)
+
+    class Config:
+        extra = Extra.forbid
