@@ -10,6 +10,7 @@ ENV APP_MODULE="plants.main:app"
 
 COPY plants /src/plants
 COPY ml_helpers /src/ml_helpers
+COPY alembic /src/alembic
 COPY config.toml /src/config.toml
 
 # switch working directory to have module "plants" available
