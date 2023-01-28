@@ -12,6 +12,7 @@ COPY plants /src/plants
 COPY ml_helpers /src/ml_helpers
 COPY alembic /src/alembic
 COPY config.toml /src/config.toml
+COPY alembic.ini /src/alembic.ini
 
 # switch working directory to have module "plants" available
 WORKDIR "/src/"
