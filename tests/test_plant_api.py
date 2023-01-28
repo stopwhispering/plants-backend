@@ -67,7 +67,7 @@ def test_plant_rename_source_not_exists(db, test_client, valid_simple_plant_dict
                'NewPlantName': 'Aloe redundata'}
     response = test_client.put("/api/plants/", json=payload)
     assert response.status_code != 200
-    assert response.json().get('detail').get('message').startswith("Can't find plant")
+    assert response.json().get('detail').get('message').startswith("Plant not found")
 
 
 def test_propose_subsequent_plant_name(test_client):

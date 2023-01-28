@@ -10,7 +10,7 @@ from plants.dependencies import get_db
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.plant.models import Plant
-from plants.tests.config_test import generate_db_url
+from tests.config_test import generate_db_url
 import plants as plants_package
 
 TEST_DB_NAME = 'test_plants'
@@ -51,10 +51,14 @@ def setup_db(connection: Connection, request: SubRequest) -> None:
     Executed once per test session.
     """
     Base.metadata.bind = connection
-    # Base.metadata.create_all()
 
     init_orm(engine=connection.engine)
-    request.addfinalizer(lambda: Base.metadata.drop_all(bind=connection))
+
+    def teardown() -> None:
+        pass
+        # Base.metadata.drop_all(bind=connection)
+
+    request.addfinalizer(teardown)
 
 
 @pytest.fixture(scope="function")
