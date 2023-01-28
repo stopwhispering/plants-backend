@@ -14,3 +14,5 @@ COPY config.toml /src/config.toml
 
 # switch working directory to have module "plants" available
 WORKDIR "/src/"
+
+CMD ["alembic", "upgrade", "head"]
