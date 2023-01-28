@@ -6,7 +6,7 @@ from pydantic.main import BaseModel
 
 from decimal import Decimal
 from plants.shared.message_schemas import BMessage
-from plants.util.schema_util import REGEX_DATE
+from plants.constants import REGEX_DATE
 
 
 ####################################################################################################

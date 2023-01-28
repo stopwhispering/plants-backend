@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session
 
-from plants.util.ui_utils import get_message
+from plants.shared.message__services import get_message
 from plants.dependencies import get_db
 from plants.modules.event.services import create_soil, update_soil, read_events_for_plant, create_or_update_event, \
     fetch_soils

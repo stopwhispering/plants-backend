@@ -8,7 +8,7 @@ from plants import settings
 from plants.exceptions import TooManyResultsError
 from plants.modules.taxon.models import Taxon
 from plants.modules.biodiversity.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
-from plants.util.ui_utils import throw_exception
+from plants.shared.message__services import throw_exception
 from plants.modules.taxon.schemas import FBRank
 
 logger = logging.getLogger(__name__)

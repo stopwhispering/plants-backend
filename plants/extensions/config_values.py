@@ -5,7 +5,8 @@ from typing import Tuple
 import toml
 from pydantic import BaseModel, BaseSettings, constr
 
-from plants.util.filename_utils import create_if_not_exists
+from plants.shared.path_utils import create_if_not_exists
+from plants.extensions.logging import LogLevel
 
 
 class ImageSettings(BaseModel):
@@ -92,14 +93,6 @@ def parse_settings() -> Settings:
 class Environment(str, Enum):
     DEV = 'dev'
     PROD = 'prod'
-
-
-class LogLevel(str, Enum):
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
-    WARNING = 'WARNING'
-    ERROR = 'ERROR'
-    NONE = None
 
 
 class LogSettings(BaseSettings):

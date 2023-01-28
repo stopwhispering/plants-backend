@@ -22,7 +22,7 @@ from plants.modules.pollination.florescence_services import (
     read_active_florescences, update_active_florescence, read_plants_for_new_florescence, create_new_florescence,
     remove_florescence)
 from plants.modules.pollination.flower_history_services import generate_flower_history
-from plants.util.ui_utils import (get_message)
+from plants.shared.message__services import get_message
 from plants.dependencies import get_db
 
 logger = logging.getLogger(__name__)

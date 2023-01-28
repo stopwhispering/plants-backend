@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import BotanicalNameInput, create_formatted_botanical_name
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.util.ui_utils import throw_exception
+from plants.shared.message__services import throw_exception
 from plants.modules.taxon.models import Taxon, Distribution
 from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.taxon.schemas import FTaxon, FTaxonImage, FNewTaxon

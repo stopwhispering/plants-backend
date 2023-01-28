@@ -3,14 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic.color import Color
 from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity
 from sqlalchemy.types import DateTime
 import logging
 
 from sqlalchemy.orm import relationship
 
-from plants.util.OrmUtilMixin import OrmUtil
+from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
@@ -86,7 +85,7 @@ class BFlorescenceStatus(Enum):
         return value in cls._value2member_map_
 
 
-class Florescence(Base, OrmUtil):
+class Florescence(Base, OrmAsDict):
     """flowering period of a plant"""
     __tablename__ = 'florescence'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -128,7 +127,7 @@ class Florescence(Base, OrmUtil):
         return as_dict
 
 
-class Pollination(Base, OrmUtil):
+class Pollination(Base, OrmAsDict):
     """pollination attempts of a plant
     note: we don't make a composite key of inflorence_id and pollen_donor_id because we might have multiple
     differing attempts to pollinate for the same inflorence and pollen donor"""

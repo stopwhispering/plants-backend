@@ -1,7 +1,14 @@
 import logging
+from enum import Enum
 from pathlib import Path
 
-from plants.extensions.config_values import LogLevel
+
+class LogLevel(str, Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARNING = 'WARNING'
+    ERROR = 'ERROR'
+    NONE = None
 
 
 def configure_root_logger(log_severity_console: LogLevel,

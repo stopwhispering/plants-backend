@@ -15,7 +15,7 @@ from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
 from plants.modules.biodiversity.routes import router as biodiversity_router
 from plants.modules.property.routes import router as properties_router
-from plants.util.logger_utils import configure_root_logger
+from plants.extensions.logging import configure_root_logger
 
 configure_root_logger(log_severity_console=local_config.log_settings.log_level_console,
                       log_severity_file=local_config.log_settings.log_level_file,

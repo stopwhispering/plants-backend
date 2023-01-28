@@ -10,16 +10,16 @@ import logging
 import datetime
 
 from plants import settings
-from plants.util.ui_utils import throw_exception
+from plants.shared.message__services import throw_exception
 from plants.modules.taxon.models import Taxon
-from plants.util.OrmUtilMixin import OrmUtil
+from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 from plants.modules.plant.schemas import FPlant
 
 logger = logging.getLogger(__name__)
 
 
-class Plant(Base, OrmUtil):
+class Plant(Base, OrmAsDict):
     """my plants"""
     __tablename__ = 'plants'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -217,7 +217,7 @@ class Plant(Base, OrmUtil):
         return plant_name
 
 
-class Tag(Base, OrmUtil):
+class Tag(Base, OrmAsDict):
     """tags displayed in master view and created/deleted in details view"""
     __tablename__ = 'tags'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)

@@ -15,7 +15,7 @@ from plants.modules.plant.models import Plant
 from plants.modules.property.models import PropertyCategory
 from plants.modules.taxon.models import Taxon
 from plants.modules.image.services import _to_response_image
-from plants.util.ui_utils import get_message
+from plants.shared.message__services import get_message
 from plants.shared.message_schemas import BMessageType
 from plants.modules.event.schemas import BResultsEventResource
 from plants.modules.image.schemas import FBImages, BResultsImageResource

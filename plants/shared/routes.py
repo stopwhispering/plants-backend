@@ -7,7 +7,8 @@ from plants.modules.plant.models import Plant
 from plants.modules.image.services import get_distinct_image_keywords
 from plants.shared.proposal_schemas import FProposalEntity, BResultsProposals, BResultsSelection
 from plants.shared.proposal_services import build_taxon_tree
-from plants.util.ui_utils import throw_exception, get_message, make_list_items_json_serializable
+from plants.shared.api_utils import make_list_items_json_serializable
+from plants.shared.message__services import throw_exception, get_message
 from plants.dependencies import get_db
 
 logger = logging.getLogger(__name__)

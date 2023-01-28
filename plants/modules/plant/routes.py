@@ -4,7 +4,7 @@ import logging
 import datetime
 from starlette.requests import Request
 
-from plants.util.ui_utils import (get_message, throw_exception)
+from plants.shared.message__services import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry

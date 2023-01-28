@@ -16,11 +16,10 @@ from plants.modules.taxon.models import TaxonOccurrenceImage
 
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.image_services_simple import resizing_required, get_relative_path
-from plants.util.exif_utils import read_record_datetime_from_exif_tags
-from plants.util.filename_utils import with_suffix, get_generated_filename
-from plants.util.image_utils import resize_image, generate_thumbnail, get_thumbnail_name
-from plants.util.path_utils import get_absolute_path_for_generated_image
-from plants.util.ui_utils import throw_exception
+from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
+from plants.modules.image.util import resize_image, generate_thumbnail, get_thumbnail_name
+from plants.shared.path_utils import with_suffix, get_generated_filename
+from plants.shared.message__services import throw_exception
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,8 @@ async def save_image_files(files: List[UploadFile],
         for size in settings.images.sizes:
             generate_thumbnail(image=path,
                                size=size,
-                               path_thumbnail=settings.paths.path_generated_thumbnails)
+                               path_thumbnail=settings.paths.path_generated_thumbnails,
+                               ignore_missing_image_files=local_config.ignore_missing_image_files)
 
         # save metadata in jpg exif tags
         PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
@@ -162,7 +162,8 @@ def get_image_path_by_size(filename: str, db: Session, width: int | None, height
     else:
         # the pixel size is part of the resized images' filenames rem size must be converted to px
         filename_sized = get_generated_filename(filename, (width, height))
-        return get_absolute_path_for_generated_image(filename_sized)
+        # return get_absolute_path_for_generated_image(filename_sized, settings.paths.path_generated_thumbnails)
+        return settings.paths.path_generated_thumbnails.joinpath(filename)
 
 
 def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
@@ -243,7 +244,8 @@ def _generate_missing_thumbnails(images: list[Image]):
             else:
                 generate_thumbnail(image=image.absolute_path,
                                    size=size,
-                                   path_thumbnail=settings.paths.path_generated_thumbnails)
+                                   path_thumbnail=settings.paths.path_generated_thumbnails,
+                                   ignore_missing_image_files=local_config.ignore_missing_image_files)
                 count_generated += 1
                 logger.info(f'Generated thumbnail in size {size} for {image.absolute_path}')
 

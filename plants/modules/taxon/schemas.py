@@ -7,7 +7,7 @@ from pydantic.main import BaseModel
 
 from plants.modules.image.models import Image
 from plants.modules.taxon.models import Distribution
-from plants.util.ui_utils import FORMAT_API_YYYY_MM_DD_HH_MM
+from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.shared.message_schemas import BMessage
 
 

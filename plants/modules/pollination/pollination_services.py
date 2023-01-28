@@ -9,8 +9,8 @@ from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import (Florescence, BFlorescenceStatus, PollenType, Pollination,
                                                PollinationStatus, Context, Location, COLORS_MAP, COLORS_MAP_TO_RGB)
 from plants.modules.pollination.ml_prediction import predict_probability_of_seed_production
-from plants.util.ui_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date, \
-    FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
+from plants.shared.api_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date
+from plants.shared.api_constants import FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.modules.pollination.schemas import (FRequestNewPollination, BOngoingPollination,
                                                 BPotentialPollenDonor, BPollinationAttempt,
                                                 BPollinationResultingPlant, FRequestEditedPollination,

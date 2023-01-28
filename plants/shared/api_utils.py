@@ -1,52 +1,10 @@
 from pathlib import Path
 
-from fastapi import HTTPException
 from starlette.requests import Request
 import json
 from datetime import date, datetime, timedelta
 
-from plants.shared.message_schemas import BMessageType, BMessage
-
-
-def throw_exception(message: str = None,
-                    message_type: BMessageType = BMessageType.ERROR,
-                    additional_text: str = None,
-                    status_code: int = 520,
-                    description: str = None,
-                    request: Request = None):
-    """
-    hands over supplied message details for ui5 frontend to be displayed as toast and added to message collection;
-    adds header info from starlette request if available
-    """
-    description_text = ''
-    if request:
-        # todo remove? !
-        description_text = f'Resource: {parse_resource_from_request(request)}'
-    if description:
-        description_text = description + '\n' + description_text
-    raise HTTPException(detail={
-        'type':           message_type.value,
-        'message':        message,
-        'additionalText': additional_text,
-        'description':    description_text
-        },
-            status_code=status_code)
-
-
-def get_message(message: str = None,
-                message_type: BMessageType = BMessageType.INFORMATION,
-                additional_text: str = None,
-                description: str = None) -> dict:
-    """generates a message to be userd in a ui5 frontend; uses flask request which is not required as a paramter"""
-    msg = {
-        'type':           message_type.value,
-        'message':        message,
-        'additionalText': additional_text,
-        'description':    description
-        }
-    BMessage.validate(msg)
-    return msg
-
+from plants.shared.api_constants import FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
 
 
 def parse_resource_from_request(req: Request):
@@ -128,9 +86,3 @@ def format_api_datetime(dt: datetime) -> str:
     """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
     if dt:
         return dt.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
-
-
-FORMAT_YYYY_MM = '%Y-%m'
-FORMAT_FULL_DATETIME = '%Y-%m-%d %H:%M:%S'
-FORMAT_YYYY_MM_DD = '%Y-%m-%d'
-FORMAT_API_YYYY_MM_DD_HH_MM = '%Y-%m-%d %H:%M'

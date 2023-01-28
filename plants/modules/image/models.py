@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, Session
 from plants import settings
 from plants.extensions.orm import Base
 from plants.modules.plant.models import Plant
-from plants.util.ui_utils import throw_exception
+from plants.shared.message__services import throw_exception
 
 logger = logging.getLogger(__name__)
 

@@ -6,14 +6,14 @@ from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, Dat
 from sqlalchemy.orm import relationship, Session
 import logging
 
-from plants.util.ui_utils import throw_exception
-from plants.util.OrmUtilMixin import OrmUtil
+from plants.shared.message__services import throw_exception
+from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class Soil(Base, OrmUtil):
+class Soil(Base, OrmAsDict):
     __tablename__ = "soil"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     soil_name = Column(VARCHAR(100), nullable=False)
@@ -27,7 +27,7 @@ class Soil(Base, OrmUtil):
     events = relationship("Event", back_populates="soil")
 
 
-class Pot(Base, OrmUtil):
+class Pot(Base, OrmAsDict):
     __tablename__ = "pot"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     material = Column(VARCHAR(50))  # todo enum
@@ -43,7 +43,7 @@ class Pot(Base, OrmUtil):
     events = relationship("Event", back_populates="pot")
 
 
-class Observation(Base, OrmUtil):
+class Observation(Base, OrmAsDict):
     """formerly: Measurement"""
     __tablename__ = 'observation'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -61,7 +61,7 @@ class Observation(Base, OrmUtil):
     event = relationship("Event", back_populates="observation", uselist=False)
 
 
-class Event(Base, OrmUtil):
+class Event(Base, OrmAsDict):
     """events"""
     __tablename__ = 'event'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)

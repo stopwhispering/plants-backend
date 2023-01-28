@@ -22,10 +22,6 @@ class SessionFactory:
                                            bind=engine)
 
     @classmethod
-    def set_session(cls, session_factory: sessionmaker):
-        cls.session_factory = session_factory
-
-    @classmethod
     def create_session(cls):
         return cls.session_factory()
 

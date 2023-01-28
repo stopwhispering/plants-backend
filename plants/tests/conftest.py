@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session as OrmSession
 from starlette.testclient import TestClient
 
 from plants.dependencies import get_db
-from plants.extensions.config_values import LogLevel
+from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.plant.models import Plant
 from plants.tests.config_test import generate_db_url

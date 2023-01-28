@@ -9,8 +9,8 @@ from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship, Session
 
-from plants.util.ui_utils import throw_exception
-from plants.util.OrmUtilMixin import OrmUtil
+from plants.shared.message__services import throw_exception
+from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 
@@ -32,7 +32,7 @@ class Distribution(Base):
     taxon = relationship("Taxon", back_populates="distribution")
 
 
-class Taxon(Base, OrmUtil):
+class Taxon(Base, OrmAsDict):
     """
     botanical details
     non-technical key is name (unique constraint)
@@ -148,7 +148,7 @@ class Taxon(Base, OrmUtil):
         return f'<Taxon - {self.id} - {self.name}>'
 
 
-class TaxonOccurrenceImage(Base, OrmUtil):
+class TaxonOccurrenceImage(Base, OrmAsDict):
     """botanical details"""
     __tablename__ = 'taxon_ocurrence_image'
 
@@ -185,7 +185,7 @@ class TaxonOccurrenceImage(Base, OrmUtil):
     #                                                 )
 
 
-class TaxonToOccurrenceAssociation(Base, OrmUtil):
+class TaxonToOccurrenceAssociation(Base, OrmAsDict):
     """link table for taxon to occurrence images"""
     __tablename__ = 'taxon_to_occurrence_association'
 

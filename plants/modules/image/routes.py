@@ -13,7 +13,7 @@ from plants.modules.image.services import (
     save_image_files, delete_image_file_and_db_entries, read_image_by_size,
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails, fetch_images_for_plant, fetch_untagged_images)
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.util.ui_utils import get_message, throw_exception
+from plants.shared.message__services import throw_exception, get_message
 from plants.dependencies import get_db
 from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,
                                           BResultsImagesUploaded, FBImages, FBImage)

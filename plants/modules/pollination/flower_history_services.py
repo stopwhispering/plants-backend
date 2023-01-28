@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence, BFlorescenceStatus
-from plants.util.ui_utils import FORMAT_YYYY_MM
+from plants.shared.api_constants import FORMAT_YYYY_MM
 from plants.modules.pollination.schemas import BFloweringState, BPlantFlowerHistory
 
 logger = logging.getLogger(__name__)

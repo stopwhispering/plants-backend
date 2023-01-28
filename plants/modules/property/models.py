@@ -5,14 +5,14 @@ from typing import List
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship, Session
 
-from plants.util.ui_utils import throw_exception
-from plants.util.OrmUtilMixin import OrmUtil
+from plants.shared.message__services import throw_exception
+from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class PropertyCategory(Base, OrmUtil):
+class PropertyCategory(Base, OrmAsDict):
     """property categories"""
     __tablename__ = 'property_category'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -40,7 +40,7 @@ class PropertyCategory(Base, OrmUtil):
         return cat
 
 
-class PropertyName(Base, OrmUtil):
+class PropertyName(Base, OrmAsDict):
     """new named properties - property names"""
     __tablename__ = 'property_name'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -56,7 +56,7 @@ class PropertyName(Base, OrmUtil):
     property_values = relationship("PropertyValue")
 
 
-class PropertyValue(Base, OrmUtil):
+class PropertyValue(Base, OrmAsDict):
     """new named properties - property values for plants and taxa"""
     __tablename__ = 'property_value'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)

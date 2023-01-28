@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session, subqueryload
 
-from plants.util.ui_utils import get_message, make_list_items_json_serializable
+from plants.shared.api_utils import make_list_items_json_serializable
+from plants.shared.message__services import get_message
 from plants.modules.property.schemas import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,
                                              FPropertiesModifiedTaxon, BResultsPropertyNames)
 from plants.modules.property.services import SaveProperties, SavePropertiesTaxa, LoadProperties

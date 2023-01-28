@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence, BFlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB
-from plants.util.ui_utils import parse_api_date, format_api_date
+from plants.shared.api_utils import parse_api_date, format_api_date
 from plants.modules.pollination.schemas import (
     BActiveFlorescence, FRequestEditedFlorescence, BPlantForNewFlorescence, FRequestNewFlorescence)
 
