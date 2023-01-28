@@ -16,5 +16,3 @@ COPY alembic.ini /src/alembic.ini
 
 # switch working directory to have module "plants" available
 WORKDIR "/src/"
-
-CMD ["alembic", "upgrade", "head"]
