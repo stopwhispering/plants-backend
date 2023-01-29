@@ -14,7 +14,7 @@ class TestConfig(BaseSettings):
     test_db_port: int
 
     class Config:
-        env_file = Path(__file__).resolve().parent.joinpath('.test.env')
+        env_file = Path(__file__).resolve().parent.parent.joinpath('.test.env')
         env_file_encoding = 'utf-8'
 
 

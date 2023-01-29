@@ -19,7 +19,7 @@ from plants.modules.image.image_services_simple import resizing_required, get_re
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.util import resize_image, generate_thumbnail, get_thumbnail_name
 from plants.shared.path_utils import with_suffix, get_generated_filename
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 
 logger = logging.getLogger(__name__)
 

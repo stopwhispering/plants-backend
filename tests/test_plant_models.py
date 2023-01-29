@@ -21,7 +21,7 @@ def test_plant_valid(db):
     db.add(plant)
     db.commit()
 
-    p = db.query(Plant).filter(Plant.plant_name == plant.plant_name).first()
+    p = Plant.get_plant_by_plant_name(plant.plant_name, db=db)
     assert p.plant_name == plant.plant_name
     assert p.id is not None
 
@@ -34,3 +34,4 @@ def test_plant_duplicate_name(db, plant_valid):
     with pytest.raises(IntegrityError):
         db.commit()
     db.rollback()
+

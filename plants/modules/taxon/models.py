@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship, Session
 
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 

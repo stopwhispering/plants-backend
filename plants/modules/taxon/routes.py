@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import create_formatted_botanical_name, BotanicalNameInput
-from plants.shared.message__services import get_message
+from plants.shared.message_services import get_message
 from plants.modules.taxon.models import Taxon
 from plants.dependencies import get_db
 from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource

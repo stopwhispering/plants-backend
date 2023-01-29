@@ -10,7 +10,7 @@ import logging
 import datetime
 
 from plants import settings
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.modules.taxon.models import Taxon
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base

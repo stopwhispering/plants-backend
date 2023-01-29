@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from plants import local_config, settings
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.modules.taxon.models import TaxonOccurrenceImage, Taxon, TaxonToOccurrenceAssociation
 from plants.modules.image.util import generate_thumbnail
 from plants.modules.taxon.schemas import BTaxonOccurrenceImage

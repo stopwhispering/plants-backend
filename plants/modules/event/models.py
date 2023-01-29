@@ -6,7 +6,7 @@ from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, Dat
 from sqlalchemy.orm import relationship, Session
 import logging
 
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 

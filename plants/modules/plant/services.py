@@ -7,7 +7,7 @@ from plants import settings
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.tag_services import tag_modified, update_tag
 from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.modules.plant.schemas import FBPlantTag, FPlant
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ def deep_clone_plant(plant_original: Plant, plant_name_clone: str, db: Session):
     cloned = []
 
     plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,  # noqa
-                                                         # 'last_update': datetime.now()
+                                                         'filename_previewimage': None,
                                                           })
     # plant_clone.set_last_update()
     cloned.append(plant_clone)

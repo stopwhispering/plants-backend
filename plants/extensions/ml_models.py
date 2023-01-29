@@ -5,7 +5,7 @@ from sklearn.pipeline import Pipeline
 
 from ml_helpers.preprocessing.features import FeatureContainer
 from plants import settings
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 
 logger = logging.getLogger(__name__)
 FILENAME_PICKLED_POLLINATION_ESTIMATOR = 'pollination_estimator.pkl'

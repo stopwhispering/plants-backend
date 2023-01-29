@@ -9,7 +9,8 @@ from starlette.testclient import TestClient
 from plants.dependencies import get_db
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
-from plants.modules.plant.models import Plant
+from plants.modules.plant.models import Plant, Tag
+from plants.modules.plant.schemas import FBPropagationType
 from tests.config_test import generate_db_url
 import plants as plants_package
 
@@ -36,10 +37,11 @@ def connection() -> Connection:
     engine = create_engine(generate_db_url(TEST_DB_NAME))
     connection = engine.connect()
     yield connection
-
     connection.close()
-    with engine_for_db_setup.connect() as setup_connection:
-        setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
+
+    # # setup_connection = engine_for_db_setup.connect()
+    # with engine_for_db_setup.connect() as setup_connection:
+    #     setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -73,14 +75,22 @@ def db(connection: Connection) -> OrmSession:
     yield next(get_db())
 
     # connection.execute(text(f"TRUNCATE plants CASCADE;"))  # freezes sometimes
-    connection.execute(text(f"DELETE FROM florescence; DELETE FROM plants;"))
+    connection.execute(text(f"DELETE FROM tags; DELETE FROM florescence; DELETE FROM plants;"))
     # TRUNCATE table_a, table_b, …, table_z;
     connection.commit()
 
 
 @pytest.fixture(scope="session")
 def plant_valid() -> Plant:
-    plant = Plant(plant_name='Aloe Vera',)
+    plant = Plant(plant_name='Aloe Vera',
+                  field_number="A100",
+                  active=True,
+                  nursery_source="Some Nursery",
+                  propagation_type=FBPropagationType.LEAF_CUTTING,
+                  filename_previewimage="somefile.jpg",
+                  tags=[Tag(text="new", state="Information"),
+                        Tag(text="wow", state="Information")],
+                  )
     return plant
 
 

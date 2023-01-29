@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, subqueryload
 from plants.modules.event.models import Soil, Event, Observation, Pot
 from plants.modules.image.models import ImageToEventAssociation, Image
 from plants.modules.plant.models import Plant
-from plants.shared.message__services import throw_exception
+from plants.shared.message_services import throw_exception
 from plants.modules.event.schemas import FSoilCreate, BEvents, FSoil, FCreateOrUpdateEvent
 
 logger = logging.getLogger(__name__)

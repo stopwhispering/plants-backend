@@ -90,4 +90,3 @@ def test_propose_subsequent_plant_name(test_client):
     response = test_client.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}/")
     assert response.status_code == 200
     assert response.json().get('subsequent_plant_name') == "× Aloe rauhii 'Demi' × Gasteria batesiana IX"
-
