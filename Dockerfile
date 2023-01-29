@@ -13,6 +13,7 @@ COPY ml_helpers /src/ml_helpers
 COPY alembic /src/alembic
 COPY config.toml /src/config.toml
 COPY alembic.ini /src/alembic.ini
+COPY prestart.sh /src/prestart.sh
 
 # switch working directory to have module "plants" available
 WORKDIR "/src/"
