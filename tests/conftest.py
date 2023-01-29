@@ -11,6 +11,7 @@ from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.schemas import FBPropagationType
+from plants.modules.pollination.models import Florescence
 from tests.config_test import generate_db_url
 import plants as plants_package
 
@@ -27,7 +28,7 @@ def connection() -> Connection:
                                         isolation_level='AUTOCOMMIT')
     with engine_for_db_setup.connect() as setup_connection:
         if (setup_connection.execute(text(f"SELECT datname FROM pg_catalog.pg_database "
-                                     f"where datname ='{TEST_DB_NAME}'")).rowcount):
+                                          f"where datname ='{TEST_DB_NAME}'")).rowcount):
             setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
         setup_connection.execute(text(f"CREATE DATABASE {TEST_DB_NAME} ENCODING 'utf8'"))
 
@@ -80,7 +81,7 @@ def db(connection: Connection) -> OrmSession:
     connection.commit()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def plant_valid() -> Plant:
     plant = Plant(plant_name='Aloe Vera',
                   field_number="A100",
@@ -91,6 +92,21 @@ def plant_valid() -> Plant:
                   tags=[Tag(text="new", state="Information"),
                         Tag(text="wow", state="Information")],
                   )
+    return plant
+
+
+@pytest.fixture(scope="function")
+def plant_valid_with_active_florescence() -> Plant:
+    plant = Plant(plant_name='Gasteria obtusa',
+                  active=True,
+                  tags=[Tag(text="thirsty", state="Information")],
+                  florescences=[Florescence(
+                      inflorescence_appearance_date='2023-01-01',
+                      branches_count=1,
+                      flowers_count=12,
+                      florescence_status="flowering",
+                      creation_context='manual'
+                  )])
     return plant
 
 
@@ -126,17 +142,6 @@ def valid_simple_plant_dict(app) -> dict:
 
 
 @pytest.fixture(scope="function")
-def valid_florescence_dict(app) -> dict:
-    valid_florescence = {
-        'plant_id': 1,
-        'florescence_status': 'flowering',
-        'inflorescence_appearance_date': '2022-11-16',
-        'comment': ' large & new',
-    }
-    return valid_florescence
-
-
-@pytest.fixture(scope="function")
 def valid_another_simple_plant_dict(app) -> dict:
     new_plant = {'plant_name': 'Gasteria bicolor var. fallax',
                  'active': True,
@@ -145,3 +150,14 @@ def valid_another_simple_plant_dict(app) -> dict:
                  'same_taxon_plants': [],
                  'tags': []}
     return new_plant
+
+
+@pytest.fixture(scope="function")
+def valid_florescence_dict(app) -> dict:
+    valid_florescence = {
+        'plant_id': 1,
+        'florescence_status': 'flowering',
+        'inflorescence_appearance_date': '2022-11-16',
+        'comment': ' large & new',
+    }
+    return valid_florescence

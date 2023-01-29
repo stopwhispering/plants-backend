@@ -59,7 +59,7 @@ class Location(str, enum.Enum):
         return value in cls._value2member_map_
 
 
-COLORS_MAP = {
+COLORS_MAP: dict[str, str] = {
     '#f2f600': 'yellow',
     '#d21d26': 'red',
     '#ffffff': 'white',
@@ -179,6 +179,8 @@ class Pollination(Base, OrmAsDict):
     pollen_type = Column(VARCHAR(20), nullable=False)  # PollenType (fresh | frozen | unknown)
     # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))
     location = Column(VARCHAR(100), nullable=False)
+
+    count = Column(INTEGER)
 
     pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
     label_color = Column(VARCHAR(60))

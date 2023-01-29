@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional, List
 from decimal import Decimal
 
-from pydantic import Extra, constr, condecimal
+from pydantic import Extra, constr, condecimal, conint
 from pydantic.main import BaseModel
 
 from plants.modules.pollination.models import PollenType, BFlorescenceStatus, PollinationStatus, \
@@ -16,8 +16,8 @@ from plants.constants import REGEX_DATE
 ####################################################################################################
 class FBPollenContainer(BaseModel):
     plant_id: int
-    plant_name: constr(min_length=1, max_length=100)
-    genus: constr(min_length=1, max_length=100) | None
+    plant_name: constr(min_length=1, max_length=100)  # todo remove/ignore for F...
+    genus: constr(min_length=1, max_length=100) | None  # todo remove/ignore for F...
     count_stored_pollen_containers: int  # mandatory in this case
 
     class Config:
@@ -33,6 +33,7 @@ class FRequestNewPollination(BaseModel):
     pollinationTimestamp: str  # e.g. '2022-11-16 12:06'
     labelColorRgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     location: constr(min_length=1, max_length=100)  # todo enum  # e.g. 'outside_led'
+    count: conint(ge=1)
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
@@ -47,6 +48,7 @@ class FRequestEditedPollination(BaseModel):
     pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
     pollen_type: PollenType
     location: constr(min_length=1, max_length=100) | None  # todo enum  # e.g. 'outside_led'
+    count: conint(ge=1)
     label_color_rgb: str  # e.g. '#FFFF00'
 
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
@@ -155,6 +157,7 @@ class BOngoingPollination(BaseModel):
     pollination_timestamp: str | None  # e.g. '2022-11-16 12:06'
     pollen_type: str
     location: str | None
+    count: int | None
     location_text: str
     label_color_rgb: str  # e.g. '#FFFF00'
 

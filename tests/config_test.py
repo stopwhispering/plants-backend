@@ -21,7 +21,12 @@ class TestConfig(BaseSettings):
 test_config = TestConfig()
 
 
-def generate_db_url(database: str = None) -> URL:
+def generate_db_url(database: str = 'postgres') -> URL:
+    """
+    postgres does not allow connection to <<no>> database (e.g. to create a new database),
+    it will automtically try to connect to a database with same name as user if no database is specified
+    therefore, we connect to the default maintenance database <<postgres>> if no database is specified
+    """
     url = URL.create(drivername=test_config.test_db_drivername,
                      username=test_config.test_db_username,
                      password=test_config.test_db_password,

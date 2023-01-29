@@ -38,6 +38,7 @@ export interface BOngoingPollination {
   pollination_timestamp?: string;
   pollen_type: string;
   location?: string;
+  count?: number;
   location_text: string;
   label_color_rgb: string;
   id: number;
@@ -163,6 +164,7 @@ export interface FRequestEditedPollination {
   pollination_timestamp?: string;
   pollen_type: PollenType;
   location?: string;
+  count: number;
   label_color_rgb: string;
   pollination_status: PollinationStatus;
   ongoing: boolean;
@@ -192,6 +194,7 @@ export interface FRequestNewPollination {
   pollinationTimestamp: string;
   labelColorRgb: string;
   location: string;
+  count: number;
 }
 export interface FRequestPollenContainers {
   pollenContainerCollection: FBPollenContainer[];

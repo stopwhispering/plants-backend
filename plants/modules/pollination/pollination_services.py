@@ -181,6 +181,7 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Sessi
         pollen_donor_plant_id=new_pollination_data.pollenDonorPlantId,
         pollen_donor_plant=pollen_donor_plant,
         pollen_type=new_pollination_data.pollenType,
+        count=new_pollination_data.count,
         location=new_pollination_data.location,
         pollination_timestamp=pollination_timestamp,
         ongoing=True,
@@ -235,6 +236,7 @@ def update_pollination(pollination_data: FRequestEditedPollination, db: Session)
     pollination.pollen_type = pollination_data.pollen_type
     pollination.location = pollination_data.location
     pollination.pollination_timestamp = parse_api_datetime(pollination_data.pollination_timestamp)
+    pollination.count = pollination_data.count
     pollination.label_color = label_color
     pollination.pollination_status = pollination_data.pollination_status
     pollination.ongoing = pollination_data.ongoing
@@ -272,6 +274,7 @@ def read_ongoing_pollinations(db: Session) -> list[BOngoingPollination]:
             'pollen_donor_plant_name': p.pollen_donor_plant.plant_name,
             'pollination_timestamp': format_api_datetime(p.pollination_timestamp),  # e.g. '2022-11-16 12:06'
             'pollen_type': p.pollen_type,
+            'count': p.count,
             'location': p.location,
             'location_text': LOCATION_TEXTS[p.location],
             'label_color_rgb': label_color_rgb,
