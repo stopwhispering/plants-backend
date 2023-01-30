@@ -93,11 +93,12 @@ class TaxonOccurencesLoader:
 
         image_bytes_io = BytesIO(result.content)
         try:
-            path_thumbnail = generate_thumbnail(image=image_bytes_io,
-                                                size=settings.images.size_thumbnail_image_taxon,
-                                                path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
-                                                filename_thumb=filename,
-                                                ignore_missing_image_files=local_config.ignore_missing_image_files)
+            path_thumbnail = generate_thumbnail(
+                image=image_bytes_io,
+                size=settings.images.size_thumbnail_image_taxon,
+                path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
+                filename_thumb=filename,
+                ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
         except OSError as err:
             logger.warning(f"Could not load as image: {info['href']} ({str(err)}")
             return

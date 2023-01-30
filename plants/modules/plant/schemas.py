@@ -190,8 +190,9 @@ class BPlant(BaseModel):
 
 
 class BPlantsRenameRequest(BaseModel):
-    OldPlantName: constr(min_length=1, max_length=100)
-    NewPlantName: constr(min_length=1, max_length=100)
+    plant_id: int
+    old_plant_name: constr(min_length=1, max_length=100)
+    new_plant_name: constr(min_length=1, max_length=100)
 
     class Config:
         extra = Extra.forbid

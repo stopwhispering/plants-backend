@@ -23,7 +23,7 @@ class Plant(Base, OrmAsDict):
     """my plants"""
     __tablename__ = 'plants'
     id: int = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
-    plant_name = Column(VARCHAR(100), unique=True, nullable=False)
+    plant_name: str = Column(VARCHAR(100), unique=True, nullable=False)
 
     field_number = Column(VARCHAR(20))
     geographic_origin = Column(VARCHAR(100))

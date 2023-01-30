@@ -76,7 +76,14 @@ def db(connection: Connection) -> OrmSession:
     yield next(get_db())
 
     # connection.execute(text(f"TRUNCATE plants CASCADE;"))  # freezes sometimes
-    connection.execute(text(f"DELETE FROM tags; DELETE FROM florescence; DELETE FROM plants;"))
+    sql = """
+    DELETE FROM history; 
+    DELETE FROM tags; 
+    DELETE FROM pollination; 
+    DELETE FROM florescence; 
+    DELETE FROM plants;
+    """
+    connection.execute(text(sql))
     # TRUNCATE table_a, table_b, …, table_z;
     connection.commit()
 
@@ -96,6 +103,13 @@ def plant_valid() -> Plant:
 
 
 @pytest.fixture(scope="function")
+def plant_valid_in_db(db, plant_valid) -> Plant:
+    db.add(plant_valid)
+    db.commit()
+    return plant_valid
+
+
+@pytest.fixture(scope="function")
 def plant_valid_with_active_florescence() -> Plant:
     plant = Plant(plant_name='Gasteria obtusa',
                   active=True,
@@ -108,6 +122,13 @@ def plant_valid_with_active_florescence() -> Plant:
                       creation_context='manual'
                   )])
     return plant
+
+
+@pytest.fixture(scope="function")
+def plant_valid_with_active_florescence_in_db(db, plant_valid_with_active_florescence) -> Plant:
+    db.add(plant_valid_with_active_florescence)
+    db.commit()
+    return plant_valid_with_active_florescence
 
 
 @pytest.fixture(scope="session")

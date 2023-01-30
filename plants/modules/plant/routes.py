@@ -109,33 +109,32 @@ def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Dep
 def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Depends(get_db)):
     """we use the put method to rename a plant"""  # todo use id
     # args = data
+    plant = Plant.get_plant_by_plant_id(args.plant_id, db, raise_exception=True)
+    assert plant.plant_name == args.old_plant_name
+    # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
 
-    plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
-    if not plant_obj:
-        throw_exception(f"Can't find plant {args.OldPlantName}", request=request)
-
-    if db.query(Plant).filter(Plant.plant_name == args.NewPlantName).first():
-        throw_exception(f"Plant already exists: {args.NewPlantName}", request=request)
+    if db.query(Plant).filter(Plant.plant_name == args.new_plant_name).first():
+        throw_exception(f"Plant already exists: {args.new_plant_name}", request=request)
 
     # rename plant name
-    plant_obj.plant_name = args.NewPlantName
+    plant.plant_name = args.new_plant_name
 
     # most difficult task: jpg exif tags use plant name not id; we need to change each plant name occurence
-    count_modified_images = rename_plant_in_image_files(plant=plant_obj,
-                                                        plant_name_old=args.OldPlantName)
+    count_modified_images = rename_plant_in_image_files(plant=plant,
+                                                        plant_name_old=args.old_plant_name)
+
+    create_history_entry(description=f"Renamed to {args.new_plant_name}",
+                         db=db,
+                         plant_id=plant.id,
+                         plant_name=args.old_plant_name,
+                         commit=False)
 
     # only after photo_file modifications have gone well, we can commit changes to database
     db.commit()
 
-    create_history_entry(description=f"Renamed to {args.NewPlantName}",
-                         db=db,
-                         plant_id=plant_obj.id,
-                         plant_name=args.OldPlantName,
-                         commit=False)
-
     logger.info(f'Modified {count_modified_images} images.')
     results = {'action':   'Renamed plant',
-               'message':  get_message(f'Renamed {args.OldPlantName} to {args.NewPlantName}',
+               'message':  get_message(f'Renamed {args.old_plant_name} to {args.new_plant_name}',
                                        description=f'Modified {count_modified_images} images.')}
 
     return results

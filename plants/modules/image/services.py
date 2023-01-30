@@ -87,7 +87,7 @@ async def save_image_files(files: List[UploadFile],
             generate_thumbnail(image=path,
                                size=size,
                                path_thumbnail=settings.paths.path_generated_thumbnails,
-                               ignore_missing_image_files=local_config.ignore_missing_image_files)
+                               ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
 
         # save metadata in jpg exif tags
         PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
@@ -128,7 +128,7 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
 
     old_path = image.absolute_path
     if not old_path.is_file():
-        if local_config.ignore_missing_image_files:
+        if local_config.log_settings.ignore_missing_image_files:
             logger.warning(f'Image file {old_path} to be deleted not found.')
             return
         else:
@@ -163,7 +163,7 @@ def get_image_path_by_size(filename: str, db: Session, width: int | None, height
         # the pixel size is part of the resized images' filenames rem size must be converted to px
         filename_sized = get_generated_filename(filename, (width, height))
         # return get_absolute_path_for_generated_image(filename_sized, settings.paths.path_generated_thumbnails)
-        return settings.paths.path_generated_thumbnails.joinpath(filename)
+        return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 
 def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
@@ -188,7 +188,7 @@ def read_image_by_size(filename: str, db: Session, width: int | None, height: in
 
     if not path.is_file():
         # return default image on dev environment where most photos are missing
-        if local_config.ignore_missing_image_files:
+        if local_config.log_settings.ignore_missing_image_files:
             path = get_dummy_image_path_by_size(width=width, height=height)
         else:
             logger.error(err_msg := f'Image file not found: {path}')
@@ -212,7 +212,7 @@ def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db:
     path = settings.paths.path_generated_thumbnails_taxon.joinpath(taxon_occurrence_image.filename_thumbnail)
     if not path.is_file():
         # return default image on dev environment where most photos are missing
-        if local_config.ignore_missing_image_files:
+        if local_config.log_settings.ignore_missing_image_files:
             path = get_dummy_image_path_by_size(width=settings.images.size_thumbnail_image_taxon[0],
                                                 height=settings.images.size_thumbnail_image_taxon[1])
         else:
@@ -245,7 +245,7 @@ def _generate_missing_thumbnails(images: list[Image]):
                 generate_thumbnail(image=image.absolute_path,
                                    size=size,
                                    path_thumbnail=settings.paths.path_generated_thumbnails,
-                                   ignore_missing_image_files=local_config.ignore_missing_image_files)
+                                   ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
                 count_generated += 1
                 logger.info(f'Generated thumbnail in size {size} for {image.absolute_path}')
 

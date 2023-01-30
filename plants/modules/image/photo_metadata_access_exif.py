@@ -122,7 +122,7 @@ class PhotoMetadataAccessExifTags:
             tag_authors_plants = b''
 
         if not absolute_path.is_file():
-            if local_config.ignore_missing_image_files:
+            if local_config.log_settings.ignore_missing_image_files:
                 logger.warning(f'File {absolute_path} not found. Can''t write EXIF Tags. Ignoring.')
                 return
             else:
@@ -171,7 +171,7 @@ class PhotoMetadataAccessExifTags:
         rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called
         in context of renaming)
         """
-        if not absolute_path.is_file() and local_config.ignore_missing_image_files:
+        if not absolute_path.is_file() and local_config.log_settings.ignore_missing_image_files:
             return
 
         # we want to preserve the file's last-change-date
