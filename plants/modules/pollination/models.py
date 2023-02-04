@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import enum
 
-from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric
+from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric, Enum
 import sqlalchemy
 
 from sqlalchemy.types import DateTime
@@ -82,10 +82,15 @@ class BFlorescenceStatus(str, enum.Enum):
     INFLORESCENCE_APPEARED = "inflorescence_appeared"
     FLOWERING = "flowering"
     FINISHED = "finished"  # as soon as the last flower is closed
+    ABORTED = "aborted"  # not made it to flowering
 
     @classmethod
     def has_value(cls, value):
         return value in cls._value2member_map_
+
+    @classmethod
+    def get_names(cls) -> list[str]:
+        return [name for name, value in vars(cls).items() if type(value) is cls]
 
 
 class FlowerColorDifferentiation(str, enum.Enum):
@@ -123,7 +128,7 @@ class Florescence(Base, OrmAsDict):
     last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status = Column(VARCHAR(100))  # todo enum
+    florescence_status = Column(Enum(BFlorescenceStatus), nullable=False)
 
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date = Column(DATE)

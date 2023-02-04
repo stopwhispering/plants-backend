@@ -35,8 +35,8 @@ def read_plants_for_new_florescence(db: Session) -> list[BPlantForNewFlorescence
 
 def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
     query = (db.query(Florescence)
-             .filter(Florescence.florescence_status.in_({BFlorescenceStatus.FLOWERING.value,
-                                                         BFlorescenceStatus.INFLORESCENCE_APPEARED.value}))
+             .filter(Florescence.florescence_status.in_({BFlorescenceStatus.FLOWERING,
+                                                         BFlorescenceStatus.INFLORESCENCE_APPEARED}))
              )
     florescences_orm = query.all()
 
@@ -78,9 +78,6 @@ def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence
     # technical validation
     assert florescence is not None
     assert florescence.plant_id == edited_florescence_data.plant_id
-
-    # semantic validation
-    assert BFlorescenceStatus.has_value(edited_florescence_data.florescence_status)
 
     if (edited_florescence_data.flower_colors_differentiation in {FlowerColorDifferentiation.TOP_BOTTOM,
                                                                   FlowerColorDifferentiation.OVARY_MOUTH}

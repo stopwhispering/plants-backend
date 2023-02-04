@@ -99,7 +99,7 @@ class FRequestEditedFlorescence(BaseModel):
 
 class FRequestNewFlorescence(BaseModel):
     plant_id: int
-    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
+    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished | aborted)
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: constr(max_length=110, strip_whitespace=True) | None
 

@@ -85,7 +85,7 @@ def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[BPote
 
     # 1. flowering plants
     query = (db.query(Florescence)
-             .filter(Florescence.florescence_status == BFlorescenceStatus.FLOWERING.value,
+             .filter(Florescence.florescence_status == BFlorescenceStatus.FLOWERING,
                      # Florescence.plant_id != plant_id
                      ))
     fresh_pollen_donors = query.all()

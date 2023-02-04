@@ -1,3 +1,6 @@
+from plants.modules.plant.models import Plant
+from plants.modules.pollination.models import Florescence, BFlorescenceStatus
+
 
 def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, valid_florescence_dict):
     # create plant
@@ -65,3 +68,36 @@ def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, vali
     assert response.status_code == 200
     active_florescence = response.json().get('activeFlorescenceCollection')[0]
     assert active_florescence.get('flower_color_second') == '#dddd00'
+
+
+def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant):
+    # FRequestNewFlorescence
+    payload = {
+        "plant_id": plant_valid_in_db.id,
+        "florescence_status": "inflorescence_appeared",
+        "inflorescence_appearance_date": "2022-11-16",
+        "comment": "    large & new "
+    }
+    response = test_client.post("/api/active_florescences/", json=payload)
+    assert response.status_code == 200
+    db.expire_all()
+    assert len(plant_valid_in_db.florescences) == 1
+    florescence_in_db: Florescence = plant_valid_in_db.florescences[0]
+    assert florescence_in_db.florescence_status == BFlorescenceStatus.INFLORESCENCE_APPEARED
+
+    # FRequestEditedFlorescence
+    payload = {
+        "id": florescence_in_db.id,
+        "plant_id": plant_valid_in_db.id,
+        "florescence_status": "doing_great",  # invalid
+    }
+    response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
+    assert 400 <= response.status_code <= 499
+    db.expire_all()
+    assert florescence_in_db.florescence_status == BFlorescenceStatus.INFLORESCENCE_APPEARED
+
+    payload['florescence_status'] = "aborted"
+    response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
+    assert response.status_code == 200
+    db.expire_all()
+    assert florescence_in_db.florescence_status == BFlorescenceStatus.ABORTED

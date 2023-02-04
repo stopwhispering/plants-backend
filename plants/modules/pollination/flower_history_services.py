@@ -226,7 +226,7 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
 
 def generate_flower_history(db: Session):
     florescences = db.query(Florescence).filter(
-        Florescence.florescence_status == BFlorescenceStatus.FINISHED.value).all()
+        Florescence.florescence_status == BFlorescenceStatus.FINISHED).all()
     distinct_plants = set([f.plant for f in florescences])
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
 
