@@ -73,14 +73,10 @@ def get_probability_pollination_to_seed(florescence: Florescence,
     return probability
 
 
-def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[BPotentialPollenDonor]:
+def read_potential_pollen_donors(florescence: Florescence, db: Session) -> list[BPotentialPollenDonor]:
     """ Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen"""
-    florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
-    if not florescence:
-        raise HTTPException(500, detail={'message': 'Florescence not found'})
-
-    plant = Plant.get_plant_by_plant_id(plant_id=florescence.plant_id, db=db)
+    plant = Plant.by_id(plant_id=florescence.plant_id, db=db)
     potential_pollen_donors = []
 
     # 1. flowering plants
@@ -148,10 +144,9 @@ def read_potential_pollen_donors(florescence_id: int, db: Session) -> list[BPote
 def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Session):
     """ Save a new pollination attempt """
     # validate data quality
-    florescence: Florescence = db.query(Florescence).filter(
-        Florescence.id == new_pollination_data.florescenceId).first()
-    seed_capsule_plant: Plant = db.query(Plant).filter(Plant.id == new_pollination_data.seedCapsulePlantId).first()
-    pollen_donor_plant: Plant = db.query(Plant).filter(Plant.id == new_pollination_data.pollenDonorPlantId).first()
+    florescence = Florescence.by_id(new_pollination_data.florescenceId, db)
+    seed_capsule_plant = Plant.by_id(new_pollination_data.seedCapsulePlantId, db)
+    pollen_donor_plant = Plant.by_id(new_pollination_data.pollenDonorPlantId, db)
     assert seed_capsule_plant is florescence.plant
     assert PollenType.has_value(new_pollination_data.pollenType)
     assert Location.has_value(new_pollination_data.location)
@@ -194,19 +189,13 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination, db: Sessi
     db.add(pollination)
 
 
-def remove_pollination(pollination_id: int, db: Session):
+def remove_pollination(pollination: Pollination, db: Session):
     """ Delete a pollination attempt """
-    pollination = db.query(Pollination).filter(Pollination.id == pollination_id).first()
-    if not pollination:
-        raise HTTPException(500, detail={'message': 'Pollination attempt not found'})
     db.delete(pollination)
 
 
-def update_pollination(pollination_data: FRequestEditedPollination, db: Session):
+def update_pollination(pollination: Pollination, pollination_data: FRequestEditedPollination):
     """ Update a pollination attempt """
-
-    pollination: Pollination = db.query(Pollination).filter(
-        Pollination.id == pollination_data.id).first()
 
     # technical validation (some values are not allowed to be changed)
     assert pollination is not None
@@ -335,5 +324,5 @@ def read_plants_without_pollen_containers(db: Session) -> list[BPlantWithoutPoll
 
 def update_pollen_containers(pollen_containers_data: list[FBPollenContainer], db: Session):
     for pollen_container_data in pollen_containers_data:
-        plant = Plant.get_plant_by_plant_id(pollen_container_data.plant_id, db, raise_exception=True)
+        plant = Plant.by_id(pollen_container_data.plant_id, db, raise_if_not_exists=True)
         plant.count_stored_pollen_containers = pollen_container_data.count_stored_pollen_containers

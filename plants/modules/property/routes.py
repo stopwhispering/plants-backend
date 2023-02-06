@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends
 import logging
 from sqlalchemy.orm import Session, subqueryload
 
+from plants.modules.plant.models import Plant
 from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.message_services import get_message
 from plants.modules.property.schemas import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,
                                              FPropertiesModifiedTaxon, BResultsPropertyNames)
 from plants.modules.property.services import SaveProperties, SavePropertiesTaxa, LoadProperties
-from plants.dependencies import get_db
+from plants.dependencies import get_db, valid_plant
 from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource
 from plants.modules.property.models import PropertyCategory
 
@@ -52,13 +53,13 @@ async def modify_plant_properties(
 
 @router.get("/plant_properties/{plant_id}", response_model=BResultsPropertiesForPlant)
 def get_plant_properties(
-        plant_id: int,
-        taxon_id: int = None,
+        plant: Plant = Depends(valid_plant),
+        taxon_id: int = None,  # todo works??
         db: Session = Depends(get_db)):
     """reads a plant's property values from db; plus it's taxon's property values"""
 
     load_properties = LoadProperties()
-    categories = load_properties.get_properties_for_plant(plant_id, db)
+    categories = load_properties.get_properties_for_plant(plant, db)
 
     categories_taxon = load_properties.get_properties_for_taxon(taxon_id, db) if taxon_id else []
 
@@ -67,11 +68,11 @@ def get_plant_properties(
 
     results = {
         'propertyCollections':      {"categories": categories},
-        'plant_id':                 plant_id,
+        'plant_id':                 plant.id,
         'propertyCollectionsTaxon': {"categories": categories_taxon},
         'taxon_id':                 taxon_id,
         'action':                   'Get',
-        'message':                  get_message(f"Receiving properties for plant {plant_id} from database.")
+        'message':                  get_message(f"Receiving properties for plant {plant.id} from database.")
         }
     return results
 

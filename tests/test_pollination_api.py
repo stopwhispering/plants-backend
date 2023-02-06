@@ -22,7 +22,7 @@ def test_florescence_create_valid(db, test_client, plant_valid_with_active_flore
                                               }]}
     response = test_client.post("/api/pollen_containers/", json=payload)
     assert response.status_code == 200
-    plant2: Plant = Plant.get_plant_by_plant_name(p['plant_name'], db)
+    plant2: Plant = Plant.by_name(p['plant_name'], db)
     assert plant2.count_stored_pollen_containers == 4
 
     # create a florescence from active florescence and container

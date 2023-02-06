@@ -127,11 +127,11 @@ class FPlant(BaseModel):
         allow_population_by_field_name = True
 
 
-class FPlantsDeleteRequest(BaseModel):
-    plant_id: int
-
-    class Config:
-        extra = Extra.forbid
+# class FPlantsDeleteRequest(BaseModel):
+#     plant_id: int
+#
+#     class Config:
+#         extra = Extra.forbid
 
 
 class FPlantsUpdateRequest(BaseModel):

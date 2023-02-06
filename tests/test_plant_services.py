@@ -9,7 +9,7 @@ def test_deep_clone_plant(db, plant_valid):
     deep_clone_plant(plant_valid, plant_name_clone='Aloe Vera Clone', db=db)
     db.commit()
 
-    cloned_plant = Plant.get_plant_by_plant_name('Aloe Vera Clone', db=db)
+    cloned_plant = Plant.by_name('Aloe Vera Clone', db=db)
     assert cloned_plant is not None
     assert cloned_plant.plant_name == 'Aloe Vera Clone'
     assert cloned_plant.id >= 0 and cloned_plant.id != plant_valid.id

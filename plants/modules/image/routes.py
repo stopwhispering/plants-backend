@@ -13,8 +13,9 @@ from plants.modules.image.services import (
     save_image_files, delete_image_file_and_db_entries, read_image_by_size,
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails, fetch_images_for_plant, fetch_untagged_images)
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.modules.plant.models import Plant
 from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db
+from plants.dependencies import get_db, valid_plant
 from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,
                                           BResultsImagesUploaded, FBImages, FBImage)
 from plants.modules.image.image_services_simple import remove_files_already_existing
@@ -31,17 +32,17 @@ router = APIRouter(
 
 
 @router.get("/plants/{plant_id}/images/", response_model=FBImages)
-async def get_images_for_plant(plant_id: int, db: Session = Depends(get_db)):
+async def get_images_for_plant(plant: Plant = Depends(valid_plant)):
     """
     get photo_file information for requested plant_id including (other) plants and keywords
     """
-    images = fetch_images_for_plant(plant_id=plant_id, db=db)
-    logger.info(f'Returned {len(images)} images for plant {plant_id}.')
+    images = fetch_images_for_plant(plant)
+    logger.info(f'Returned {len(images)} images for plant {plant.id}.')
     return images
 
 
 @router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
-async def upload_images_plant(plant_id: int, request: Request, db: Session = Depends(get_db)):
+async def upload_images_plant(request: Request, plant: Plant = Depends(valid_plant), db: Session = Depends(get_db)):
     """
     upload images and directly assign them to supplied plant; no keywords included
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
@@ -57,7 +58,7 @@ async def upload_images_plant(plant_id: int, request: Request, db: Session = Dep
 
     images: list[FBImage] = await save_image_files(files=files,
                                                    db=db,
-                                                   plant_ids=(plant_id,),
+                                                   plant_ids=(plant.id,),
                                                    )
 
     desc = (f'Saved: {[p.filename for p in files]}.'

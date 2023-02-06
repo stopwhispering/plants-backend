@@ -10,6 +10,7 @@ import logging
 import datetime
 
 from plants import settings
+from plants.exceptions import PlantNotFound
 from plants.shared.message_services import throw_exception
 from plants.modules.taxon.models import Taxon
 from plants.shared.orm_utils import OrmAsDict
@@ -180,40 +181,37 @@ class Plant(Base, OrmAsDict):
 
     def set_taxon(self, db: Session, taxon_id: Optional[int]):
         if taxon_id:
-            self.taxon = Taxon.get_taxon_by_taxon_id(taxon_id, db)
+            self.taxon = Taxon.by_id(taxon_id, db)
         else:
             self.taxon = None
 
-    # def set_last_update(self, last_update=None):
-    #     self.last_update = last_update if last_update else datetime.datetime.now()
-
     # static query methods
     @staticmethod
-    def get_plant_by_plant_name(plant_name: str, db: Session, raise_exception: bool = False) -> Plant | None:
+    def by_name(plant_name: str, db: Session, raise_if_not_exists: bool = False) -> Plant | None:
         plant = db.query(Plant).filter(Plant.plant_name == plant_name).first()
-        if not plant and raise_exception:
-            throw_exception(f'Plant not found in database: {plant_name}')
+        if not plant and raise_if_not_exists:
+            raise PlantNotFound(plant_name)
         return plant
 
     @staticmethod
-    def get_plant_by_plant_id(plant_id: int, db: Session, raise_exception: bool = False) -> Plant | None:
+    def by_id(plant_id: int, db: Session, raise_if_not_exists: bool = False) -> Plant | None:
         plant = db.query(Plant).filter(Plant.id == plant_id).first()
-        if not plant and raise_exception:
-            throw_exception(f'Plant ID not found in database: {plant_id}')
+        if not plant and raise_if_not_exists:
+            raise PlantNotFound(plant_id)
         return plant
 
     @staticmethod
-    def get_plant_id_by_plant_name(plant_name: str, db: Session, raise_exception: bool = False) -> int:
+    def get_plant_id_by_plant_name(plant_name: str, db: Session, raise_if_not_exists: bool = False) -> int:
         plant_id = db.query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
-        if not plant_id and raise_exception:
-            throw_exception(f'Plant ID not found in database: {plant_name}')
+        if not plant_id and raise_if_not_exists:
+            raise PlantNotFound(plant_name)
         return plant_id
 
     @staticmethod
-    def get_plant_name_by_plant_id(plant_id: int, db: Session, raise_exception: bool = False) -> str:
+    def get_plant_name_by_plant_id(plant_id: int, db: Session, raise_if_not_exists: bool = False) -> str:
         plant_name = db.query(Plant.plant_name).filter(Plant.id == plant_id).scalar()
-        if not plant_name and raise_exception:
-            throw_exception(f'Plant not found in database: {plant_id}')
+        if not plant_name and raise_if_not_exists:
+            raise PlantNotFound(plant_id)
         return plant_name
 
 

@@ -5,15 +5,14 @@ import datetime
 from starlette.requests import Request
 
 from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db
+from plants.dependencies import get_db, valid_plant
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry
 from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.services import update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants, \
     generate_subsequent_plant_name
 from plants.shared.message_schemas import BConfirmation, FBMajorResource
-from plants.modules.plant.schemas import (FPlantsDeleteRequest,
-                                          BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
+from plants.modules.plant.schemas import (BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
                                           BResultsPlantsUpdate, BResultsPlantCloned, BResultsProposeSubsequentPlantName)
 
 logger = logging.getLogger(__name__)
@@ -30,22 +29,20 @@ router = APIRouter(
 @router.post("/{plant_id}/clone", response_model=BResultsPlantCloned)
 def clone_plant(
         request: Request,
-        plant_id: int,
         plant_name_clone: str,
+        plant_original: Plant = Depends(valid_plant),
         db: Session = Depends(get_db),
         ):
     """
     clone plant with supplied plant_id; include duplication of events, photo_file assignments, and
     properties
     """
-    plant_original = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
-
-    if not plant_name_clone or Plant.get_plant_by_plant_name(plant_name_clone, db):
+    if not plant_name_clone or Plant.by_name(plant_name_clone, db):
         throw_exception(f'Cloned Plant Name may not exist, yet: {plant_name_clone}.', request=request)
 
     deep_clone_plant(plant_original, plant_name_clone, db)
 
-    plant_clone = Plant.get_plant_by_plant_name(plant_name_clone, db, raise_exception=True)
+    plant_clone = Plant.by_name(plant_name_clone, db, raise_if_not_exists=True)
     create_history_entry(description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
                          db=db,
                          plant_id=plant_clone.id,
@@ -85,21 +82,16 @@ def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(ge
     return results
 
 
-@router.delete("/", response_model=BConfirmation)
-def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Depends(get_db)):
+@router.delete("/{plant_id}", response_model=BConfirmation)
+def delete_plant(plant: Plant = Depends(valid_plant), db: Session = Depends(get_db)):
     """tag deleted plant as 'deleted' in database"""
-
-    args = data
-    record_update: Plant = Plant.get_plant_by_plant_id(args.plant_id, db, raise_exception=True)
-    if not record_update:
-        throw_exception(f'Plant to be deleted not found in database: {args.plant_id}.', request=request)
-    record_update.deleted = True
+    plant.deleted = True
     db.commit()
 
-    logger.info(message := f'Deleted plant {record_update.plant_name}')
+    logger.info(message := f'Deleted plant {plant.plant_name}')
     results = {'action':   'Deleted plant',
                'message':  get_message(message,
-                                       description=f'Plant name: {record_update.plant_name}\nDeleted: True')
+                                       description=f'Plant name: {plant.plant_name}\nDeleted: True')
                }
 
     return results
@@ -108,8 +100,7 @@ def delete_plant(request: Request, data: FPlantsDeleteRequest, db: Session = Dep
 @router.put("/", response_model=BConfirmation)
 def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Depends(get_db)):
     """we use the put method to rename a plant"""  # todo use id
-    # args = data
-    plant = Plant.get_plant_by_plant_id(args.plant_id, db, raise_exception=True)
+    plant = Plant.by_id(args.plant_id, db, raise_if_not_exists=True)
     assert plant.plant_name == args.old_plant_name
     # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
 

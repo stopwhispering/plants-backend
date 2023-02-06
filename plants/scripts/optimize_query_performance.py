@@ -130,7 +130,7 @@ def images_for_plant():
     # /api/plants/495/images/
     # 0.05376739997882396 seconds
     plant_id = 495
-    plant = Plant.get_plant_by_plant_id(plant_id, db=db, raise_exception=True)
+    plant = Plant.by_id(plant_id, db=db, raise_if_not_exists=True)
     photo_files_ext = [_to_response_image(image) for image in plant.images]
     FBImages.parse_obj(photo_files_ext)
 

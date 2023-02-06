@@ -46,8 +46,8 @@ class LoadProperties:
                                            # 'sort':          category_obj.sort,
                                            'properties':    []}
 
-    def get_properties_for_plant(self, plant_id: int, db: Session) -> List:
-        property_objects = PropertyValue.get_by_plant_id(plant_id, db, raise_exception=False) if plant_id else []
+    def get_properties_for_plant(self, plant: Plant, db: Session) -> List:
+        property_objects = PropertyValue.get_by_plant_id(plant.id, db, raise_exception=False)
         property_dicts = [p.as_dict() for p in property_objects]
 
         # build category / property hierarchy
@@ -76,7 +76,7 @@ class LoadProperties:
         return categories
 
     def get_properties_for_taxon(self, taxon_id: int, db: Session) -> Dict[int, Dict]:
-        taxon = Taxon.get_taxon_by_taxon_id(taxon_id, db, raise_exception=True)
+        taxon = Taxon.by_id(taxon_id, db, raise_if_not_exists=True)
         property_objects_taxon = taxon.property_values_taxon
         property_dicts_taxon = [p.as_dict() for p in property_objects_taxon]
 
@@ -164,7 +164,7 @@ class SaveProperties(MixinShared):
     def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory], db: Session) -> List:
         # get current properties for the plant
         self._remove_taxon_properties(categories_modified)
-        plant = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)
+        plant = Plant.by_id(plant_id, db, raise_if_not_exists=True)
         properties_current = plant.property_values_plant
 
         new_list = []
@@ -234,7 +234,7 @@ class SavePropertiesTaxa(MixinShared):
         new_list = []
         del_list = []
         for taxon_id, categories_dict in properties_modified.items():
-            taxon = Taxon.get_taxon_by_taxon_id(taxon_id, db=db, raise_exception=True)
+            taxon = Taxon.by_id(taxon_id, db=db, raise_if_not_exists=True)
 
             # nested loop
             for category in categories_dict.values():

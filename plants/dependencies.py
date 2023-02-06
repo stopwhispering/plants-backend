@@ -1,4 +1,10 @@
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 from plants.extensions import orm
+from plants.modules.plant.models import Plant
+from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.taxon.models import Taxon
 
 
 def get_db():
@@ -7,3 +13,27 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+async def valid_plant(plant_id: int, db: Session = Depends(get_db)) -> Plant:
+    """injects a plant orm object into the route function if plant_id is valid"""
+    plant = Plant.by_id(plant_id, db, raise_if_not_exists=True)
+    return plant
+
+
+async def valid_pollination(pollination_id: int, db: Session = Depends(get_db)) -> Pollination:
+    """injects a pollination orm object into the route function if pollination_id is valid"""
+    pollination = Pollination.by_id(pollination_id, db, raise_if_not_exists=True)
+    return pollination
+
+
+async def valid_florescence(florescence_id: int, db: Session = Depends(get_db)) -> Florescence:
+    """injects a florescence orm object into the route function if florescence_id is valid"""
+    florescence = Florescence.by_id(florescence_id, db, raise_if_not_exists=True)
+    return florescence
+
+
+async def valid_taxon(taxon_id: int, db: Session = Depends(get_db)) -> Taxon:
+    """injects a taxon orm object into the route function if taxon_id is valid"""
+    taxon = Taxon.by_id(taxon_id, db, raise_if_not_exists=True)
+    return taxon

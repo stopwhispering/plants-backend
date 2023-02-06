@@ -7,7 +7,7 @@ from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import create_formatted_botanical_name, BotanicalNameInput
 from plants.shared.message_services import get_message
 from plants.modules.taxon.models import Taxon
-from plants.dependencies import get_db
+from plants.dependencies import get_db, valid_taxon
 from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource
 from plants.modules.taxon.schemas import (
     FModifiedTaxa, BResultsGetTaxon, FBotanicalAttributes,
@@ -56,16 +56,13 @@ async def create_botanical_name(botanical_attributes: FBotanicalAttributes):
 
 
 @router.get("/{taxon_id}", response_model=BResultsGetTaxon)
-async def get_taxon(taxon_id: int, db: Session = Depends(get_db)):
+async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
     """
     returns taxon for requested taxon_id
     """
-    taxon: Taxon = Taxon.get_taxon_by_taxon_id(taxon_id=taxon_id, db=db)
-    results = {'action': 'Get taxa',
-               'message': get_message(f'Read taxon {taxon_id} from database.'),
-               'taxon': taxon}
-
-    return results
+    return {'action': 'Get taxa',
+            'message': get_message(f'Read taxon {taxon.id} from database.'),
+            'taxon': taxon}
 
 
 @router.post("/new", response_model=BCreatedTaxonResponse)
@@ -75,7 +72,7 @@ async def save_taxon(new_taxon_data: FNewTaxon, db: Session = Depends(get_db)):
     """
     logger.info(f'Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}')
     if new_taxon_data.id:
-        taxon: Taxon = Taxon.get_taxon_by_taxon_id(taxon_id=new_taxon_data.id, db=db)
+        taxon: Taxon = Taxon.by_id(taxon_id=new_taxon_data.id, db=db)
         msg = get_message(f'Loaded {taxon.name} from database.')
     else:
         taxon: Taxon = save_new_taxon(new_taxon_data, db=db)

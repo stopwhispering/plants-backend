@@ -21,7 +21,7 @@ def test_plant_valid(db):
     db.add(plant)
     db.commit()
 
-    p = Plant.get_plant_by_plant_name(plant.plant_name, db=db)
+    p = Plant.by_name(plant.plant_name, db=db)
     assert p.plant_name == plant.plant_name
     assert p.id is not None
 

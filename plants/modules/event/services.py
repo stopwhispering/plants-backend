@@ -15,11 +15,12 @@ from plants.modules.event.schemas import FSoilCreate, BEvents, FSoil, FCreateOrU
 logger = logging.getLogger(__name__)
 
 
-def read_events_for_plant(plant_id: int, db: Session) -> list[dict]:
+def read_events_for_plant(plant: Plant) -> list[dict]:
     """
     read events from event database table
     """
-    events = Event.get_events_by_plant_id(plant_id, db)
+    # events = Event.get_events_by_plant_id(plant_id, db)
+    events: list[Event] = plant.events
     BEvents.validate(events)
     return events
 
@@ -64,7 +65,7 @@ def update_soil(soil: FSoil, db: Session) -> Soil:
 
 
 def create_or_update_event(plant_id: int, events: list[FCreateOrUpdateEvent], counts: defaultdict, db: Session):
-    plant_obj = Plant.get_plant_by_plant_id(plant_id, db, raise_exception=True)  # noqa
+    plant_obj = Plant.by_id(plant_id, db, raise_if_not_exists=True)  # noqa
     logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
                 f' {[e.id for e in plant_obj.events]}')
 

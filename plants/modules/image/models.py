@@ -234,7 +234,7 @@ def update_image_if_altered(db: Session,
         # image.last_update = datetime.now()
 
     # plants
-    new_plants = set(Plant.get_plant_by_plant_id(plant_id, db=db, raise_exception=True) for plant_id in plant_ids)
+    new_plants = set(Plant.by_id(plant_id, db=db, raise_if_not_exists=True) for plant_id in plant_ids)
     removed_image_to_plant_associations = [a for a in image.image_to_plant_associations
                                            if a.plant not in new_plants]
     added_image_to_plant_associations = [ImageToPlantAssociation(

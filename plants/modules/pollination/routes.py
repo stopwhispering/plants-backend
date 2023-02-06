@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from plants.modules.pollination.models import COLORS_MAP
+from plants.modules.pollination.models import COLORS_MAP, Pollination, Florescence
 from plants.modules.pollination.ml_model import train_model_for_probability_of_seed_production
 from plants.modules.pollination.pollination_services import (save_new_pollination, read_ongoing_pollinations,
                                                              update_pollination,
@@ -23,7 +23,7 @@ from plants.modules.pollination.florescence_services import (
     remove_florescence)
 from plants.modules.pollination.flower_history_services import generate_flower_history
 from plants.shared.message_services import get_message
-from plants.dependencies import get_db
+from plants.dependencies import get_db, valid_pollination, valid_florescence
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +44,11 @@ async def post_pollination(
 
 @router.put('/pollinations/{pollination_id}')
 async def put_pollination(
-        pollination_id: int,
         edited_pollination_data: FRequestEditedPollination,
+        pollination: Pollination = Depends(valid_pollination),
         db: Session = Depends(get_db), ):
-    assert pollination_id == edited_pollination_data.id
-    update_pollination(pollination_data=edited_pollination_data, db=db)
+    assert pollination.id == edited_pollination_data.id
+    update_pollination(pollination, pollination_data=edited_pollination_data)
     db.commit()
 
 
@@ -90,9 +90,9 @@ async def post_pollen_containers(pollen_containers_data: FRequestPollenContainer
 
 @router.delete('/pollinations/{pollination_id}')
 async def delete_pollination(
-        pollination_id: int,
+        pollination: Pollination = Depends(valid_pollination),
         db: Session = Depends(get_db)):
-    remove_pollination(pollination_id=pollination_id, db=db)
+    remove_pollination(pollination, db=db)
     db.commit()
 
 
@@ -122,11 +122,11 @@ async def get_plants_for_new_florescence(db: Session = Depends(get_db), ):
 
 @router.put('/active_florescences/{florescence_id}')  # no response required (full reload after post)
 async def put_active_florescence(
-        florescence_id: int,
         edited_florescence_data: FRequestEditedFlorescence,
+        florescence: Florescence = Depends(valid_florescence),
         db: Session = Depends(get_db)):
-    assert florescence_id == edited_florescence_data.id
-    update_active_florescence(edited_florescence_data=edited_florescence_data, db=db)
+    assert florescence.id == edited_florescence_data.id
+    update_active_florescence(florescence, edited_florescence_data=edited_florescence_data)
     db.commit()
 
 
@@ -140,17 +140,17 @@ async def post_active_florescence(new_florescence_data: FRequestNewFlorescence,
 
 @router.delete('/florescences/{florescence_id}')
 async def delete_florescence(
-        florescence_id: int,
+        florescence: Florescence = Depends(valid_florescence),
         db: Session = Depends(get_db), ):
-    remove_florescence(florescence_id=florescence_id, db=db)
+    remove_florescence(florescence, db=db)
     db.commit()
 
 
 @router.get("/potential_pollen_donors/{florescence_id}",
             response_model=BResultsPotentialPollenDonors)
-async def get_potential_pollen_donors(florescence_id: int,
+async def get_potential_pollen_donors(florescence: Florescence = Depends(valid_florescence),
                                       db: Session = Depends(get_db), ):
-    potential_pollen_donors = read_potential_pollen_donors(florescence_id=florescence_id, db=db)
+    potential_pollen_donors = read_potential_pollen_donors(florescence=florescence, db=db)
     return {'action': 'Get potential pollen donors',
             'message': get_message(f"Provided {len(potential_pollen_donors)} potential donors."),
             'potentialPollenDonorCollection': potential_pollen_donors}

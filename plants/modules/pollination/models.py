@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 import enum
+from typing import Collection
 
+from numpy.random.mtrand import Sequence
 from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric, Enum
 import sqlalchemy
 
@@ -11,6 +13,7 @@ import logging
 
 from sqlalchemy.orm import relationship, Session
 
+from plants.exceptions import PollinationNotFound, FlorescenceNotFound
 from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
@@ -109,7 +112,7 @@ class StigmaPosition(str, enum.Enum):
 class Florescence(Base, OrmAsDict):
     """flowering period of a plant"""
     __tablename__ = 'florescence'
-    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+    id: int = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     plant_id = Column(INTEGER, ForeignKey('plants.id'), nullable=False)  # table name is 'plants'
     plant = relationship("Plant", back_populates="florescences")  # class name is 'Plant'
 
@@ -156,11 +159,18 @@ class Florescence(Base, OrmAsDict):
         return as_dict
 
     @staticmethod
-    def by_id(florescence_id: int, db: Session, raise_exception: bool = True) -> Florescence | None:
+    def by_id(florescence_id: int, db: Session, raise_if_not_exists: bool = True) -> Florescence | None:
         florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
-        if not florescence and raise_exception:
-            throw_exception(f'Florescence ID not found in database: {florescence_id}')
+        if not florescence and raise_if_not_exists:
+            raise FlorescenceNotFound(florescence_id)
         return florescence
+
+    @staticmethod
+    def by_status(status: Collection[BFlorescenceStatus], db: Session) -> list[Florescence]:
+        query = (db.query(Florescence)
+                 .filter(Florescence.florescence_status.in_(status))
+                 )
+        return query.all()  # noqa
 
 
 class Pollination(Base, OrmAsDict):
@@ -226,3 +236,10 @@ class Pollination(Base, OrmAsDict):
         as_dict['pollen_donor_plant_name'] = (self.pollen_donor_plant.plant_name
                                               if self.pollen_donor_plant else None)
         return as_dict
+
+    @classmethod
+    def by_id(cls, pollination_id: int, db: Session, raise_if_not_exists: bool = True) -> Pollination | None:
+        pollination = db.query(cls).filter(cls.id == pollination_id).first()
+        if not pollination and raise_if_not_exists:
+            raise PollinationNotFound(pollination_id)
+        return pollination

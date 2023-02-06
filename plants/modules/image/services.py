@@ -75,7 +75,7 @@ async def save_image_files(files: List[UploadFile],
 
         # add to db
         record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
-        plants = [Plant.get_plant_by_plant_id(plant_id=p, db=db, raise_exception=True) for p in plant_ids]
+        plants = [Plant.by_id(plant_id=p, db=db, raise_if_not_exists=True) for p in plant_ids]
         image: Image = create_image(db=db,
                                     relative_path=get_relative_path(path),
                                     record_date_time=record_datetime,
@@ -262,8 +262,7 @@ def trigger_generation_of_missing_thumbnails(db: Session, background_tasks: Back
     return msg
 
 
-def fetch_images_for_plant(plant_id: int, db: Session) -> list[FBImage]:
-    plant = Plant.get_plant_by_plant_id(plant_id, db=db, raise_exception=True)
+def fetch_images_for_plant(plant: Plant) -> list[FBImage]:
     images = [_to_response_image(image) for image in plant.images]
     return images
 

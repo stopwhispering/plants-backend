@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from plants.exceptions import BaseError
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence, BFlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB, \
     FlowerColorDifferentiation
@@ -34,12 +35,9 @@ def read_plants_for_new_florescence(db: Session) -> list[BPlantForNewFlorescence
 
 
 def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
-    query = (db.query(Florescence)
-             .filter(Florescence.florescence_status.in_({BFlorescenceStatus.FLOWERING,
-                                                         BFlorescenceStatus.INFLORESCENCE_APPEARED}))
-             )
-    florescences_orm = query.all()
 
+    florescences_orm = Florescence.by_status({BFlorescenceStatus.FLOWERING,
+                                              BFlorescenceStatus.INFLORESCENCE_APPEARED}, db)
     florescences = []
     for f in florescences_orm:
         f: Florescence
@@ -70,10 +68,7 @@ def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
     return florescences
 
 
-def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence, db: Session):
-    florescence = Florescence.by_id(edited_florescence_data.id, db=db)
-    # florescence: Florescence = db.query(Florescence).filter(
-    #     Florescence.id == edited_florescence_data.id).first()
+def update_active_florescence(florescence: Florescence, edited_florescence_data: FRequestEditedFlorescence):
 
     # technical validation
     assert florescence is not None
@@ -115,7 +110,7 @@ def update_active_florescence(edited_florescence_data: FRequestEditedFlorescence
 def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Session):
 
     assert BFlorescenceStatus.has_value(new_florescence_data.florescence_status)
-    plant = Plant.get_plant_by_plant_id(plant_id=new_florescence_data.plant_id, db=db, raise_exception=True)
+    plant = Plant.by_id(plant_id=new_florescence_data.plant_id, db=db, raise_if_not_exists=True)
 
     florescence = Florescence(
         plant_id=new_florescence_data.plant_id,
@@ -131,11 +126,8 @@ def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Ses
     db.add(florescence)
 
 
-def remove_florescence(florescence_id: int, db: Session):
+def remove_florescence(florescence: Florescence, db: Session):
     """ Delete a florescence """
-    florescence: Florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
-    if not florescence:
-        raise HTTPException(500, detail={'message': 'Florescence attempt not found'})
     if florescence.pollinations:
-        raise HTTPException(500, detail={'message': 'Florescence has pollinations'})
+        raise BaseError(detail={'message': 'Florescence has pollinations'})
     db.delete(florescence)
