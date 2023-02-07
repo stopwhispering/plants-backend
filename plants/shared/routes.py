@@ -3,13 +3,13 @@ import logging
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
+from plants.modules.plant.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
-from plants.modules.image.services import get_distinct_image_keywords
 from plants.shared.proposal_schemas import FProposalEntity, BResultsProposals, BResultsSelection
 from plants.shared.proposal_services import build_taxon_tree
 from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db
+from plants.dependencies import get_db, get_image_dal
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,8 @@ router = APIRouter(
 
 
 @router.get("/proposals/{entity_id}", response_model=BResultsProposals)
-def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = Depends(get_db)):
+def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = Depends(get_db),
+                  image_dal: ImageDAL = Depends(get_image_dal) ):
     """returns proposals for selection tables"""
 
     results = {}
@@ -39,7 +40,7 @@ def get_proposals(request: Request, entity_id: FProposalEntity, db: Session = De
     elif entity_id == FProposalEntity.KEYWORD:
         # return collection of all distinct keywords used in images
         # keywords_set = get_distinct_keywords_from_image_files()
-        keywords_set = get_distinct_image_keywords(db=db)
+        keywords_set = image_dal.get_distinct_image_keywords()
         keywords_collection = [{'keyword': keyword} for keyword in keywords_set]
         results = {'KeywordsCollection': keywords_collection}
 

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List
 from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, DateTime, Numeric
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 import logging
 
-from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Soil(Base, OrmAsDict):
     __tablename__ = "soil"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
-    soil_name = Column(VARCHAR(100), nullable=False)
+    soil_name = Column(VARCHAR(100), nullable=False)  # todo make unique
     description = Column(TEXT)
     mix = Column(TEXT)
 
@@ -65,7 +63,7 @@ class Event(Base, OrmAsDict):
     """events"""
     __tablename__ = 'event'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
-    date = Column(VARCHAR(12), nullable=False)  # e.g. 201912241645 or 201903
+    date = Column(VARCHAR(12), nullable=False)  # yyyy-mm-dd  # todo make it 10
     event_notes = Column(TEXT)
 
     # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
@@ -141,22 +139,3 @@ class Event(Base, OrmAsDict):
             as_dict['images'] = []
 
         return as_dict
-
-    # static query methods
-    @staticmethod
-    def get_events_by_plant_id(plant_id: int,
-                               db: Session,
-                               raise_exception: bool = False) -> List[Event]:
-        events = db.query(Event).filter(Event.plant_id == plant_id).all()
-        if not events and raise_exception:
-            throw_exception(f'No events in db for plant: {plant_id}')
-        return events
-
-    @staticmethod
-    def get_event_by_event_id(event_id: int,
-                              db: Session,
-                              raise_exception: bool = False) -> Event:
-        event = db.query(Event).filter(Event.id == event_id).first()
-        if not event and raise_exception:
-            throw_exception(f'Event not found in db: {event_id}')
-        return event

@@ -5,13 +5,12 @@ import logging
 
 import piexif
 from piexif import InvalidImageDataError
-from sqlalchemy.orm import Session
 
 from plants import local_config
-from plants.modules.image.models import Image
 from plants.modules.image.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                              encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
                                              encode_record_date_time, set_modified_date)
+from plants.modules.plant.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +35,11 @@ class PhotoMetadataAccessExifTags:
                             plant_names: list[str],
                             keywords: list[str],
                             description: str,
-                            db: Session,
+                            image_dal: ImageDAL,
                             ) -> None:
         """save/update photo_file metadata"""
         # get file system path to the image
-        image = Image.get_image_by_id(id_=image_id, db=db)
+        image = image_dal.by_id(image_id)
 
         metadata = MetadataDTO(plant_names=plant_names,
                                keywords=keywords,

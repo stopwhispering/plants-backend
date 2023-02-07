@@ -3,13 +3,16 @@ from _pytest.fixtures import SubRequest
 from fastapi import FastAPI
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Connection
-from sqlalchemy.orm import Session as OrmSession
+from sqlalchemy.orm import Session as OrmSession, Session
 from starlette.testclient import TestClient
 
 from plants.dependencies import get_db
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
+from plants.modules.plant.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.property_dal import PropertyDAL
 from plants.modules.plant.schemas import FBPropagationType
 from plants.modules.pollination.models import Florescence
 from tests.config_test import generate_db_url
@@ -62,6 +65,27 @@ def setup_db(connection: Connection, request: SubRequest) -> None:
         # Base.metadata.drop_all(bind=connection)
 
     request.addfinalizer(teardown)
+
+
+@pytest.fixture(scope="function")
+def plant_dal(db: Session) -> PlantDAL:
+    """
+    """
+    yield PlantDAL(db)
+
+
+@pytest.fixture(scope="function")
+def event_dal(db: Session) -> EventDAL:
+    """
+    """
+    yield EventDAL(db)
+
+
+@pytest.fixture(scope="function")
+def property_dal(db: Session) -> PropertyDAL:
+    """
+    """
+    yield PropertyDAL(db)
 
 
 @pytest.fixture(scope="function")

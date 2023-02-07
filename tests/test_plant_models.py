@@ -16,12 +16,12 @@ def test_plant_invalid(db):
     assert p is None
 
 
-def test_plant_valid(db):
+def test_plant_valid(db, plant_dal):
     plant = Plant(plant_name='Aloe Vera',)
     db.add(plant)
     db.commit()
 
-    p = Plant.by_name(plant.plant_name, db=db)
+    p = plant_dal.by_name(plant.plant_name)
     assert p.plant_name == plant.plant_name
     assert p.id is not None
 
@@ -34,4 +34,3 @@ def test_plant_duplicate_name(db, plant_valid):
     with pytest.raises(IntegrityError):
         db.commit()
     db.rollback()
-

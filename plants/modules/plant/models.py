@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from operator import attrgetter
-from typing import Optional
 from sqlalchemy import Column, INTEGER, BOOLEAN, ForeignKey, TEXT, Identity, VARCHAR
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.orm import foreign, remote  # noqa
@@ -9,13 +8,9 @@ from sqlalchemy.types import DateTime
 import logging
 import datetime
 
-from plants import settings
 from plants.exceptions import PlantNotFound
-from plants.shared.message_services import throw_exception
-from plants.modules.taxon.models import Taxon
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
-from plants.modules.plant.schemas import FPlant
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +26,8 @@ class Plant(Base, OrmAsDict):
     nursery_source = Column(VARCHAR(100))
     propagation_type = Column(VARCHAR(30))  # todo enum
 
-    active = Column(BOOLEAN)
-    deleted = Column(BOOLEAN)
+    active = Column(BOOLEAN)  # todo not nullable
+    deleted = Column(BOOLEAN)  # todo not nullable
     cancellation_reason = Column(VARCHAR(60))  # todo enum,  only set if active == False
     cancellation_date = Column(DateTime(timezone=True))  # todo rename to datetime or make it date type
 
@@ -51,7 +46,7 @@ class Plant(Base, OrmAsDict):
     parent_plant_id = Column(INTEGER, ForeignKey('plants.id'))
     parent_plant = relationship("Plant",
                                 primaryjoin='Plant.parent_plant_id==Plant.id',
-                                remote_side=[id],
+                                remote_side=[id],  # noqa
                                 back_populates="descendant_plants")
     descendant_plants = relationship("Plant",
                                      primaryjoin="Plant.parent_plant_id==Plant.id",
@@ -60,7 +55,7 @@ class Plant(Base, OrmAsDict):
     parent_plant_pollen_id = Column(INTEGER, ForeignKey('plants.id'))
     parent_plant_pollen = relationship("Plant",
                                        primaryjoin='Plant.parent_plant_pollen_id==Plant.id',
-                                       remote_side=[id],
+                                       remote_side=[id],  # noqa
                                        back_populates="descendant_plants_pollen")
     descendant_plants_pollen = relationship("Plant",
                                             primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
@@ -90,6 +85,9 @@ class Plant(Base, OrmAsDict):
     florescences = relationship("Florescence", back_populates="plant")
 
     count_stored_pollen_containers = Column(INTEGER)
+
+    def __repr__(self):
+        return f'<Plant [{self.id}] {self.plant_name}>'
 
     @property
     def descendant_plants_all(self) -> list[Plant]:
@@ -162,57 +160,14 @@ class Plant(Base, OrmAsDict):
         merge descendant_plants_pollen into descendant_plants"""
         raise NotImplementedError('use get_plant_as_dict() instead')
 
-    def set_filename_previewimage(self, plant: Optional[FPlant] = None):
-        """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
-        the photos-subdir part of the uri
-        """
-        if not plant.filename_previewimage:
-            self.filename_previewimage = None
-            return
-
-        # generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
-
-        # rmeove photos-subdir from path if required (todo: still required somewhere?)
-        if plant.filename_previewimage.is_relative_to(settings.paths.subdirectory_photos):
-            self.filename_previewimage = plant.filename_previewimage.relative_to(
-                settings.paths.subdirectory_photos).as_posix()
-        else:
-            self.filename_previewimage = plant.filename_previewimage.as_posix()
-
-    def set_taxon(self, db: Session, taxon_id: Optional[int]):
-        if taxon_id:
-            self.taxon = Taxon.by_id(taxon_id, db)
-        else:
-            self.taxon = None
-
     # static query methods
-    @staticmethod
-    def by_name(plant_name: str, db: Session, raise_if_not_exists: bool = False) -> Plant | None:
-        plant = db.query(Plant).filter(Plant.plant_name == plant_name).first()
-        if not plant and raise_if_not_exists:
-            raise PlantNotFound(plant_name)
-        return plant
-
+    # todo remove
     @staticmethod
     def by_id(plant_id: int, db: Session, raise_if_not_exists: bool = True) -> Plant | None:
-        plant = db.query(Plant).filter(Plant.id == plant_id).first()
+        plant = db.query(Plant).filter(Plant.id == plant_id).first()  # noqa
         if not plant and raise_if_not_exists:
             raise PlantNotFound(plant_id)
         return plant
-
-    @staticmethod
-    def get_plant_id_by_plant_name(plant_name: str, db: Session, raise_if_not_exists: bool = False) -> int:
-        plant_id = db.query(Plant.id).filter(Plant.plant_name == plant_name).scalar()
-        if not plant_id and raise_if_not_exists:
-            raise PlantNotFound(plant_name)
-        return plant_id
-
-    @staticmethod
-    def get_plant_name_by_plant_id(plant_id: int, db: Session, raise_if_not_exists: bool = False) -> str:
-        plant_name = db.query(Plant.plant_name).filter(Plant.id == plant_id).scalar()
-        if not plant_name and raise_if_not_exists:
-            raise PlantNotFound(plant_id)
-        return plant_name
 
 
 class Tag(Base, OrmAsDict):
@@ -228,11 +183,3 @@ class Tag(Base, OrmAsDict):
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-
-    # static query methods
-    @staticmethod
-    def get_tag_by_tag_id(tag_id: int, db: Session, raise_exception: bool = False) -> Tag | None:
-        tag = db.query(Tag).filter(Tag.id == tag_id).first()
-        if not tag and raise_exception:
-            throw_exception(f'Tag not found in database: {tag_id}')
-        return tag

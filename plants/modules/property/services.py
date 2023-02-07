@@ -1,18 +1,23 @@
 from typing import List, Dict, Optional
-from sqlalchemy.orm import Session
 
 from plants import constants
 from plants.modules.plant.models import Plant
-from plants.modules.property.models import PropertyValue, PropertyCategory, PropertyName
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.property_dal import PropertyDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.property.models import PropertyValue, PropertyName
 from plants.modules.taxon.models import Taxon
 from plants.modules.property.schemas import FBPropertiesInCategory, FBProperty, FBPropertyCollectionPlant
 
 
 class MixinShared:
-    @staticmethod
-    def create_new_property_name(category_id, property_name, db: Session):
+
+    def __init__(self, property_dal: PropertyDAL):
+        self.property_dal = property_dal
+
+    def create_new_property_name(self, category_id, property_name):
         """returns newly createad property name's id"""
-        category_obj = PropertyCategory.get_cat_by_id(category_id, raise_exception=True, db=db)
+        category_obj = self.property_dal.get_property_category_by_id(category_id)
         # make sure it does not already exist
         current_property_names = [p for p in category_obj.property_names if p.property_name == property_name]
         if current_property_names:
@@ -20,34 +25,37 @@ class MixinShared:
 
         property_name = PropertyName(property_name=property_name, category_id=category_id)
         # we need to add it and flush to get a property name id
-        db.add(property_name)
-        db.flush()
+        self.property_dal.create_property_name(property_name)
         return property_name.id
 
 
 class LoadProperties:
-    @staticmethod
-    def _add_empty_categories(categories: List, db: Session):
+
+    def __init__(self, property_dal: PropertyDAL, taxon_dal: TaxonDAL):
+        self.property_dal = property_dal
+        self.taxon_dal = taxon_dal
+
+    def _add_empty_categories(self, categories: List):
         category_names = [c['category_name'] for c in categories]
         for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
-            category_obj = PropertyCategory.get_cat_by_name(default_category, db)
+            category_obj = self.property_dal.get_property_category_by_name(default_category)
             categories.append({'category_name': category_obj.category_name,
                                'category_id':   category_obj.id,
                                # 'sort':          category_obj.sort,
                                'properties':    []})
 
-    @staticmethod
-    def _add_empty_categories_to_dict(categories: Dict, db: Session):
+    def _add_empty_categories_to_dict(self, categories: Dict):
         category_names = [c['category_name'] for c in categories.values()]
         for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
-            category_obj = PropertyCategory.get_cat_by_name(default_category, db)
+            category_obj = self.property_dal.get_property_category_by_name(default_category)
             categories[category_obj.id] = {'category_name': category_obj.category_name,
                                            'category_id':   category_obj.id,
                                            # 'sort':          category_obj.sort,
                                            'properties':    []}
 
-    def get_properties_for_plant(self, plant: Plant, db: Session) -> List:
-        property_objects = PropertyValue.get_by_plant_id(plant.id, db, raise_exception=False)
+    def get_properties_for_plant(self, plant: Plant) -> List:
+        property_objects = self.property_dal.get_property_values_by_plant_id(plant.id)
+        # property_objects = PropertyValue.get_by_plant_id(plant.id, db, raise_exception=False)
         property_dicts = [p.as_dict() for p in property_objects]
 
         # build category / property hierarchy
@@ -72,11 +80,11 @@ class LoadProperties:
                     ]
                 } for p in property_dicts if p['category_id'] == cat['category_id']]
 
-        self._add_empty_categories(categories, db)
+        self._add_empty_categories(categories)
         return categories
 
-    def get_properties_for_taxon(self, taxon_id: int, db: Session) -> Dict[int, Dict]:
-        taxon = Taxon.by_id(taxon_id, db, raise_if_not_exists=True)
+    def get_properties_for_taxon(self, taxon_id: int) -> Dict[int, Dict]:
+        taxon = self.taxon_dal.by_id(taxon_id)
         property_objects_taxon = taxon.property_values_taxon
         property_dicts_taxon = [p.as_dict() for p in property_objects_taxon]
 
@@ -101,11 +109,16 @@ class LoadProperties:
                         }
                     ]
                 } for p in property_dicts_taxon if p['category_id'] == cat['category_id']]
-        self._add_empty_categories_to_dict(categories_taxon, db)
+        self._add_empty_categories_to_dict(categories_taxon)
         return categories_taxon
 
 
 class SaveProperties(MixinShared):
+
+    def __init__(self, property_dal: PropertyDAL, plant_dal: PlantDAL):
+        super().__init__(property_dal=property_dal)
+        self.property_dal = property_dal
+        self.plant_dal = plant_dal
 
     @staticmethod
     def _is_newly_used_for_plant(property_new: FBProperty, properties_current: List[PropertyValue]) -> bool:
@@ -127,7 +140,7 @@ class SaveProperties(MixinShared):
             return False
 
     @staticmethod
-    def _new_property_for_plant(plant_id: int, property_modified: FBProperty):
+    def _new_property_for_plant(plant_id: int, property_modified: FBProperty) -> PropertyValue:
         property_object = PropertyValue(
                 property_name_id=property_modified.property_name_id,
                 property_value=property_modified.property_value,
@@ -135,13 +148,10 @@ class SaveProperties(MixinShared):
                 )
         return property_object
 
-    @staticmethod
-    def _modify_existing_property_value(property_modified: FBProperty, db: Session):
+    def _modify_existing_property_value(self, property_modified: FBProperty):
         # todo is this code outdated? seems to make no sense as there is no prop value id here
         # todo check
-        property_value_object = PropertyValue.get_by_id(property_modified.property_value_id,
-                                                        raise_exception=True,
-                                                        db=db)
+        property_value_object = self.property_dal.get_property_value_by_id(property_modified.property_value_id)
         property_value_object.property_value = property_modified.property_value
 
     @staticmethod
@@ -161,13 +171,13 @@ class SaveProperties(MixinShared):
                         # therefore, delete the whole property name node
                         category_modified.properties.pop(i)
 
-    def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory], db: Session) -> List:
+    def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory]) -> list[PropertyValue]:
         # get current properties for the plant
         self._remove_taxon_properties(categories_modified)
-        plant = Plant.by_id(plant_id, db, raise_if_not_exists=True)
+        plant = self.plant_dal.by_id(plant_id)
         properties_current = plant.property_values_plant
 
-        new_list = []
+        new_list: list[PropertyValue] = []
         for category_modified in categories_modified:
             if not category_modified.properties:
                 continue
@@ -180,11 +190,10 @@ class SaveProperties(MixinShared):
                     if not property_modified.property_name_id:
                         property_modified.property_name_id = self.create_new_property_name(
                                 category_modified.category_id,
-                                property_modified.property_name,
-                                db)
+                                property_modified.property_name)
                     new_list.append(self._new_property_for_plant(plant_id, property_modified))
                 elif self._is_modified(property_modified, properties_current):
-                    self._modify_existing_property_value(property_modified, db)
+                    self._modify_existing_property_value(property_modified)
 
         # identify deleted property values
         ids_current = [p.id for p in properties_current]
@@ -194,33 +203,38 @@ class SaveProperties(MixinShared):
         ids_modified = [p.property_value_id for p in properties_modified_flattened if p.property_value_id]
         property_value_ids_deleted = [i for i in ids_current if i not in ids_modified]
         if property_value_ids_deleted:
-            self._delete_property_values(property_value_ids_deleted, db)
+            self._delete_property_values(property_value_ids_deleted)
 
         return new_list
 
-    def save_properties(self, properties_modified: Dict[int, FBPropertyCollectionPlant], db: Session):
+    def save_properties(self, properties_modified: Dict[int, FBPropertyCollectionPlant]):
         for plant_id, plant_values in properties_modified.items():
-            new_list = self._save_categories(plant_id, plant_values.categories, db)
+            new_list: list[PropertyValue] = self._save_categories(plant_id, plant_values.categories)
             if new_list:
-                db.add_all(new_list)
-            db.commit()
+                self.property_dal.create_property_values(new_list)
 
-    @staticmethod
-    def _delete_property_values(property_value_ids: List[int], db: Session):
+    def _delete_property_values(self, property_value_ids: List[int]):
         for property_value_id in property_value_ids:
-            property_value_object = PropertyValue.get_by_id(property_value_id, db)
-            db.delete(property_value_object)
+            property_value_object = self.property_dal.get_property_value_by_id(property_value_id)
+            self.property_dal.delete_property_value(property_value_object)
 
 
 class SavePropertiesTaxa(MixinShared):
+
+    def __init__(self, property_dal: PropertyDAL, taxon_dal: TaxonDAL):
+        super().__init__(property_dal=property_dal)
+        self.property_dal = property_dal
+        self.taxon_dal = taxon_dal
+
     @staticmethod
-    def _get_taxon_property_value(property_values: List[PropertyValue]) -> Optional[PropertyValue]:
+    def _get_taxon_property_value(property_values: list[PropertyValue]) -> PropertyValue | None:
         property_values = [p for p in property_values if p.type == 'taxon']
         if property_values:
             return property_values[0]
 
     def _flatten_property(self, property_name_dict: FBProperty) -> Optional[FBProperty]:
         """pick the taxon property value among the plant_name property values and set it in property name dict """
+        # todo this seems messeup -> cleanup or remove functionality
         property_value_taxon = self._get_taxon_property_value(property_name_dict.property_values)
         if property_value_taxon:
             property_name_dict.property_value = property_value_taxon.property_value
@@ -229,12 +243,12 @@ class SavePropertiesTaxa(MixinShared):
         else:
             return None
 
-    def save_properties(self, properties_modified: Dict[int, Dict[int, FBPropertiesInCategory]], db: Session):
+    def save_properties(self, properties_modified: Dict[int, Dict[int, FBPropertiesInCategory]]):
         # loop at taxa
-        new_list = []
-        del_list = []
+        new_list: list[PropertyValue] = []
+        del_list: list[PropertyValue] = []
         for taxon_id, categories_dict in properties_modified.items():
-            taxon = Taxon.by_id(taxon_id, db=db, raise_if_not_exists=True)
+            taxon = self.taxon_dal.by_id(taxon_id)
 
             # nested loop
             for category in categories_dict.values():
@@ -243,18 +257,11 @@ class SavePropertiesTaxa(MixinShared):
                                            category.category_id]
                 properties = [self._flatten_property(p) for p in category.properties]
 
-            # property_names_nested = [x['properties'] for x in categories_dict.values()]
-            # property_names = [item for sublist in property_names_nested for item in sublist]
-            #     properties = [self._flatten_property(p) for p in property_names]
-            #     properties = [p for p in properties if p is not None]
-
                 # filter out empty values
                 properties = [p for p in properties if p and p.property_value]
 
                 # deleted properties
                 del_list.extend(self._get_deleted_property_values(properties, property_values_current))
-                if del_list:
-                    pass
 
                 for p in properties:
                     # compare with current property values whether new or deleted
@@ -263,17 +270,15 @@ class SavePropertiesTaxa(MixinShared):
                         if not p.property_name_id:
                             p.property_name_id = self.create_new_property_name(
                                     category.category_id,
-                                    p.property_name,
-                                    db)
+                                    p.property_name)
                         new_list.append(self._new_property_value_object(taxon, p))
                     elif self._is_modified(p, property_values_current):
                         self._modify_existing_property_value(p, property_values_current)
 
         if new_list:
-            db.add_all(new_list)
-        for d in del_list:
-            db.delete(d)
-        db.commit()
+            self.property_dal.create_property_values(new_list)
+        if del_list:
+            self.property_dal.delete_property_values(del_list)
 
     @staticmethod
     def _get_deleted_property_values(properties, property_values_current) -> List[PropertyValue]:
@@ -287,7 +292,7 @@ class SavePropertiesTaxa(MixinShared):
         property_value_object.property_value = property_modified.property_value
 
     @staticmethod
-    def _new_property_value_object(taxon: Taxon, property_value_modified: FBProperty):
+    def _new_property_value_object(taxon: Taxon, property_value_modified: FBProperty) -> PropertyValue:
         property_value_object = PropertyValue(
                 property_name_id=property_value_modified.property_name_id,
                 property_value=property_value_modified.property_value,

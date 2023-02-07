@@ -1,13 +1,14 @@
 import logging
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
+from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import create_formatted_botanical_name, BotanicalNameInput
 from plants.shared.message_services import get_message
 from plants.modules.taxon.models import Taxon
-from plants.dependencies import get_db, valid_taxon
+from plants.dependencies import valid_taxon, get_taxon_dal, get_image_dal
 from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource
 from plants.modules.taxon.schemas import (
     FModifiedTaxa, BResultsGetTaxon, FBotanicalAttributes,
@@ -66,17 +67,16 @@ async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
 
 
 @router.post("/new", response_model=BCreatedTaxonResponse)
-async def save_taxon(new_taxon_data: FNewTaxon, db: Session = Depends(get_db)):
+async def save_taxon(new_taxon_data: FNewTaxon, taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     """
     save a custom or non-custom taxon from search results list; if taxon already is in db, just return it
     """
     logger.info(f'Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}')
     if new_taxon_data.id:
-        taxon: Taxon = Taxon.by_id(taxon_id=new_taxon_data.id, db=db)
+        taxon: Taxon = taxon_dal.by_id(new_taxon_data.id)
         msg = get_message(f'Loaded {taxon.name} from database.')
     else:
-        taxon: Taxon = save_new_taxon(new_taxon_data, db=db)
-        db.commit()
+        taxon: Taxon = save_new_taxon(new_taxon_data, taxon_dal=taxon_dal)
         msg = get_message(f'Saved taxon {taxon.name} to database.')
 
     return {
@@ -87,15 +87,16 @@ async def save_taxon(new_taxon_data: FNewTaxon, db: Session = Depends(get_db)):
 
 
 @router.put("/", response_model=BSaveConfirmation)
-async def update_taxa(modified_taxa: FModifiedTaxa, db: Session = Depends(get_db)):
+async def update_taxa(modified_taxa: FModifiedTaxa,
+                      taxon_dal: TaxonDAL = Depends(get_taxon_dal),
+                      image_dal: ImageDAL = Depends(get_image_dal)):
     """
     update 1..n taxa in database
     """
     modified_taxa = modified_taxa.ModifiedTaxaCollection
     for taxon_modified in modified_taxa:
-        modify_taxon(taxon_modified=taxon_modified, db=db)
+        modify_taxon(taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal)
 
-    db.commit()
     results = {'resource': FBMajorResource.TAXON,
                'message': get_message(msg := f'Updated {len(modified_taxa)} taxa in database.')
                }

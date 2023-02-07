@@ -2,7 +2,8 @@ from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Pollination
 
 
-def test_florescence_create_valid(db, test_client, plant_valid_with_active_florescence, valid_simple_plant_dict):
+def test_florescence_create_valid(db, test_client, plant_valid_with_active_florescence, valid_simple_plant_dict,
+                                  plant_dal):
     """includes creation of pollen container"""
     # via orm:
     # create plant 1 with active florescence
@@ -22,7 +23,8 @@ def test_florescence_create_valid(db, test_client, plant_valid_with_active_flore
                                               }]}
     response = test_client.post("/api/pollen_containers/", json=payload)
     assert response.status_code == 200
-    plant2: Plant = Plant.by_name(p['plant_name'], db)
+    # plant2: Plant = Plant.by_name(p['plant_name'], db)
+    plant2: Plant = plant_dal.by_name(p['plant_name'])
     assert plant2.count_stored_pollen_containers == 4
 
     # create a florescence from active florescence and container
@@ -45,4 +47,3 @@ def test_florescence_create_valid(db, test_client, plant_valid_with_active_flore
     assert pollination.pollen_type == 'frozen'
     assert pollination.location == 'indoor'
     assert pollination.count == 3
-

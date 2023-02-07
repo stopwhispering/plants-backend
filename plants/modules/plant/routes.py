@@ -1,16 +1,21 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 import logging
 import datetime
-from starlette.requests import Request
 
-from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db, valid_plant
+from plants.exceptions import PlantAlreadyExists
+from plants.modules.plant.event_dal import EventDAL
+from plants.modules.plant.history_dal import HistoryDAL
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.property_dal import PropertyDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.shared.message_services import get_message
+from plants.dependencies import (valid_plant, get_plant_dal, get_property_dal, get_event_dal, get_history_dal,
+                                 get_taxon_dal)
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry
 from plants.modules.image.services import rename_plant_in_image_files
-from plants.modules.plant.services import update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants, \
-    generate_subsequent_plant_name
+from plants.modules.plant.services import (update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants,
+                                           generate_subsequent_plant_name)
 from plants.shared.message_schemas import BConfirmation, FBMajorResource
 from plants.modules.plant.schemas import (BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
                                           BResultsPlantsUpdate, BResultsPlantCloned, BResultsProposeSubsequentPlantName)
@@ -20,49 +25,56 @@ logger = logging.getLogger(__name__)
 NULL_DATE = datetime.date(1900, 1, 1)
 
 router = APIRouter(
-        prefix="/plants",
-        tags=["plants"],
-        responses={404: {"description": "Not found"}},
-        )
+    prefix="/plants",
+    tags=["plants"],
+    responses={404: {"description": "Not found"}},
+)
 
 
 @router.post("/{plant_id}/clone", response_model=BResultsPlantCloned)
 def clone_plant(
-        request: Request,
         plant_name_clone: str,
         plant_original: Plant = Depends(valid_plant),
-        db: Session = Depends(get_db),
-        ):
+        plant_dal: PlantDAL = Depends(get_plant_dal),
+        event_dal: EventDAL = Depends(get_event_dal),
+        property_dal: PropertyDAL = Depends(get_property_dal),
+        history_dal: HistoryDAL = Depends(get_history_dal),
+):
     """
-    clone plant with supplied plant_id; include duplication of events, photo_file assignments, and
-    properties
+    clone plant with supplied plant_id; include duplication of events and
+    properties; excludes regular image assignments (only to events)
     """
-    if not plant_name_clone or Plant.by_name(plant_name_clone, db):
-        throw_exception(f'Cloned Plant Name may not exist, yet: {plant_name_clone}.', request=request)
+    if not plant_name_clone or plant_dal.exists(plant_name_clone):
+        raise PlantAlreadyExists(plant_name_clone)
 
-    deep_clone_plant(plant_original, plant_name_clone, db)
+    deep_clone_plant(plant_original,
+                     plant_name_clone,
+                     plant_dal=plant_dal,
+                     event_dal=event_dal,
+                     property_dal=property_dal, )
 
-    plant_clone = Plant.by_name(plant_name_clone, db, raise_if_not_exists=True)
+    plant_clone = plant_dal.by_name(plant_name_clone)
     create_history_entry(description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
-                         db=db,
+                         history_dal=history_dal,
+                         plant_dal=plant_dal,
                          plant_id=plant_clone.id,
-                         plant_name=plant_clone.plant_name,
-                         commit=False)
+                         plant_name=plant_clone.plant_name)
 
     logger.info(msg := f"Cloned {plant_original.plant_name} ({plant_original.id}) "
                        f"into {plant_clone.plant_name} ({plant_clone.id})")
 
-    db.commit()
-    results = {'action':   'Renamed plant',
-               'message':  get_message(msg, description=msg),
-               'plant':   plant_clone}
+    results = {'action': 'Renamed plant',
+               'message': get_message(msg, description=msg),
+               'plant': plant_clone}
 
     return results
 
 
 # @router.post("/", response_model=PResultsPlantsUpdate)
 @router.post("/", response_model=BResultsPlantsUpdate)
-def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(get_db)):
+def create_or_update_plants(data: FPlantsUpdateRequest,
+                            plant_dal: PlantDAL = Depends(get_plant_dal),
+                            taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     """
     update existing or create new plants
     if no id is supplied, a new plant is created having the supplied attributes (only
@@ -71,7 +83,7 @@ def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(ge
     plants_modified = data.PlantsCollection
 
     # update plants
-    plants_saved = update_plants_from_list_of_dicts(plants_modified, db)
+    plants_saved = update_plants_from_list_of_dicts(plants_modified, plant_dal=plant_dal, taxon_dal=taxon_dal)
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
     results = {'action': 'Saved Plants',
@@ -83,29 +95,30 @@ def create_or_update_plants(data: FPlantsUpdateRequest, db: Session = Depends(ge
 
 
 @router.delete("/{plant_id}", response_model=BConfirmation)
-def delete_plant(plant: Plant = Depends(valid_plant), db: Session = Depends(get_db)):
+def delete_plant(plant: Plant = Depends(valid_plant), plant_dal: PlantDAL = Depends(get_plant_dal)):
     """tag deleted plant as 'deleted' in database"""
-    plant.deleted = True
-    db.commit()
+    plant_dal.delete(plant)
 
     logger.info(message := f'Deleted plant {plant.plant_name}')
-    results = {'action':   'Deleted plant',
-               'message':  get_message(message,
-                                       description=f'Plant name: {plant.plant_name}\nDeleted: True')
+    results = {'action': 'Deleted plant',
+               'message': get_message(message,
+                                      description=f'Plant name: {plant.plant_name}\nDeleted: True')
                }
 
     return results
 
 
 @router.put("/", response_model=BConfirmation)
-def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Depends(get_db)):
+def rename_plant(args: BPlantsRenameRequest,
+                 plant_dal: PlantDAL = Depends(get_plant_dal),
+                 history_dal: HistoryDAL = Depends(get_history_dal)):
     """we use the put method to rename a plant"""  # todo use id
-    plant = Plant.by_id(args.plant_id, db, raise_if_not_exists=True)
+    plant = plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
     # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
 
-    if db.query(Plant).filter(Plant.plant_name == args.new_plant_name).first():
-        throw_exception(f"Plant already exists: {args.new_plant_name}", request=request)
+    if plant_dal.exists(args.new_plant_name):
+        raise PlantAlreadyExists(args.new_plant_name)
 
     # rename plant name
     plant.plant_name = args.new_plant_name
@@ -115,28 +128,25 @@ def rename_plant(request: Request, args: BPlantsRenameRequest, db: Session = Dep
                                                         plant_name_old=args.old_plant_name)
 
     create_history_entry(description=f"Renamed to {args.new_plant_name}",
-                         db=db,
+                         history_dal=history_dal,
+                         plant_dal=plant_dal,
                          plant_id=plant.id,
-                         plant_name=args.old_plant_name,
-                         commit=False)
-
-    # only after photo_file modifications have gone well, we can commit changes to database
-    db.commit()
+                         plant_name=args.old_plant_name)
 
     logger.info(f'Modified {count_modified_images} images.')
-    results = {'action':   'Renamed plant',
-               'message':  get_message(f'Renamed {args.old_plant_name} to {args.new_plant_name}',
-                                       description=f'Modified {count_modified_images} images.')}
+    results = {'action': 'Renamed plant',
+               'message': get_message(f'Renamed {args.old_plant_name} to {args.new_plant_name}',
+                                      description=f'Modified {count_modified_images} images.')}
 
     return results
 
 
 @router.get("/", response_model=BResultsPlants)
-async def get_plants(db: Session = Depends(get_db)):
+async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
     """read (almost unfiltered) plants information from db"""
-    plants = fetch_plants(db)
-    results = {'action':           'Get plants',
-               'message':          get_message(f"Loaded {len(plants)} plants from database."),
+    plants = fetch_plants(plant_dal=plant_dal)
+    results = {'action': 'Get plants',
+               'message': get_message(f"Loaded {len(plants)} plants from database."),
                'PlantsCollection': plants}
 
     return results

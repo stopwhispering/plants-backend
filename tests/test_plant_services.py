@@ -1,15 +1,22 @@
-from plants.modules.plant.models import Plant
+from plants.modules.plant.event_dal import EventDAL
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.property_dal import PropertyDAL
 from plants.modules.plant.services import deep_clone_plant
 
 
-def test_deep_clone_plant(db, plant_valid):
+def test_deep_clone_plant(db, plant_valid, plant_dal: PlantDAL, event_dal: EventDAL, property_dal: PropertyDAL):
     db.add(plant_valid)
     db.commit()
 
-    deep_clone_plant(plant_valid, plant_name_clone='Aloe Vera Clone', db=db)
+    deep_clone_plant(plant_valid,
+                     plant_name_clone='Aloe Vera Clone',
+                     plant_dal=plant_dal,
+                     event_dal=event_dal,
+                     property_dal=property_dal)
     db.commit()
 
-    cloned_plant = Plant.by_name('Aloe Vera Clone', db=db)
+    cloned_plant = plant_dal.by_name('Aloe Vera Clone')
+    # cloned_plant = Plant.by_name('Aloe Vera Clone', db=db)
     assert cloned_plant is not None
     assert cloned_plant.plant_name == 'Aloe Vera Clone'
     assert cloned_plant.id >= 0 and cloned_plant.id != plant_valid.id

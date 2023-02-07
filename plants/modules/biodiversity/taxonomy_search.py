@@ -2,12 +2,13 @@ import logging
 
 from pykew import ipni as ipni, powo as powo
 from pykew.ipni_terms import Name
-from sqlalchemy.orm import Session
 
 from plants import settings
 from plants.exceptions import TooManyResultsError
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import Taxon
-from plants.modules.biodiversity.taxonomy_shared_functions import create_synonym_label_if_only_a_synonym, create_distribution_concat
+from plants.modules.biodiversity.taxonomy_shared_functions import (
+    create_synonym_label_if_only_a_synonym, create_distribution_concat)
 from plants.shared.message_services import throw_exception
 from plants.modules.taxon.schemas import FBRank
 
@@ -15,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class TaxonomySearch:
-    def __init__(self, include_external_apis: bool, search_for_genus_not_species: bool, db: Session):
+    def __init__(self, include_external_apis: bool, search_for_genus_not_species: bool, taxon_dal: TaxonDAL):
         self.include_external_apis = include_external_apis
         self.search_for_genus_not_species = search_for_genus_not_species
-        self.db = db
+        self.taxon_dal = taxon_dal
 
     def search(self, taxon_name_pattern: str) -> list[dict]:
         """
@@ -28,8 +29,7 @@ class TaxonomySearch:
         # search for taxa already in the database
         local_results = self._query_taxa_in_local_database(
             taxon_name_pattern=f'%{taxon_name_pattern}%',
-            search_for_genus_not_species=self.search_for_genus_not_species,
-            db=self.db)
+            search_for_genus_not_species=self.search_for_genus_not_species)
         results = local_results[:]
 
         # optionally, search in external biodiversity databases "ipni" and "powo"
@@ -81,14 +81,13 @@ class TaxonomySearch:
 
     def _query_taxa_in_local_database(self,
                                       taxon_name_pattern: str,
-                                      search_for_genus_not_species: bool,
-                                      db: Session) -> list[dict]:
+                                      search_for_genus_not_species: bool
+                                      ) -> list[dict]:
         """searches term in local botany database and returns results in web-format"""
         if search_for_genus_not_species:
-            taxa = db.query(Taxon).filter(Taxon.name.ilike(taxon_name_pattern),  # ilike ~ case-insensitive like
-                                          Taxon.rank == 'gen.').all()
+            taxa = self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern, FBRank.GENUS)
         else:
-            taxa = db.query(Taxon).filter(Taxon.name.ilike(taxon_name_pattern)).all()
+            taxa = self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern)
 
         results = []
         for taxon in taxa:
@@ -184,7 +183,7 @@ class TaxonomySearch:
         return results, lsid_in_powo
 
     @staticmethod
-    def _update_taxon_from_powo_api(result: dict) -> dict:
+    def _update_taxon_from_powo_api(result: dict):
         """
         for the supplied search result entry, fetch additional information from "Plants of the World" API
         """
@@ -211,7 +210,6 @@ class TaxonomySearch:
         # add information only available at POWO
         # result['phylum'] = powo_lookup.get('phylum')
         result['distribution_concat'] = create_distribution_concat(powo_lookup)
-        return result
 
     def _search_taxa_in_external_apis(self,
                                       plant_name_pattern: str,
@@ -235,7 +233,7 @@ class TaxonomySearch:
                 continue
                 # result['synonyms_concat'] = 'Status unknown, no entry in POWO'
 
-            result = self._update_taxon_from_powo_api(result)
+            self._update_taxon_from_powo_api(result)
 
         logger.info(f'Found {len(results)} results from IPNI/POWO search for search term "{plant_name_pattern}".')
         return results

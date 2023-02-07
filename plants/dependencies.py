@@ -2,8 +2,13 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from plants.extensions import orm
+from plants.modules.plant.event_dal import EventDAL
+from plants.modules.plant.history_dal import HistoryDAL
+from plants.modules.plant.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.property_dal import PropertyDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Pollination, Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
@@ -27,8 +32,28 @@ def get_florescence_dal(db: Session = Depends(get_db)):
     return FlorescenceDAL(db)
 
 
+def get_property_dal(db: Session = Depends(get_db)):
+    return PropertyDAL(db)
+
+
+def get_history_dal(db: Session = Depends(get_db)):
+    return HistoryDAL(db)
+
+
+def get_image_dal(db: Session = Depends(get_db)):
+    return ImageDAL(db)
+
+
 def get_plant_dal(db: Session = Depends(get_db)):
     return PlantDAL(db)
+
+
+def get_taxon_dal(db: Session = Depends(get_db)):
+    return TaxonDAL(db)
+
+
+def get_event_dal(db: Session = Depends(get_db)):
+    return EventDAL(db)
 
 
 async def valid_plant(plant_id: int, db: Session = Depends(get_db)) -> Plant:

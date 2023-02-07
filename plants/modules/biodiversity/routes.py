@@ -1,11 +1,11 @@
 from json.decoder import JSONDecodeError
 from fastapi import APIRouter, Depends
 import logging
-from sqlalchemy.orm import Session
 from starlette.requests import Request
 
+from plants.dependencies import get_taxon_dal
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db
 from plants.exceptions import TooManyResultsError
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
 from plants.modules.taxon.schemas import (
@@ -26,7 +26,7 @@ router = APIRouter(
 async def search_taxa_by_name(
         request: Request,
         taxon_info_request: FTaxonInfoRequest,
-        db: Session = Depends(get_db)):
+        taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     """
     searches taxon pattern in
         (1) local database and
@@ -34,7 +34,7 @@ async def search_taxa_by_name(
     """
     taxonomy_search = TaxonomySearch(include_external_apis=taxon_info_request.include_external_apis,
                                      search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
-                                     db=db)
+                                     taxon_dal=taxon_dal)
     try:
         results = taxonomy_search.search(taxon_info_request.taxon_name_pattern)
     except TooManyResultsError as e:
@@ -60,11 +60,12 @@ async def search_taxa_by_name(
 @router.post("/fetch_taxon_occurrence_images", response_model=BResultsFetchTaxonImages)
 async def fetch_taxon_occurrence_images(
         fetch_taxon_occurrence_images_request: FFetchTaxonOccurrenceImagesRequest,
-        db: Session = Depends(get_db)):
+        taxon_dal: TaxonDAL = Depends(get_taxon_dal)
+):
     """(re)fetch taxon images from gbif and create thumbnails"""
 
     # lookup ocurrences & images at gbif and generate thumbnails
-    loader = TaxonOccurencesLoader(db=db)
+    loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
     occurrence_images = loader.scrape_occurrences_for_taxon(gbif_id=fetch_taxon_occurrence_images_request.gbif_id)
 
     message = f'Refetched occurences for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id}'

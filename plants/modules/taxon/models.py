@@ -10,7 +10,6 @@ from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship, Session
 
 from plants.exceptions import TaxonNotFound
-from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -100,23 +99,9 @@ class Taxon(Base, OrmAsDict):
 
     # taxon to occurence images (n:m)
     occurrence_images = relationship("TaxonOccurrenceImage",
-                                           back_populates="taxa",
-                                           secondary='taxon_to_occurrence_association'
-                                           )
-
-    # occurrence_images = relationship('TaxonOccurrenceImage',
-    #                                  secondary='taxon_to_occurrence_association',
-    #                                  # foreign_keys='[taxon.id]',
-    #                                  # primaryjoin='Taxon.id == TaxonToOccurrenceAssociation.taxon_id',
-    #                                  # primaryjoin="and_(User.id==Address.user_id, " "Address.city=='Boston')"
-    #                                  primaryjoin="and_(Taxon.id == TaxonToOccurrenceAssociation.taxon_id, TaxonToOccurrenceAssociation.occurrence_id==TaxonOccurrenceImage.occurrence_id)",
-    #                                  back_populates='taxa')
-
-    # occurrence_images = relationship('TaxonOccurrenceImage',
-    #                                  secondary='taxon_to_occurrence_association',
-    #                                  primaryjoin='Taxon.id == foreign(TaxonToOccurrenceAssociation.taxon_id)',
-    #                                  secondaryjoin='and_(TaxonOccurrenceImage.occurrence_id == TaxonToOccurrenceAssociation.occurrence_id, TaxonOccurrenceImage.img_no == foreign(TaxonToOccurrenceAssociation.img_no), TaxonOccurrenceImage.gbif_id == foreign(TaxonToOccurrenceAssociation.gbif_id))'
-    #                                  )
+                                     back_populates="taxa",
+                                     secondary='taxon_to_occurrence_association'
+                                     )
 
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")

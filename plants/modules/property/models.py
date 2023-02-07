@@ -1,11 +1,9 @@
 from __future__ import annotations
 import logging
 from datetime import datetime
-from typing import List
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 
-from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -23,21 +21,6 @@ class PropertyCategory(Base, OrmAsDict):
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     property_names = relationship("PropertyName", back_populates="property_category")
-
-    # static query methods
-    @staticmethod
-    def get_cat_by_name(category_name: str, db: Session, raise_exception: bool = False) -> PropertyCategory:
-        cat = db.query(PropertyCategory).filter(PropertyCategory.category_name == category_name).first()
-        if not cat and raise_exception:
-            throw_exception(f'Property Category not found in database: {category_name}')
-        return cat
-
-    @staticmethod
-    def get_cat_by_id(category_id: int, db: Session, raise_exception: bool = False) -> PropertyCategory:
-        cat = db.query(PropertyCategory).filter(PropertyCategory.id == category_id).first()
-        if not cat and raise_exception:
-            throw_exception(f'Property Category not found in database: {category_id}')
-        return cat
 
 
 class PropertyName(Base, OrmAsDict):
@@ -75,32 +58,6 @@ class PropertyValue(Base, OrmAsDict):
 
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="property_values_taxon")
-
-    # static query methods
-    @staticmethod
-    def get_by_id(property_value_id: int, db: Session, raise_exception: bool = False) -> PropertyValue:
-        property_obj = db.query(PropertyValue).filter(PropertyValue.id ==
-                                                      property_value_id).first()
-        if not property_obj and raise_exception:
-            throw_exception(f'No property values found for Property value ID: {property_value_id}')
-        return property_obj
-
-    @staticmethod
-    def get_by_plant_id(plant_id: int, db: Session, raise_exception: bool = False) -> List[PropertyValue]:
-        property_obj = db.query(PropertyValue).filter(PropertyValue.plant_id == int(plant_id),
-                                                      PropertyValue.taxon_id.is_(None)).all()
-        if not property_obj and raise_exception:
-            throw_exception(f'No property values found for Plant ID: {plant_id}')
-        return property_obj
-
-    @staticmethod
-    def get_by_taxon_id(taxon_id: int, db: Session, raise_exception: bool = False) -> List[PropertyValue]:
-        property_obj = db.query(PropertyValue).filter(PropertyValue.taxon_id ==
-                                                      taxon_id,
-                                                      PropertyValue.taxon_id.is_(None)).all()
-        if not property_obj and raise_exception:
-            throw_exception(f'No property values found for Taxon ID: {taxon_id}')
-        return property_obj
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""

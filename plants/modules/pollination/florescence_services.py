@@ -1,26 +1,15 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 from plants.exceptions import BaseError
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import Florescence, FlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB, \
-    FlowerColorDifferentiation
+from plants.modules.pollination.models import (Florescence, FlorescenceStatus, Context,
+                                               FlowerColorDifferentiation)
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.shared.api_utils import parse_api_date, format_api_date
 from plants.modules.pollination.schemas import (
     BActiveFlorescence, FRequestEditedFlorescence, BPlantForNewFlorescence, FRequestNewFlorescence)
-
-
-# def _read_available_colors_rgb(plant: Plant, db: Session):
-#     used_colors_t = db.query(Pollination.label_color).filter(Pollination.seed_capsule_plant_id == plant.id,
-#                                                              Pollination.ongoing).all()
-#     # un-tuple
-#     used_colors = [t[0] for t in used_colors_t]
-#     available_color_names = [c for c in COLORS_MAP_TO_RGB.keys() if c not in used_colors]
-#     available_colors_rgb = [COLORS_MAP_TO_RGB[c] for c in available_color_names]
-#     return available_colors_rgb
 
 
 def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:

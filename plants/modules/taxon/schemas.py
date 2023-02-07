@@ -37,7 +37,8 @@ class FTaxonOccurrenceImage(BaseModel):
     publisher_dataset: Optional[constr(min_length=1, max_length=100)]
     references: Optional[HttpUrl]
     href: HttpUrl  # link to iamge at inaturalist etc.
-    filename_thumbnail: constr(min_length=1, max_length=120)  # filename for generated thumbnails  # todo switch to other id
+    # todo switch to other id
+    filename_thumbnail: constr(min_length=1, max_length=120)  # filename for generated thumbnails
 
     class Config:
         extra = Extra.forbid

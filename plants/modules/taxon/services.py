@@ -2,12 +2,12 @@ import logging
 from threading import Thread
 
 from pykew import powo
-from sqlalchemy.orm import Session
-
+from plants.exceptions import TaxonAlreadyExists
 from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import BotanicalNameInput, create_formatted_botanical_name
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.shared.message_services import throw_exception
+from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import Taxon, Distribution
 from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.taxon.schemas import FTaxon, FTaxonImage, FNewTaxon
@@ -71,8 +71,7 @@ def _retrieve_locations(lsid: str):
     return locations
 
 
-def save_new_taxon(new_taxon: FNewTaxon, db: Session) -> Taxon:
-
+def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
@@ -91,9 +90,8 @@ def save_new_taxon(new_taxon: FNewTaxon, db: Session) -> Taxon:
         gbif_identifier_lookup = GBIFIdentifierLookup()
         gbif_id = gbif_identifier_lookup.lookup(taxon_name=name, lsid=new_taxon.lsid)
 
-    existing = Taxon.by_name(taxon_name=name, db=db, raise_if_not_exists=False)
-    if existing:
-        throw_exception(f'Taxon with name {name} already exists.')
+    if taxon_dal.exists(taxon_name=name):
+        raise TaxonAlreadyExists(name)
 
     taxon = Taxon(
         name=name,
@@ -128,10 +126,11 @@ def save_new_taxon(new_taxon: FNewTaxon, db: Session) -> Taxon:
         custom_suffix=new_taxon.custom_suffix,
         custom_notes='',
     )
-    db.add(taxon)
+
+    taxon_dal.create(taxon)
 
     # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
-    loader = TaxonOccurencesLoader(db=db)
+    loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
     thread = Thread(target=loader.scrape_occurrences_for_taxon, args=[gbif_id])
     logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
     thread.start()
@@ -139,13 +138,11 @@ def save_new_taxon(new_taxon: FNewTaxon, db: Session) -> Taxon:
     return taxon
 
 
-def modify_taxon(taxon_modified: FTaxon, db: Session):
-    taxon: Taxon = db.query(Taxon).filter(Taxon.id == taxon_modified.id).first()
-    if not taxon:
-        logger.error(f'Taxon not found: {taxon.name}. Saving canceled.')
-        throw_exception(f'Taxon not found: {taxon.name}. Saving canceled.')
+def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDAL):
+    taxon: Taxon = taxon_dal.by_id(taxon_modified.id)
 
-    taxon.custom_notes = taxon_modified.custom_notes
+    if taxon.custom_notes != taxon_modified.custom_notes:
+        taxon_dal.update(taxon, {'custom_notes': taxon_modified.custom_notes})
 
     # changes to images attached to the taxon
     image: FTaxonImage
@@ -157,14 +154,15 @@ def modify_taxon(taxon_modified: FTaxon, db: Session):
             # don't delete photo_file object, but only the association
             # (photo_file might be assigned to other events)
             link: ImageToTaxonAssociation
-            db.delete([link for link in taxon.image_to_taxon_associations if
-                       link.image.relative_path == image_obj.relative_path][0])
+            deleted_link = next(link for link in taxon.image_to_taxon_associations
+                                if link.image.relative_path == image_obj.relative_path)
+            taxon_dal.delete_image_association_from_taxon(taxon, deleted_link)
 
     # newly assigned images
     if taxon_modified.images:
         for image in taxon_modified.images:
             # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
-            image_obj = Image.get_image_by_id(id_=image.id, db=db)
+            image_obj = image_dal.by_id(image.id)
             # if not image_obj:
             # if not Image.exists(filename=image.filename, db=db):
             #     # not assigned to any event, yet
@@ -178,7 +176,7 @@ def modify_taxon(taxon_modified: FTaxon, db: Session):
                 link = ImageToTaxonAssociation(image_id=image_obj.id,
                                                taxon_id=taxon.id,
                                                description=image.description)
-                db.add(link)
+                taxon_dal.create_image_to_taxon_association(link)
                 logger.info(f'Image {image_obj.relative_path} assigned to taxon {taxon.name}')
 
             # update description

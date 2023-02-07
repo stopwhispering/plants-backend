@@ -3,10 +3,9 @@ from typing import List, Tuple
 import logging
 
 from PIL import Image
-from sqlalchemy.orm import Session
 
 from plants import settings
-from plants.modules.image.models import Image as ImageModel
+from plants.modules.plant.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
 
@@ -15,21 +14,11 @@ def _original_image_file_exists(filename: str) -> bool:
     return settings.paths.path_original_photos_uploaded.joinpath(filename).is_file()
 
 
-def _image_exists_in_db(filename: str, db: Session) -> bool:
-    return ImageModel.exists(filename, db)
-
-
-def _remove_image_from_db(filename: str, db: Session):
-    image = ImageModel.get_image_by_filename(filename, db)
-    db.delete(image)
-    db.commit()
-
-
 def _remove_image_from_filesystem(filename: str) -> None:
     settings.paths.path_original_photos_uploaded.joinpath(filename).unlink()
 
 
-def remove_files_already_existing(files: List, suffix: str, db: Session) -> Tuple[list[str], list[str]]:
+def remove_files_already_existing(files: List, image_dal: ImageDAL) -> Tuple[list[str], list[str]]:
     """
     iterates over file objects, checks whether a file with that name already exists in filesystem and/or in database
      - if we have an orphaned file in filesystem, missing in database, it will be deleted with a messasge
@@ -42,14 +31,14 @@ def remove_files_already_existing(files: List, suffix: str, db: Session) -> Tupl
         # path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
         # logger.debug(f'Checking uploaded photo_file ({photo_upload.content_type}) to be saved as {path}.')
         exists_in_filesystem = _original_image_file_exists(filename=photo_upload.filename)
-        exists_in_db = _image_exists_in_db(filename=photo_upload.filename, db=db)
+        exists_in_db = image_dal.image_exists(filename=photo_upload.filename)
         if exists_in_filesystem and not exists_in_db:
             _remove_image_from_filesystem(filename=photo_upload.filename)
             logger.warning(warning := f'Found orphaned image {{photo_upload.filename}} in filesystem, '
                                       f'but not in database. Deletied image file.')
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:
-            _remove_image_from_db(filename=photo_upload.filename, db=db)
+            image_dal.delete_image_by_filename(filename=photo_upload.filename)
             logger.warning(warning := f'Found orphaned db entry for uploaded image  {photo_upload.filename} with no '
                            f'corresponsing file. Removed db entry.')
             warnings.append(warning)

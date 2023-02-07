@@ -1,21 +1,22 @@
-from typing import List
+from typing import List, Sequence
 import json
-from sqlalchemy.orm import Session
 import logging
 from pydantic.error_wrappers import ValidationError
 from fastapi import UploadFile, BackgroundTasks
 from fastapi import APIRouter, Depends, Request
 from starlette.responses import Response
 
-from plants import constants
-from plants.modules.image.models import Image, update_image_if_altered
+from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
 from plants.modules.image.services import (
     save_image_files, delete_image_file_and_db_entries, read_image_by_size,
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails, fetch_images_for_plant, fetch_untagged_images)
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.modules.plant.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_db, valid_plant
+from plants.dependencies import valid_plant, get_image_dal, get_taxon_dal, get_plant_dal
 from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,
                                           BResultsImagesUploaded, FBImages, FBImage)
 from plants.modules.image.image_services_simple import remove_files_already_existing
@@ -42,7 +43,10 @@ async def get_images_for_plant(plant: Plant = Depends(valid_plant)):
 
 
 @router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
-async def upload_images_plant(request: Request, plant: Plant = Depends(valid_plant), db: Session = Depends(get_db)):
+async def upload_images_plant(request: Request,
+                              plant: Plant = Depends(valid_plant),
+                              image_dal: ImageDAL = Depends(get_image_dal),
+                              plant_dal: PlantDAL = Depends(get_plant_dal)):
     """
     upload images and directly assign them to supplied plant; no keywords included
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
@@ -54,10 +58,11 @@ async def upload_images_plant(request: Request, plant: Plant = Depends(valid_pla
     files: List[UploadFile] = form.getlist('files[]')
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = remove_files_already_existing(files, constants.RESIZE_SUFFIX, db=db)
+    duplicate_filenames, warnings = remove_files_already_existing(files, image_dal=image_dal)
 
     images: list[FBImage] = await save_image_files(files=files,
-                                                   db=db,
+                                                   image_dal=image_dal,
+                                                   plant_dal=plant_dal,
                                                    plant_ids=(plant.id,),
                                                    )
 
@@ -77,11 +82,11 @@ async def upload_images_plant(request: Request, plant: Plant = Depends(valid_pla
 
 
 @router.get("/images/untagged/", response_model=BResultsImageResource)
-async def get_untagged_images(db: Session = Depends(get_db)):
+async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)):
     """
     get images with no plants assigned, yet
     """
-    untagged_images: list[FBImage] = fetch_untagged_images(db=db)
+    untagged_images: list[FBImage] = fetch_untagged_images(image_dal=image_dal)
     logger.info(msg := f'Returned {len(untagged_images)} images.')
     return {'ImagesCollection': untagged_images,
             'message': get_message(msg,
@@ -90,7 +95,9 @@ async def get_untagged_images(db: Session = Depends(get_db)):
 
 
 @router.put("/images/", response_model=BSaveConfirmation)
-async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_db)):
+async def update_images(modified_ext: BImageUpdated,
+                        image_dal: ImageDAL = Depends(get_image_dal),
+                        plant_dal: PlantDAL = Depends(get_plant_dal)):
     """
     modify existing photo_file's metadata
     """
@@ -102,22 +109,26 @@ async def update_images(modified_ext: BImageUpdated, db: Session = Depends(get_d
                                                           plant_names=[p.plant_name for p in image_ext.plants],
                                                           keywords=[k.keyword for k in image_ext.keywords],
                                                           description=image_ext.description or '',
-                                                          db=db)
-        image = Image.get_image_by_filename(filename=image_ext.filename, db=db)
-        update_image_if_altered(image=image,
-                                description=image_ext.description,
-                                plant_ids=[plant.plant_id for plant in image_ext.plants],
-                                keywords=[k.keyword for k in image_ext.keywords],
-                                db=db)
+                                                          image_dal=image_dal)
+        # image = Image.get_image_by_filename(filename=image_ext.filename, db=db)
+        image = image_dal.get_image_by_filename(filename=image_ext.filename)
+        _update_image_if_altered(image=image,
+                                 description=image_ext.description,
+                                 plant_ids=[plant.plant_id for plant in image_ext.plants],
+                                 keywords=[k.keyword for k in image_ext.keywords],
+                                 plant_dal=plant_dal,
+                                 image_dal=image_dal)
 
-    db.commit()
     return {'resource': FBMajorResource.IMAGE,
             'message': get_message(f"Saved updates for {len(modified_ext.ImagesCollection.__root__)} images.")
             }
 
 
 @router.post("/images/", response_model=BResultsImagesUploaded)
-async def upload_images(request: Request, db: Session = Depends(get_db)):
+async def upload_images(request: Request,
+                        image_dal: ImageDAL = Depends(get_image_dal),
+                        plant_dal: PlantDAL = Depends(get_plant_dal)
+                        ):
     """upload new photo_file(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
@@ -134,10 +145,11 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
         throw_exception(str(err), request=request)
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = remove_files_already_existing(files, constants.RESIZE_SUFFIX, db=db)
+    duplicate_filenames, warnings = remove_files_already_existing(files, image_dal=image_dal)
 
     images: list[FBImage] = await save_image_files(files=files,
-                                                   db=db,
+                                                   image_dal=image_dal,
+                                                   plant_dal=plant_dal,
                                                    plant_ids=additional_data['plants'],
                                                    keywords=additional_data['keywords'])
 
@@ -159,18 +171,17 @@ async def upload_images(request: Request, db: Session = Depends(get_db)):
 
 
 @router.delete("/images/", response_model=BResultsImageDeleted)
-async def delete_image(image_container: FImagesToDelete, db: Session = Depends(get_db)):
+async def delete_image(image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)):
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
     for image_to_delete in image_container.images:
-        image = Image.get_image_by_id(id_=image_to_delete.id, db=db)
+        image = image_dal.by_id(image_id=image_to_delete.id)
         if image.filename != image_to_delete.filename:
             logger.error(err_msg := f'Image {image.id} has unexpected filename: {image.filename}. '
                                     f'Expected filename: {image_to_delete.filename}. Analyze this inconsistency!')
             throw_exception(err_msg)
 
-        delete_image_file_and_db_entries(image=image, db=db)
+        delete_image_file_and_db_entries(image=image, image_dal=image_dal)
 
-    db.commit()
     deleted_files = [image.filename for image in image_container.images]
     return {
         'action': 'Deleted',
@@ -183,8 +194,8 @@ async def delete_image(image_container: FImagesToDelete, db: Session = Depends(g
             # Prevent FastAPI from adding "application/json" as an additional
             # response media type in the autogenerated OpenAPI specification.
             response_class=Response)
-def get_photo(filename: str, width: int = None, height: int = None, db: Session = Depends(get_db)):
-    image_bytes: bytes = read_image_by_size(filename=filename, db=db, width=width, height=height)
+def get_photo(filename: str, width: int = None, height: int = None, image_dal: ImageDAL = Depends(get_image_dal)):
+    image_bytes: bytes = read_image_by_size(filename=filename, image_dal=image_dal, width=width, height=height)
 
     # media_type here sets the media type of the actual response sent to the client.
     return Response(content=image_bytes, media_type="image/png")
@@ -194,11 +205,14 @@ def get_photo(filename: str, width: int = None, height: int = None, db: Session 
             # Prevent FastAPI from adding "application/json" as an additional
             # response media type in the autogenerated OpenAPI specification.
             response_class=Response)
-def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: Session = Depends(get_db)):
+def get_occurrence_thumbnail(gbif_id: int,
+                             occurrence_id: int,
+                             img_no: int,
+                             taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     image_bytes: bytes = read_occurrence_thumbnail(gbif_id=gbif_id,
                                                    occurrence_id=occurrence_id,
                                                    img_no=img_no,
-                                                   db=db)
+                                                   taxon_dal=taxon_dal)
 
     # media_type here sets the media type of the actual response sent to the client.
     return Response(content=image_bytes, media_type="image/png")
@@ -206,10 +220,49 @@ def get_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: 
 
 @router.post("/generate_missing_thumbnails", response_model=BConfirmation)
 async def trigger_generate_missing_thumbnails(background_tasks: BackgroundTasks,
-                                              db: Session = Depends(get_db)):
+                                              image_dal: ImageDAL = Depends(get_image_dal)):
     """trigger the generation of missing thumbnails for occurrences"""
-    msg = trigger_generation_of_missing_thumbnails(db=db, background_tasks=background_tasks)
+    msg = trigger_generation_of_missing_thumbnails(image_dal=image_dal, background_tasks=background_tasks)
     return {
         'action': 'Triggering generation of missing thumbnails',
         'message': get_message(msg)
     }
+
+
+def _update_image_if_altered(image: Image,
+                             description: str,
+                             plant_ids: Sequence[int],
+                             keywords: Sequence[str],
+                             plant_dal: PlantDAL,
+                             image_dal: ImageDAL
+                             ):
+    """compare current database record for image with supplied field values; update db entry if different;
+    Note: record_date_time is only set at upload, so we're not comparing or updating it."""
+    # description
+    if description != image.description and not (not description and not image.description):
+        image.description = description
+
+    # plants
+    new_plants = set(plant_dal.by_id(plant_id) for plant_id in plant_ids)
+    removed_image_to_plant_associations = [a for a in image.image_to_plant_associations
+                                           if a.plant not in new_plants]
+    added_image_to_plant_associations = [ImageToPlantAssociation(
+        image=image,
+        plant=p, )
+        for p in new_plants if p not in image.plants]
+    for removed_image_to_plant_association in removed_image_to_plant_associations:
+        plant_dal.delete_image_to_plant_association(removed_image_to_plant_association)
+    if added_image_to_plant_associations:
+        image.image_to_plant_associations.extend(added_image_to_plant_associations)
+
+    # keywords
+    current_keywords = set(k.keyword for k in image.keywords)
+    removed_keywords = [k for k in image.keywords if k.keyword not in keywords]
+    added_keywords = [ImageKeyword(image_id=image.id,
+                                   keyword=k)
+                      for k in set(keywords) if k not in current_keywords]
+
+    if removed_keywords:
+        image_dal.delete_keywords_from_image(image, removed_keywords)
+    if added_keywords:
+        image_dal.create_new_keywords_for_image(image, added_keywords)

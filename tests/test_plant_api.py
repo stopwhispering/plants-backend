@@ -54,8 +54,8 @@ def test_plant_rename_target_exists(db, test_client, plant_valid_in_db, plant_va
         'new_plant_name': plant_valid_with_active_florescence_in_db.plant_name
     }
     response = test_client.put("/api/plants/", json=payload)
-    assert response.status_code != 200
-    assert response.json().get('detail').get('message').startswith('Plant already exists')
+    assert 400 <= response.status_code < 500
+    assert 'already exists' in response.json().get('detail')
 
     history_entry = db.query(History).first()
     assert history_entry is None or not history_entry.description.startswith('Renamed')

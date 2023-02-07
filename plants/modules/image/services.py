@@ -1,17 +1,20 @@
-from pathlib import Path
-from typing import List
+from pathlib import Path, PurePath
+from typing import List, Sequence
 import logging
 import os
+from datetime import datetime
 
 import aiofiles
 from fastapi import UploadFile, BackgroundTasks
-from sqlalchemy.orm import Session
 
 from plants import local_config, settings, constants
-from plants.modules.image.models import Image, create_image, ImageToPlantAssociation, ImageToEventAssociation, \
+from plants.modules.image.models import Image, ImageToPlantAssociation, ImageToEventAssociation, \
     ImageToTaxonAssociation, ImageKeyword
 from plants.modules.image.schemas import FBImage, FBImagePlantTag
+from plants.modules.plant.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import TaxonOccurrenceImage
 
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -43,7 +46,8 @@ def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
 
 
 async def save_image_files(files: List[UploadFile],
-                           db: Session,
+                           image_dal: ImageDAL,
+                           plant_dal: PlantDAL,
                            plant_ids: tuple[int] = (),
                            keywords: tuple[str] = ()
                            ) -> list[FBImage]:
@@ -75,12 +79,12 @@ async def save_image_files(files: List[UploadFile],
 
         # add to db
         record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
-        plants = [Plant.by_id(plant_id=p, db=db, raise_if_not_exists=True) for p in plant_ids]
-        image: Image = create_image(db=db,
-                                    relative_path=get_relative_path(path),
-                                    record_date_time=record_datetime,
-                                    keywords=keywords,
-                                    plants=plants)
+        plants = [plant_dal.by_id(p) for p in plant_ids]
+        image: Image = _create_image(image_dal=image_dal,
+                                     relative_path=get_relative_path(path),
+                                     record_date_time=record_datetime,
+                                     keywords=keywords,
+                                     plants=plants)
 
         # generate thumbnails for frontend display
         for size in settings.images.sizes:
@@ -94,37 +98,34 @@ async def save_image_files(files: List[UploadFile],
                                                           plant_names=[p.plant_name for p in plants],
                                                           keywords=list(keywords),
                                                           description='',
-                                                          db=db)
+                                                          image_dal=image_dal)
         images.append(image)
 
-    db.commit()
     return [_to_response_image(i) for i in images]
 
 
-def delete_image_file_and_db_entries(image: Image, db: Session):
+def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
     """delete image file and entries in db"""
     ai: ImageToEventAssociation
     ap: ImageToPlantAssociation
     at: ImageToTaxonAssociation
     if image.image_to_event_associations:
         logger.info(f'Deleting {len(image.image_to_event_associations)} associated Image to Event associations.')
-        [db.delete(ai) for ai in image.image_to_event_associations]
+        image_dal.delete_image_to_event_associations(image, image.image_to_event_associations)
         image.events = []
     if image.image_to_plant_associations:
         logger.info(f'Deleting {len(image.image_to_plant_associations)} associated Image to Plant associations.')
-        [db.delete(ap) for ap in image.image_to_plant_associations]
+        image_dal.delete_image_to_plant_associations(image, image.image_to_plant_associations)
         image.plants = []
     if image.image_to_taxon_associations:
         logger.info(f'Deleting {len(image.image_to_taxon_associations)} associated Image to Taxon associations.')
-        [db.delete(at) for at in image.image_to_taxon_associations]
+        image_dal.delete_image_to_taxon_associations(image, image.image_to_taxon_associations)
         image.taxa = []
     if image.keywords:
         logger.info(f'Deleting {len(image.keywords)} associated Keywords.')
-        [db.delete(k) for k in image.keywords]
-    db.delete(image)
-    # we're committing at the end if deletion works; in case of a problem, flushing will raise exception
-    # in most situations, too
-    db.flush()
+        image_dal.delete_keywords_from_image(image, image.keywords)
+
+    image_dal.delete_image(image)
 
     old_path = image.absolute_path
     if not old_path.is_file():
@@ -149,14 +150,14 @@ def delete_image_file_and_db_entries(image: Image, db: Session):
 #     """return the path to the image file with the given pixel size"""
 #
 
-def get_image_path_by_size(filename: str, db: Session, width: int | None, height: int | None) -> Path:
+def get_image_path_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> Path:
     if (width is None or height is None) and not (width is None and height is None):
         logger.error(err_msg := f'Either supply width and height or neither of them.')
         throw_exception(err_msg)
 
     if width is None:
         # get image db entry for the directory it is stored at in local filesystem
-        image: Image = Image.get_image_by_filename(db=db, filename=filename)
+        image: Image = image_dal.get_image_by_filename(filename=filename)
         return Path(image.absolute_path)
 
     else:
@@ -179,12 +180,12 @@ def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
     return path
 
 
-def read_image_by_size(filename: str, db: Session, width: int | None, height: int | None) -> bytes:
+def read_image_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> bytes:
     """return the image in specified size as bytes"""
     path = get_image_path_by_size(filename=filename,
-                                  db=db,
                                   width=width,
-                                  height=height)
+                                  height=height,
+                                  image_dal=image_dal)
 
     if not path.is_file():
         # return default image on dev environment where most photos are missing
@@ -200,11 +201,21 @@ def read_image_by_size(filename: str, db: Session, width: int | None, height: in
     return image_bytes
 
 
-def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, db: Session):
-    taxon_occurrence_image: TaxonOccurrenceImage = (db.query(TaxonOccurrenceImage).filter(
-                                    TaxonOccurrenceImage.gbif_id == gbif_id,
-                                    TaxonOccurrenceImage.occurrence_id == occurrence_id,
-                                    TaxonOccurrenceImage.img_no == img_no).first())
+def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, taxon_dal: TaxonDAL):
+    taxon_occurrence_images: list[TaxonOccurrenceImage] = taxon_dal.get_taxon_occurrence_image_by_filter(
+        {'gbif_id': gbif_id, 'occurrence_id': occurrence_id, 'img_no': img_no})
+
+    if not taxon_occurrence_images:
+        logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
+        throw_exception(err_msg)
+
+    assert len(taxon_occurrence_images) == 1
+    taxon_occurrence_image = taxon_occurrence_images[0]
+
+    # taxon_occurrence_image: TaxonOccurrenceImage = (db.query(TaxonOccurrenceImage).filter(
+    #                                 TaxonOccurrenceImage.gbif_id == gbif_id,
+    #                                 TaxonOccurrenceImage.occurrence_id == occurrence_id,
+    #                                 TaxonOccurrenceImage.img_no == img_no).first())
     if not taxon_occurrence_image:
         logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
         throw_exception(err_msg)
@@ -254,8 +265,8 @@ def _generate_missing_thumbnails(images: list[Image]):
     logger.info(f'Thumbnail Generation - Files not found: {count_files_not_found}')
 
 
-def trigger_generation_of_missing_thumbnails(db: Session, background_tasks: BackgroundTasks) -> str:
-    images: list[Image] = db.query(Image).all()
+def trigger_generation_of_missing_thumbnails(background_tasks: BackgroundTasks, image_dal: ImageDAL) -> str:
+    images: list[Image] = image_dal.get_all_images()
     logger.info(msg := f"Generating thumbnails for {len(images)} images in "
                        f"sizes: {settings.images.sizes} in background.")
     background_tasks.add_task(_generate_missing_thumbnails, images)
@@ -284,8 +295,8 @@ def _to_response_image(image: Image) -> FBImage:
         record_date_time=image.record_date_time)
 
 
-def fetch_untagged_images(db: Session) -> list[FBImage]:
-    untagged_images = db.query(Image).filter(~Image.plants.any()).all()  # noqa
+def fetch_untagged_images(image_dal: ImageDAL) -> list[FBImage]:
+    untagged_images = image_dal.get_untagged_images()
     return [_to_response_image(image) for image in untagged_images]
 
 
@@ -296,9 +307,33 @@ def _shorten_plant_name(plant_name: str) -> str:
             else plant_name)
 
 
-def get_distinct_image_keywords(db: Session) -> set[str]:
-    """
-    get set of all image keywords
-    """
-    keyword_tuples = db.query(ImageKeyword.keyword).distinct().all()
-    return {k[0] for k in keyword_tuples}
+def _create_image(image_dal: ImageDAL,
+                  relative_path: PurePath,
+                  record_date_time: datetime,
+                  description: str = None,
+                  plants: list[Plant] = None,
+                  keywords: Sequence[str] = (),
+                  # events and taxa are saved elsewhere
+                  ) -> Image:
+    if image_dal.get_image_by_relative_path(relative_path.as_posix()):
+        # if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
+        raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')
+
+    image = Image(relative_path=relative_path.as_posix(),
+                  filename=relative_path.name,
+                  record_date_time=record_date_time,
+                  description=description,
+                  plants=plants if plants else [],
+                  )
+    # get the image id
+    image_dal.create_image(image)
+
+    if keywords:
+        keywords_orm = [
+            ImageKeyword(
+                image_id=image.id,
+                image=image,
+                keyword=k) for k in keywords
+        ]
+        image_dal.create_new_keywords_for_image(image, keywords_orm)
+    return image
