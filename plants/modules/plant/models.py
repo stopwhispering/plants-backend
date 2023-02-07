@@ -194,7 +194,7 @@ class Plant(Base, OrmAsDict):
         return plant
 
     @staticmethod
-    def by_id(plant_id: int, db: Session, raise_if_not_exists: bool = False) -> Plant | None:
+    def by_id(plant_id: int, db: Session, raise_if_not_exists: bool = True) -> Plant | None:
         plant = db.query(Plant).filter(Plant.id == plant_id).first()
         if not plant and raise_if_not_exists:
             raise PlantNotFound(plant_id)

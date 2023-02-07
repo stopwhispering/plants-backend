@@ -1,0 +1,66 @@
+from typing import Collection
+
+from sqlalchemy import select
+
+from plants.modules.pollination.models import Florescence, FlorescenceStatus
+from plants.shared.base_dal import BaseDAL
+
+
+class FlorescenceDAL(BaseDAL):
+    def __init__(self, session):
+        super().__init__(session)
+
+    def create_florescence(self, florescence: Florescence):
+        self.session.add(florescence)
+        self.session.flush()
+
+    def delete_florescence(self, florescence: Florescence):
+        self.session.delete(florescence)
+        self.session.flush()
+
+    def by_status(self, status: Collection[FlorescenceStatus]) -> list[Florescence]:
+        query = (
+            select(Florescence)
+            .where(Florescence.florescence_status.in_(status))
+        )
+        return (self.session.scalars(query)).all()  # noqa
+
+    def by_id(self, florescence_id: int) -> Florescence:
+        query = (
+            select(Florescence)
+            .where(Florescence.id == florescence_id)  # noqa
+        )
+        return (self.session.scalars(query)).first()
+
+    def update_florescence(self, florescence: Florescence, updates: dict):
+        if 'florescence_status' in updates:
+            florescence.florescence_status = updates['florescence_status']
+        if 'comment' in updates:
+            florescence.comment = updates['comment']
+        if 'branches_count' in updates:
+            florescence.branches_count = updates['branches_count']
+        if 'flowers_count' in updates:
+            florescence.flowers_count = updates['flowers_count']
+        if 'perianth_length' in updates:
+            florescence.perianth_length = updates['perianth_length']
+        if 'perianth_diameter' in updates:
+            florescence.perianth_diameter = updates['perianth_diameter']
+        if 'flower_color' in updates:
+            florescence.flower_color = updates['flower_color']
+        if 'flower_color_second' in updates:
+            florescence.flower_color_second = updates['flower_color_second']
+        if 'flower_colors_differentiation' in updates:
+            florescence.flower_colors_differentiation = updates['flower_colors_differentiation']
+        if 'stigma_position' in updates:
+            florescence.stigma_position = updates['stigma_position']
+
+        if 'first_flower_opening_date' in updates:
+            florescence.first_flower_opening_date = updates['first_flower_opening_date']
+        if 'last_flower_closing_date' in updates:
+            florescence.last_flower_closing_date = updates['last_flower_closing_date']
+        if 'inflorescence_appearance_date' in updates:
+            florescence.inflorescence_appearance_date = updates['inflorescence_appearance_date']
+        if 'last_update_context' in updates:
+            florescence.last_update_context = updates['last_update_context']
+
+        self.session.flush()

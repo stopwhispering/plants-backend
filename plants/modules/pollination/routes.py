@@ -1,10 +1,12 @@
 import logging
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import COLORS_MAP, Pollination, Florescence
 from plants.modules.pollination.ml_model import train_model_for_probability_of_seed_production
+from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (save_new_pollination, read_ongoing_pollinations,
                                                              update_pollination,
                                                              read_pollen_containers, update_pollen_containers,
@@ -23,7 +25,8 @@ from plants.modules.pollination.florescence_services import (
     remove_florescence)
 from plants.modules.pollination.flower_history_services import generate_flower_history
 from plants.shared.message_services import get_message
-from plants.dependencies import get_db, valid_pollination, valid_florescence
+from plants.dependencies import (valid_pollination, valid_florescence, get_pollination_dal, get_plant_dal,
+                                 get_florescence_dal)
 
 logger = logging.getLogger(__name__)
 
@@ -37,28 +40,34 @@ router = APIRouter(
 @router.post('/pollinations')
 async def post_pollination(
         new_pollination_data: FRequestNewPollination,
-        db: Session = Depends(get_db)):
-    save_new_pollination(new_pollination_data=new_pollination_data, db=db)
-    db.commit()
+        pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+        florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+        plant_dal: PlantDAL = Depends(get_plant_dal)
+):
+    save_new_pollination(new_pollination_data=new_pollination_data,
+                         pollination_dal=pollination_dal,
+                         florescence_dal=florescence_dal,
+                         plant_dal=plant_dal)
 
 
 @router.put('/pollinations/{pollination_id}')
 async def put_pollination(
         edited_pollination_data: FRequestEditedPollination,
         pollination: Pollination = Depends(valid_pollination),
-        db: Session = Depends(get_db), ):
+        pollination_dal: PollinationDAL = Depends(get_pollination_dal)):
     assert pollination.id == edited_pollination_data.id
-    update_pollination(pollination, pollination_data=edited_pollination_data)
-    db.commit()
+    update_pollination(pollination, pollination_data=edited_pollination_data, pollination_dal=pollination_dal)
 
 
 @router.get("/ongoing_pollinations",
             response_model=BResultsOngoingPollinations)
-async def get_ongoing_pollinations(db: Session = Depends(get_db)):
-    ongoing_pollinations = read_ongoing_pollinations(db=db)
-    return {'action': 'Get ongoing pollinations',
-            'message': get_message(f"Provided {len(ongoing_pollinations)} ongoing pollinations."),
-            'ongoingPollinationCollection': ongoing_pollinations}
+async def get_ongoing_pollinations(pollination_dal=Depends(get_pollination_dal)):
+    ongoing_pollinations = read_ongoing_pollinations(pollination_dal=pollination_dal)
+    return {
+        'action': 'Get ongoing pollinations',
+        'message': get_message(f"Provided {len(ongoing_pollinations)} ongoing pollinations."),
+        'ongoingPollinationCollection': ongoing_pollinations
+    }
 
 
 @router.get("/pollinations/settings",
@@ -72,51 +81,51 @@ async def get_pollination_settings():
 
 @router.get("/pollen_containers",
             response_model=BResultsPollenContainers)
-async def get_pollen_containers(db: Session = Depends(get_db)):
+async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)):
     """Get pollen containers plus plants without pollen containers """
-    pollen_containers = read_pollen_containers(db=db)
-    plants_without_pollen_containers = read_plants_without_pollen_containers(db=db)
+    pollen_containers = read_pollen_containers(plant_dal=plant_dal)
+    plants_without_pollen_containers = read_plants_without_pollen_containers(plant_dal=plant_dal)
     return {'pollenContainerCollection': pollen_containers,
             'plantsWithoutPollenContainerCollection': plants_without_pollen_containers}
 
 
 @router.post("/pollen_containers")
 async def post_pollen_containers(pollen_containers_data: FRequestPollenContainers,
-                                 db: Session = Depends(get_db)):
+                                 plant_dal: PlantDAL = Depends(get_plant_dal)):
     """update pollen containers and add new ones"""
-    update_pollen_containers(pollen_containers_data=pollen_containers_data.pollenContainerCollection, db=db)
-    db.commit()
+    update_pollen_containers(pollen_containers_data=pollen_containers_data.pollenContainerCollection,
+                             plant_dal=plant_dal)
 
 
 @router.delete('/pollinations/{pollination_id}')
 async def delete_pollination(
         pollination: Pollination = Depends(valid_pollination),
-        db: Session = Depends(get_db)):
-    remove_pollination(pollination, db=db)
-    db.commit()
+        pollination_dal=Depends(get_pollination_dal)):
+    remove_pollination(pollination, pollination_dal=pollination_dal)
 
 
 @router.post('/retrain_probability_pollination_to_seed_model',
              response_model=BResultsRetrainingPollinationToSeedsModel)
-async def retrain_probability_pollination_to_seed_model(db: Session = Depends(get_db)):
+async def retrain_probability_pollination_to_seed_model():
     """retrain the probability_pollination_to_seed ml model"""
-    results = train_model_for_probability_of_seed_production(db=db)
+    results = train_model_for_probability_of_seed_production()
     return results
 
 
 @router.get("/active_florescences", response_model=BResultsActiveFlorescences)
-async def get_active_florescences(db: Session = Depends(get_db), ):
+async def get_active_florescences(florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+                                  pollination_dal: PollinationDAL = Depends(get_pollination_dal)):
     """read active florescences, either after inflorescence appeared or flowering"""
-    florescences = read_active_florescences(db)
+    florescences = read_active_florescences(florescence_dal=florescence_dal, pollination_dal=pollination_dal)
     return {'action': 'Get active florescences',
             'message': get_message(f"Provided {len(florescences)} active florescences."),
             'activeFlorescenceCollection': florescences}
 
 
 @router.get("/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence)
-async def get_plants_for_new_florescence(db: Session = Depends(get_db), ):
+async def get_plants_for_new_florescence(plant_dal: PlantDAL = Depends(get_plant_dal)):
     """read all plants available for new florescence"""
-    plants = read_plants_for_new_florescence(db)
+    plants = read_plants_for_new_florescence(plant_dal=plant_dal)
     return {'plantsForNewFlorescenceCollection': plants}
 
 
@@ -124,33 +133,40 @@ async def get_plants_for_new_florescence(db: Session = Depends(get_db), ):
 async def put_active_florescence(
         edited_florescence_data: FRequestEditedFlorescence,
         florescence: Florescence = Depends(valid_florescence),
-        db: Session = Depends(get_db)):
+        florescence_dal: FlorescenceDAL = Depends(get_florescence_dal)):
     assert florescence.id == edited_florescence_data.id
-    update_active_florescence(florescence, edited_florescence_data=edited_florescence_data)
-    db.commit()
+    update_active_florescence(florescence,
+                              edited_florescence_data=edited_florescence_data,
+                              florescence_dal=florescence_dal)
 
 
 @router.post("/active_florescences")  # no response required (full reload after post)
 async def post_active_florescence(new_florescence_data: FRequestNewFlorescence,
-                                  db: Session = Depends(get_db), ):
+                                  florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+                                  plant_dal: PlantDAL = Depends(get_plant_dal)):
     """create new florescence for a plant"""
-    create_new_florescence(new_florescence_data=new_florescence_data, db=db)
-    db.commit()
+    create_new_florescence(new_florescence_data=new_florescence_data,
+                           florescence_dal=florescence_dal,
+                           plant_dal=plant_dal)
 
 
 @router.delete('/florescences/{florescence_id}')
 async def delete_florescence(
         florescence: Florescence = Depends(valid_florescence),
-        db: Session = Depends(get_db), ):
-    remove_florescence(florescence, db=db)
-    db.commit()
+        florescence_dal: FlorescenceDAL = Depends(get_florescence_dal)):
+    remove_florescence(florescence, florescence_dal=florescence_dal)
 
 
 @router.get("/potential_pollen_donors/{florescence_id}",
             response_model=BResultsPotentialPollenDonors)
 async def get_potential_pollen_donors(florescence: Florescence = Depends(valid_florescence),
-                                      db: Session = Depends(get_db), ):
-    potential_pollen_donors = read_potential_pollen_donors(florescence=florescence, db=db)
+                                      florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+                                      pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+                                      plant_dal: PlantDAL = Depends(get_plant_dal)):
+    potential_pollen_donors = read_potential_pollen_donors(florescence=florescence,
+                                                           florescence_dal=florescence_dal,
+                                                           pollination_dal=pollination_dal,
+                                                           plant_dal=plant_dal)
     return {'action': 'Get potential pollen donors',
             'message': get_message(f"Provided {len(potential_pollen_donors)} potential donors."),
             'potentialPollenDonorCollection': potential_pollen_donors}
@@ -158,8 +174,8 @@ async def get_potential_pollen_donors(florescence: Florescence = Depends(valid_f
 
 @router.get("/flower_history",
             response_model=BResultsFlowerHistory)
-async def get_flower_history(db: Session = Depends(get_db), ):
-    months, flower_history = generate_flower_history(db=db)
+async def get_flower_history(florescence_dal: FlorescenceDAL = Depends(get_florescence_dal)):
+    months, flower_history = generate_flower_history(florescence_dal=florescence_dal)
     return {'action': 'Generate flower history',
             'message': get_message(f"Generated flower history for {len(months)} months."),
             'plants': flower_history,

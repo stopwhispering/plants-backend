@@ -10,7 +10,6 @@ from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.utils._testing import ignore_warnings  # noqa
-from sqlalchemy.orm import Session
 
 from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
 from plants import local_config
@@ -173,7 +172,7 @@ def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
     return {'mean_f1_score': np.mean(scores)}
 
 
-def train_model_for_probability_of_seed_production(db: Session) -> dict:
+def train_model_for_probability_of_seed_production() -> dict:
     """predict whether a pollination attempt is goint to reach SEED status"""
     feature_container = _create_features()
     df = _create_data(feature_container=feature_container)

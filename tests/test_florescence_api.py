@@ -1,5 +1,5 @@
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Florescence, BFlorescenceStatus
+from plants.modules.pollination.models import Florescence, FlorescenceStatus
 
 
 def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, valid_florescence_dict):
@@ -83,7 +83,7 @@ def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant)
     db.expire_all()
     assert len(plant_valid_in_db.florescences) == 1
     florescence_in_db: Florescence = plant_valid_in_db.florescences[0]
-    assert florescence_in_db.florescence_status == BFlorescenceStatus.INFLORESCENCE_APPEARED
+    assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     # FRequestEditedFlorescence
     payload = {
@@ -94,10 +94,10 @@ def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant)
     response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert 400 <= response.status_code <= 499
     db.expire_all()
-    assert florescence_in_db.florescence_status == BFlorescenceStatus.INFLORESCENCE_APPEARED
+    assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     payload['florescence_status'] = "aborted"
     response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert response.status_code == 200
     db.expire_all()
-    assert florescence_in_db.florescence_status == BFlorescenceStatus.ABORTED
+    assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED

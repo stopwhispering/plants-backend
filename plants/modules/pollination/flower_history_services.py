@@ -3,10 +3,9 @@ from dataclasses import dataclass
 from datetime import date, timedelta, datetime
 from dateutil import rrule
 
-from sqlalchemy.orm import Session
-
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Florescence, BFlorescenceStatus
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
+from plants.modules.pollination.models import Florescence, FlorescenceStatus
 from plants.shared.api_constants import FORMAT_YYYY_MM
 from plants.modules.pollination.schemas import BFloweringState, BPlantFlowerHistory
 
@@ -224,9 +223,8 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
     return flowering_plants
 
 
-def generate_flower_history(db: Session):
-    florescences = db.query(Florescence).filter(
-        Florescence.florescence_status == BFlorescenceStatus.FINISHED).all()
+def generate_flower_history(florescence_dal: FlorescenceDAL):
+    florescences = florescence_dal.by_status([FlorescenceStatus.FINISHED])
     distinct_plants = set([f.plant for f in florescences])
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
 

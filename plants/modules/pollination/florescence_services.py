@@ -3,41 +3,42 @@ from sqlalchemy.orm import Session
 
 from plants.exceptions import BaseError
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Florescence, BFlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB, \
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
+from plants.modules.pollination.models import Florescence, FlorescenceStatus, Context, Pollination, COLORS_MAP_TO_RGB, \
     FlowerColorDifferentiation
+from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.shared.api_utils import parse_api_date, format_api_date
 from plants.modules.pollination.schemas import (
     BActiveFlorescence, FRequestEditedFlorescence, BPlantForNewFlorescence, FRequestNewFlorescence)
 
 
-def _read_available_colors_rgb(plant: Plant, db: Session):
-    used_colors_t = db.query(Pollination.label_color).filter(Pollination.seed_capsule_plant_id == plant.id,
-                                                             Pollination.ongoing).all()
-    # un-tuple
-    used_colors = [t[0] for t in used_colors_t]
-    available_color_names = [c for c in COLORS_MAP_TO_RGB.keys() if c not in used_colors]
-    available_colors_rgb = [COLORS_MAP_TO_RGB[c] for c in available_color_names]
-    return available_colors_rgb
+# def _read_available_colors_rgb(plant: Plant, db: Session):
+#     used_colors_t = db.query(Pollination.label_color).filter(Pollination.seed_capsule_plant_id == plant.id,
+#                                                              Pollination.ongoing).all()
+#     # un-tuple
+#     used_colors = [t[0] for t in used_colors_t]
+#     available_color_names = [c for c in COLORS_MAP_TO_RGB.keys() if c not in used_colors]
+#     available_colors_rgb = [COLORS_MAP_TO_RGB[c] for c in available_color_names]
+#     return available_colors_rgb
 
 
-def read_plants_for_new_florescence(db: Session) -> list[BPlantForNewFlorescence]:
-    # query = db.query(Plant).filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
-    query = db.query(Plant).filter(Plant.deleted.is_(False))
-    plants: list[Plant] = query.all()
+def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:
+    plants: list[Plant] = plant_dal.get_all_plants()
 
     plants_for_new_florescence = []
     for p in plants:
         plants_for_new_florescence.append(BPlantForNewFlorescence(
-                                            plant_id=p.id,
-                                            plant_name=p.plant_name,
-                                            genus=p.taxon.genus if p.taxon else None))
+            plant_id=p.id,
+            plant_name=p.plant_name,
+            genus=p.taxon.genus if p.taxon else None))
     return plants_for_new_florescence
 
 
-def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
-
-    florescences_orm = Florescence.by_status({BFlorescenceStatus.FLOWERING,
-                                              BFlorescenceStatus.INFLORESCENCE_APPEARED}, db)
+def read_active_florescences(florescence_dal: FlorescenceDAL,
+                             pollination_dal: PollinationDAL) -> list[BActiveFlorescence]:
+    florescences_orm = florescence_dal.by_status({FlorescenceStatus.FLOWERING,
+                                                  FlorescenceStatus.INFLORESCENCE_APPEARED})
     florescences = []
     for f in florescences_orm:
         f: Florescence
@@ -61,15 +62,16 @@ def read_active_florescences(db: Session) -> list[BActiveFlorescence]:
             'first_flower_opening_date': format_api_date(f.first_flower_opening_date),
             'last_flower_closing_date': format_api_date(f.last_flower_closing_date),
 
-            'available_colors_rgb': _read_available_colors_rgb(plant=f.plant, db=db),
+            'available_colors_rgb': pollination_dal.get_available_colors_for_plant(plant=f.plant),
         }
         florescences.append(BActiveFlorescence.parse_obj(f_dict))
 
     return florescences
 
 
-def update_active_florescence(florescence: Florescence, edited_florescence_data: FRequestEditedFlorescence):
-
+def update_active_florescence(florescence: Florescence,
+                              edited_florescence_data: FRequestEditedFlorescence,
+                              florescence_dal: FlorescenceDAL):
     # technical validation
     assert florescence is not None
     assert florescence.plant_id == edited_florescence_data.plant_id
@@ -88,46 +90,34 @@ def update_active_florescence(florescence: Florescence, edited_florescence_data:
             and edited_florescence_data.flower_color_second == edited_florescence_data.flower_color):
         raise HTTPException(status_code=400, detail="flower_color_second must be different from flower_color")
 
-    florescence.florescence_status = edited_florescence_data.florescence_status
-    florescence.inflorescence_appearance_date = parse_api_date(edited_florescence_data.inflorescence_appearance_date)
-    florescence.comment = edited_florescence_data.comment
-    florescence.first_flower_opening_date = parse_api_date(edited_florescence_data.first_flower_opening_date)
-    florescence.last_flower_closing_date = parse_api_date(edited_florescence_data.last_flower_closing_date)
-    florescence.branches_count = edited_florescence_data.branches_count
-    florescence.flowers_count = edited_florescence_data.flowers_count
+    updates = edited_florescence_data.__dict__
+    updates['first_flower_opening_date'] = parse_api_date(edited_florescence_data.first_flower_opening_date)
+    updates['last_flower_closing_date'] = parse_api_date(edited_florescence_data.last_flower_closing_date)
+    updates['inflorescence_appearance_date'] = parse_api_date(edited_florescence_data.inflorescence_appearance_date)
+    updates['last_update_context'] = Context.API.value
 
-    florescence.perianth_length = edited_florescence_data.perianth_length
-    florescence.perianth_diameter = edited_florescence_data.perianth_diameter
-    florescence.flower_color = edited_florescence_data.flower_color
-    florescence.flower_color_second = edited_florescence_data.flower_color_second
-    florescence.flower_colors_differentiation = edited_florescence_data.flower_colors_differentiation
-    florescence.stigma_position = edited_florescence_data.stigma_position
-
-    # florescence.last_update_at = datetime.now()
-    florescence.last_update_context = Context.API.value
+    florescence_dal.update_florescence(florescence, updates=updates)
 
 
-def create_new_florescence(new_florescence_data: FRequestNewFlorescence, db: Session):
+def create_new_florescence(new_florescence_data: FRequestNewFlorescence,
+                           florescence_dal: FlorescenceDAL,
+                           plant_dal: PlantDAL):
+    assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)
 
-    assert BFlorescenceStatus.has_value(new_florescence_data.florescence_status)
-    plant = Plant.by_id(plant_id=new_florescence_data.plant_id, db=db, raise_if_not_exists=True)
-
+    plant = plant_dal.by_id(new_florescence_data.plant_id)
     florescence = Florescence(
         plant_id=new_florescence_data.plant_id,
         plant=plant,
         florescence_status=new_florescence_data.florescence_status,
         inflorescence_appearance_date=parse_api_date(new_florescence_data.inflorescence_appearance_date),
         comment=new_florescence_data.comment,
-
-        # creation_at=datetime.now(),
         creation_context=Context.API.value  # noqa
     )
+    florescence_dal.create_florescence(florescence)
 
-    db.add(florescence)
 
-
-def remove_florescence(florescence: Florescence, db: Session):
+def remove_florescence(florescence: Florescence, florescence_dal: FlorescenceDAL):
     """ Delete a florescence """
     if florescence.pollinations:
         raise BaseError(detail={'message': 'Florescence has pollinations'})
-    db.delete(florescence)
+    florescence_dal.delete_florescence(florescence)

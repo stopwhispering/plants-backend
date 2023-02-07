@@ -5,7 +5,7 @@ from decimal import Decimal
 from pydantic import Extra, constr, condecimal, conint
 from pydantic.main import BaseModel
 
-from plants.modules.pollination.models import PollenType, BFlorescenceStatus, PollinationStatus, \
+from plants.modules.pollination.models import PollenType, FlorescenceStatus, PollinationStatus, \
     FlowerColorDifferentiation, StigmaPosition
 from plants.shared.message_schemas import BMessage
 from plants.constants import REGEX_DATE
@@ -76,7 +76,7 @@ class FRequestEditedFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
     # plant_name: constr(min_length=1, max_length=100)
-    florescence_status: BFlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    florescence_status: FlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: str | None  # e.g. location if multiple plants in one container
     branches_count: int | None
@@ -99,7 +99,7 @@ class FRequestEditedFlorescence(BaseModel):
 
 class FRequestNewFlorescence(BaseModel):
     plant_id: int
-    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished | aborted)
+    florescence_status: FlorescenceStatus  # (inflorescence_appeared | flowering | finished | aborted)
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: constr(max_length=110, strip_whitespace=True) | None
 
@@ -125,7 +125,7 @@ class BActiveFlorescence(BaseModel):
     id: int  # florescence id
     plant_id: int
     plant_name: str  # from as_dict
-    florescence_status: BFlorescenceStatus  # (inflorescence_appeared | flowering | finished)
+    florescence_status: FlorescenceStatus  # (inflorescence_appeared | flowering | finished)
 
     inflorescence_appearance_date: str | None  # e.g. '2022-11-16'
     comment: str | None  # max 110 chars, e.g. location if multiple plants in one container

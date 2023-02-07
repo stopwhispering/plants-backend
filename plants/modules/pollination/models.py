@@ -81,7 +81,7 @@ COLORS_MAP: dict[str, str] = {
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}
 
 
-class BFlorescenceStatus(str, enum.Enum):
+class FlorescenceStatus(str, enum.Enum):
     INFLORESCENCE_APPEARED = "inflorescence_appeared"
     FLOWERING = "flowering"
     FINISHED = "finished"  # as soon as the last flower is closed
@@ -131,7 +131,7 @@ class Florescence(Base, OrmAsDict):
     last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status = Column(Enum(BFlorescenceStatus), nullable=False)
+    florescence_status = Column(Enum(FlorescenceStatus), nullable=False)
 
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date = Column(DATE)
@@ -166,7 +166,7 @@ class Florescence(Base, OrmAsDict):
         return florescence
 
     @staticmethod
-    def by_status(status: Collection[BFlorescenceStatus], db: Session) -> list[Florescence]:
+    def by_status(status: Collection[FlorescenceStatus], db: Session) -> list[Florescence]:
         query = (db.query(Florescence)
                  .filter(Florescence.florescence_status.in_(status))
                  )
