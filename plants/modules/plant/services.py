@@ -49,7 +49,12 @@ async def update_plants_from_list_of_dicts(plants: List[FPlant],
         else:
             record_update = await plant_dal.by_id(plant.id)
 
-        updates = plant.__dict__
+        updates = plant.__dict__.copy()
+        del updates['id']
+        del updates['tags']
+        del updates['parent_plant']
+        del updates['parent_plant_pollen']
+
         updates['parent_plant_id'] = plant.parent_plant.id if plant.parent_plant else None
         updates['parent_plant_pollen_id'] = plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         updates['filename_previewimage'] = _get_filename_previewimage(plant)  # todo still required?
@@ -142,7 +147,7 @@ async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL)
     # update existing tags (not currently implemented in frontend)
     for updated_tag in [t for t in tags if t.id is not None]:
         tag_object = await plant_dal.get_tag_by_tag_id(updated_tag.id)
-        await plant_dal.update_tag(tag_object, updated_tag.__dict__)
+        await plant_dal.update_tag(tag_object, updated_tag.__dict__.copy())
 
     # delete tags not supplied anymore
     updated_plant_ids = set((t.id for t in tags if t.id is not None))

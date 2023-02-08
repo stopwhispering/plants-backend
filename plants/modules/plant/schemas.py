@@ -102,26 +102,26 @@ class FPlant(BaseModel):
     cancellation_date: date | None
     generation_notes: constr(min_length=1, max_length=250, strip_whitespace=True) | None
     taxon_id: int | None
-    taxon_authors: str | None  # irrelevant from frontend
-    botanical_name: str | None  # irrelevant from frontend
-    full_botanical_html_name: str | None  # irrelevant from frontend
+    # taxon_authors: str | None  # irrelevant from frontend
+    # botanical_name: str | None  # irrelevant from frontend
+    # full_botanical_html_name: str | None  # irrelevant from frontend
 
     parent_plant: FBAssociatedPlantExtractForPlant | None
     parent_plant_pollen: FBAssociatedPlantExtractForPlant | None
     plant_notes: str | None
     filename_previewimage: Path | None
-    last_update: datetime | None  # None for new plants
+    # last_update: datetime | None  # None for new plants
 
-    descendant_plants_all: list[FBAssociatedPlantExtractForPlant]
-    sibling_plants: list[FBAssociatedPlantExtractForPlant]
-    same_taxon_plants: list[FBAssociatedPlantExtractForPlant]
+    # descendant_plants_all: list[FBAssociatedPlantExtractForPlant]
+    # sibling_plants: list[FBAssociatedPlantExtractForPlant]
+    # same_taxon_plants: list[FBAssociatedPlantExtractForPlant]
 
-    current_soil: FBPlantCurrentSoil | None
-    latest_image: FBPlantLatestImage | None
+    # current_soil: FBPlantCurrentSoil | None
+    # latest_image: FBPlantLatestImage | None
     tags: list[FBPlantTag]
 
     class Config:
-        extra = Extra.forbid
+        extra = Extra.ignore  # !
         use_enum_values = True  # populate model with enum values, rather than the raw enum
         orm_mode = True
         allow_population_by_field_name = True

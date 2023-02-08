@@ -79,7 +79,7 @@ async def update_active_florescence(florescence: Florescence,
             and edited_florescence_data.flower_color_second == edited_florescence_data.flower_color):
         raise HTTPException(status_code=400, detail="flower_color_second must be different from flower_color")
 
-    updates = edited_florescence_data.__dict__
+    updates = edited_florescence_data.__dict__.copy()
     updates['first_flower_opening_date'] = parse_api_date(edited_florescence_data.first_flower_opening_date)
     updates['last_flower_closing_date'] = parse_api_date(edited_florescence_data.last_flower_closing_date)
     updates['inflorescence_appearance_date'] = parse_api_date(edited_florescence_data.inflorescence_appearance_date)

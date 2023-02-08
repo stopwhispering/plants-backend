@@ -249,12 +249,21 @@ class PlantDAL(BaseDAL):
             elif key == 'parent_plant_id':
                 value: int | None
                 plant.parent_plant_id = value
+            # elif key == 'parent_plant':
+            #     value: Plant | None
+            #     plant.parent_plant = value
             elif key == 'parent_plant_pollen_id':
                 value: int | None
                 plant.parent_plant_pollen_id = value
+            elif key == 'parent_plant_pollen':
+                value: Plant | None
+                plant.parent_plant_pollen = value
             elif key == 'filename_previewimage':
                 value: str | None
                 plant.filename_previewimage = value
+            elif key == 'taxon_id':
+                value: int | None
+                plant.taxon_id = value
             elif key == 'taxon':
                 value: Taxon | None
                 plant.taxon = value

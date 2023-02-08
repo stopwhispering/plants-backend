@@ -209,9 +209,9 @@ async def ac(app) -> AsyncClient:
 def valid_simple_plant_dict() -> dict:
     new_plant = {'plant_name': 'Aloe ferox',
                  'active': True,
-                 'descendant_plants_all': [],
-                 'sibling_plants': [],
-                 'same_taxon_plants': [],
+                 # 'descendant_plants_all': [],
+                 # 'sibling_plants': [],
+                 # 'same_taxon_plants': [],
                  'tags': []}
     return new_plant
 

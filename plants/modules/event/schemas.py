@@ -114,7 +114,7 @@ class FImagesToDelete(BaseModel):
 class FCreateOrUpdateEvent(FEvent):
     id: Optional[int]  # empty for new, filled for updated events
     date: constr(regex=REGEX_DATE)  # string yyyy-mm-dd
-    event_notes: str | None
+    event_notes: constr(strip_whitespace=True) | None
     images: list[FBImageAssignedToEvent]
     observation: FObservation | None
     soil: FSoil | None
