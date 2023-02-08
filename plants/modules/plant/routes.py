@@ -5,12 +5,13 @@ import datetime
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.plant.event_dal import EventDAL
 from plants.modules.plant.history_dal import HistoryDAL
+from plants.modules.plant.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.property_dal import PropertyDAL
 from plants.modules.plant.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message
 from plants.dependencies import (valid_plant, get_plant_dal, get_property_dal, get_event_dal, get_history_dal,
-                                 get_taxon_dal)
+                                 get_taxon_dal, get_image_dal)
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry
 from plants.modules.image.services import rename_plant_in_image_files
@@ -111,7 +112,8 @@ async def delete_plant(plant: Plant = Depends(valid_plant), plant_dal: PlantDAL 
 @router.put("/", response_model=BConfirmation)
 async def rename_plant(args: BPlantsRenameRequest,
                        plant_dal: PlantDAL = Depends(get_plant_dal),
-                       history_dal: HistoryDAL = Depends(get_history_dal)):
+                       history_dal: HistoryDAL = Depends(get_history_dal),
+                       image_dal: ImageDAL = Depends(get_image_dal)):
     """we use the put method to rename a plant"""  # todo use id
     plant = await plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
@@ -124,8 +126,9 @@ async def rename_plant(args: BPlantsRenameRequest,
     plant.plant_name = args.new_plant_name
 
     # most difficult task: jpg exif tags use plant name not id; we need to change each plant name occurence
-    count_modified_images = rename_plant_in_image_files(plant=plant,
-                                                        plant_name_old=args.old_plant_name)
+    count_modified_images = await rename_plant_in_image_files(plant=plant,
+                                                              plant_name_old=args.old_plant_name,
+                                                              image_dal=image_dal)
 
     await create_history_entry(description=f"Renamed to {args.new_plant_name}",
                                history_dal=history_dal,

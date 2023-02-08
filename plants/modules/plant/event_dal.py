@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from plants.exceptions import EventNotFound, SoilNotFound
 from plants.modules.event.models import Event, Soil, Observation, Pot
@@ -10,6 +11,18 @@ from plants.shared.base_dal import BaseDAL
 class EventDAL(BaseDAL):
     def __init__(self, session):
         super().__init__(session)
+
+    async def get_events_by_plant(self, plant: Plant) -> list[Event]:
+        """read all events for supplied plant, including related images, observations, soils and pots"""
+        query = (select(Event)
+                 .where(Event.plant_id == plant.id)
+                 .options(selectinload(Event.images))
+                 .options(selectinload(Event.observation))
+                 .options(selectinload(Event.soil))
+                 .options(selectinload(Event.pot))
+                 )
+        events: list[Event] = (await self.session.scalars(query)).all()  # noqa
+        return events
 
     async def create_pot(self, pot: Pot):
         self.session.add(pot)
@@ -89,6 +102,10 @@ class EventDAL(BaseDAL):
     async def by_id(self, event_id) -> Event:
         query = (select(Event)
                  .where(Event.id == event_id)  # noqa
+                 .options(selectinload(Event.images))
+                 .options(selectinload(Event.observation))
+                 .options(selectinload(Event.pot))
+                 .options(selectinload(Event.soil))
                  .limit(1))
         event: Event = (await self.session.scalars(query)).first()
         if not event:

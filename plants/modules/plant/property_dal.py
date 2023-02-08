@@ -37,7 +37,7 @@ class PropertyDAL(BaseDAL):
 
     async def get_all_property_categories(self) -> list[PropertyCategory]:
         query = (select(PropertyCategory)
-                 .options(selectinload(PropertyCategory.property_names))
+                 .options(selectinload(PropertyCategory.property_names).selectinload(PropertyName.property_values))
                  )
         property_categories: list[PropertyCategory] = (await self.session.scalars(query)).all()  # noqa
         return property_categories

@@ -29,14 +29,17 @@ logger = logging.getLogger(__name__)
 NOT_AVAILABLE_IMAGE_FILENAME = "not_available.png"
 
 
-def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
+async def rename_plant_in_image_files(plant: Plant, plant_name_old: str, image_dal: ImageDAL) -> int:
     """
     in each photo_file file that has the old plant name tagged, fit tag to the new plant name
     """
     if not plant.images:
         logger.info(f'No photo_file tag to change for {plant_name_old}.')
     for image in plant.images:
-        image: Image
+
+        # reload image including it's relationships (lazy loading not allowed in async mode)
+        image = await image_dal.by_id(image.id)
+
         plant_names = [p.plant_name for p in image.plants]
         PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,  # todo executor
                                                                 plants=plant_names)
@@ -269,16 +272,26 @@ async def trigger_generation_of_missing_thumbnails(background_tasks: BackgroundT
     images: list[Image] = await image_dal.get_all_images()
     logger.info(msg := f"Generating thumbnails for {len(images)} images in "
                        f"sizes: {settings.images.sizes} in background.")
+    # todo correct like that with async?
     background_tasks.add_task(_generate_missing_thumbnails, images)
     return msg
 
 
-def fetch_images_for_plant(plant: Plant) -> list[FBImage]:
-    images = [_to_response_image(image) for image in plant.images]
-    return images
+async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[FBImage]:
+    # for async, we need to reload the image relationships
+    images = await image_dal.by_ids([i.id for i in plant.images])
+    # todo switch to orm mode
+    image_results = [_to_response_image(image) for image in images]
+    return image_results
 
 
 def _to_response_image(image: Image) -> FBImage:
+    # todo swithc toorm mode
+    # from sqlalchemy import inspect
+    # ins = inspect(image)
+    # if 'plants' in ins.unloaded or 'keywords' in ins.unloaded:
+    #     a = 1
+
     k: ImageKeyword
     return FBImage(
         id=image.id,

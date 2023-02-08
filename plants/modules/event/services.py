@@ -16,13 +16,12 @@ from plants.modules.event.schemas import FSoilCreate, BEvents, FSoil, FCreateOrU
 logger = logging.getLogger(__name__)
 
 
-def read_events_for_plant(plant: Plant) -> list[dict]:
+async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[dict]:
     """
     read events from event database table
     """
-    # events = Event.get_events_by_plant_id(plant_id, db)
-    events: list[Event] = plant.events
-    BEvents.validate(events)
+    # plant has .events loaded, but not all sub-relationships; therefore, we load them here
+    events: list[Event] = await event_dal.get_events_by_plant(plant)
     return events
 
 
@@ -67,10 +66,11 @@ async def create_or_update_event(plant_id: int,
                                  image_dal: ImageDAL,
                                  event_dal: EventDAL,
                                  plant_dal: PlantDAL) -> None:
-    plant_obj = plant_dal.by_id(plant_id)
+    plant_obj = await plant_dal.by_id(plant_id)
     logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
                 f' {[e.id for e in plant_obj.events]}')
 
+    # todo remove that comment if no need
     # event might have no id in browser but already in backend from earlier save
     # so try to get eventid  from plant name and date (pseudo-key) to avoid events being deleted
     # note: if we "replace" an event in the browser  (i.e. for a specific date, we delete an event and
@@ -110,8 +110,13 @@ async def create_or_update_event(plant_id: int,
             await event_dal.create_event(event_obj)
             counts['Added Events'] += 1
 
+            # as async does not allow for lazy loading, we need to reloda the event including
+            # it's relationships
+            event_obj = await event_dal.by_id(event_obj.id)
+
         # update existing event
         else:
+
             # try:
             logger.info(f'Getting event  {event.id}.')
             event_obj = await event_dal.by_id(event.id)

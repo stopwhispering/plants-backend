@@ -51,11 +51,12 @@ async def update_existing_soil(updated_soil: FSoil, event_dal: EventDAL = Depend
 
 
 @router.get("/events/{plant_id}", response_model=BResultsEventResource)
-async def get_events(plant: Plant = Depends(valid_plant)):
+async def get_events(plant: Plant = Depends(valid_plant),
+                     event_dal: EventDAL = Depends(get_event_dal)):
     """
     returns events from event database table
     """
-    events = read_events_for_plant(plant)
+    events = await read_events_for_plant(plant, event_dal=event_dal)
 
     logger.info(msg := f'Receiving {len(events)} events for {plant.plant_name}.')
     return {'events': events,

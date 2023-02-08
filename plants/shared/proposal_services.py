@@ -76,12 +76,12 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
         previous_species = current_species
 
     # add empty family to allow for selecting plants with no taxon assigned
-    count_empty = plant_dal.get_count_plants_without_taxon()
+    count_empty = await plant_dal.get_count_plants_without_taxon()
     # count_empty = db.query(Plant).filter(and_(plant_exists_filter, Plant.taxon_id.is_(None))).count()
     if count_empty:
         # plant_ids_empty_tuples = db.query(Plant.id).filter(and_(plant_exists_filter, Plant.taxon_id.is_(None))).all()
         # plant_ids_empty = [t[0] for t in plant_ids_empty_tuples]
-        plant_ids_empty = plant_dal.get_plants_ids_without_taxon()
+        plant_ids_empty = await plant_dal.get_plants_ids_without_taxon()
         node_empty_species = {'key': '', 'level': 2, 'count': count_empty, 'plant_ids': plant_ids_empty}
         node_empty_genus = {'key': '', 'level': 1, 'count': count_empty, 'nodes': [node_empty_species]}
         node_empty_family = {'key': '', 'level': 0, 'count': count_empty, 'nodes': [node_empty_genus]}

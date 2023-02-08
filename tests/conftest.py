@@ -131,6 +131,10 @@ async def db() -> AsyncSession:
     await conn.execute(text("DELETE FROM tags;"))
     await conn.execute(text("DELETE FROM pollination;"))
     await conn.execute(text("DELETE FROM florescence;"))
+    await conn.execute(text("DELETE FROM image;"))
+    await conn.execute(text("DELETE FROM soil;"))
+    await conn.execute(text("DELETE FROM pot;"))
+    await conn.execute(text("DELETE FROM event;"))
     await conn.execute(text("DELETE FROM plants;"))
     # TRUNCATE table_a, table_b, …, table_z;
     await conn.commit()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from plants.exceptions import PlantNotFound, TagNotFound, TagNotAssignedToPlant
 from plants.modules.event.models import Event
-from plants.modules.image.models import ImageToPlantAssociation
+from plants.modules.image.models import ImageToPlantAssociation, Image
 from plants.modules.plant.models import Plant, Tag
 from plants.shared.base_dal import BaseDAL
 
@@ -15,6 +15,8 @@ class PlantDAL(BaseDAL):
 
     @staticmethod
     def _add_eager_load_options(query: Select) -> Select:
+        """apply eager loading the query supplied;
+        use only for single- or limited-number select queries to avoid performance issues"""
         query = query.options(
             selectinload(Plant.parent_plant),
             selectinload(Plant.parent_plant_pollen),
@@ -24,8 +26,11 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.descendant_plants),
             selectinload(Plant.descendant_plants_pollen),
             selectinload(Plant.taxon),
-            selectinload(Plant.events),
-            selectinload(Plant.images),
+            selectinload(Plant.events).selectinload(Event.soil),
+            selectinload(Plant.events).selectinload(Event.observation),
+            selectinload(Plant.events).selectinload(Event.pot),
+            selectinload(Plant.events).selectinload(Event.images),
+            selectinload(Plant.images).selectinload(Image.keywords),
             selectinload(Plant.property_values_plant),
             selectinload(Plant.florescences)
         )
@@ -116,7 +121,7 @@ class PlantDAL(BaseDAL):
                  .where(Plant.deleted.is_(False))
                  .where(Plant.active)
                  )
-        count = (await self.session.scalar(query))
+        count: int = (await self.session.scalars(query)).first()  # noqa
         return count
 
     async def get_plants_ids_without_taxon(self) -> list[int]:
@@ -125,7 +130,7 @@ class PlantDAL(BaseDAL):
                  .where(Plant.deleted.is_(False))
                  .where(Plant.active)
                  )
-        plant_ids = (await self.session.scalar(query)).all()
+        plant_ids: list[int] = (await self.session.scalars(query)).all()  # noqa
         return plant_ids
 
     async def create_plant(self, plant: Plant):

@@ -1,4 +1,5 @@
-from sqlalchemy import select
+from sqlalchemy import select, Select
+from sqlalchemy.orm import selectinload
 
 from plants.exceptions import ImageNotFound
 from plants.modules.image.models import Image, ImageToEventAssociation, ImageToPlantAssociation, \
@@ -10,13 +11,48 @@ class ImageDAL(BaseDAL):
     def __init__(self, session):
         super().__init__(session)
 
+    @staticmethod
+    def _add_eager_load_options(query: Select) -> Select:
+        """apply eager loading the query supplied;
+        use only for single- or limited-number select queries to avoid performance issues"""
+        query = query.options(
+            selectinload(Image.keywords),
+            selectinload(Image.plants),
+            selectinload(Image.image_to_plant_associations),
+            selectinload(Image.plants),
+            selectinload(Image.image_to_event_associations),
+            selectinload(Image.events),
+            selectinload(Image.image_to_taxon_associations),
+            selectinload(Image.taxa),
+            selectinload(Image.keywords),
+        )
+        return query
+
     async def by_id(self, image_id: int) -> Image:
         query = (select(Image)
                  .where(Image.id == image_id)
                  .limit(1))
+        query = self._add_eager_load_options(query)
         image: Image = (await self.session.scalars(query)).first()  # noqa
         if not image:
             raise ImageNotFound(image_id)
+        return image
+
+    async def by_ids(self, image_ids: list[int]) -> list[Image]:
+        query = (select(Image)
+                 .where(Image.id.in_(image_ids)))
+        query = self._add_eager_load_options(query)
+        images: Image = (await self.session.scalars(query)).all()  # noqa
+        return images
+
+    async def get_image_by_filename(self, filename: str) -> Image:
+        query = (select(Image)
+                 .where(Image.filename == filename)
+                 .limit(1))
+        query = self._add_eager_load_options(query)
+        image: Image = (await self.session.scalars(query)).first()
+        if not image:
+            raise ImageNotFound(filename)
         return image
 
     async def get_all_images(self) -> list[Image]:
@@ -28,6 +64,8 @@ class ImageDAL(BaseDAL):
     async def get_untagged_images(self) -> list[Image]:
         query = (select(Image)
                  .where(~Image.plants.any())
+                 .options(selectinload(Image.keywords))
+                 .options(selectinload(Image.plants))
                  )
         images: list[Image] = (await self.session.scalars(query)).all()  # noqa
         return images
@@ -50,15 +88,6 @@ class ImageDAL(BaseDAL):
     async def delete_image(self, image: Image):
         await self.session.delete(image)
         await self.session.flush()
-
-    async def get_image_by_filename(self, filename: str) -> Image:
-        query = (select(Image)
-                 .where(Image.filename == filename)
-                 .limit(1))
-        image: Image = (await self.session.scalars(query)).first()
-        if not image:
-            raise ImageNotFound(filename)
-        return image
 
     async def get_image_by_relative_path(self, relative_path: str) -> Image | None:
         query = (select(Image)

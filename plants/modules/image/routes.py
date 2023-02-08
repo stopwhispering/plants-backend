@@ -33,11 +33,13 @@ router = APIRouter(
 
 
 @router.get("/plants/{plant_id}/images/", response_model=FBImages)
-async def get_images_for_plant(plant: Plant = Depends(valid_plant)):
+async def get_images_for_plant(plant: Plant = Depends(valid_plant),
+                               image_dal: ImageDAL = Depends(get_image_dal),
+                               ):
     """
     get photo_file information for requested plant_id including (other) plants and keywords
     """
-    images = fetch_images_for_plant(plant)
+    images = await fetch_images_for_plant(plant, image_dal=image_dal)
     logger.info(f'Returned {len(images)} images for plant {plant.id}.')
     return images
 
@@ -222,7 +224,7 @@ async def get_occurrence_thumbnail(gbif_id: int,
 async def trigger_generate_missing_thumbnails(background_tasks: BackgroundTasks,
                                               image_dal: ImageDAL = Depends(get_image_dal)):
     """trigger the generation of missing thumbnails for occurrences"""
-    msg = trigger_generation_of_missing_thumbnails(image_dal=image_dal, background_tasks=background_tasks)
+    msg = await trigger_generation_of_missing_thumbnails(image_dal=image_dal, background_tasks=background_tasks)
     return {
         'action': 'Triggering generation of missing thumbnails',
         'message': get_message(msg)
@@ -243,7 +245,7 @@ async def _update_image_if_altered(image: Image,
         image.description = description
 
     # plants
-    new_plants = set(await plant_dal.by_id(plant_id) for plant_id in plant_ids)
+    new_plants = set([await plant_dal.by_id(plant_id) for plant_id in plant_ids])
     removed_image_to_plant_associations = [a for a in image.image_to_plant_associations
                                            if a.plant not in new_plants]
     added_image_to_plant_associations = [ImageToPlantAssociation(

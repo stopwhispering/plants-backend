@@ -1,5 +1,6 @@
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
 from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon
@@ -15,9 +16,15 @@ class TaxonDAL(BaseDAL):
         super().__init__(session)
 
     async def by_id(self, taxon_id: int) -> Taxon:
-        query = (select(Taxon)
-                 .where(Taxon.id == taxon_id)  # noqa
-                 .limit(1))
+        query = (
+            select(Taxon)
+            .where(Taxon.id == taxon_id)  # noqa
+            .options(selectinload(Taxon.property_values_taxon))
+            .options(selectinload(Taxon.occurrence_images))
+            .options(selectinload(Taxon.images))
+            .options(selectinload(Taxon.distribution))
+            .limit(1)
+        )
         taxon: Taxon = (await self.session.scalars(query)).first()  # noqa
         if not taxon:
             raise TaxonNotFound(taxon_id)
@@ -66,15 +73,8 @@ class TaxonDAL(BaseDAL):
         query = (select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id)
                  .where(has_any_plant_filter)
                  )
-        species_tuples = (await self.session.scalar(query)).all()
-        return species_tuples
-
-    # def get_taxon_to_occurrence_associations_by_gbif_id(self, gbif_id: int) -> list[TaxonToOccurrenceAssociation]:
-    #     query = (select(TaxonToOccurrenceAssociation)
-    #              .where(TaxonToOccurrenceAssociation.gbif_id == gbif_id)  # noqa
-    #              )
-    #     links: list[TaxonToOccurrenceAssociation] = (await self.session.scalars(query)).all()  # noqa
-    #     return links
+        species_tuples = (await self.session.execute(query)).all()
+        return species_tuples  # noqa
 
     async def create_taxon_to_occurrence_associations(self, links: list[TaxonToOccurrenceAssociation]):
         self.session.add_all(links)

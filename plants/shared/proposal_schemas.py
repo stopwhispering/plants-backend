@@ -47,6 +47,21 @@ class BResultsProposals(BaseModel):
         extra = Extra.forbid
 
 
+class BTaxonTreeNode(BaseModel):
+    key: str
+    level: int
+    count: int
+    nodes: Optional[List[BTaxonTreeNode]]  # missing on lowest level
+    plant_ids: Optional[List[int]]  # plants themselves on lowest level
+
+    class Config:
+        extra = Extra.forbid
+
+
+# this is required (plus importing annotations) to allow for self-references
+BTaxonTreeNode.update_forward_refs()
+
+
 class BTaxonTreeRoot(BaseModel):
     TaxonTree: List[BTaxonTreeNode]
 
@@ -61,18 +76,3 @@ class BResultsSelection(BaseModel):
 
     class Config:
         extra = Extra.forbid
-
-
-class BTaxonTreeNode(BaseModel):
-    key: str
-    level: int
-    count: int
-    nodes: Optional[List[BTaxonTreeNode]]  # missing on lowest level
-    plant_ids: Optional[List[int]]  # plants themselves on lowest level
-
-    class Config:
-        extra = Extra.forbid
-
-
-# this is required (plus importing annotations) to allow for self-references
-BTaxonTreeNode.update_forward_refs()
