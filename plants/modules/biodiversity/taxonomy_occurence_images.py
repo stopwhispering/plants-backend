@@ -141,10 +141,10 @@ class TaxonOccurencesLoader:
 
         return image_dicts
 
-    def _save_to_db(self, image_dicts: List[Dict], gbif_id: int):
+    async def _save_to_db(self, image_dicts: List[Dict], gbif_id: int):
         # cleanup existing entries for taxon
-        self.taxon_dal.delete_taxon_to_occurrence_associations_by_gbif_id(gbif_id)
-        self.taxon_dal.delete_taxon_occurrence_image_by_gbif_id(gbif_id)
+        await self.taxon_dal.delete_taxon_to_occurrence_associations_by_gbif_id(gbif_id)
+        await self.taxon_dal.delete_taxon_occurrence_image_by_gbif_id(gbif_id)
         # db.query(TaxonToOccurrenceAssociation).filter(TaxonToOccurrenceAssociation.gbif_id == gbif_id).delete()
         # db.query(TaxonOccurrenceImage).filter(TaxonOccurrenceImage.gbif_id == gbif_id).delete()
 
@@ -157,7 +157,7 @@ class TaxonOccurencesLoader:
 
             # assign occurrence image to each taxon with that gbif id (usually only one)
             # taxa = db.query(Taxon).filter(Taxon.gbif_id == gbif_id).all()
-            taxa = self.taxon_dal.by_gbif_id(gbif_id)
+            taxa = await self.taxon_dal.by_gbif_id(gbif_id)
             taxon_ids = [t.id for t in taxa]
             record_associations = [TaxonToOccurrenceAssociation(taxon_id=taxon_id,
                                                                 occurrence_id=img['occurrence_id'],
@@ -167,14 +167,14 @@ class TaxonOccurencesLoader:
 
         try:
             if new_occurrence_images:
-                self.taxon_dal.create_taxon_occurrence_images(new_occurrence_images)
+                await self.taxon_dal.create_taxon_occurrence_images(new_occurrence_images)
             if new_taxon_occ_links:
-                self.taxon_dal.create_taxon_to_occurrence_associations(new_taxon_occ_links)
+                await self.taxon_dal.create_taxon_to_occurrence_associations(new_taxon_occ_links)
         except IntegrityError as err:
             logger.error(str(err))
             print(err)
 
-    def scrape_occurrences_for_taxon(self, gbif_id: int) -> list[TaxonOccurrenceImage]:
+    async def scrape_occurrences_for_taxon(self, gbif_id: int) -> list[TaxonOccurrenceImage]:
         logger.info(f'Searching occurrence immages for  {gbif_id}.')
         occ_search = occ_api.search(taxonKey=gbif_id, mediaType='StillImage')
         if not occ_search['results']:
@@ -190,9 +190,9 @@ class TaxonOccurencesLoader:
 
         # save information to database
         logger.info(f'Saving/Updating {len(image_dicts)} occurrence images to database.')
-        self._save_to_db(image_dicts, gbif_id)
+        await self._save_to_db(image_dicts, gbif_id)
 
-        taxa = self.taxon_dal.by_gbif_id(gbif_id)
+        taxa = await self.taxon_dal.by_gbif_id(gbif_id)
         taxon = taxa[0]  # we assigned to each taxon with that gbif id, here we just use the first
         # taxon: Taxon = self.db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
         return taxon.occurrence_images

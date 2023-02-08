@@ -71,7 +71,7 @@ def _retrieve_locations(lsid: str):
     return locations
 
 
-def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
+async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
@@ -88,9 +88,9 @@ def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
         locations = _retrieve_locations(new_taxon.lsid)
 
         gbif_identifier_lookup = GBIFIdentifierLookup()
-        gbif_id = gbif_identifier_lookup.lookup(taxon_name=name, lsid=new_taxon.lsid)
+        gbif_id = gbif_identifier_lookup.lookup(taxon_name=name, lsid=new_taxon.lsid)  # todo run in executor
 
-    if taxon_dal.exists(taxon_name=name):
+    if await taxon_dal.exists(taxon_name=name):
         raise TaxonAlreadyExists(name)
 
     taxon = Taxon(
@@ -127,7 +127,7 @@ def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
         custom_notes='',
     )
 
-    taxon_dal.create(taxon)
+    await taxon_dal.create(taxon)
 
     # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
@@ -138,11 +138,11 @@ def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
     return taxon
 
 
-def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDAL):
-    taxon: Taxon = taxon_dal.by_id(taxon_modified.id)
+async def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDAL):
+    taxon: Taxon = await taxon_dal.by_id(taxon_modified.id)
 
     if taxon.custom_notes != taxon_modified.custom_notes:
-        taxon_dal.update(taxon, {'custom_notes': taxon_modified.custom_notes})
+        await taxon_dal.update(taxon, {'custom_notes': taxon_modified.custom_notes})
 
     # changes to images attached to the taxon
     image: FTaxonImage
@@ -156,13 +156,13 @@ def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDA
             link: ImageToTaxonAssociation
             deleted_link = next(link for link in taxon.image_to_taxon_associations
                                 if link.image.relative_path == image_obj.relative_path)
-            taxon_dal.delete_image_association_from_taxon(taxon, deleted_link)
+            await taxon_dal.delete_image_association_from_taxon(taxon, deleted_link)
 
     # newly assigned images
     if taxon_modified.images:
         for image in taxon_modified.images:
             # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
-            image_obj = image_dal.by_id(image.id)
+            image_obj = await image_dal.by_id(image.id)
             # if not image_obj:
             # if not Image.exists(filename=image.filename, db=db):
             #     # not assigned to any event, yet
@@ -176,7 +176,7 @@ def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDA
                 link = ImageToTaxonAssociation(image_id=image_obj.id,
                                                taxon_id=taxon.id,
                                                description=image.description)
-                taxon_dal.create_image_to_taxon_association(link)
+                await taxon_dal.create_image_to_taxon_association(link)
                 logger.info(f'Image {image_obj.relative_path} assigned to taxon {taxon.name}')
 
             # update description

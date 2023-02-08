@@ -38,7 +38,7 @@ def rename_plant_in_image_files(plant: Plant, plant_name_old: str) -> int:
     for image in plant.images:
         image: Image
         plant_names = [p.plant_name for p in image.plants]
-        PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
+        PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,  # todo executor
                                                                 plants=plant_names)
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
@@ -79,8 +79,8 @@ async def save_image_files(files: List[UploadFile],
 
         # add to db
         record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
-        plants = [plant_dal.by_id(p) for p in plant_ids]
-        image: Image = _create_image(image_dal=image_dal,
+        plants = [await plant_dal.by_id(p) for p in plant_ids]
+        image: Image = await _create_image(image_dal=image_dal,
                                      relative_path=get_relative_path(path),
                                      record_date_time=record_datetime,
                                      keywords=keywords,
@@ -94,38 +94,38 @@ async def save_image_files(files: List[UploadFile],
                                ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
 
         # save metadata in jpg exif tags
-        PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
-                                                          plant_names=[p.plant_name for p in plants],
-                                                          keywords=list(keywords),
-                                                          description='',
-                                                          image_dal=image_dal)
+        await PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
+                                                                plant_names=[p.plant_name for p in plants],
+                                                                keywords=list(keywords),
+                                                                description='',
+                                                                image_dal=image_dal)
         images.append(image)
 
     return [_to_response_image(i) for i in images]
 
 
-def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
+async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
     """delete image file and entries in db"""
     ai: ImageToEventAssociation
     ap: ImageToPlantAssociation
     at: ImageToTaxonAssociation
     if image.image_to_event_associations:
         logger.info(f'Deleting {len(image.image_to_event_associations)} associated Image to Event associations.')
-        image_dal.delete_image_to_event_associations(image, image.image_to_event_associations)
+        await image_dal.delete_image_to_event_associations(image, image.image_to_event_associations)
         image.events = []
     if image.image_to_plant_associations:
         logger.info(f'Deleting {len(image.image_to_plant_associations)} associated Image to Plant associations.')
-        image_dal.delete_image_to_plant_associations(image, image.image_to_plant_associations)
+        await image_dal.delete_image_to_plant_associations(image, image.image_to_plant_associations)
         image.plants = []
     if image.image_to_taxon_associations:
         logger.info(f'Deleting {len(image.image_to_taxon_associations)} associated Image to Taxon associations.')
-        image_dal.delete_image_to_taxon_associations(image, image.image_to_taxon_associations)
+        await image_dal.delete_image_to_taxon_associations(image, image.image_to_taxon_associations)
         image.taxa = []
     if image.keywords:
         logger.info(f'Deleting {len(image.keywords)} associated Keywords.')
-        image_dal.delete_keywords_from_image(image, image.keywords)
+        await image_dal.delete_keywords_from_image(image, image.keywords)
 
-    image_dal.delete_image(image)
+    await image_dal.delete_image(image)
 
     old_path = image.absolute_path
     if not old_path.is_file():
@@ -150,14 +150,14 @@ def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
 #     """return the path to the image file with the given pixel size"""
 #
 
-def get_image_path_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> Path:
+async def get_image_path_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> Path:
     if (width is None or height is None) and not (width is None and height is None):
         logger.error(err_msg := f'Either supply width and height or neither of them.')
         throw_exception(err_msg)
 
     if width is None:
         # get image db entry for the directory it is stored at in local filesystem
-        image: Image = image_dal.get_image_by_filename(filename=filename)
+        image: Image = await image_dal.get_image_by_filename(filename=filename)
         return Path(image.absolute_path)
 
     else:
@@ -180,12 +180,12 @@ def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
     return path
 
 
-def read_image_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> bytes:
+async def read_image_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> bytes:
     """return the image in specified size as bytes"""
-    path = get_image_path_by_size(filename=filename,
-                                  width=width,
-                                  height=height,
-                                  image_dal=image_dal)
+    path = await get_image_path_by_size(filename=filename,
+                                        width=width,
+                                        height=height,
+                                        image_dal=image_dal)
 
     if not path.is_file():
         # return default image on dev environment where most photos are missing
@@ -201,8 +201,8 @@ def read_image_by_size(filename: str, width: int | None, height: int | None, ima
     return image_bytes
 
 
-def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, taxon_dal: TaxonDAL):
-    taxon_occurrence_images: list[TaxonOccurrenceImage] = taxon_dal.get_taxon_occurrence_image_by_filter(
+async def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, taxon_dal: TaxonDAL):
+    taxon_occurrence_images: list[TaxonOccurrenceImage] = await taxon_dal.get_taxon_occurrence_image_by_filter(
         {'gbif_id': gbif_id, 'occurrence_id': occurrence_id, 'img_no': img_no})
 
     if not taxon_occurrence_images:
@@ -265,8 +265,8 @@ def _generate_missing_thumbnails(images: list[Image]):
     logger.info(f'Thumbnail Generation - Files not found: {count_files_not_found}')
 
 
-def trigger_generation_of_missing_thumbnails(background_tasks: BackgroundTasks, image_dal: ImageDAL) -> str:
-    images: list[Image] = image_dal.get_all_images()
+async def trigger_generation_of_missing_thumbnails(background_tasks: BackgroundTasks, image_dal: ImageDAL) -> str:
+    images: list[Image] = await image_dal.get_all_images()
     logger.info(msg := f"Generating thumbnails for {len(images)} images in "
                        f"sizes: {settings.images.sizes} in background.")
     background_tasks.add_task(_generate_missing_thumbnails, images)
@@ -295,8 +295,8 @@ def _to_response_image(image: Image) -> FBImage:
         record_date_time=image.record_date_time)
 
 
-def fetch_untagged_images(image_dal: ImageDAL) -> list[FBImage]:
-    untagged_images = image_dal.get_untagged_images()
+async def fetch_untagged_images(image_dal: ImageDAL) -> list[FBImage]:
+    untagged_images = await image_dal.get_untagged_images()
     return [_to_response_image(image) for image in untagged_images]
 
 
@@ -307,7 +307,7 @@ def _shorten_plant_name(plant_name: str) -> str:
             else plant_name)
 
 
-def _create_image(image_dal: ImageDAL,
+async def _create_image(image_dal: ImageDAL,
                   relative_path: PurePath,
                   record_date_time: datetime,
                   description: str = None,
@@ -315,7 +315,7 @@ def _create_image(image_dal: ImageDAL,
                   keywords: Sequence[str] = (),
                   # events and taxa are saved elsewhere
                   ) -> Image:
-    if image_dal.get_image_by_relative_path(relative_path.as_posix()):
+    if await image_dal.get_image_by_relative_path(relative_path.as_posix()):
         # if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
         raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')
 
@@ -326,7 +326,7 @@ def _create_image(image_dal: ImageDAL,
                   plants=plants if plants else [],
                   )
     # get the image id
-    image_dal.create_image(image)
+    await image_dal.create_image(image)
 
     if keywords:
         keywords_orm = [
@@ -335,5 +335,5 @@ def _create_image(image_dal: ImageDAL,
                 image=image,
                 keyword=k) for k in keywords
         ]
-        image_dal.create_new_keywords_for_image(image, keywords_orm)
+        await image_dal.create_new_keywords_for_image(image, keywords_orm)
     return image

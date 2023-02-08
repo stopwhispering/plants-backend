@@ -7,9 +7,8 @@ from sqlalchemy import (Column, INTEGER, VARCHAR, ForeignKey,
                         )
 from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.types import DateTime
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 
-from plants.exceptions import TaxonNotFound
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -105,20 +104,6 @@ class Taxon(Base, OrmAsDict):
 
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")
-
-    @classmethod
-    def by_id(cls, taxon_id: int, db: Session, raise_if_not_exists: bool = False) -> Taxon | None:
-        taxon = db.query(cls).filter(cls.id == taxon_id).first()
-        if not taxon and raise_if_not_exists:
-            raise TaxonNotFound(taxon_id)
-        return taxon
-
-    @classmethod
-    def by_name(cls, taxon_name: str, db: Session, raise_if_not_exists: bool = False) -> Taxon | None:
-        taxon = db.query(cls).filter(cls.name == taxon_name).first()
-        if not taxon and raise_if_not_exists:
-            raise TaxonNotFound(taxon_name)
-        return taxon
 
     def as_dict(self):
         """add some additional fields to mixin's as_dict, especially from relationships"""

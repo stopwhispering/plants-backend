@@ -1,16 +1,16 @@
 from decimal import Decimal
 
 import pytest
-from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 
-from plants.modules.pollination.models import Florescence, StigmaPosition, FlowerColorDifferentiation, Context, \
-    FlorescenceStatus
+from plants.modules.pollination.models import (Florescence, StigmaPosition, FlowerColorDifferentiation, Context,
+                                               FlorescenceStatus)
 
 
-def test_florescence_flower_attrs(db, plant_valid):
-    print('wtf debugger')
+@pytest.mark.asyncio
+async def test_florescence_flower_attrs(db, plant_valid):
     db.add(plant_valid)
-    db.commit()
+    await db.commit()
 
     new_florescence = Florescence(
         plant_id=plant_valid.id,
@@ -24,7 +24,7 @@ def test_florescence_flower_attrs(db, plant_valid):
         florescence_status=FlorescenceStatus.FLOWERING,
         creation_context=Context.MANUAL)
     db.add(new_florescence)
-    db.commit()
+    await db.commit()
 
     new_florescence = Florescence(
         plant_id=plant_valid.id,
@@ -40,5 +40,5 @@ def test_florescence_flower_attrs(db, plant_valid):
     )
     db.add(new_florescence)
     with pytest.raises(IntegrityError):
-        db.commit()
-    db.rollback()
+        await db.commit()
+    await db.rollback()

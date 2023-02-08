@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from operator import attrgetter
 from sqlalchemy import Column, INTEGER, BOOLEAN, ForeignKey, TEXT, Identity, VARCHAR
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import foreign, remote  # noqa
 from sqlalchemy.types import DateTime
 import logging
 import datetime
 
-from plants.exceptions import PlantNotFound
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -26,8 +25,9 @@ class Plant(Base, OrmAsDict):
     nursery_source = Column(VARCHAR(100))
     propagation_type = Column(VARCHAR(30))  # todo enum
 
-    active = Column(BOOLEAN)  # todo not nullable
-    deleted = Column(BOOLEAN)  # todo not nullable
+    deleted = Column(BOOLEAN, nullable=False)
+
+    active = Column(BOOLEAN, nullable=False)
     cancellation_reason = Column(VARCHAR(60))  # todo enum,  only set if active == False
     cancellation_date = Column(DateTime(timezone=True))  # todo rename to datetime or make it date type
 
@@ -159,15 +159,6 @@ class Plant(Base, OrmAsDict):
         """add some additional fields to mixin's as_dict, especially from relationships
         merge descendant_plants_pollen into descendant_plants"""
         raise NotImplementedError('use get_plant_as_dict() instead')
-
-    # static query methods
-    # todo remove
-    @staticmethod
-    def by_id(plant_id: int, db: Session, raise_if_not_exists: bool = True) -> Plant | None:
-        plant = db.query(Plant).filter(Plant.id == plant_id).first()  # noqa
-        if not plant and raise_if_not_exists:
-            raise PlantNotFound(plant_id)
-        return plant
 
 
 class Tag(Base, OrmAsDict):

@@ -26,47 +26,48 @@ def read_events_for_plant(plant: Plant) -> list[dict]:
     return events
 
 
-def create_soil(soil: FSoilCreate, event_dal: EventDAL) -> Soil:
+async def create_soil(soil: FSoilCreate, event_dal: EventDAL) -> Soil:
     """create new soil in database"""
     if soil.id:
         throw_exception(f'Soil already exists: {soil.id}')
 
     # make sure there isn't a soil yet with same name
-    same_name_soils = event_dal.get_soils_by_name(soil.soil_name.strip())
+    same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
     if same_name_soils:
         raise SoilNotUnique(soil.soil_name.strip())
 
     soil_obj = Soil(soil_name=soil.soil_name,
                     mix=soil.mix,
                     description=soil.description)
-    event_dal.create_soil(soil_obj)
+    await event_dal.create_soil(soil_obj)
     logger.info(f'Created soil {soil_obj.id} - {soil_obj.soil_name}')
     return soil_obj
 
 
-def update_soil(soil: FSoil, event_dal: EventDAL) -> Soil:
+async def update_soil(soil: FSoil, event_dal: EventDAL) -> Soil:
     """update existing soil in database"""
     # make sure there isn't another soil with same name
-    same_name_soils = event_dal.get_soils_by_name(soil.soil_name.strip())
+    same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
     if len(same_name_soils) > 1 or same_name_soils[0].id != soil.id:
         raise SoilNotUnique(soil.soil_name.strip())
 
-    soil_obj: Soil = event_dal.get_soil_by_id(soil.id)
+    soil_obj: Soil = await event_dal.get_soil_by_id(soil.id)
 
-    event_dal.update_soil(soil_obj, {'soil_name': soil.soil_name,
-                                     'description': soil.description,
-                                     'mix': soil.mix})
+    await event_dal.update_soil(soil_obj, {'soil_name': soil.soil_name,
+                                           'description': soil.description,
+                                           'mix': soil.mix})
 
     logger.info(f'Updated soil {soil_obj.id} - {soil_obj.soil_name}')
     return soil_obj
 
 
-def create_or_update_event(plant_id: int,
-                           events: list[FCreateOrUpdateEvent],
-                           counts: defaultdict,
-                           image_dal: ImageDAL,
-                           event_dal: EventDAL):
-    plant_obj = Plant.by_id(plant_id, db, raise_if_not_exists=True)  # noqa
+async def create_or_update_event(plant_id: int,
+                                 events: list[FCreateOrUpdateEvent],
+                                 counts: defaultdict,
+                                 image_dal: ImageDAL,
+                                 event_dal: EventDAL,
+                                 plant_dal: PlantDAL) -> None:
+    plant_obj = plant_dal.by_id(plant_id)
     logger.info(f'Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:'
                 f' {[e.id for e in plant_obj.events]}')
 
@@ -76,7 +77,7 @@ def create_or_update_event(plant_id: int,
     # create a new one, then that event in database will be modified, not deleted and re-created
     for event in [e for e in events if not e.id]:
 
-        existing_event = event_dal.get_event_by_plant_and_date(plant_obj, event.date)
+        existing_event = await event_dal.get_event_by_plant_and_date(plant_obj, event.date)
         # event_obj_id = db.query(Event.id).filter(Event.plant_id == plant_obj.id,
         #                                          Event.date == event.date).scalar()
         if existing_event is not None:
@@ -91,8 +92,9 @@ def create_or_update_event(plant_id: int,
         if event_obj.id not in event_ids:
             logger.info(f'Deleting event {event_obj.id}')
             if event_obj.image_to_event_associations:
-                event_dal.delete_image_to_event_associations(event_obj.image_to_event_associations, event=event_obj)
-            event_dal.delete_event(event_obj)
+                await event_dal.delete_image_to_event_associations(event_obj.image_to_event_associations,
+                                                                   event=event_obj)
+            await event_dal.delete_event(event_obj)
             counts['Deleted Events'] += 1
 
     # loop at the current plant's events from frontend to find new events and modify existing ones
@@ -105,14 +107,14 @@ def create_or_update_event(plant_id: int,
                               event_notes=event.event_notes,
                               plant=plant_obj
                               )
-            event_dal.create_event(event_obj)
+            await event_dal.create_event(event_obj)
             counts['Added Events'] += 1
 
         # update existing event
         else:
             # try:
             logger.info(f'Getting event  {event.id}.')
-            event_obj = event_dal.by_id(event.id)
+            event_obj = await event_dal.by_id(event.id)
             if not event_obj:
                 logger.warning(f'Event not found: {event.id}')
                 continue
@@ -128,12 +130,12 @@ def create_or_update_event(plant_id: int,
         # segments observation, pot, and soil
         if event.observation and not event_obj.observation:
             observation_obj = Observation()
-            event_dal.create_observation(observation_obj)
+            await event_dal.create_observation(observation_obj)
             event_obj.observation = observation_obj
             counts['Added Observations'] += 1
         elif not event.observation and event_obj.observation:
             # 1:1 relationship, so we can delete the observation directly
-            event_dal.delete_observation(event_obj.observation)
+            await event_dal.delete_observation(event_obj.observation)
             event_obj.observation = None
         if event.observation and event_obj.observation:
             event_obj.observation.diseases = event.observation.diseases
@@ -154,7 +156,7 @@ def create_or_update_event(plant_id: int,
             # add empty if not existing
             if not event_obj.pot:
                 pot_obj = Pot()
-                event_dal.create_pot(pot_obj)
+                await event_dal.create_pot(pot_obj)
                 event_obj.pot = pot_obj
                 counts['Added Pots'] += 1
 
@@ -178,7 +180,7 @@ def create_or_update_event(plant_id: int,
             if not event.soil.id:
                 throw_exception(f"Can't update Soil {event.soil.soil_name} without ID.")
             if not event_obj.soil or (event.soil.id != event_obj.soil.id):
-                soil = event_dal.get_soil_by_id(event.soil.id)
+                soil = await event_dal.get_soil_by_id(event.soil.id)
                 if not soil:
                     throw_exception(f'Soil ID {event.soil.id} not found')
                 event_obj.soil = soil
@@ -195,12 +197,12 @@ def create_or_update_event(plant_id: int,
                 li: ImageToEventAssociation
                 link: ImageToEventAssociation = next(li for li in event_obj.image_to_event_associations if
                                                      li.image.filename == image_obj.filename)
-                event_dal.delete_image_to_event_associations(links=[link])
+                await event_dal.delete_image_to_event_associations(links=[link])
 
         # newly assigned images
         if event.images:
             for image in event.images:
-                image_obj = image_dal.get_image_by_filename(image.filename)
+                image_obj = await image_dal.get_image_by_filename(image.filename)
                 # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).scalar()
                 # if not image_obj:
                 #     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
@@ -210,13 +212,13 @@ def create_or_update_event(plant_id: int,
                     event_obj.images.append(image_obj)
 
 
-def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
+async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
     soils = []
 
     # add the number of plants that currently have a specific soil
     soil_counter = defaultdict(int)
 
-    plants = plant_dal.get_all_plants_with_events_loaded()
+    plants = await plant_dal.get_all_plants_with_events_loaded()
     for plant in plants:
         # if events := [e for e in plant.events if e.soil_id]:
         if events := [e for e in plant.events if e.soil and e.soil.id]:
@@ -225,7 +227,7 @@ def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
             soil_counter[latest_event.soil.id] += 1
 
     all_soils = event_dal.get_all_soils()
-    for soil in all_soils:
+    for soil in await all_soils:
         soil.plants_count = soil_counter.get(soil.id, 0)
         soils.append(soil)
 

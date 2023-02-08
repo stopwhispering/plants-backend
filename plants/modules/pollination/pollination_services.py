@@ -4,6 +4,7 @@ from typing import Final
 
 from fastapi import HTTPException
 
+from plants.exceptions import UnknownColor, ColorAlreadyTaken
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
@@ -26,14 +27,14 @@ LOCATION_TEXTS: Final[dict] = {
 }
 
 
-def _read_pollination_attempts(plant: Plant,
-                               pollen_donor: Plant,
-                               pollination_dal: PollinationDAL) -> list[BPollinationAttempt]:
+async def _read_pollination_attempts(plant: Plant,
+                                     pollen_donor: Plant,
+                                     pollination_dal: PollinationDAL) -> list[BPollinationAttempt]:
     """ Read all pollination attempts for a plant and a pollen donor plus the other way around"""
-    attempts_orm = pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
+    attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
     # attempts_orm = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == plant.id,
     #                                             Pollination.pollen_donor_plant_id == pollen_donor.id).all()
-    attempts_orm_reverse = pollination_dal.get_pollinations_by_plants(pollen_donor, plant)
+    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(pollen_donor, plant)
     # attempts_orm_reverse = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == pollen_donor.id,
     #                                                     Pollination.pollen_donor_plant_id == plant.id).all()
     attempts = []
@@ -52,11 +53,13 @@ def _read_pollination_attempts(plant: Plant,
     return attempts
 
 
-def _read_resulting_plants(plant: Plant, pollen_donor: Plant, plant_dal: PlantDAL) -> list[BPollinationResultingPlant]:
-    resulting_plants_orm: list[Plant] = plant_dal.get_children(plant, pollen_donor)
+async def _read_resulting_plants(plant: Plant,
+                                 pollen_donor: Plant,
+                                 plant_dal: PlantDAL) -> list[BPollinationResultingPlant]:
+    resulting_plants_orm: list[Plant] = await plant_dal.get_children(plant, pollen_donor)
     # resulting_plants_orm = db.query(Plant).filter(Plant.parent_plant_id == plant.id,
     #                                               Plant.parent_plant_pollen_id == pollen_donor.id).all()
-    resulting_plants_orm_reverse = plant_dal.get_children(pollen_donor, plant)
+    resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
     # resulting_plants_orm_reverse = db.query(Plant).filter(Plant.parent_plant_id == pollen_donor.id,
     #                                                       Plant.parent_plant_pollen_id == plant.id).all()
     resulting_plants = []
@@ -81,10 +84,10 @@ def get_probability_pollination_to_seed(florescence: Florescence,
     return probability
 
 
-def _plants_have_ongoing_pollination(seed_capsule_plant: Plant,
-                                     pollen_donor_plant: Plant,
-                                     pollination_dal: PollinationDAL) -> bool:
-    ongoing_pollination = pollination_dal.get_pollinations_with_filter({
+async def _plants_have_ongoing_pollination(seed_capsule_plant: Plant,
+                                           pollen_donor_plant: Plant,
+                                           pollination_dal: PollinationDAL) -> bool:
+    ongoing_pollination = await pollination_dal.get_pollinations_with_filter({
         'ongoing': True,
         'seed_capsule_plant': seed_capsule_plant,
         'pollen_donor_plant': pollen_donor_plant,
@@ -92,13 +95,13 @@ def _plants_have_ongoing_pollination(seed_capsule_plant: Plant,
     return len(ongoing_pollination) > 0
 
 
-def read_potential_pollen_donors(florescence: Florescence,
-                                 florescence_dal: FlorescenceDAL,
-                                 pollination_dal: PollinationDAL,
-                                 plant_dal: PlantDAL) -> list[BPotentialPollenDonor]:
+async def read_potential_pollen_donors(florescence: Florescence,
+                                       florescence_dal: FlorescenceDAL,
+                                       pollination_dal: PollinationDAL,
+                                       plant_dal: PlantDAL) -> list[BPotentialPollenDonor]:
     """ Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen"""
-    plant = plant_dal.by_id(florescence.plant_id)
+    plant = await plant_dal.by_id(florescence.plant_id)
     potential_pollen_donors = []
 
     # 1. flowering plants
@@ -107,7 +110,7 @@ def read_potential_pollen_donors(florescence: Florescence,
     #                  # Florescence.plant_id != plant_id
     #                  ))
     # fresh_pollen_donors = query.all()
-    fresh_pollen_donors: list[Florescence] = florescence_dal.by_status([FlorescenceStatus.FLOWERING])
+    fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status([FlorescenceStatus.FLOWERING])
     for f in fresh_pollen_donors:
         already_ongoing_attempt = _plants_have_ongoing_pollination(plant, f.plant, pollination_dal=pollination_dal)
         # already_ongoing_attempt = db.query(Pollination).filter(Pollination.ongoing,
@@ -122,12 +125,12 @@ def read_potential_pollen_donors(florescence: Florescence,
             'probability_pollination_to_seed': get_probability_pollination_to_seed(florescence=florescence,
                                                                                    pollen_donor=f.plant,
                                                                                    pollen_type=PollenType.FRESH),
-            'pollination_attempts': _read_pollination_attempts(plant=plant,
-                                                               pollen_donor=f.plant,
-                                                               pollination_dal=pollination_dal),
-            'resulting_plants': _read_resulting_plants(plant=plant,
-                                                       pollen_donor=f.plant,
-                                                       plant_dal=plant_dal),
+            'pollination_attempts': await _read_pollination_attempts(plant=plant,
+                                                                     pollen_donor=f.plant,
+                                                                     pollination_dal=pollination_dal),
+            'resulting_plants': await _read_resulting_plants(plant=plant,
+                                                             pollen_donor=f.plant,
+                                                             plant_dal=plant_dal),
         }
         potential_pollen_donors.append(BPotentialPollenDonor.parse_obj(potential_pollen_donor_flowering))
 
@@ -136,14 +139,14 @@ def read_potential_pollen_donors(florescence: Florescence,
     #     Plant.id != florescence.plant_id,
     #     Plant.count_stored_pollen_containers >= 1))
     # frozen_pollen_plants = query.all()
-    frozen_pollen_plants_ = plant_dal.get_plants_with_pollen_containers()
+    frozen_pollen_plants_ = await plant_dal.get_plants_with_pollen_containers()
     frozen_pollen_plants = [plant for plant in frozen_pollen_plants_ if plant.id != florescence.plant_id]
 
     for frozen_pollen_plant in frozen_pollen_plants:
         frozen_pollen_plant: Plant
 
-        already_ongoing_attempt = _plants_have_ongoing_pollination(plant, frozen_pollen_plant,
-                                                                   pollination_dal=pollination_dal)
+        already_ongoing_attempt = await _plants_have_ongoing_pollination(plant, frozen_pollen_plant,
+                                                                         pollination_dal=pollination_dal)
 
         # already_ongoing_attempt = db.query(Pollination).filter(
         #     Pollination.ongoing,
@@ -157,12 +160,12 @@ def read_potential_pollen_donors(florescence: Florescence,
             'probability_pollination_to_seed': get_probability_pollination_to_seed(florescence=florescence,
                                                                                    pollen_donor=frozen_pollen_plant,
                                                                                    pollen_type=PollenType.FROZEN),
-            'pollination_attempts': _read_pollination_attempts(plant=plant,
-                                                               pollen_donor=frozen_pollen_plant,
-                                                               pollination_dal=pollination_dal),
-            'resulting_plants': _read_resulting_plants(plant=plant,
-                                                       pollen_donor=frozen_pollen_plant,
-                                                       plant_dal=plant_dal),
+            'pollination_attempts': await _read_pollination_attempts(plant=plant,
+                                                                     pollen_donor=frozen_pollen_plant,
+                                                                     pollination_dal=pollination_dal),
+            'resulting_plants': await _read_resulting_plants(plant=plant,
+                                                             pollen_donor=frozen_pollen_plant,
+                                                             plant_dal=plant_dal),
         }
         #     Pollination.pollen_donor_plant == frozen_pollen_plant).count() > 0
         potential_pollen_donors.append(BPotentialPollenDonor.parse_obj(potential_pollen_donor_frozen))
@@ -170,34 +173,32 @@ def read_potential_pollen_donors(florescence: Florescence,
     return potential_pollen_donors
 
 
-def save_new_pollination(new_pollination_data: FRequestNewPollination,
-                         pollination_dal: PollinationDAL,
-                         florescence_dal: FlorescenceDAL,
-                         plant_dal: PlantDAL):
+async def save_new_pollination(new_pollination_data: FRequestNewPollination,
+                               pollination_dal: PollinationDAL,
+                               florescence_dal: FlorescenceDAL,
+                               plant_dal: PlantDAL):
     """ Save a new pollination attempt """
     # validate data quality
-    florescence = florescence_dal.by_id(new_pollination_data.florescenceId)
-    seed_capsule_plant = plant_dal.by_id(new_pollination_data.seedCapsulePlantId)
-    pollen_donor_plant = plant_dal.by_id(new_pollination_data.pollenDonorPlantId)
+    florescence = await florescence_dal.by_id(new_pollination_data.florescenceId)
+    seed_capsule_plant = await plant_dal.by_id(new_pollination_data.seedCapsulePlantId)
+    pollen_donor_plant = await plant_dal.by_id(new_pollination_data.pollenDonorPlantId)
     assert seed_capsule_plant is florescence.plant
     assert PollenType.has_value(new_pollination_data.pollenType)
     assert Location.has_value(new_pollination_data.location)
     if new_pollination_data.labelColorRgb not in COLORS_MAP:
-        raise HTTPException(500, detail={'message': f'Unknown color: {new_pollination_data.labelColorRgb}'})
+        raise UnknownColor(new_pollination_data.labelColorRgb)
 
     # apply transformations
     pollination_timestamp = datetime.strptime(new_pollination_data.pollinationTimestamp, FORMAT_API_YYYY_MM_DD_HH_MM)
 
     # make sure there's no ongoing pollination for that plant with the same thread color
     label_color = COLORS_MAP[new_pollination_data.labelColorRgb]
-    same_color_pollination = pollination_dal.get_pollinations_with_filter({
+    same_color_pollination = await pollination_dal.get_pollinations_with_filter({
         'seed_capsule_plant_id': new_pollination_data.seedCapsulePlantId,
         'label_color': label_color,
     })
     if same_color_pollination:
-        raise HTTPException(500, detail={
-            'message': 'There is already an ongoing pollination for that plant with the same thread color',
-        })
+        raise ColorAlreadyTaken(seed_capsule_plant.plant_name, label_color)
 
     # create new pollination orm object and write it to db
     pollination = Pollination(
@@ -218,17 +219,17 @@ def save_new_pollination(new_pollination_data: FRequestNewPollination,
         creation_at_context=Context.API.value  # noqa
     )
 
-    pollination_dal.create(pollination)
+    await pollination_dal.create(pollination)
 
 
-def remove_pollination(pollination: Pollination, pollination_dal: PollinationDAL):
+async def remove_pollination(pollination: Pollination, pollination_dal: PollinationDAL):
     """ Delete a pollination attempt """
-    pollination_dal.delete(pollination)
+    await pollination_dal.delete(pollination)
 
 
-def update_pollination(pollination: Pollination,
-                       pollination_data: FRequestEditedPollination,
-                       pollination_dal: PollinationDAL):
+async def update_pollination(pollination: Pollination,
+                             pollination_data: FRequestEditedPollination,
+                             pollination_dal: PollinationDAL):
     """ Update a pollination attempt """
 
     # technical validation (some values are not allowed to be changed)
@@ -261,7 +262,7 @@ def update_pollination(pollination: Pollination,
     updates['harvest_date'] = parse_api_date(pollination_data.harvest_date)
     updates['germination_rate'] = germination_rate
     updates['last_update_context'] = Context.API.value
-    pollination_dal.update(pollination, updates)
+    await pollination_dal.update(pollination, updates)
 
     # # update pollination orm object and write it to db
     # pollination.pollen_type = pollination_data.pollen_type
@@ -288,12 +289,12 @@ def update_pollination(pollination: Pollination,
     # pollination.last_update_context = Context.API.value
 
 
-def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[BOngoingPollination]:
+async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[BOngoingPollination]:
     # query = (db.query(Pollination)
     #          .filter(Pollination.ongoing)
     #          )
     # ongoing_pollinations_orm: list[Pollination] = query.all()
-    ongoing_pollinations_orm: list[Pollination] = pollination_dal.get_ongoing_pollinations()
+    ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations()
 
     ongoing_pollinations = []
     for p in ongoing_pollinations_orm:
@@ -332,10 +333,10 @@ def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[BOngoingP
     return ongoing_pollinations
 
 
-def read_pollen_containers(plant_dal: PlantDAL) -> list[FBPollenContainer]:
+async def read_pollen_containers(plant_dal: PlantDAL) -> list[FBPollenContainer]:
     # query = db.query(Plant).filter(Plant.count_stored_pollen_containers >= 1)
     # plants: list[Plant] = query.all()
-    plants: list[Plant] = plant_dal.get_plants_with_pollen_containers()
+    plants: list[Plant] = await plant_dal.get_plants_with_pollen_containers()
 
     pollen_containers = []
     for p in plants:
@@ -349,13 +350,13 @@ def read_pollen_containers(plant_dal: PlantDAL) -> list[FBPollenContainer]:
     return pollen_containers
 
 
-def read_plants_without_pollen_containers(plant_dal: PlantDAL) -> list[BPlantWithoutPollenContainer]:
+async def read_plants_without_pollen_containers(plant_dal: PlantDAL) -> list[BPlantWithoutPollenContainer]:
     # query = (db.query(Plant).filter((Plant.count_stored_pollen_containers == 0) |
     #                                 Plant.count_stored_pollen_containers.is_(None))
     #          # .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))))
     #          .filter((Plant.deleted.is_(False))))
     # plants: list[Plant] = query.all()
-    plants: list[Plant] = plant_dal.get_plants_without_pollen_containers()
+    plants: list[Plant] = await plant_dal.get_plants_without_pollen_containers()
 
     plants_without_pollen_containers = []
     for p in plants:
@@ -367,9 +368,9 @@ def read_plants_without_pollen_containers(plant_dal: PlantDAL) -> list[BPlantWit
     return plants_without_pollen_containers
 
 
-def update_pollen_containers(pollen_containers_data: list[FBPollenContainer], plant_dal: PlantDAL):
+async def update_pollen_containers(pollen_containers_data: list[FBPollenContainer], plant_dal: PlantDAL):
     for pollen_container_data in pollen_containers_data:
         # plant = Plant.by_id(pollen_container_data.plant_id, db)
         # plant.count_stored_pollen_containers = pollen_container_data.count_stored_pollen_containers
-        plant = plant_dal.by_id(pollen_container_data.plant_id)
-        plant_dal.set_count_stored_pollen_containers(plant, pollen_container_data.count_stored_pollen_containers)
+        plant = await plant_dal.by_id(pollen_container_data.plant_id)
+        await plant_dal.set_count_stored_pollen_containers(plant, pollen_container_data.count_stored_pollen_containers)

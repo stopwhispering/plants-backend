@@ -1,9 +1,8 @@
 import time
 
-from sqlalchemy.orm import subqueryload
+from sqlalchemy.orm import selectinload
 
 from plants.dependencies import get_db
-from plants.extensions.db import engine
 from plants.extensions.orm import init_orm
 from plants.modules.event.models import Event
 from plants.modules.image.models import ImageKeyword, Image, ImageToTaxonAssociation
@@ -47,36 +46,36 @@ class catchtime:
         print(f'Perf time: {self.end_perf:.4f} seconds')
 
 
-def plants_subqueryload():
+def plants_selectinload():
     query = db.query(Plant)
     # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
     query = query.filter(Plant.deleted.is_(False))
 
     # early-load all relationship tables for Plant model relevant for PResultsPlants
     query = query.options(
-        subqueryload(Plant.parent_plant),
-        subqueryload(Plant.parent_plant_pollen),
+        selectinload(Plant.parent_plant),
+        selectinload(Plant.parent_plant_pollen),
 
-        subqueryload(Plant.tags),
-        subqueryload(Plant.same_taxon_plants),
-        subqueryload(Plant.sibling_plants),
+        selectinload(Plant.tags),
+        selectinload(Plant.same_taxon_plants),
+        selectinload(Plant.sibling_plants),
 
-        subqueryload(Plant.descendant_plants),
-        subqueryload(Plant.descendant_plants_pollen),
-        # subqueryload(Plant.descendant_plants_all),  # property
+        selectinload(Plant.descendant_plants),
+        selectinload(Plant.descendant_plants_pollen),
+        # selectinload(Plant.descendant_plants_all),  # property
 
-        subqueryload(Plant.taxon),
-        # subqueryload(Plant.taxon_authors),  # property
+        selectinload(Plant.taxon),
+        # selectinload(Plant.taxon_authors),  # property
 
-        subqueryload(Plant.events),
-        # subqueryload(Plant.current_soil),  # property
+        selectinload(Plant.events),
+        # selectinload(Plant.current_soil),  # property
 
-        subqueryload(Plant.images),
-        # subqueryload(Plant.latest_image),  # property
+        selectinload(Plant.images),
+        # selectinload(Plant.latest_image),  # property
 
-        # subqueryload(Plant.property_values_plant),  # not required
-        # subqueryload(Plant.image_to_plant_associations),  # not required
-        # subqueryload(Plant.florescences),  # not required
+        # selectinload(Plant.property_values_plant),  # not required
+        # selectinload(Plant.image_to_plant_associations),  # not required
+        # selectinload(Plant.florescences),  # not required
     )
     plants_obj = query.all()
     results = {'action':           'Get plants',
@@ -86,7 +85,7 @@ def plants_subqueryload():
     BResultsPlants.parse_obj(results)
 
 
-def plants_no_subqueryload():
+def plants_no_selectinload():
     query = db.query(Plant)
     # query = query.filter((Plant.hide.is_(False)) | (Plant.hide.is_(None)))
     query = query.filter(Plant.deleted.is_(False))
@@ -138,15 +137,15 @@ def images_for_plant():
 def taxa():
     # /api/taxa/
     taxa: list[Taxon] = db.query(Taxon).options(  # noqa
-        subqueryload(Taxon.distribution),
-        subqueryload(Taxon.occurrence_images),
-        subqueryload(Taxon.images),
+        selectinload(Taxon.distribution),
+        selectinload(Taxon.occurrence_images),
+        selectinload(Taxon.images),
 
-        # subqueryload(Taxon.plants),  # not required
-        # subqueryload(Taxon.property_values_taxon),  # not required
+        # selectinload(Taxon.plants),  # not required
+        # selectinload(Taxon.property_values_taxon),  # not required
 
-        subqueryload(Taxon.image_to_taxon_associations)
-        .subqueryload(ImageToTaxonAssociation.image),
+        selectinload(Taxon.image_to_taxon_associations)
+        .selectinload(ImageToTaxonAssociation.image),
     ).all()
     taxon_dict = {}
     for taxon in taxa:
@@ -195,7 +194,7 @@ def untagged():
 def property_names():
     # /api/property_names/
     # 0.0922 seconds
-    query = db.query(PropertyCategory).options(subqueryload(PropertyCategory.property_names))
+    query = db.query(PropertyCategory).options(selectinload(PropertyCategory.property_names))
     category_obj = query.all()
     categories = {}
     for cat in category_obj:
@@ -217,8 +216,8 @@ def property_names():
 
 # print(config.db_type)
 functions = [
-    # plants_no_subqueryload,
-    # plants_subqueryload,
+    # plants_no_selectinload,
+    # plants_selectinload,
     # keyword_proposals,
     # events_for_plant,
     # images_for_plant,

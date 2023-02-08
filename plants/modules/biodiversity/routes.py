@@ -36,7 +36,7 @@ async def search_taxa_by_name(
                                      search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
                                      taxon_dal=taxon_dal)
     try:
-        results = taxonomy_search.search(taxon_info_request.taxon_name_pattern)
+        results = await taxonomy_search.search(taxon_info_request.taxon_name_pattern)
     except TooManyResultsError as e:
         logger.error('Exception catched.', exc_info=e)
         throw_exception(e.args[0], request=request)

@@ -107,6 +107,7 @@ class LocalConfig(BaseSettings):
     they are case-insensitive by default"""
     environment: Environment
     connection_string: constr(min_length=1, strip_whitespace=True)
+    alembic_connection_string: constr(min_length=1, strip_whitespace=True)
     max_images_per_taxon: int = 20
     allow_cors: bool = False
     log_settings: LogSettings

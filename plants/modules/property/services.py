@@ -15,9 +15,9 @@ class MixinShared:
     def __init__(self, property_dal: PropertyDAL):
         self.property_dal = property_dal
 
-    def create_new_property_name(self, category_id, property_name):
+    async def create_new_property_name(self, category_id, property_name):
         """returns newly createad property name's id"""
-        category_obj = self.property_dal.get_property_category_by_id(category_id)
+        category_obj = await self.property_dal.get_property_category_by_id(category_id)
         # make sure it does not already exist
         current_property_names = [p for p in category_obj.property_names if p.property_name == property_name]
         if current_property_names:
@@ -25,7 +25,7 @@ class MixinShared:
 
         property_name = PropertyName(property_name=property_name, category_id=category_id)
         # we need to add it and flush to get a property name id
-        self.property_dal.create_property_name(property_name)
+        await self.property_dal.create_property_name(property_name)
         return property_name.id
 
 
@@ -35,26 +35,26 @@ class LoadProperties:
         self.property_dal = property_dal
         self.taxon_dal = taxon_dal
 
-    def _add_empty_categories(self, categories: List):
+    async def _add_empty_categories(self, categories: List):
         category_names = [c['category_name'] for c in categories]
         for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
-            category_obj = self.property_dal.get_property_category_by_name(default_category)
+            category_obj = await self.property_dal.get_property_category_by_name(default_category)
             categories.append({'category_name': category_obj.category_name,
                                'category_id':   category_obj.id,
                                # 'sort':          category_obj.sort,
                                'properties':    []})
 
-    def _add_empty_categories_to_dict(self, categories: Dict):
+    async def _add_empty_categories_to_dict(self, categories: Dict):
         category_names = [c['category_name'] for c in categories.values()]
         for default_category in [p for p in constants.PROPERTY_CATEGORIES if p not in category_names]:
-            category_obj = self.property_dal.get_property_category_by_name(default_category)
+            category_obj = await self.property_dal.get_property_category_by_name(default_category)
             categories[category_obj.id] = {'category_name': category_obj.category_name,
                                            'category_id':   category_obj.id,
                                            # 'sort':          category_obj.sort,
                                            'properties':    []}
 
-    def get_properties_for_plant(self, plant: Plant) -> List:
-        property_objects = self.property_dal.get_property_values_by_plant_id(plant.id)
+    async def get_properties_for_plant(self, plant: Plant) -> List:
+        property_objects = await self.property_dal.get_property_values_by_plant_id(plant.id)
         # property_objects = PropertyValue.get_by_plant_id(plant.id, db, raise_exception=False)
         property_dicts = [p.as_dict() for p in property_objects]
 
@@ -80,11 +80,11 @@ class LoadProperties:
                     ]
                 } for p in property_dicts if p['category_id'] == cat['category_id']]
 
-        self._add_empty_categories(categories)
+        await self._add_empty_categories(categories)
         return categories
 
-    def get_properties_for_taxon(self, taxon_id: int) -> Dict[int, Dict]:
-        taxon = self.taxon_dal.by_id(taxon_id)
+    async def get_properties_for_taxon(self, taxon_id: int) -> Dict[int, Dict]:
+        taxon = await self.taxon_dal.by_id(taxon_id)
         property_objects_taxon = taxon.property_values_taxon
         property_dicts_taxon = [p.as_dict() for p in property_objects_taxon]
 
@@ -109,7 +109,7 @@ class LoadProperties:
                         }
                     ]
                 } for p in property_dicts_taxon if p['category_id'] == cat['category_id']]
-        self._add_empty_categories_to_dict(categories_taxon)
+        await self._add_empty_categories_to_dict(categories_taxon)
         return categories_taxon
 
 
@@ -148,10 +148,10 @@ class SaveProperties(MixinShared):
                 )
         return property_object
 
-    def _modify_existing_property_value(self, property_modified: FBProperty):
+    async def _modify_existing_property_value(self, property_modified: FBProperty):
         # todo is this code outdated? seems to make no sense as there is no prop value id here
         # todo check
-        property_value_object = self.property_dal.get_property_value_by_id(property_modified.property_value_id)
+        property_value_object = await self.property_dal.get_property_value_by_id(property_modified.property_value_id)
         property_value_object.property_value = property_modified.property_value
 
     @staticmethod
@@ -171,10 +171,10 @@ class SaveProperties(MixinShared):
                         # therefore, delete the whole property name node
                         category_modified.properties.pop(i)
 
-    def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory]) -> list[PropertyValue]:
+    async def _save_categories(self, plant_id, categories_modified: List[FBPropertiesInCategory]) -> list[PropertyValue]:
         # get current properties for the plant
         self._remove_taxon_properties(categories_modified)
-        plant = self.plant_dal.by_id(plant_id)
+        plant = await self.plant_dal.by_id(plant_id)
         properties_current = plant.property_values_plant
 
         new_list: list[PropertyValue] = []
@@ -188,12 +188,12 @@ class SaveProperties(MixinShared):
                         continue
                     # maybe the property name is new, too
                     if not property_modified.property_name_id:
-                        property_modified.property_name_id = self.create_new_property_name(
+                        property_modified.property_name_id = await self.create_new_property_name(
                                 category_modified.category_id,
                                 property_modified.property_name)
                     new_list.append(self._new_property_for_plant(plant_id, property_modified))
                 elif self._is_modified(property_modified, properties_current):
-                    self._modify_existing_property_value(property_modified)
+                    await self._modify_existing_property_value(property_modified)
 
         # identify deleted property values
         ids_current = [p.id for p in properties_current]
@@ -203,20 +203,20 @@ class SaveProperties(MixinShared):
         ids_modified = [p.property_value_id for p in properties_modified_flattened if p.property_value_id]
         property_value_ids_deleted = [i for i in ids_current if i not in ids_modified]
         if property_value_ids_deleted:
-            self._delete_property_values(property_value_ids_deleted)
+            await self._delete_property_values(property_value_ids_deleted)
 
         return new_list
 
-    def save_properties(self, properties_modified: Dict[int, FBPropertyCollectionPlant]):
+    async def save_properties(self, properties_modified: Dict[int, FBPropertyCollectionPlant]):
         for plant_id, plant_values in properties_modified.items():
-            new_list: list[PropertyValue] = self._save_categories(plant_id, plant_values.categories)
+            new_list: list[PropertyValue] = await self._save_categories(plant_id, plant_values.categories)
             if new_list:
-                self.property_dal.create_property_values(new_list)
+                await self.property_dal.create_property_values(new_list)
 
-    def _delete_property_values(self, property_value_ids: List[int]):
+    async def _delete_property_values(self, property_value_ids: List[int]):
         for property_value_id in property_value_ids:
-            property_value_object = self.property_dal.get_property_value_by_id(property_value_id)
-            self.property_dal.delete_property_value(property_value_object)
+            property_value_object = await self.property_dal.get_property_value_by_id(property_value_id)
+            await self.property_dal.delete_property_value(property_value_object)
 
 
 class SavePropertiesTaxa(MixinShared):
@@ -243,12 +243,12 @@ class SavePropertiesTaxa(MixinShared):
         else:
             return None
 
-    def save_properties(self, properties_modified: Dict[int, Dict[int, FBPropertiesInCategory]]):
+    async def save_properties(self, properties_modified: Dict[int, Dict[int, FBPropertiesInCategory]]):
         # loop at taxa
         new_list: list[PropertyValue] = []
         del_list: list[PropertyValue] = []
         for taxon_id, categories_dict in properties_modified.items():
-            taxon = self.taxon_dal.by_id(taxon_id)
+            taxon = await self.taxon_dal.by_id(taxon_id)
 
             # nested loop
             for category in categories_dict.values():
@@ -268,7 +268,7 @@ class SavePropertiesTaxa(MixinShared):
                     if self._is_newly_used_for_taxon(p, property_values_current):
                         # maybe the property name is new, too
                         if not p.property_name_id:
-                            p.property_name_id = self.create_new_property_name(
+                            p.property_name_id = await self.create_new_property_name(
                                     category.category_id,
                                     p.property_name)
                         new_list.append(self._new_property_value_object(taxon, p))
@@ -276,9 +276,9 @@ class SavePropertiesTaxa(MixinShared):
                         self._modify_existing_property_value(p, property_values_current)
 
         if new_list:
-            self.property_dal.create_property_values(new_list)
+            await self.property_dal.create_property_values(new_list)
         if del_list:
-            self.property_dal.delete_property_values(del_list)
+            await self.property_dal.delete_property_values(del_list)
 
     @staticmethod
     def _get_deleted_property_values(properties, property_values_current) -> List[PropertyValue]:

@@ -21,13 +21,13 @@ class TaxonomySearch:
         self.search_for_genus_not_species = search_for_genus_not_species
         self.taxon_dal = taxon_dal
 
-    def search(self, taxon_name_pattern: str) -> list[dict]:
+    async def search(self, taxon_name_pattern: str) -> list[dict]:
         """
         search for a taxon name via pattern, first in local database, then in external APIs
         merge results from local database and external APIs
         """
         # search for taxa already in the database
-        local_results = self._query_taxa_in_local_database(
+        local_results = await self._query_taxa_in_local_database(
             taxon_name_pattern=f'%{taxon_name_pattern}%',
             search_for_genus_not_species=self.search_for_genus_not_species)
         results = local_results[:]
@@ -79,15 +79,15 @@ class TaxonomySearch:
         }
         return search_result_entry
 
-    def _query_taxa_in_local_database(self,
-                                      taxon_name_pattern: str,
-                                      search_for_genus_not_species: bool
-                                      ) -> list[dict]:
+    async def _query_taxa_in_local_database(self,
+                                            taxon_name_pattern: str,
+                                            search_for_genus_not_species: bool
+                                            ) -> list[dict]:
         """searches term in local botany database and returns results in web-format"""
         if search_for_genus_not_species:
-            taxa = self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern, FBRank.GENUS)
+            taxa = await self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern, FBRank.GENUS)
         else:
-            taxa = self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern)
+            taxa = await self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern)
 
         results = []
         for taxon in taxa:
@@ -175,7 +175,7 @@ class TaxonomySearch:
                 # custom_rankr=  # always custom
                 # custom_infraspeciesr=  # always custom
                 'synonyms_concat': None,  # available only in POWO
-                'distribution_concat': None,   # available only in POWO
+                'distribution_concat': None,  # available only in POWO
             }
             if ipni_result.get('inPowo'):
                 lsid_in_powo.add(result['lsid'])

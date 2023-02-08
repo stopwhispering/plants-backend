@@ -1,4 +1,5 @@
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Base is the the base class for ORM models
@@ -15,11 +16,13 @@ class SessionFactory:
     session_factory: sessionmaker = None
 
     @classmethod
-    def create_sessionmaker(cls, engine: Engine) -> None:
+    def create_sessionmaker(cls, engine: AsyncEngine) -> None:
         """Create a sessionmaker for a given db engine."""
-        cls.session_factory = sessionmaker(autocommit=False,
+        cls.session_factory = sessionmaker(engine,  # noqa
+                                           autocommit=False,
                                            autoflush=False,
-                                           bind=engine)
+                                           expire_on_commit=False,
+                                           class_=AsyncSession)
 
     @classmethod
     def create_session(cls):
@@ -32,17 +35,17 @@ class SessionFactory:
         return cls.session_factory
 
 
-def init_orm(engine: Engine):
+async def init_orm(engine: AsyncEngine):
     SessionFactory.create_sessionmaker(engine=engine)
 
-    create_tables_if_required(engine)
+    await create_tables_if_required(engine)
 
     # initially populate tables with default data
     from plants.modules.property.populate_table import insert_property_categories
-    insert_property_categories(SessionFactory.create_session())
+    await insert_property_categories(SessionFactory.create_session())
 
 
-def create_tables_if_required(engine: Engine):
+async def create_tables_if_required(engine: AsyncEngine):
     """uses metadata's connection if no engine supplied"""
     # import all orm tables. don't remove!
     # this populates Base.metadata's list of tables
@@ -55,4 +58,5 @@ def create_tables_if_required(engine: Engine):
     import plants.modules.pollination.models  # noqa
 
     # create db tables if not existing
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

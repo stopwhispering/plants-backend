@@ -26,14 +26,14 @@ router = APIRouter(
 
 @router.get("/events/soils", response_model=BResultsSoilsResource)
 async def get_soils(event_dal: EventDAL = Depends(get_event_dal), plant_dal: PlantDAL = Depends(get_plant_dal)):
-    soils = fetch_soils(event_dal=event_dal, plant_dal=plant_dal)
+    soils = await fetch_soils(event_dal=event_dal, plant_dal=plant_dal)
     return {'SoilsCollection': soils}
 
 
 @router.post("/events/soils", response_model=BPResultsUpdateCreateSoil)
 async def create_new_soil(new_soil: FSoilCreate, event_dal: EventDAL = Depends(get_event_dal)):
     """create new soil and return it with (newly assigned) id"""
-    soil = create_soil(soil=new_soil, event_dal=event_dal)
+    soil = await create_soil(soil=new_soil, event_dal=event_dal)
 
     logger.info(msg := f'Created soil with new ID {soil.id}')
     return {'soil': soil,
@@ -43,7 +43,7 @@ async def create_new_soil(new_soil: FSoilCreate, event_dal: EventDAL = Depends(g
 @router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
 async def update_existing_soil(updated_soil: FSoil, event_dal: EventDAL = Depends(get_event_dal)):
     """update soil attributes"""
-    soil = update_soil(soil=updated_soil, event_dal=event_dal)
+    soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
     logger.info(msg := f'Updated soil with ID {soil.id}')
     return {'soil': soil.as_dict(),
@@ -66,7 +66,8 @@ async def get_events(plant: Plant = Depends(valid_plant)):
 @router.post("/events/", response_model=BSaveConfirmation)
 async def create_or_update_events(events_request: FRequestCreateOrUpdateEvent,
                                   event_dal: EventDAL = Depends(get_event_dal),
-                                  image_dal: ImageDAL = Depends(get_image_dal)
+                                  image_dal: ImageDAL = Depends(get_image_dal),
+                                  plant_dal: PlantDAL = Depends(get_plant_dal)
                                   ):
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has been changed, added, or
@@ -75,11 +76,12 @@ async def create_or_update_events(events_request: FRequestCreateOrUpdateEvent,
     # loop at the plants and their events, identify additions, deletions, and updates and save them
     counts = defaultdict(int)
     for plant_id, events in events_request.plants_to_events.items():
-        create_or_update_event(plant_id=plant_id,
-                               events=events,
-                               counts=counts,
-                               event_dal=event_dal,
-                               image_dal=image_dal)
+        await create_or_update_event(plant_id=plant_id,
+                                     events=events,
+                                     counts=counts,
+                                     event_dal=event_dal,
+                                     image_dal=image_dal,
+                                     plant_dal=plant_dal)
 
     logger.info(' Saving Events: ' + (description := ', '.join([f'{key}: {counts[key]}' for key in counts.keys()])))
     results = {'resource': FBMajorResource.EVENT,

@@ -13,6 +13,16 @@ class BaseError(HTTPException):
         super().__init__(status_code=404, detail=detail)
 
 
+class UnknownColor(BaseError):
+    def __init__(self, color: str):
+        super().__init__(detail=f"Unknown Color: {color}")
+
+
+class ColorAlreadyTaken(BaseError):
+    def __init__(self, plant_name: str, color: str):
+        super().__init__(detail=f"Color {color} already used for current florescence at {plant_name}")
+
+
 class TaxonAlreadyExists(BaseError):
     """"""
 

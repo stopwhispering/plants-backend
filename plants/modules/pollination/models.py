@@ -2,19 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 import enum
-from typing import Collection
 
-from numpy.random.mtrand import Sequence
 from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric, Enum
 import sqlalchemy
 
 from sqlalchemy.types import DateTime
 import logging
 
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 
-from plants.exceptions import PollinationNotFound, FlorescenceNotFound
-from plants.shared.message_services import throw_exception
 from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
@@ -158,20 +154,6 @@ class Florescence(Base, OrmAsDict):
                                  if self.plant else None)
         return as_dict
 
-    @staticmethod
-    def by_id(florescence_id: int, db: Session, raise_if_not_exists: bool = True) -> Florescence | None:
-        florescence = db.query(Florescence).filter(Florescence.id == florescence_id).first()
-        if not florescence and raise_if_not_exists:
-            raise FlorescenceNotFound(florescence_id)
-        return florescence
-
-    @staticmethod
-    def by_status(status: Collection[FlorescenceStatus], db: Session) -> list[Florescence]:
-        query = (db.query(Florescence)
-                 .filter(Florescence.florescence_status.in_(status))
-                 )
-        return query.all()  # noqa
-
 
 class Pollination(Base, OrmAsDict):
     """pollination attempts of a plant
@@ -236,10 +218,3 @@ class Pollination(Base, OrmAsDict):
         as_dict['pollen_donor_plant_name'] = (self.pollen_donor_plant.plant_name
                                               if self.pollen_donor_plant else None)
         return as_dict
-
-    @classmethod
-    def by_id(cls, pollination_id: int, db: Session, raise_if_not_exists: bool = True) -> Pollination | None:
-        pollination = db.query(cls).filter(cls.id == pollination_id).first()
-        if not pollination and raise_if_not_exists:
-            raise PollinationNotFound(pollination_id)
-        return pollination
