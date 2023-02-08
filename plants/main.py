@@ -70,3 +70,4 @@ async def startup_event():
     logger.info("Starting up, starting with DB connection")
     engine = create_db_engine(local_config.connection_string)
     await init_orm(engine=engine)
+

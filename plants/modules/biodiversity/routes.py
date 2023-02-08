@@ -1,6 +1,7 @@
 from json.decoder import JSONDecodeError
 from fastapi import APIRouter, Depends
 import logging
+
 from starlette.requests import Request
 
 from plants.dependencies import get_taxon_dal

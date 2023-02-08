@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select, Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -6,6 +8,7 @@ from plants.exceptions import PlantNotFound, TagNotFound, TagNotAssignedToPlant
 from plants.modules.event.models import Event
 from plants.modules.image.models import ImageToPlantAssociation, Image
 from plants.modules.plant.models import Plant, Tag
+from plants.modules.taxon.models import Taxon
 from plants.shared.base_dal import BaseDAL
 
 
@@ -212,32 +215,51 @@ class PlantDAL(BaseDAL):
         return nurseries
 
     async def update(self, plant: Plant, updates: dict):
-        if 'plant_name' in updates:
-            plant.plant_name = updates['plant_name']
-        if 'active' in updates:
-            plant.active = updates['active']
-        if 'cancellation_reason' in updates:
-            plant.cancellation_reason = updates['cancellation_reason']
-        if 'cancellation_date' in updates:
-            plant.cancellation_date = updates['cancellation_date']
-        if 'field_number' in updates:
-            plant.field_number = updates['field_number']
-        if 'geographic_origin' in updates:
-            plant.geographic_origin = updates['geographic_origin']
-        if 'nursery_source' in updates:
-            plant.nursery_source = updates['nursery_source']
-        if 'propagation_type' in updates:
-            plant.propagation_type = updates['propagation_type']
-        if 'generation_notes' in updates:
-            plant.generation_notes = updates['generation_notes']
-        if 'plant_notes' in updates:
-            plant.plant_notes = updates['plant_notes']
-        if 'parent_plant_id' in updates:
-            plant.parent_plant_id = updates['parent_plant_id']
-        if 'parent_plant_pollen_id' in updates:
-            plant.parent_plant_pollen_id = updates['parent_plant_pollen_id']
-        if 'filename_previewimage' in updates:
-            plant.filename_previewimage = updates['filename_previewimage']
+        for key, value in updates.items():
+            if key == 'plant_name':
+                value: str
+                plant.plant_name = value
+            elif key == 'active':
+                value: bool
+                plant.active = updates['active']
+            elif key == 'cancellation_reason':
+                value: str | None
+                plant.cancellation_reason = value
+            elif key == 'cancellation_date':
+                value: datetime | None
+                plant.cancellation_date = value
+            elif key == 'field_number':
+                value: str | None
+                plant.field_number = value
+            elif key == 'geographic_origin':
+                value: str | None
+                plant.geographic_origin = value
+            elif key == 'nursery_source':
+                value: str | None
+                plant.nursery_source = value
+            elif key == 'propagation_type':
+                value: str | None
+                plant.propagation_type = value
+            elif key == 'generation_notes':
+                value: str | None
+                plant.generation_notes = value
+            elif key == 'plant_notes':
+                value: str | None
+                plant.plant_notes = value
+            elif key == 'parent_plant_id':
+                value: int | None
+                plant.parent_plant_id = value
+            elif key == 'parent_plant_pollen_id':
+                value: int | None
+                plant.parent_plant_pollen_id = value
+            elif key == 'filename_previewimage':
+                value: str | None
+                plant.filename_previewimage = value
+            elif key == 'taxon':
+                value: Taxon | None
+                plant.taxon = value
+            else:
+                raise NotImplementedError(f'Update of {key} not implemented')
 
         await self.session.flush()
 

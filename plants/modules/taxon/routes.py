@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+from starlette.background import BackgroundTasks
 
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
@@ -67,7 +68,9 @@ async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
 
 
 @router.post("/new", response_model=BCreatedTaxonResponse)
-async def save_taxon(new_taxon_data: FNewTaxon, taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
+async def save_taxon(new_taxon_data: FNewTaxon,
+                     background_tasks: BackgroundTasks,
+                     taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     """
     save a custom or non-custom taxon from search results list; if taxon already is in db, just return it
     """
@@ -76,8 +79,9 @@ async def save_taxon(new_taxon_data: FNewTaxon, taxon_dal: TaxonDAL = Depends(ge
         taxon: Taxon = await taxon_dal.by_id(new_taxon_data.id)
         msg = get_message(f'Loaded {taxon.name} from database.')
     else:
-        taxon: Taxon = await save_new_taxon(new_taxon_data, taxon_dal=taxon_dal)
+        taxon: Taxon = await save_new_taxon(new_taxon_data, taxon_dal=taxon_dal, background_tasks=background_tasks)
         msg = get_message(f'Saved taxon {taxon.name} to database.')
+        taxon: Taxon = await taxon_dal.by_id(taxon.id)
 
     return {
         'action': 'Save taxon',

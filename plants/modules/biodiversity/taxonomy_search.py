@@ -2,6 +2,7 @@ import logging
 
 from pykew import ipni as ipni, powo as powo
 from pykew.ipni_terms import Name
+from fastapi.concurrency import run_in_threadpool
 
 from plants import settings
 from plants.exceptions import TooManyResultsError
@@ -34,9 +35,19 @@ class TaxonomySearch:
 
         # optionally, search in external biodiversity databases "ipni" and "powo"
         if self.include_external_apis:
-            kew_results = self._search_taxa_in_external_apis(
-                plant_name_pattern=taxon_name_pattern,  # no %/* required here
-                local_results=local_results)
+            api_searcher = ApiSearcher(search_for_genus_not_species=self.search_for_genus_not_species)
+
+            kew_results = await run_in_threadpool(api_searcher.search_taxa_in_external_apis,
+                                                  plant_name_pattern=taxon_name_pattern,  # no %/* required here
+                                                  local_results=local_results)
+
+            # kew_results = api_searcher.search_taxa_in_external_apis(
+            #     plant_name_pattern=taxon_name_pattern,  # no %/* required here
+            #     local_results=local_results)
+
+            # kew_results = self._search_taxa_in_external_apis(
+            #     plant_name_pattern=taxon_name_pattern,  # no %/* required here
+            #     local_results=local_results)
             results.extend(kew_results)
         return results
 
@@ -96,6 +107,38 @@ class TaxonomySearch:
 
         logger.info(f'Found query term in plants taxon database.'
                     if results else f'Query term not found in plants taxon database.')
+        return results
+
+
+class ApiSearcher:
+    def __init__(self, search_for_genus_not_species: bool):
+        self.search_for_genus_not_species = search_for_genus_not_species
+
+    def search_taxa_in_external_apis(self,
+                                     plant_name_pattern: str,
+                                     local_results: list,
+                                     ) -> list[dict]:
+        """searches term in kew's International Plant Name Index ("IPNI") and Plants of the World ("POWO");
+        ignores entries included in the local_results list"""
+        # First step: search in the International Plant Names Index (IPNI) which has slightly more items than POWO
+        results, lsid_in_powo = self._search_taxa_in_ipni_api(plant_name_pattern=plant_name_pattern,
+                                                              ignore_local_db_results=local_results)
+
+        # Second step: for each IPNI result, search in POWO for more details if available
+        bad_todo = []
+        for result in results[:]:  # can't remove from oneself
+            result: dict
+
+            # for those entries without POWO data, we add a warning concerning acceptance status first
+            if result['lsid'] not in lsid_in_powo:
+                results.remove(result)
+                bad_todo.append(result)
+                continue
+                # result['synonyms_concat'] = 'Status unknown, no entry in POWO'
+
+            self._update_taxon_from_powo_api(result)
+
+        logger.info(f'Found {len(results)} results from IPNI/POWO search for search term "{plant_name_pattern}".')
         return results
 
     def _search_taxa_in_ipni_api(self,
@@ -210,30 +253,3 @@ class TaxonomySearch:
         # add information only available at POWO
         # result['phylum'] = powo_lookup.get('phylum')
         result['distribution_concat'] = create_distribution_concat(powo_lookup)
-
-    def _search_taxa_in_external_apis(self,
-                                      plant_name_pattern: str,
-                                      local_results: list,
-                                      ) -> list[dict]:
-        """searches term in kew's International Plant Name Index ("IPNI") and Plants of the World ("POWO");
-        ignores entries included in the local_results list"""
-        # First step: search in the International Plant Names Index (IPNI) which has slightly more items than POWO
-        results, lsid_in_powo = self._search_taxa_in_ipni_api(plant_name_pattern=plant_name_pattern,
-                                                              ignore_local_db_results=local_results)
-
-        # Second step: for each IPNI result, search in POWO for more details if available
-        bad_todo = []
-        for result in results[:]:  # can't remove from oneself
-            result: dict
-
-            # for those entries without POWO data, we add a warning concerning acceptance status first
-            if result['lsid'] not in lsid_in_powo:
-                results.remove(result)
-                bad_todo.append(result)
-                continue
-                # result['synonyms_concat'] = 'Status unknown, no entry in POWO'
-
-            self._update_taxon_from_powo_api(result)
-
-        logger.info(f'Found {len(results)} results from IPNI/POWO search for search term "{plant_name_pattern}".')
-        return results

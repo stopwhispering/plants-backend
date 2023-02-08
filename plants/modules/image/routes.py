@@ -108,10 +108,10 @@ async def update_images(modified_ext: BImageUpdated,
         # alter metadata in jpg exif tags
         logger.info(f'Updating {image_ext.filename}')
         await PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image_ext.id,
-                                                          plant_names=[p.plant_name for p in image_ext.plants],
-                                                          keywords=[k.keyword for k in image_ext.keywords],
-                                                          description=image_ext.description or '',
-                                                          image_dal=image_dal)
+                                                                plant_names=[p.plant_name for p in image_ext.plants],
+                                                                keywords=[k.keyword for k in image_ext.keywords],
+                                                                description=image_ext.description or '',
+                                                                image_dal=image_dal)
         # image = Image.get_image_by_filename(filename=image_ext.filename, db=db)
         image = await image_dal.get_image_by_filename(filename=image_ext.filename)
         await _update_image_if_altered(image=image,

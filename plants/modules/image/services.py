@@ -6,6 +6,7 @@ from datetime import datetime
 
 import aiofiles
 from fastapi import UploadFile, BackgroundTasks
+from starlette.concurrency import run_in_threadpool
 
 from plants import local_config, settings, constants
 from plants.modules.image.models import Image, ImageToPlantAssociation, ImageToEventAssociation, \
@@ -29,22 +30,39 @@ logger = logging.getLogger(__name__)
 NOT_AVAILABLE_IMAGE_FILENAME = "not_available.png"
 
 
+def _rename_plant_in_image_files(images: list[Image], exif: PhotoMetadataAccessExifTags):
+    for image in images:
+        plant_names = [p.plant_name for p in image.plants]
+        exif.rewrite_plant_assignments(absolute_path=image.absolute_path, plants=plant_names)
+
+
 async def rename_plant_in_image_files(plant: Plant, plant_name_old: str, image_dal: ImageDAL) -> int:
     """
     in each photo_file file that has the old plant name tagged, fit tag to the new plant name
     """
     if not plant.images:
         logger.info(f'No photo_file tag to change for {plant_name_old}.')
-    for image in plant.images:
-        # reload image including it's relationships (lazy loading not allowed in async mode)
-        image = await image_dal.by_id(image.id)
+    exif = PhotoMetadataAccessExifTags()
+    # reload images to include their relationships (lazy loading not allowed in async mode)
+    images = await image_dal.by_ids([i.id for i in plant.images])
+    await run_in_threadpool(_rename_plant_in_image_files, images=images, exif=exif)
 
-        plant_names = [p.plant_name for p in image.plants]
-        PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,  # todo executor
-                                                                plants=plant_names)
+
+    #
+    # await run_in_threadpool(exif.rewrite_plant_assignments,
+    #                         absolute_path=image.absolute_path,
+    #                         plants=plant_names)
+    # for image in images:
+    #     # reload image including it's relationships (lazy loading not allowed in async mode)
+    #     _rename_plant_in_image_files(image, exif)
+    #     # await run_in_threadpool(exif.rewrite_plant_assignments,
+    #     #                         absolute_path=image.absolute_path,
+    #     #                         plants=plant_names)
+    #     # PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
+    #     #                                                         plants=plant_names)
 
     # note: there's no need to upload the cache as we did modify directly in the cache above
-    return len(plant.images)
+    return len(images)
 
 
 async def save_image_files(files: List[UploadFile],

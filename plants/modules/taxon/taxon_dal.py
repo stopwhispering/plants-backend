@@ -41,6 +41,7 @@ class TaxonDAL(BaseDAL):
 
         query = (select(Taxon)
                  .where(Taxon.name.ilike(taxon_name_pattern))  # ilike ~ case-insensitive like
+                 .options(selectinload(Taxon.plants))
                  )
         if rank:
             query = query.where(Taxon.rank == rank.value)  # noqa

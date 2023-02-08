@@ -1,7 +1,9 @@
 import logging
-from threading import Thread
 
 from pykew import powo
+from fastapi import BackgroundTasks
+from fastapi.concurrency import run_in_threadpool
+
 from plants.exceptions import TaxonAlreadyExists
 from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import BotanicalNameInput, create_formatted_botanical_name
@@ -44,8 +46,8 @@ def _create_names(new_taxon: FNewTaxon) -> tuple[str, str]:
     return name, full_html_name
 
 
-def _retrieve_locations(lsid: str):
-    powo_lookup = powo.lookup(lsid, include=['distribution'])
+async def _retrieve_locations(lsid: str):
+    powo_lookup = await run_in_threadpool(powo.lookup, lsid, include=['distribution'])
     locations: list[Distribution] = []
 
     # collect native and introduced distribution into one list
@@ -71,7 +73,7 @@ def _retrieve_locations(lsid: str):
     return locations
 
 
-async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
+async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL, background_tasks: BackgroundTasks) -> Taxon:
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
@@ -85,10 +87,10 @@ async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
         assert not new_taxon.custom_suffix
         assert not new_taxon.cultivar
         assert not new_taxon.affinis
-        locations = _retrieve_locations(new_taxon.lsid)
+        locations = await _retrieve_locations(new_taxon.lsid)
 
         gbif_identifier_lookup = GBIFIdentifierLookup()
-        gbif_id = gbif_identifier_lookup.lookup(taxon_name=name, lsid=new_taxon.lsid)  # todo run in executor
+        gbif_id = await run_in_threadpool(gbif_identifier_lookup.lookup, taxon_name=name, lsid=new_taxon.lsid)
 
     if await taxon_dal.exists(taxon_name=name):
         raise TaxonAlreadyExists(name)
@@ -131,9 +133,13 @@ async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL) -> Taxon:
 
     # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
-    thread = Thread(target=loader.scrape_occurrences_for_taxon, args=[gbif_id])
-    logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
-    thread.start()
+
+    # logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
+    # thread = Thread(target=loader.scrape_occurrences_for_taxon, args=[gbif_id])
+    # thread.start()
+
+    logger.info(f'Starting background task to load occurences for gbif_id {gbif_id}')
+    background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
 
     return taxon
 
