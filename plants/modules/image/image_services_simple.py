@@ -5,7 +5,7 @@ import logging
 from PIL import Image
 
 from plants import settings
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.image.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
 

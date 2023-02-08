@@ -2,8 +2,8 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from plants.modules.plant.image_dal import ImageDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.image.image_dal import ImageDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import create_formatted_botanical_name, BotanicalNameInput
 from plants.shared.message_services import get_message

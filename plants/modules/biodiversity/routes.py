@@ -4,7 +4,7 @@ import logging
 from starlette.requests import Request
 
 from plants.dependencies import get_taxon_dal
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception, get_message
 from plants.exceptions import TooManyResultsError
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader

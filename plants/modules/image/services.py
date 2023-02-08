@@ -11,10 +11,10 @@ from plants import local_config, settings, constants
 from plants.modules.image.models import Image, ImageToPlantAssociation, ImageToEventAssociation, \
     ImageToTaxonAssociation, ImageKeyword
 from plants.modules.image.schemas import FBImage, FBImagePlantTag
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import TaxonOccurrenceImage
 
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -36,7 +36,6 @@ async def rename_plant_in_image_files(plant: Plant, plant_name_old: str, image_d
     if not plant.images:
         logger.info(f'No photo_file tag to change for {plant_name_old}.')
     for image in plant.images:
-
         # reload image including it's relationships (lazy loading not allowed in async mode)
         image = await image_dal.by_id(image.id)
 
@@ -84,10 +83,10 @@ async def save_image_files(files: List[UploadFile],
         record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
         plants = [await plant_dal.by_id(p) for p in plant_ids]
         image: Image = await _create_image(image_dal=image_dal,
-                                     relative_path=get_relative_path(path),
-                                     record_date_time=record_datetime,
-                                     keywords=keywords,
-                                     plants=plants)
+                                           relative_path=get_relative_path(path),
+                                           record_date_time=record_datetime,
+                                           keywords=keywords,
+                                           plants=plants)
 
         # generate thumbnails for frontend display
         for size in settings.images.sizes:
@@ -198,8 +197,11 @@ async def read_image_by_size(filename: str, width: int | None, height: int | Non
             logger.error(err_msg := f'Image file not found: {path}')
             throw_exception(err_msg)
 
-    with open(path, "rb") as image:
-        image_bytes: bytes = image.read()
+    async with aiofiles.open(path, 'rb') as file:
+        image_bytes: bytes = await file.read()
+
+    # with open(path, "rb") as image:
+    #     image_bytes: bytes = image.read()
 
     return image_bytes
 
@@ -233,8 +235,11 @@ async def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: in
             logger.error(err_msg := f'Occurence thumbnail file not found: {path}')
             throw_exception(err_msg)
 
-    with open(path, "rb") as image:
-        image_bytes: bytes = image.read()
+    # with open(path, "rb") as image:
+    #     image_bytes: bytes = image.read()
+
+    async with aiofiles.open(path, 'rb') as file:
+        image_bytes: bytes = await file.read()
 
     return image_bytes
 
@@ -321,13 +326,13 @@ def _shorten_plant_name(plant_name: str) -> str:
 
 
 async def _create_image(image_dal: ImageDAL,
-                  relative_path: PurePath,
-                  record_date_time: datetime,
-                  description: str = None,
-                  plants: list[Plant] = None,
-                  keywords: Sequence[str] = (),
-                  # events and taxa are saved elsewhere
-                  ) -> Image:
+                        relative_path: PurePath,
+                        record_date_time: datetime,
+                        description: str = None,
+                        plants: list[Plant] = None,
+                        keywords: Sequence[str] = (),
+                        # events and taxa are saved elsewhere
+                        ) -> Image:
     if await image_dal.get_image_by_relative_path(relative_path.as_posix()):
         # if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
         raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')

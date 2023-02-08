@@ -1,7 +1,7 @@
 from typing import List
 
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 
 
 async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:

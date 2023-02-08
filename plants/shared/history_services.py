@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from plants.modules.plant.history_dal import HistoryDAL
+from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.history_models import History
 

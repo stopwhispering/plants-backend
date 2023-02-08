@@ -2,13 +2,13 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.extensions import orm
-from plants.modules.plant.event_dal import EventDAL
-from plants.modules.plant.history_dal import HistoryDAL
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.event.event_dal import EventDAL
+from plants.shared.history_dal import HistoryDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.property.property_dal import PropertyDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Pollination, Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL

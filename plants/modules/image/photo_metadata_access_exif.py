@@ -10,7 +10,7 @@ from plants import local_config
 from plants.modules.image.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
                                              encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
                                              encode_record_date_time, set_modified_date)
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.image.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,6 @@
 import pytest
 from httpx import AsyncClient
 
-from plants.modules.plant.history_dal import HistoryDAL
-from plants.modules.plant.models import Plant
-
 
 @pytest.mark.asyncio
 async def test_create_event(ac: AsyncClient, plant_valid_in_db):

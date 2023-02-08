@@ -3,8 +3,8 @@ from typing import List, Dict, Optional
 from plants import constants
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.property.property_dal import PropertyDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.property.models import PropertyValue, PropertyName
 from plants.modules.taxon.models import Taxon
 from plants.modules.property.schemas import FBPropertiesInCategory, FBProperty, FBPropertyCollectionPlant

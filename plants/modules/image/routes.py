@@ -11,10 +11,10 @@ from plants.modules.image.services import (
     save_image_files, delete_image_file_and_db_entries, read_image_by_size,
     read_occurrence_thumbnail, trigger_generation_of_missing_thumbnails, fetch_images_for_plant, fetch_untagged_images)
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception, get_message
 from plants.dependencies import valid_plant, get_image_dal, get_taxon_dal, get_plant_dal
 from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,

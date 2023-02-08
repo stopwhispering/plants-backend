@@ -3,8 +3,8 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends
 import logging
 
-from plants.modules.plant.event_dal import EventDAL
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.event.event_dal import EventDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.message_services import get_message
 from plants.dependencies import valid_plant, get_event_dal, get_plant_dal, get_image_dal

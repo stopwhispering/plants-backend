@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from plants.modules.plant.event_dal import EventDAL
+from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
+from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.plant.services import deep_clone_plant
 
 

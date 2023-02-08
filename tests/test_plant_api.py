@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-from plants.modules.plant.history_dal import HistoryDAL
+from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant
 
 

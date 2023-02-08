@@ -3,9 +3,9 @@ import logging
 
 from starlette.requests import Request
 
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.proposal_schemas import FProposalEntity, BResultsProposals, BResultsSelection
 from plants.shared.proposal_services import build_taxon_tree
 from plants.shared.api_utils import make_list_items_json_serializable

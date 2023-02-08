@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 import logging
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.property.property_dal import PropertyDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.message_services import get_message
 from plants.modules.property.schemas import (BResultsPropertiesForPlant, FPropertiesModifiedPlant,

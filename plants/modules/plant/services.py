@@ -3,11 +3,11 @@ from typing import List, Optional
 
 from plants import settings
 from plants.exceptions import PlantAlreadyExists
-from plants.modules.plant.event_dal import EventDAL
+from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.property.property_dal import PropertyDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
 from plants.modules.plant.schemas import FBPlantTag, FPlant
 

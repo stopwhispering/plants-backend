@@ -1,9 +1,6 @@
 import pytest
 from httpx import AsyncClient
 
-from plants.modules.plant.history_dal import HistoryDAL
-from plants.modules.plant.models import Plant
-
 
 @pytest.mark.asyncio
 async def test_untagged_images_empty(ac: AsyncClient):

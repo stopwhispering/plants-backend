@@ -6,8 +6,8 @@ from plants.exceptions import TaxonAlreadyExists
 from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import BotanicalNameInput, create_formatted_botanical_name
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.modules.plant.image_dal import ImageDAL
-from plants.modules.plant.taxon_dal import TaxonDAL
+from plants.modules.image.image_dal import ImageDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import Taxon, Distribution
 from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.taxon.schemas import FTaxon, FTaxonImage, FNewTaxon

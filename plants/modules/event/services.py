@@ -6,12 +6,12 @@ from operator import attrgetter
 from plants.exceptions import SoilNotUnique
 from plants.modules.event.models import Soil, Event, Observation, Pot
 from plants.modules.image.models import ImageToEventAssociation, Image
-from plants.modules.plant.event_dal import EventDAL
-from plants.modules.plant.image_dal import ImageDAL
+from plants.modules.event.event_dal import EventDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.message_services import throw_exception
-from plants.modules.event.schemas import FSoilCreate, BEvents, FSoil, FCreateOrUpdateEvent
+from plants.modules.event.schemas import FSoilCreate, FSoil, FCreateOrUpdateEvent
 
 logger = logging.getLogger(__name__)
 

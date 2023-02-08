@@ -12,11 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_en
 from plants.dependencies import get_db
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
-from plants.modules.plant.event_dal import EventDAL
-from plants.modules.plant.history_dal import HistoryDAL
+from plants.modules.event.event_dal import EventDAL
+from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.property_dal import PropertyDAL
+from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.plant.schemas import FBPropagationType
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
