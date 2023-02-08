@@ -12,8 +12,8 @@ from plants.modules.pollination.schemas import (
     BActiveFlorescence, FRequestEditedFlorescence, BPlantForNewFlorescence, FRequestNewFlorescence)
 
 
-def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:
-    plants: list[Plant] = plant_dal.get_all_plants()
+async def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:
+    plants: list[Plant] = await plant_dal.get_all_plants()
 
     plants_for_new_florescence = []
     for p in plants:
@@ -24,10 +24,10 @@ def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlo
     return plants_for_new_florescence
 
 
-def read_active_florescences(florescence_dal: FlorescenceDAL,
-                             pollination_dal: PollinationDAL) -> list[BActiveFlorescence]:
-    florescences_orm = florescence_dal.by_status({FlorescenceStatus.FLOWERING,
-                                                  FlorescenceStatus.INFLORESCENCE_APPEARED})
+async def read_active_florescences(florescence_dal: FlorescenceDAL,
+                                   pollination_dal: PollinationDAL) -> list[BActiveFlorescence]:
+    florescences_orm = await florescence_dal.by_status({FlorescenceStatus.FLOWERING,
+                                                        FlorescenceStatus.INFLORESCENCE_APPEARED})
     florescences = []
     for f in florescences_orm:
         f: Florescence
@@ -51,16 +51,16 @@ def read_active_florescences(florescence_dal: FlorescenceDAL,
             'first_flower_opening_date': format_api_date(f.first_flower_opening_date),
             'last_flower_closing_date': format_api_date(f.last_flower_closing_date),
 
-            'available_colors_rgb': pollination_dal.get_available_colors_for_plant(plant=f.plant),
+            'available_colors_rgb': await pollination_dal.get_available_colors_for_plant(plant=f.plant),
         }
         florescences.append(BActiveFlorescence.parse_obj(f_dict))
 
     return florescences
 
 
-def update_active_florescence(florescence: Florescence,
-                              edited_florescence_data: FRequestEditedFlorescence,
-                              florescence_dal: FlorescenceDAL):
+async def update_active_florescence(florescence: Florescence,
+                                    edited_florescence_data: FRequestEditedFlorescence,
+                                    florescence_dal: FlorescenceDAL):
     # technical validation
     assert florescence is not None
     assert florescence.plant_id == edited_florescence_data.plant_id
@@ -85,15 +85,15 @@ def update_active_florescence(florescence: Florescence,
     updates['inflorescence_appearance_date'] = parse_api_date(edited_florescence_data.inflorescence_appearance_date)
     updates['last_update_context'] = Context.API.value
 
-    florescence_dal.update_florescence(florescence, updates=updates)
+    await florescence_dal.update_florescence(florescence, updates=updates)
 
 
-def create_new_florescence(new_florescence_data: FRequestNewFlorescence,
-                           florescence_dal: FlorescenceDAL,
-                           plant_dal: PlantDAL):
+async def create_new_florescence(new_florescence_data: FRequestNewFlorescence,
+                                 florescence_dal: FlorescenceDAL,
+                                 plant_dal: PlantDAL):
     assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)
 
-    plant = plant_dal.by_id(new_florescence_data.plant_id)
+    plant = await plant_dal.by_id(new_florescence_data.plant_id)
     florescence = Florescence(
         plant_id=new_florescence_data.plant_id,
         plant=plant,
@@ -102,11 +102,11 @@ def create_new_florescence(new_florescence_data: FRequestNewFlorescence,
         comment=new_florescence_data.comment,
         creation_context=Context.API.value  # noqa
     )
-    florescence_dal.create_florescence(florescence)
+    await florescence_dal.create_florescence(florescence)
 
 
-def remove_florescence(florescence: Florescence, florescence_dal: FlorescenceDAL):
+async def remove_florescence(florescence: Florescence, florescence_dal: FlorescenceDAL):
     """ Delete a florescence """
     if florescence.pollinations:
         raise BaseError(detail={'message': 'Florescence has pollinations'})
-    florescence_dal.delete_florescence(florescence)
+    await florescence_dal.delete_florescence(florescence)

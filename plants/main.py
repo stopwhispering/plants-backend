@@ -64,5 +64,9 @@ app.include_router(properties_router, prefix=COMMON_PREFIX)
 app.include_router(shared_router, prefix=COMMON_PREFIX)
 app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 
-engine = create_db_engine(local_config.connection_string)
-init_orm(engine=engine)
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting up, starting with DB connection")
+    engine = create_db_engine(local_config.connection_string)
+    await init_orm(engine=engine)

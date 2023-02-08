@@ -29,7 +29,7 @@ async def create_or_update_taxon_properties(
         properties; save new and modified taxon properties"""
 
     saver = SavePropertiesTaxa(property_dal=property_dal, taxon_dal=taxon_dal)
-    saver.save_properties(properties_modified=data.modifiedPropertiesTaxa)
+    await saver.save_properties(properties_modified=data.modifiedPropertiesTaxa)
     results = {'resource': FBMajorResource.TAXON_PROPERTIES,
                'message': get_message(f'Updated properties for taxa in database.')
                }
@@ -44,8 +44,8 @@ async def modify_plant_properties(
         plant_dal: PlantDAL = Depends(get_plant_dal)
 ):
     """save plant properties"""
-
-    SaveProperties(property_dal=property_dal, plant_dal=plant_dal).save_properties(data.modifiedPropertiesPlants)
+    saver = SaveProperties(property_dal=property_dal, plant_dal=plant_dal)
+    await saver.save_properties(data.modifiedPropertiesPlants)
     results = {'resource': FBMajorResource.PLANT_PROPERTIES,
                'message': get_message(f'Updated properties in database.')
                }
@@ -54,7 +54,7 @@ async def modify_plant_properties(
 
 
 @router.get("/plant_properties/{plant_id}", response_model=BResultsPropertiesForPlant)
-def get_plant_properties(
+async def get_plant_properties(
         plant: Plant = Depends(valid_plant),
         taxon_id: int = None,  # todo works??
         property_dal: PropertyDAL = Depends(get_property_dal),
@@ -62,9 +62,9 @@ def get_plant_properties(
     """reads a plant's property values from db; plus it's taxon's property values"""
 
     load_properties = LoadProperties(property_dal=property_dal, taxon_dal=taxon_dal)
-    categories = load_properties.get_properties_for_plant(plant)
+    categories = await load_properties.get_properties_for_plant(plant)
 
-    categories_taxon = load_properties.get_properties_for_taxon(taxon_id) if taxon_id else []
+    categories_taxon = await load_properties.get_properties_for_taxon(taxon_id) if taxon_id else []
 
     make_list_items_json_serializable(categories)
     make_list_items_json_serializable(categories_taxon)
@@ -82,7 +82,7 @@ def get_plant_properties(
 
 @router.get("/property_names/", response_model=BResultsPropertyNames)
 async def get_property_names(property_dal: PropertyDAL = Depends(get_property_dal)):
-    category_obj = property_dal.get_all_property_categories()
+    category_obj = await property_dal.get_all_property_categories()
     categories = {}
     for cat in category_obj:
         # todo switch to orm mode

@@ -73,10 +73,10 @@ async def save_taxon(new_taxon_data: FNewTaxon, taxon_dal: TaxonDAL = Depends(ge
     """
     logger.info(f'Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}')
     if new_taxon_data.id:
-        taxon: Taxon = taxon_dal.by_id(new_taxon_data.id)
+        taxon: Taxon = await taxon_dal.by_id(new_taxon_data.id)
         msg = get_message(f'Loaded {taxon.name} from database.')
     else:
-        taxon: Taxon = save_new_taxon(new_taxon_data, taxon_dal=taxon_dal)
+        taxon: Taxon = await save_new_taxon(new_taxon_data, taxon_dal=taxon_dal)
         msg = get_message(f'Saved taxon {taxon.name} to database.')
 
     return {
@@ -95,7 +95,7 @@ async def update_taxa(modified_taxa: FModifiedTaxa,
     """
     modified_taxa = modified_taxa.ModifiedTaxaCollection
     for taxon_modified in modified_taxa:
-        modify_taxon(taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal)
+        await modify_taxon(taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal)
 
     results = {'resource': FBMajorResource.TAXON,
                'message': get_message(msg := f'Updated {len(modified_taxa)} taxa in database.')

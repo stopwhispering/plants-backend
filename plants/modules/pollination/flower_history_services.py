@@ -223,8 +223,8 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
     return flowering_plants
 
 
-def generate_flower_history(florescence_dal: FlorescenceDAL):
-    florescences = florescence_dal.by_status([FlorescenceStatus.FINISHED])
+async def generate_flower_history(florescence_dal: FlorescenceDAL):
+    florescences = await florescence_dal.by_status([FlorescenceStatus.FINISHED])
     distinct_plants = set([f.plant for f in florescences])
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
 

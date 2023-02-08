@@ -1,23 +1,35 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from plants.exceptions import PollinationNotFound
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Pollination, COLORS_MAP_TO_RGB
 from plants.shared.base_dal import BaseDAL
 
 
 class PollinationDAL(BaseDAL):
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    def create(self, pollination: Pollination):
+    async def by_id(self, pollination_id: int) -> Pollination:
+        query = (
+            select(Pollination)
+            .where(Pollination.id == pollination_id)  # noqa
+        )
+        pollination: Pollination = (await self.session.scalars(query)).first()
+        if not pollination:
+            raise PollinationNotFound(pollination_id)
+        return pollination
+
+    async def create(self, pollination: Pollination):
         self.session.add(pollination)
-        self.session.flush()
+        await self.session.flush()
 
-    def delete(self, pollination: Pollination):
-        self.session.delete(pollination)
-        self.session.flush()
+    async def delete(self, pollination: Pollination):
+        await self.session.delete(pollination)
+        await self.session.flush()
 
-    def update(self, pollination: Pollination, updates: dict):
+    async def update(self, pollination: Pollination, updates: dict):
         if 'pollen_type' in updates:
             pollination.pollen_type = updates['pollen_type']
         if 'location' in updates:
@@ -59,26 +71,26 @@ class PollinationDAL(BaseDAL):
         if 'last_update_context' in updates:
             pollination.last_update_context = updates['last_update_context']
 
-        self.session.flush()
+        await self.session.flush()
 
-    def get_ongoing_pollinations(self) -> list[Pollination]:
-        query = select(Pollination) .where(Pollination.ongoing)
-        pollinations: list[Pollination] = (self.session.scalars(query)).all()  # noqa
+    async def get_ongoing_pollinations(self) -> list[Pollination]:
+        query = select(Pollination).where(Pollination.ongoing)
+        pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations
 
-    def get_available_colors_for_plant(self, plant: Plant):
+    async def get_available_colors_for_plant(self, plant: Plant):
 
         used_colors_query = (
             select(Pollination.label_color)
             .where(Pollination.seed_capsule_plant_id == plant.id,
                    Pollination.ongoing)
         )
-        used_colors = (self.session.scalars(used_colors_query)).all()
+        used_colors = (await self.session.scalars(used_colors_query)).all()
         available_color_names = [c for c in COLORS_MAP_TO_RGB.keys() if c not in used_colors]
         available_colors_rgb = [COLORS_MAP_TO_RGB[c] for c in available_color_names]
         return available_colors_rgb
 
-    def get_pollinations_with_filter(self, criteria: dict) -> list[Pollination]:
+    async def get_pollinations_with_filter(self, criteria: dict) -> list[Pollination]:
         query = select(Pollination)
 
         for key, value in criteria.items():
@@ -100,13 +112,25 @@ class PollinationDAL(BaseDAL):
             else:
                 raise NotImplemented(f'Unknown filter key: {key}')
 
-        pollinations: list[Pollination] = (self.session.scalars(query)).all()  # noqa
+        pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations
 
-    def get_pollinations_by_plants(self, seed_capsule_plant: Plant, pollen_donor_plant: Plant) -> list[Pollination]:
+    async def get_pollinations_by_plants(self,
+                                         seed_capsule_plant: Plant,
+                                         pollen_donor_plant: Plant) -> list[Pollination]:
         query = (select(Pollination)
                  .where(Pollination.seed_capsule_plant_id == seed_capsule_plant.id,
                         Pollination.pollen_donor_plant_id == pollen_donor_plant.id))
 
-        pollinations: list[Pollination] = (self.session.scalars(query)).all()  # noqa
+        pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
+        return pollinations
+
+    async def get_pollinations_by_plant_ids(self,
+                                            seed_capsule_plant_id: int,
+                                            pollen_donor_plant_id: int) -> list[Pollination]:
+        query = (select(Pollination)
+                 .where(Pollination.seed_capsule_plant_id == seed_capsule_plant_id,
+                        Pollination.pollen_donor_plant_id == pollen_donor_plant_id))
+
+        pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations

@@ -1,20 +1,25 @@
+import pytest
+from httpx import AsyncClient
+
 from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.models import Florescence, FlorescenceStatus
 
 
-def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, valid_florescence_dict):
+@pytest.mark.asyncio
+async def test_florescence_create_valid(ac: AsyncClient, valid_simple_plant_dict, valid_florescence_dict):
     # create plant
     payload = {'PlantsCollection': [valid_simple_plant_dict]}
-    response = test_client.post("/api/plants/", json=payload)
+    response = await ac.post("/api/plants/", json=payload)
     assert response.status_code == 200
     assert response.json().get('plants')[0] is not None
 
     # create florescence for plant
-    response = test_client.post("/api/active_florescences/", json=valid_florescence_dict)
+    response = await ac.post("/api/active_florescences", json=valid_florescence_dict)
     assert response.status_code == 200
 
     # get florescences
-    response = test_client.get("/api/active_florescences/")
+    response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
     active_florescence = response.json().get('activeFlorescenceCollection')[0]
     assert active_florescence.get('comment') == 'large & new'  # first space has been trimmed
@@ -31,11 +36,11 @@ def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, vali
         'flower_colors_differentiation': "ovary_mouth",  # ["ovary_mouth", "top_bottom"]
         'stigma_position': "deeply_inserted",
     }
-    response = test_client.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
     assert response.status_code == 200
 
     # get florescences
-    response = test_client.get("/api/active_florescences/")
+    response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
     assert len(response.json().get('activeFlorescenceCollection')) == 1
     active_florescence = response.json().get('activeFlorescenceCollection')[0]
@@ -48,29 +53,30 @@ def test_florescence_create_valid(db, test_client, valid_simple_plant_dict, vali
 
     # update florescence (invalid): flower_colors_differentiation only allowed if flower_color_second is set
     del payload['flower_color_second']
-    response = test_client.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
     assert response.status_code == 400
 
     # update florescence (invalid): uniform differentiation but second color set
     payload['flower_color_second'] = '#dddd00'
     payload['flower_colors_differentiation'] = "uniform"
-    response = test_client.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
     assert response.status_code == 400
 
     # update florescence (invalid): second same as first color (must be different)
     payload['flower_color_second'] = '#F2F600'
     payload['flower_colors_differentiation'] = "ovary_mouth"
-    response = test_client.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{active_florescence.get('id')}", json=payload)
     assert response.status_code == 400
 
     # must be unchanged
-    response = test_client.get("/api/active_florescences/")
+    response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
     active_florescence = response.json().get('activeFlorescenceCollection')[0]
     assert active_florescence.get('flower_color_second') == '#dddd00'
 
 
-def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant):
+@pytest.mark.asyncio
+async def test_create_and_abort_florescence(db, ac: AsyncClient, plant_valid_in_db: Plant, plant_dal: PlantDAL):
     # FRequestNewFlorescence
     payload = {
         "plant_id": plant_valid_in_db.id,
@@ -78,9 +84,9 @@ def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant)
         "inflorescence_appearance_date": "2022-11-16",
         "comment": "    large & new "
     }
-    response = test_client.post("/api/active_florescences/", json=payload)
+    response = await ac.post("/api/active_florescences", json=payload)
     assert response.status_code == 200
-    db.expire_all()
+    plant_valid_in_db = await plant_dal.by_id(plant_valid_in_db.id)
     assert len(plant_valid_in_db.florescences) == 1
     florescence_in_db: Florescence = plant_valid_in_db.florescences[0]
     assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
@@ -91,13 +97,13 @@ def test_create_and_abort_florescence(db, test_client, plant_valid_in_db: Plant)
         "plant_id": plant_valid_in_db.id,
         "florescence_status": "doing_great",  # invalid
     }
-    response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert 400 <= response.status_code <= 499
-    db.expire_all()
+    await db.refresh(florescence_in_db)  # reloads (only) attributes, no relationships are set to not loaded
     assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     payload['florescence_status'] = "aborted"
-    response = test_client.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
+    response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert response.status_code == 200
-    db.expire_all()
+    await db.refresh(florescence_in_db)
     assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED

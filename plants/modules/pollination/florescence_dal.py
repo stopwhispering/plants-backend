@@ -1,38 +1,46 @@
 from typing import Collection
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from plants.exceptions import FlorescenceNotFound
 from plants.modules.pollination.models import Florescence, FlorescenceStatus
 from plants.shared.base_dal import BaseDAL
 
 
 class FlorescenceDAL(BaseDAL):
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    def create_florescence(self, florescence: Florescence):
+    async def create_florescence(self, florescence: Florescence):
         self.session.add(florescence)
-        self.session.flush()
+        await self.session.flush()
 
-    def delete_florescence(self, florescence: Florescence):
-        self.session.delete(florescence)
-        self.session.flush()
+    async def delete_florescence(self, florescence: Florescence):
+        await self.session.delete(florescence)
+        await self.session.flush()
 
-    def by_status(self, status: Collection[FlorescenceStatus]) -> list[Florescence]:
+    async def by_status(self, status: Collection[FlorescenceStatus]) -> list[Florescence]:
         query = (
             select(Florescence)
+            .options(selectinload(Florescence.plant))
             .where(Florescence.florescence_status.in_(status))
         )
-        return (self.session.scalars(query)).all()  # noqa
+        return (await self.session.scalars(query)).all()  # noqa
 
-    def by_id(self, florescence_id: int) -> Florescence:
+    async def by_id(self, florescence_id: int) -> Florescence:
         query = (
             select(Florescence)
+            .options(selectinload(Florescence.plant))
             .where(Florescence.id == florescence_id)  # noqa
         )
-        return (self.session.scalars(query)).first()
+        florescence: Florescence = (await self.session.scalars(query)).first()
+        if not florescence:
+            raise FlorescenceNotFound(florescence_id)
+        return florescence
 
-    def update_florescence(self, florescence: Florescence, updates: dict):
+    async def update_florescence(self, florescence: Florescence, updates: dict):
         if 'florescence_status' in updates:
             florescence.florescence_status = updates['florescence_status']
         if 'comment' in updates:
@@ -63,4 +71,4 @@ class FlorescenceDAL(BaseDAL):
         if 'last_update_context' in updates:
             florescence.last_update_context = updates['last_update_context']
 
-        self.session.flush()
+        await self.session.flush()
