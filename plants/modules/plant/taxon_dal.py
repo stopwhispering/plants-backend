@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
 from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon
-from plants.modules.image.models import ImageToTaxonAssociation
+from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.plant.models import Plant
 from plants.modules.taxon.models import Taxon, TaxonToOccurrenceAssociation, TaxonOccurrenceImage
 from plants.modules.taxon.schemas import FBRank
@@ -21,7 +21,7 @@ class TaxonDAL(BaseDAL):
             .where(Taxon.id == taxon_id)  # noqa
             .options(selectinload(Taxon.property_values_taxon))
             .options(selectinload(Taxon.occurrence_images))
-            .options(selectinload(Taxon.images))
+            .options(selectinload(Taxon.images).selectinload(Image.image_to_taxon_associations))
             .options(selectinload(Taxon.distribution))
             .limit(1)
         )
