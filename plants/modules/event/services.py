@@ -11,7 +11,7 @@ from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.message_services import throw_exception
-from plants.modules.event.schemas import FSoilCreate, FSoil, FCreateOrUpdateEvent
+from plants.modules.event.schemas import SoilCreate, SoilUpdate, EventCreateUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[dict]
     return events
 
 
-async def create_soil(soil: FSoilCreate, event_dal: EventDAL) -> Soil:
+async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
     """create new soil in database"""
     if soil.id:
         throw_exception(f'Soil already exists: {soil.id}')
@@ -43,7 +43,7 @@ async def create_soil(soil: FSoilCreate, event_dal: EventDAL) -> Soil:
     return soil_obj
 
 
-async def update_soil(soil: FSoil, event_dal: EventDAL) -> Soil:
+async def update_soil(soil: SoilUpdate, event_dal: EventDAL) -> Soil:
     """update existing soil in database"""
     # make sure there isn't another soil with same name
     same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
@@ -61,7 +61,7 @@ async def update_soil(soil: FSoil, event_dal: EventDAL) -> Soil:
 
 
 async def create_or_update_event(plant_id: int,
-                                 events: list[FCreateOrUpdateEvent],
+                                 events: list[EventCreateUpdate],
                                  counts: defaultdict,
                                  image_dal: ImageDAL,
                                  event_dal: EventDAL,

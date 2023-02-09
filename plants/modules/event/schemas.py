@@ -1,216 +1,123 @@
-from enum import Enum
 from typing import Optional
 
-from pydantic import validator, Extra, constr
-from pydantic.main import BaseModel
+from pydantic import Extra, constr
 
 from decimal import Decimal
-from plants.shared.message_schemas import BMessage
+
+from plants.modules.event.enums import FBShapeTop, FBShapeSide
+from plants.shared.base_schema import BaseSchema, ResponseContainer
 from plants.constants import REGEX_DATE
 
 
-####################################################################################################
-# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
-####################################################################################################
-class FBShapeTop(str, Enum):
-    SQUARE = 'square'
-    ROUND = 'round'
-    OVAL = 'oval'
-    HEXAGONAL = 'hexagonal'
-
-
-class FBShapeSide(str, Enum):
-    VERY_FLAT = 'very flat'
-    FLAT = 'flat'
-    HIGH = 'high'
-    VERY_HIGH = 'very high'
-
-
-class FBImageAssignedToEvent(BaseModel):
+class FBImageAssignedToEvent(BaseSchema):
     id: int
     filename: constr(min_length=1, max_length=150)
 
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
-        allow_population_by_field_name = True
 
-
-####################################################################################################
-# Entities used only in API Requests from Frontend (F...)
-####################################################################################################
-class FSoil(BaseModel):
+class SoilBase(BaseSchema):
     id: int
-    soil_name: constr(min_length=1, max_length=100, strip_whitespace=True)
+    soil_name: constr(min_length=1, max_length=100)
     mix: str | None
     description: str | None
 
+
+class SoilUpdate(SoilBase):
+    id: int
+
+
+class SoilCreate(SoilBase):
+    pass
+
+
+class SoilRead(SoilBase):
+    id: int
+
     class Config:
-        orm_mode = True
+        extra = Extra.ignore  # todo required?
 
 
-class FPot(BaseModel):
-    id: Optional[int]  # missing if new  # todo remove id
+class SoilWithCountRead(SoilBase):
+    id: int
+    plants_count: int
+
+
+class PotBase(BaseSchema):
     material: constr(min_length=1, max_length=50)  # todo enum?
     shape_top: FBShapeTop
     shape_side: FBShapeSide
     diameter_width: Decimal
 
+
+class PotCreateUpdate(PotBase):
+    id: Optional[int]  # missing if new  # todo remove id
+
     class Config:
-        extra = Extra.forbid
         use_enum_values = True
 
 
-class FObservation(BaseModel):
-    id: int | None
+class PotRead(PotBase):
+    id: int
+
+    class Config:
+        use_enum_values = True
+
+
+class ObservationBase(BaseSchema):
     diseases: str | None
     stem_max_diameter: Decimal | None
     height: Decimal | None
     observation_notes: str | None
 
-    class Config:
-        extra = Extra.forbid
 
-
-class FEvent(BaseModel):
+class ObservationRead(ObservationBase):
     id: int
+
+
+class ObservationCreateUpdate(ObservationBase):
+    id: int | None
+
+
+class EventBase(BaseSchema):
     plant_id: int
-    date: str
+    date: constr(regex=REGEX_DATE)  # string yyyy-mm-dd
     event_notes: str | None
-    observation: FObservation | None
-    soil: FSoil | None
-    pot: FPot | None
     images: Optional[list[FBImageAssignedToEvent]]
 
-    class Config:
-        extra = Extra.forbid
+
+class EventCreateUpdate(EventBase):
+    id: Optional[int]  # empty for new, filled for updated events
+    observation: ObservationCreateUpdate | None
+    soil: SoilUpdate | None
+    pot: PotCreateUpdate | None
 
 
-class FSoilCreate(FSoil):
-    id: Optional[int]
-
-    @validator('id')
-    def id_must_be_none(cls, id_):  # noqa
-        if id_ is not None:
-            raise ValueError
-        return id_
+class EventRead(EventBase):
+    id: int
+    observation: ObservationRead | None
+    soil: SoilRead | None
+    pot: PotRead | None
 
 
-class FImageDelete(BaseModel):
+class FImageDelete(BaseSchema):
     id: int
     filename: constr(min_length=1, max_length=150)
 
-    class Config:
-        extra = Extra.forbid
 
-
-class FImagesToDelete(BaseModel):
+class FImagesToDelete(BaseSchema):
     images: list[FImageDelete]
 
-    class Config:
-        extra = Extra.forbid
+
+class FRequestCreateOrUpdateEvent(BaseSchema):
+    plants_to_events: dict[int, list[EventCreateUpdate]]
 
 
-class FCreateOrUpdateEvent(FEvent):
-    id: Optional[int]  # empty for new, filled for updated events
-    date: constr(regex=REGEX_DATE)  # string yyyy-mm-dd
-    event_notes: constr(strip_whitespace=True) | None
-    images: list[FBImageAssignedToEvent]
-    observation: FObservation | None
-    soil: FSoil | None
-    pot: FPot | None
-
-    class Config:
-        extra = Extra.forbid  # todo works?
+class BResultsSoilsResource(BaseSchema):
+    SoilsCollection: list[SoilWithCountRead]
 
 
-class FRequestCreateOrUpdateEvent(BaseModel):
-    plants_to_events: dict[int, list[FCreateOrUpdateEvent]]
-
-    class Config:
-        extra = Extra.forbid
+class BResultsEventResource(ResponseContainer):
+    events: list[EventRead]
 
 
-####################################################################################################
-# Entities used only in API Responses from Backend (B...)
-####################################################################################################
-class BSoil(BaseModel):
-    id: int
-    soil_name: str
-    mix: str | None
-    description: str | None
-
-    class Config:
-        orm_mode = True
-        extra = Extra.ignore
-
-
-class BPot(BaseModel):
-    id: Optional[int]  # missing if new  # todo remove id
-    material: str
-    shape_top: FBShapeTop
-    shape_side: FBShapeSide
-    diameter_width: Decimal
-
-    class Config:
-        extra = Extra.forbid
-        use_enum_values = True
-        orm_mode = True
-
-
-class BObservation(BaseModel):
-    id: int | None
-    diseases: str | None
-    stem_max_diameter: Decimal | None
-    height: Decimal | None
-    observation_notes: str | None
-
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
-
-
-class BEvent(BaseModel):
-    id: int
-    plant_id: int
-    date: str
-    event_notes: str | None
-    observation: BObservation | None
-    soil: BSoil | None
-    pot: BPot | None
-    images: Optional[list[FBImageAssignedToEvent]]
-
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
-
-
-class BSoilWithCount(BSoil):
-    plants_count: int
-
-
-class BResultsSoilsResource(BaseModel):
-    SoilsCollection: list[BSoilWithCount]
-
-    class Config:
-        extra = Extra.forbid
-
-
-class BEvents(BaseModel):
-    __root__: list[BEvent]
-
-
-class BResultsEventResource(BaseModel):
-    events: BEvents
-    message: BMessage
-
-    class Config:
-        extra = Extra.forbid
-
-
-class BPResultsUpdateCreateSoil(BaseModel):
-    soil: BSoil
-    message: BMessage
-
-    class Config:
-        extra = Extra.forbid
+class BPResultsUpdateCreateSoil(ResponseContainer):
+    soil: SoilRead

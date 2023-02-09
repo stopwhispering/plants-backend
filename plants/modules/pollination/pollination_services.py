@@ -8,16 +8,19 @@ from plants.exceptions import UnknownColor, ColorAlreadyTaken
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import (Florescence, FlorescenceStatus, PollenType, Pollination,
-                                               PollinationStatus, Context, Location, COLORS_MAP, COLORS_MAP_TO_RGB)
+from plants.modules.pollination.models import (Florescence, Pollination)
+from plants.modules.pollination.enums import PollinationStatus, PollenType, Context, Location, COLORS_MAP, \
+    COLORS_MAP_TO_RGB, FlorescenceStatus
 from plants.modules.pollination.ml_prediction import predict_probability_of_seed_production
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.shared.api_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date
 from plants.shared.api_constants import FORMAT_FULL_DATETIME, FORMAT_YYYY_MM_DD, FORMAT_API_YYYY_MM_DD_HH_MM
-from plants.modules.pollination.schemas import (FRequestNewPollination, BOngoingPollination,
+from plants.modules.pollination.schemas import (PollinationCreate,
                                                 BPotentialPollenDonor, BPollinationAttempt,
-                                                BPollinationResultingPlant, FRequestEditedPollination,
-                                                FBPollenContainer, BPlantWithoutPollenContainer)  # noqa
+                                                BPollinationResultingPlant,
+                                                BPlantWithoutPollenContainer,
+                                                PollinationUpdate, PollinationRead, PollenContainerRead,
+                                                PollenContainerCreateUpdate)  # noqa
 
 LOCATION_TEXTS: Final[dict] = {
     'indoor': 'indoor',
@@ -173,28 +176,28 @@ async def read_potential_pollen_donors(florescence: Florescence,
     return potential_pollen_donors
 
 
-async def save_new_pollination(new_pollination_data: FRequestNewPollination,
+async def save_new_pollination(new_pollination_data: PollinationCreate,
                                pollination_dal: PollinationDAL,
                                florescence_dal: FlorescenceDAL,
                                plant_dal: PlantDAL):
     """ Save a new pollination attempt """
     # validate data quality
     florescence = await florescence_dal.by_id(new_pollination_data.florescenceId)
-    seed_capsule_plant = await plant_dal.by_id(new_pollination_data.seedCapsulePlantId)
-    pollen_donor_plant = await plant_dal.by_id(new_pollination_data.pollenDonorPlantId)
+    seed_capsule_plant = await plant_dal.by_id(new_pollination_data.seed_capsule_plant_id)
+    pollen_donor_plant = await plant_dal.by_id(new_pollination_data.pollen_donor_plant_id)
     assert seed_capsule_plant is florescence.plant
-    assert PollenType.has_value(new_pollination_data.pollenType)
+    assert PollenType.has_value(new_pollination_data.pollen_type)
     assert Location.has_value(new_pollination_data.location)
-    if new_pollination_data.labelColorRgb not in COLORS_MAP:
-        raise UnknownColor(new_pollination_data.labelColorRgb)
+    if new_pollination_data.label_color_rgb not in COLORS_MAP:
+        raise UnknownColor(new_pollination_data.label_color_rgb)
 
     # apply transformations
-    pollination_timestamp = datetime.strptime(new_pollination_data.pollinationTimestamp, FORMAT_API_YYYY_MM_DD_HH_MM)
+    pollination_timestamp = datetime.strptime(new_pollination_data.pollination_timestamp, FORMAT_API_YYYY_MM_DD_HH_MM)
 
     # make sure there's no ongoing pollination for that plant with the same thread color
-    label_color = COLORS_MAP[new_pollination_data.labelColorRgb]
+    label_color = COLORS_MAP[new_pollination_data.label_color_rgb]
     same_color_pollination = await pollination_dal.get_pollinations_with_filter({
-        'seed_capsule_plant_id': new_pollination_data.seedCapsulePlantId,
+        'seed_capsule_plant_id': new_pollination_data.seed_capsule_plant_id,
         'label_color': label_color,
     })
     if same_color_pollination:
@@ -204,16 +207,16 @@ async def save_new_pollination(new_pollination_data: FRequestNewPollination,
     pollination = Pollination(
         florescence_id=new_pollination_data.florescenceId,
         florescence=florescence,
-        seed_capsule_plant_id=new_pollination_data.seedCapsulePlantId,
+        seed_capsule_plant_id=new_pollination_data.seed_capsule_plant_id,
         seed_capsule_plant=seed_capsule_plant,
-        pollen_donor_plant_id=new_pollination_data.pollenDonorPlantId,
+        pollen_donor_plant_id=new_pollination_data.pollen_donor_plant_id,
         pollen_donor_plant=pollen_donor_plant,
-        pollen_type=new_pollination_data.pollenType,
+        pollen_type=new_pollination_data.pollen_type,
         count=new_pollination_data.count,
         location=new_pollination_data.location,
         pollination_timestamp=pollination_timestamp,
         ongoing=True,
-        label_color=COLORS_MAP[new_pollination_data.labelColorRgb],  # save the name of color, not the hex value
+        label_color=COLORS_MAP[new_pollination_data.label_color_rgb],  # save the name of color, not the hex value
         pollination_status=PollinationStatus.ATTEMPT.value,  # noqa
         # creation_at=datetime.now(),
         creation_at_context=Context.API.value  # noqa
@@ -228,7 +231,7 @@ async def remove_pollination(pollination: Pollination, pollination_dal: Pollinat
 
 
 async def update_pollination(pollination: Pollination,
-                             pollination_data: FRequestEditedPollination,
+                             pollination_data: PollinationUpdate,
                              pollination_dal: PollinationDAL):
     """ Update a pollination attempt """
 
@@ -289,7 +292,7 @@ async def update_pollination(pollination: Pollination,
     # pollination.last_update_context = Context.API.value
 
 
-async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[BOngoingPollination]:
+async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[PollinationRead]:
     # query = (db.query(Pollination)
     #          .filter(Pollination.ongoing)
     #          )
@@ -329,18 +332,18 @@ async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[BOn
             'germination_rate': p.germination_rate,
         }
         # POngoingPollination.validate(ongoing_pollination_dict)
-        ongoing_pollinations.append(BOngoingPollination.parse_obj(ongoing_pollination_dict))
+        ongoing_pollinations.append(PollinationRead.parse_obj(ongoing_pollination_dict))
     return ongoing_pollinations
 
 
-async def read_pollen_containers(plant_dal: PlantDAL) -> list[FBPollenContainer]:
+async def read_pollen_containers(plant_dal: PlantDAL) -> list[PollenContainerRead]:
     # query = db.query(Plant).filter(Plant.count_stored_pollen_containers >= 1)
     # plants: list[Plant] = query.all()
     plants: list[Plant] = await plant_dal.get_plants_with_pollen_containers()
 
     pollen_containers = []
     for p in plants:
-        pollen_containers.append(FBPollenContainer(
+        pollen_containers.append(PollenContainerRead(
             plant_id=p.id,
             plant_name=p.plant_name,
             genus=p.taxon.genus if p.taxon else None,
@@ -368,7 +371,7 @@ async def read_plants_without_pollen_containers(plant_dal: PlantDAL) -> list[BPl
     return plants_without_pollen_containers
 
 
-async def update_pollen_containers(pollen_containers_data: list[FBPollenContainer], plant_dal: PlantDAL):
+async def update_pollen_containers(pollen_containers_data: list[PollenContainerCreateUpdate], plant_dal: PlantDAL):
     for pollen_container_data in pollen_containers_data:
         # plant = Plant.by_id(pollen_container_data.plant_id, db)
         # plant.count_stored_pollen_containers = pollen_container_data.count_stored_pollen_containers

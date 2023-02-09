@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from plants.modules.taxon.models import Taxon
-from plants.modules.taxon.schemas import FBRank
+from plants.modules.taxon.enums import FBRank
 
 
 @dataclass

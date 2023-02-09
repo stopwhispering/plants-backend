@@ -4,12 +4,12 @@ from plants.exceptions import BaseError
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import (Florescence, FlorescenceStatus, Context,
-                                               FlowerColorDifferentiation)
+from plants.modules.pollination.models import (Florescence)
+from plants.modules.pollination.enums import Context, FlorescenceStatus, FlowerColorDifferentiation
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.shared.api_utils import parse_api_date, format_api_date
 from plants.modules.pollination.schemas import (
-    BActiveFlorescence, FRequestEditedFlorescence, BPlantForNewFlorescence, FRequestNewFlorescence)
+    BPlantForNewFlorescence, FlorescenceRead, FlorescenceUpdate, FlorescenceCreate)
 
 
 async def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:
@@ -25,7 +25,7 @@ async def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantFor
 
 
 async def read_active_florescences(florescence_dal: FlorescenceDAL,
-                                   pollination_dal: PollinationDAL) -> list[BActiveFlorescence]:
+                                   pollination_dal: PollinationDAL) -> list[FlorescenceRead]:
     florescences_orm = await florescence_dal.by_status({FlorescenceStatus.FLOWERING,
                                                         FlorescenceStatus.INFLORESCENCE_APPEARED})
     florescences = []
@@ -53,13 +53,13 @@ async def read_active_florescences(florescence_dal: FlorescenceDAL,
 
             'available_colors_rgb': await pollination_dal.get_available_colors_for_plant(plant=f.plant),
         }
-        florescences.append(BActiveFlorescence.parse_obj(f_dict))
+        florescences.append(FlorescenceRead.parse_obj(f_dict))
 
     return florescences
 
 
 async def update_active_florescence(florescence: Florescence,
-                                    edited_florescence_data: FRequestEditedFlorescence,
+                                    edited_florescence_data: FlorescenceUpdate,
                                     florescence_dal: FlorescenceDAL):
     # technical validation
     assert florescence is not None
@@ -88,7 +88,7 @@ async def update_active_florescence(florescence: Florescence,
     await florescence_dal.update_florescence(florescence, updates=updates)
 
 
-async def create_new_florescence(new_florescence_data: FRequestNewFlorescence,
+async def create_new_florescence(new_florescence_data: FlorescenceCreate,
                                  florescence_dal: FlorescenceDAL,
                                  plant_dal: PlantDAL):
     assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)

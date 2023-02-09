@@ -10,10 +10,11 @@ from plants.shared.message_services import get_message
 from plants.dependencies import valid_plant, get_event_dal, get_plant_dal, get_image_dal
 from plants.modules.event.services import create_soil, update_soil, read_events_for_plant, create_or_update_event, \
     fetch_soils
-from plants.shared.message_schemas import BMessageType, FBMajorResource, BSaveConfirmation
+from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.enums import FBMajorResource, BMessageType
 from plants.modules.plant.models import Plant
 from plants.modules.event.schemas import (BResultsEventResource, BPResultsUpdateCreateSoil,
-                                          BResultsSoilsResource, FSoilCreate, FRequestCreateOrUpdateEvent, FSoil)
+                                          BResultsSoilsResource, SoilCreate, FRequestCreateOrUpdateEvent, SoilUpdate)
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ async def get_soils(event_dal: EventDAL = Depends(get_event_dal), plant_dal: Pla
 
 
 @router.post("/events/soils", response_model=BPResultsUpdateCreateSoil)
-async def create_new_soil(new_soil: FSoilCreate, event_dal: EventDAL = Depends(get_event_dal)):
+async def create_new_soil(new_soil: SoilCreate, event_dal: EventDAL = Depends(get_event_dal)):
     """create new soil and return it with (newly assigned) id"""
     soil = await create_soil(soil=new_soil, event_dal=event_dal)
 
@@ -41,7 +42,7 @@ async def create_new_soil(new_soil: FSoilCreate, event_dal: EventDAL = Depends(g
 
 
 @router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
-async def update_existing_soil(updated_soil: FSoil, event_dal: EventDAL = Depends(get_event_dal)):
+async def update_existing_soil(updated_soil: SoilUpdate, event_dal: EventDAL = Depends(get_event_dal)):
     """update soil attributes"""
     soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
@@ -60,6 +61,7 @@ async def get_events(plant: Plant = Depends(valid_plant),
 
     logger.info(msg := f'Receiving {len(events)} events for {plant.plant_name}.')
     return {'events': events,
+            'action': 'read events for plant',
             'message': get_message(msg,
                                    message_type=BMessageType.DEBUG)}
 

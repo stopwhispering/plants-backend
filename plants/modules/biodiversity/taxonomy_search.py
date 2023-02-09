@@ -11,7 +11,7 @@ from plants.modules.taxon.models import Taxon
 from plants.modules.biodiversity.taxonomy_shared_functions import (
     create_synonym_label_if_only_a_synonym, create_distribution_concat)
 from plants.shared.message_services import throw_exception
-from plants.modules.taxon.schemas import FBRank
+from plants.modules.taxon.enums import FBRank
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class TaxonomySearch:
             'cultivar': taxon.cultivar,
             'affinis': taxon.affinis,
 
-            'namePublishedInYear': taxon.name_published_in_year,
+            'name_published_in_year': taxon.name_published_in_year,
             'basionym': taxon.basionym,
             # 'phylum': taxon.phylum,
             'synonyms_concat': taxon.synonyms_concat
@@ -200,7 +200,7 @@ class ApiSearcher:
                 'is_custom': False,
                 'synonym': None,  # available only in POWO
                 'authors': ipni_result.get('authors'),
-                'namePublishedInYear': ipni_result.get('publicationYear'),
+                'name_published_in_year': ipni_result.get('publicationYear'),
                 'name': ipni_result.get('name'),
                 # 'taxonomic_status':  # available only in POWO
                 'rank': rank,
@@ -241,8 +241,8 @@ class ApiSearcher:
         result['basionym'] = powo_lookup['basionym'].get('name') if 'basionym' in powo_lookup else None
         result['taxonomic_status'] = powo_lookup.get('taxonomicStatus')
         result['authors'] = powo_lookup.get('authors')
-        if 'namePublishedInYear' in powo_lookup:
-            result['namePublishedInYear'] = powo_lookup['namePublishedInYear']
+        if 'name_published_in_year' in powo_lookup:
+            result['name_published_in_year'] = powo_lookup['name_published_in_year']
         result['synonym'] = powo_lookup.get('synonym')
         if powo_lookup.get('synonym'):
             if 'accepted' in powo_lookup and (accepted_name := powo_lookup['accepted'].get('name')):

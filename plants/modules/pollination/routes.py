@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import COLORS_MAP, Pollination, Florescence
+from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.pollination.enums import COLORS_MAP
 from plants.modules.pollination.ml_model import train_model_for_probability_of_seed_production
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (save_new_pollination, read_ongoing_pollinations,
@@ -13,13 +14,14 @@ from plants.modules.pollination.pollination_services import (save_new_pollinatio
                                                              read_plants_without_pollen_containers, remove_pollination,
                                                              read_potential_pollen_donors)
 from plants.modules.pollination.schemas import (BResultsOngoingPollinations,
-                                                FRequestNewPollination,
-                                                BResultsSettings, FRequestEditedPollination,
+                                                PollinationCreate,
+                                                BResultsSettings,
                                                 BResultsPollenContainers, FRequestPollenContainers,
                                                 BResultsRetrainingPollinationToSeedsModel, BResultsActiveFlorescences,
-                                                BResultsPotentialPollenDonors, FRequestEditedFlorescence,
-                                                BResultsPlantsForNewFlorescence, FRequestNewFlorescence,
-                                                BResultsFlowerHistory, )
+                                                BResultsPotentialPollenDonors,
+                                                BResultsPlantsForNewFlorescence,
+                                                BResultsFlowerHistory, FlorescenceUpdate, FlorescenceCreate,
+                                                PollinationUpdate, )
 from plants.modules.pollination.florescence_services import (
     read_active_florescences, update_active_florescence, read_plants_for_new_florescence, create_new_florescence,
     remove_florescence)
@@ -39,7 +41,7 @@ router = APIRouter(
 
 @router.post('/pollinations')
 async def post_pollination(
-        new_pollination_data: FRequestNewPollination,
+        new_pollination_data: PollinationCreate,
         pollination_dal: PollinationDAL = Depends(get_pollination_dal),
         florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
         plant_dal: PlantDAL = Depends(get_plant_dal)
@@ -52,7 +54,7 @@ async def post_pollination(
 
 @router.put('/pollinations/{pollination_id}')
 async def put_pollination(
-        edited_pollination_data: FRequestEditedPollination,
+        edited_pollination_data: PollinationUpdate,
         pollination: Pollination = Depends(valid_pollination),
         pollination_dal: PollinationDAL = Depends(get_pollination_dal)):
     assert pollination.id == edited_pollination_data.id
@@ -131,7 +133,7 @@ async def get_plants_for_new_florescence(plant_dal: PlantDAL = Depends(get_plant
 
 @router.put('/active_florescences/{florescence_id}')  # no response required (full reload after post)
 async def put_active_florescence(
-        edited_florescence_data: FRequestEditedFlorescence,
+        edited_florescence_data: FlorescenceUpdate,
         florescence: Florescence = Depends(valid_florescence),
         florescence_dal: FlorescenceDAL = Depends(get_florescence_dal)):
     assert florescence.id == edited_florescence_data.id
@@ -141,7 +143,7 @@ async def put_active_florescence(
 
 
 @router.post("/active_florescences")  # no response required (full reload after post)
-async def post_active_florescence(new_florescence_data: FRequestNewFlorescence,
+async def post_active_florescence(new_florescence_data: FlorescenceCreate,
                                   florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
                                   plant_dal: PlantDAL = Depends(get_plant_dal)):
     """create new florescence for a plant"""

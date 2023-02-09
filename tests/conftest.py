@@ -17,7 +17,7 @@ from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.property.property_dal import PropertyDAL
-from plants.modules.plant.schemas import FBPropagationType
+from plants.modules.plant.enums import FBPropagationType
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from tests.config_test import generate_db_url

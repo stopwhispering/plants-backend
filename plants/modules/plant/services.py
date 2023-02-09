@@ -9,7 +9,7 @@ from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
-from plants.modules.plant.schemas import FBPlantTag, FPlant
+from plants.modules.plant.schemas import PlantCreateUpdate, FBPlantTag
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
     return new_plant
 
 
-def _get_filename_previewimage(plant: Optional[FPlant] = None) -> str | None:
+def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str | None:
     """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
     the photos-subdir part of the uri
     """
@@ -37,7 +37,7 @@ def _get_filename_previewimage(plant: Optional[FPlant] = None) -> str | None:
         return plant.filename_previewimage.as_posix()
 
 
-async def update_plants_from_list_of_dicts(plants: List[FPlant],
+async def update_plants_from_list_of_dicts(plants: List[PlantCreateUpdate],
                                            plant_dal: PlantDAL,
                                            taxon_dal: TaxonDAL) -> List[Plant]:
     plants_saved = []

@@ -1,92 +1,58 @@
 from typing import List, Optional
 from datetime import datetime
 
-from pydantic import Extra, constr
-from pydantic.main import BaseModel
+from pydantic import constr
 
 from plants import settings
+from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 from plants.shared.message_schemas import BMessage
 
 
-####################################################################################################
-# Entities used in both API Requests from Frontend and Responses from Backend (FB...)
-####################################################################################################
-class FBImagePlantTag(BaseModel):
+class FBImagePlantTag(BaseSchema):
     plant_id: int
     plant_name: constr(min_length=1, max_length=100)
     plant_name_short: constr(min_length=1,
                              max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag)
 
-    class Config:
-        extra = Extra.forbid
+
+class FBKeyword(BaseSchema):
+    keyword: constr(min_length=1, max_length=100)
 
 
-class FBKeyword(BaseModel):
-    keyword: constr(min_length=1, max_length=100, strip_whitespace=True)
-
-    class Config:
-        extra = Extra.forbid
-
-
-class FBImage(BaseModel):
+class ImageBase(BaseSchema):
     id: int
     filename: constr(min_length=1, max_length=150)
     keywords: List[FBKeyword]
     plants: List[FBImagePlantTag]
-    description: constr(max_length=500, strip_whitespace=True) | None
+    description: constr(max_length=500) | None
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
+
+class ImageCreateUpdate(ImageBase):
+    pass
 
 
-class FBImages(BaseModel):
-    __root__: List[FBImage]
+class ImageRead(ImageBase):
+    pass
 
 
-####################################################################################################
-# Entities used only in API Responses from Backend (B...)
-####################################################################################################
-class BImageUpdated(BaseModel):
-    ImagesCollection: FBImages
-
-    class Config:
-        extra = Extra.forbid
+class BImageUpdated(RequestContainer):
+    ImagesCollection: list[ImageCreateUpdate]
 
 
-class BResultsImageResource(BaseModel):
-    ImagesCollection: FBImages
-    message: BMessage
-
-    class Config:
-        extra = Extra.forbid
+class BResultsImageResource(ResponseContainer):
+    ImagesCollection: list[ImageRead]
 
 
-class BResultsImagesUploaded(BaseModel):
+class BResultsImagesUploaded(ResponseContainer):
+    images: list[ImageRead]
+
+
+class BResultsImageDeleted(ResponseContainer):
     action: str
     message: BMessage
-    images: FBImages
-
-    class Config:
-        extra = Extra.forbid
 
 
-class BResultsImageDeleted(BaseModel):
-    action: str
-    message: BMessage
-    # photo_file:  PImage
-
-    class Config:
-        extra = Extra.forbid
-
-
-####################################################################################################
-# Entities used only in API Requests from Frontend (F...)
-####################################################################################################
-class FImageUploadedMetadata(BaseModel):
+class FImageUploadedMetadata(BaseSchema):
     plants: list[int]
-    keywords: list[constr(min_length=1, max_length=100, strip_whitespace=True)]
-
-    class Config:
-        extra = Extra.forbid
+    keywords: list[constr(min_length=1, max_length=100)]

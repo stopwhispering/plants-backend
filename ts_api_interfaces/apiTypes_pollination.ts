@@ -188,11 +188,11 @@ export interface FRequestNewFlorescence {
 }
 export interface FRequestNewPollination {
   florescenceId: number;
-  seedCapsulePlantId: number;
-  pollenDonorPlantId: number;
-  pollenType: PollenType;
-  pollinationTimestamp: string;
-  labelColorRgb: string;
+  pollen_donor_plant_id: number;
+  pollen_donor_plant_id: number;
+  pollen_type: PollenType;
+  pollination_timestamp: string;
+  label_color_rgb: string;
   location: string;
   count: number;
 }

@@ -10,7 +10,8 @@ from plants.modules.property.schemas import (BResultsPropertiesForPlant, FProper
                                              FPropertiesModifiedTaxon, BResultsPropertyNames)
 from plants.modules.property.services import SaveProperties, SavePropertiesTaxa, LoadProperties
 from plants.dependencies import valid_plant, get_property_dal, get_taxon_dal, get_plant_dal
-from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource
+from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.enums import FBMajorResource
 
 logger = logging.getLogger(__name__)
 

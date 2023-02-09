@@ -12,7 +12,7 @@ from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
 from plants.modules.taxon.models import TaxonOccurrenceImage, TaxonToOccurrenceAssociation
 from plants.modules.image.util import generate_thumbnail
-from plants.modules.taxon.schemas import BTaxonOccurrenceImage
+from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ class TaxonOccurencesLoader:
 
                     # validate (don't convert as this would validate datetime to str
                     try:
-                        BTaxonOccurrenceImage(**d).dict()
+                        TaxonOccurrenceImageRead(**d).dict()
                     except ValidationError as err:
                         throw_exception(str(err))
                         # logger.warning(str(err))

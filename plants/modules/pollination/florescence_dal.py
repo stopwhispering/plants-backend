@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import FlorescenceNotFound
-from plants.modules.pollination.models import Florescence, FlorescenceStatus
+from plants.modules.pollination.models import Florescence
+from plants.modules.pollination.enums import FlorescenceStatus
 from plants.shared.base_dal import BaseDAL
 
 

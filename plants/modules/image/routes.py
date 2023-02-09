@@ -18,11 +18,12 @@ from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception, get_message
 from plants.dependencies import valid_plant, get_image_dal, get_taxon_dal, get_plant_dal
 from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,
-                                          BResultsImagesUploaded, FBImages, FBImage)
+                                          BResultsImagesUploaded, ImageCreateUpdate, ImageRead)
 from plants.modules.image.image_services_simple import remove_files_already_existing
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.schemas import BResultsImageDeleted
-from plants.shared.message_schemas import BMessageType, BSaveConfirmation, FBMajorResource, BConfirmation
+from plants.shared.message_schemas import BSaveConfirmation, BConfirmation
+from plants.shared.enums import FBMajorResource, BMessageType
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ router = APIRouter(
 )
 
 
-@router.get("/plants/{plant_id}/images/", response_model=FBImages)
+@router.get("/plants/{plant_id}/images/", response_model=list[ImageRead])
 async def get_images_for_plant(plant: Plant = Depends(valid_plant),
                                image_dal: ImageDAL = Depends(get_image_dal),
                                ):
@@ -62,11 +63,11 @@ async def upload_images_plant(request: Request,
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
 
-    images: list[FBImage] = await save_image_files(files=files,
-                                                   image_dal=image_dal,
-                                                   plant_dal=plant_dal,
-                                                   plant_ids=(plant.id,),
-                                                   )
+    images: list[ImageCreateUpdate] = await save_image_files(files=files,
+                                                             image_dal=image_dal,
+                                                             plant_dal=plant_dal,
+                                                             plant_ids=(plant.id,),
+                                                             )
 
     desc = (f'Saved: {[p.filename for p in files]}.'
             f'\nSkipped Duplicates: {duplicate_filenames}.')
@@ -88,9 +89,10 @@ async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)):
     """
     get images with no plants assigned, yet
     """
-    untagged_images: list[FBImage] = await fetch_untagged_images(image_dal=image_dal)
+    untagged_images: list[ImageCreateUpdate] = await fetch_untagged_images(image_dal=image_dal)
     logger.info(msg := f'Returned {len(untagged_images)} images.')
-    return {'ImagesCollection': untagged_images,
+    return {'action': 'Get untagged images',
+            'ImagesCollection': untagged_images,
             'message': get_message(msg,
                                    description=f'Count: {len(untagged_images)}')
             }
@@ -149,11 +151,11 @@ async def upload_images(request: Request,
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
 
-    images: list[FBImage] = await save_image_files(files=files,
-                                                   image_dal=image_dal,
-                                                   plant_dal=plant_dal,
-                                                   plant_ids=additional_data['plants'],
-                                                   keywords=additional_data['keywords'])
+    images: list[ImageCreateUpdate] = await save_image_files(files=files,
+                                                             image_dal=image_dal,
+                                                             plant_dal=plant_dal,
+                                                             plant_ids=additional_data['plants'],
+                                                             keywords=additional_data['keywords'])
 
     desc = (f'Saved: {[p.filename for p in files]}.'
             f'\nSkipped Duplicates: {duplicate_filenames}.')

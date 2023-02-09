@@ -80,7 +80,7 @@ export interface BKewSearchResultEntry {
   custom_suffix?: string;
   hybrid: boolean;
   hybridgenus: boolean;
-  namePublishedInYear?: number;
+  name_published_in_year?: number;
   basionym?: string;
   synonyms_concat?: string;
   distribution_concat?: string;
@@ -174,7 +174,7 @@ export interface FNewTaxon {
   taxonomic_status: string;
   synonym: boolean;
   authors: string;
-  namePublishedInYear?: number;
+  name_published_in_year?: number;
   basionym?: string;
   hybrid: boolean;
   hybridgenus: boolean;

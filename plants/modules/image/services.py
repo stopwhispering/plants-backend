@@ -11,7 +11,7 @@ from starlette.concurrency import run_in_threadpool
 from plants import local_config, settings, constants
 from plants.modules.image.models import Image, ImageToPlantAssociation, ImageToEventAssociation, \
     ImageToTaxonAssociation, ImageKeyword
-from plants.modules.image.schemas import FBImage, FBImagePlantTag
+from plants.modules.image.schemas import ImageCreateUpdate, FBImagePlantTag
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
@@ -70,7 +70,7 @@ async def save_image_files(files: List[UploadFile],
                            plant_dal: PlantDAL,
                            plant_ids: tuple[int] = (),
                            keywords: tuple[str] = ()
-                           ) -> list[FBImage]:
+                           ) -> list[ImageCreateUpdate]:
     """save the files supplied as starlette uploadfiles on os; assign plants and keywords"""
     images = []
     for photo_upload in files:
@@ -300,7 +300,7 @@ async def trigger_generation_of_missing_thumbnails(background_tasks: BackgroundT
     return msg
 
 
-async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[FBImage]:
+async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[ImageCreateUpdate]:
     # for async, we need to reload the image relationships
     images = await image_dal.by_ids([i.id for i in plant.images])
     # todo switch to orm mode
@@ -308,7 +308,7 @@ async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[FBIm
     return image_results
 
 
-def _to_response_image(image: Image) -> FBImage:
+def _to_response_image(image: Image) -> ImageCreateUpdate:
     # todo swithc toorm mode
     # from sqlalchemy import inspect
     # ins = inspect(image)
@@ -316,7 +316,7 @@ def _to_response_image(image: Image) -> FBImage:
     #     a = 1
 
     k: ImageKeyword
-    return FBImage(
+    return ImageCreateUpdate(
         id=image.id,
         filename=image.filename or '',
         keywords=[{'keyword': k.keyword} for k in image.keywords],
@@ -331,7 +331,7 @@ def _to_response_image(image: Image) -> FBImage:
         record_date_time=image.record_date_time)
 
 
-async def fetch_untagged_images(image_dal: ImageDAL) -> list[FBImage]:
+async def fetch_untagged_images(image_dal: ImageDAL) -> list[ImageCreateUpdate]:
     untagged_images = await image_dal.get_untagged_images()
     return [_to_response_image(image) for image in untagged_images]
 

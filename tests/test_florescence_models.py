@@ -3,8 +3,8 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from plants.modules.pollination.models import (Florescence, StigmaPosition, FlowerColorDifferentiation, Context,
-                                               FlorescenceStatus)
+from plants.modules.pollination.models import (Florescence)
+from plants.modules.pollination.enums import Context, FlorescenceStatus, FlowerColorDifferentiation, StigmaPosition
 
 
 @pytest.mark.asyncio

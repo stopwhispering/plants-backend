@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from plants.shared.message_schemas import BMessageType, BMessage
+from plants.shared.message_schemas import BMessage
+from plants.shared.enums import BMessageType
 from plants.shared.api_utils import parse_resource_from_request
 
 

@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from plants.modules.pollination.models import FlorescenceStatus
+from plants.modules.pollination.enums import FlorescenceStatus
 
 # revision identifiers, used by Alembic.
 revision = 'b944434abf76'

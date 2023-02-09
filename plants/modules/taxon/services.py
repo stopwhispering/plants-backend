@@ -12,12 +12,12 @@ from plants.modules.image.image_dal import ImageDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import Taxon, Distribution
 from plants.modules.image.models import ImageToTaxonAssociation, Image
-from plants.modules.taxon.schemas import FTaxon, FTaxonImage, FNewTaxon
+from plants.modules.taxon.schemas import TaxonUpdate, TaxonImageUpdate, TaxonCreate
 
 logger = logging.getLogger(__name__)
 
 
-def _create_names(new_taxon: FNewTaxon) -> tuple[str, str]:
+def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
     """
     create a simple and a html-formatted botanical name
     """
@@ -34,7 +34,7 @@ def _create_names(new_taxon: FNewTaxon) -> tuple[str, str]:
         custom_rank=new_taxon.custom_rank,
         custom_infraspecies=new_taxon.custom_infraspecies,
         authors=new_taxon.authors,
-        name_published_in_year=new_taxon.namePublishedInYear,
+        name_published_in_year=new_taxon.name_published_in_year,
         custom_suffix=new_taxon.custom_suffix,
     )
     full_html_name = create_formatted_botanical_name(botanical_attributes=botanical_name_input,
@@ -73,7 +73,7 @@ async def _retrieve_locations(lsid: str):
     return locations
 
 
-async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL, background_tasks: BackgroundTasks) -> Taxon:
+async def save_new_taxon(new_taxon: TaxonCreate, taxon_dal: TaxonDAL, background_tasks: BackgroundTasks) -> Taxon:
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
@@ -112,7 +112,7 @@ async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL, background_t
         taxonomic_status=new_taxon.taxonomic_status,
         synonym=new_taxon.synonym,
         authors=new_taxon.authors,
-        name_published_in_year=new_taxon.namePublishedInYear,
+        name_published_in_year=new_taxon.name_published_in_year,
         basionym=new_taxon.basionym,
         hybrid=new_taxon.hybrid,
         hybridgenus=new_taxon.hybridgenus,
@@ -144,14 +144,14 @@ async def save_new_taxon(new_taxon: FNewTaxon, taxon_dal: TaxonDAL, background_t
     return taxon
 
 
-async def modify_taxon(taxon_modified: FTaxon, taxon_dal: TaxonDAL, image_dal: ImageDAL):
+async def modify_taxon(taxon_modified: TaxonUpdate, taxon_dal: TaxonDAL, image_dal: ImageDAL):
     taxon: Taxon = await taxon_dal.by_id(taxon_modified.id)
 
     if taxon.custom_notes != taxon_modified.custom_notes:
         await taxon_dal.update(taxon, {'custom_notes': taxon_modified.custom_notes})
 
     # changes to images attached to the taxon
-    image: FTaxonImage
+    image: TaxonImageUpdate
     filenames_saved = ([image.filename for image in taxon_modified.images]
                        if taxon_modified.images else [])
     for image_obj in taxon.images:

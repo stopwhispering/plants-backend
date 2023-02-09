@@ -10,10 +10,11 @@ from plants.modules.biodiversity.taxonomy_name_formatter import create_formatted
 from plants.shared.message_services import get_message
 from plants.modules.taxon.models import Taxon
 from plants.dependencies import valid_taxon, get_taxon_dal, get_image_dal
-from plants.shared.message_schemas import BSaveConfirmation, FBMajorResource
+from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.enums import FBMajorResource
 from plants.modules.taxon.schemas import (
     FModifiedTaxa, BResultsGetTaxon, FBotanicalAttributes,
-    BResultsGetBotanicalName, FNewTaxon, BCreatedTaxonResponse)
+    BResultsGetBotanicalName, TaxonCreate, BCreatedTaxonResponse)
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
 
 
 @router.post("/new", response_model=BCreatedTaxonResponse)
-async def save_taxon(new_taxon_data: FNewTaxon,
+async def save_taxon(new_taxon_data: TaxonCreate,
                      background_tasks: BackgroundTasks,
                      taxon_dal: TaxonDAL = Depends(get_taxon_dal)):
     """

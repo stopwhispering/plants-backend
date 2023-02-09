@@ -7,7 +7,7 @@ from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon
 from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.plant.models import Plant
 from plants.modules.taxon.models import Taxon, TaxonToOccurrenceAssociation, TaxonOccurrenceImage
-from plants.modules.taxon.schemas import FBRank
+from plants.modules.taxon.enums import FBRank
 from plants.shared.base_dal import BaseDAL
 
 

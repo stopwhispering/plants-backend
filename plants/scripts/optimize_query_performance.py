@@ -15,12 +15,12 @@ from plants.modules.property.models import PropertyCategory
 from plants.modules.taxon.models import Taxon
 from plants.modules.image.services import _to_response_image
 from plants.shared.message_services import get_message
-from plants.shared.message_schemas import BMessageType
 from plants.modules.event.schemas import BResultsEventResource
-from plants.modules.image.schemas import FBImages, BResultsImageResource
+from plants.modules.image.schemas import BResultsImageResource
 from plants.modules.plant.schemas import BResultsPlants
 from plants.modules.property.schemas import BResultsPropertyNames
-from plants.shared.proposal_schemas import BResultsProposals, FProposalEntity
+from plants.shared.proposal_schemas import BResultsProposals
+from plants.shared.enums import FProposalEntity, BMessageType
 
 # from plants.models.pollination_models import Florescence, Pollination
 # from plants.models.property_models import PropertyCategory, PropertyName, PropertyValue
@@ -125,13 +125,13 @@ def events_for_plant():
     BResultsEventResource.parse_obj(results)
 
 
-def images_for_plant():
-    # /api/plants/495/images/
-    # 0.05376739997882396 seconds
-    plant_id = 495
-    plant = Plant.by_id(plant_id, db=db, raise_if_not_exists=True)
-    photo_files_ext = [_to_response_image(image) for image in plant.images]
-    FBImages.parse_obj(photo_files_ext)
+# def images_for_plant():
+#     # /api/plants/495/images/
+#     # 0.05376739997882396 seconds
+#     plant_id = 495
+#     plant = Plant.by_id(plant_id, db=db, raise_if_not_exists=True)
+#     photo_files_ext = [_to_response_image(image) for image in plant.images]
+#     FBImages.parse_obj(photo_files_ext)
 
 
 def taxa():

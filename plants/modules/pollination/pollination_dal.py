@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.exceptions import PollinationNotFound
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Pollination, COLORS_MAP_TO_RGB
+from plants.modules.pollination.models import Pollination
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
 from plants.shared.base_dal import BaseDAL
 
 

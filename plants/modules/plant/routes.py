@@ -17,7 +17,8 @@ from plants.shared.history_services import create_history_entry
 from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.services import (update_plants_from_list_of_dicts, deep_clone_plant, fetch_plants,
                                            generate_subsequent_plant_name)
-from plants.shared.message_schemas import BConfirmation, FBMajorResource
+from plants.shared.message_schemas import BConfirmation
+from plants.shared.enums import FBMajorResource
 from plants.modules.plant.schemas import (BPlantsRenameRequest, BResultsPlants, FPlantsUpdateRequest,
                                           BResultsPlantsUpdate, BResultsPlantCloned, BResultsProposeSubsequentPlantName)
 
