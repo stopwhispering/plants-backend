@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from plants.exceptions import PollinationNotFound
 from plants.modules.plant.models import Plant
@@ -75,7 +76,12 @@ class PollinationDAL(BaseDAL):
         await self.session.flush()
 
     async def get_ongoing_pollinations(self) -> list[Pollination]:
-        query = select(Pollination).where(Pollination.ongoing)
+        query = (select(Pollination)
+        .where(Pollination.ongoing)
+        .options(
+            selectinload(Pollination.seed_capsule_plant),
+            selectinload(Pollination.pollen_donor_plant)
+        ))
         pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations
 

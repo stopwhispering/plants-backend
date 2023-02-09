@@ -115,7 +115,7 @@ async def read_potential_pollen_donors(florescence: Florescence,
     # fresh_pollen_donors = query.all()
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status([FlorescenceStatus.FLOWERING])
     for f in fresh_pollen_donors:
-        already_ongoing_attempt = _plants_have_ongoing_pollination(plant, f.plant, pollination_dal=pollination_dal)
+        already_ongoing_attempt = await _plants_have_ongoing_pollination(plant, f.plant, pollination_dal=pollination_dal)
         # already_ongoing_attempt = db.query(Pollination).filter(Pollination.ongoing,
         #                                                        Pollination.seed_capsule_plant == plant,
         #                                                        Pollination.pollen_donor_plant == f.plant).count() > 0
@@ -298,7 +298,7 @@ async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[Pol
     #          )
     # ongoing_pollinations_orm: list[Pollination] = query.all()
     ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations()
-
+    # todo pydantic orm mode
     ongoing_pollinations = []
     for p in ongoing_pollinations_orm:
         p: Pollination

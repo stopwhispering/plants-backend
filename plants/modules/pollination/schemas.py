@@ -41,6 +41,8 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
+    count: conint(ge=1) | None  # allow None for old data
+
     pollination_status: str
     ongoing: bool
     harvest_date: str | None  # e.g. '2022-11-16'

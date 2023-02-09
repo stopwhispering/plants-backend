@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import FlorescenceNotFound
+from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.enums import FlorescenceStatus
 from plants.shared.base_dal import BaseDAL
@@ -25,7 +26,8 @@ class FlorescenceDAL(BaseDAL):
     async def by_status(self, status: Collection[FlorescenceStatus]) -> list[Florescence]:
         query = (
             select(Florescence)
-            .options(selectinload(Florescence.plant))
+            .options(selectinload(Florescence.plant).selectinload(Plant.taxon))
+            .options(selectinload(Florescence.plant).selectinload(Plant.florescences))
             .where(Florescence.florescence_status.in_(status))
         )
         return (await self.session.scalars(query)).all()  # noqa

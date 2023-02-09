@@ -150,10 +150,11 @@ class PlantDAL(BaseDAL):
         self.session.add_all(tags)
         await self.session.flush()
 
-    async def get_all_plants(self) -> list[Plant]:
+    async def get_all_plants_with_taxon(self) -> list[Plant]:
         query = (
             select(Plant)
             .where(Plant.deleted.is_(False))
+            .options(selectinload(Plant.taxon))
         )
         return (await self.session.scalars(query)).all()  # noqa
 
@@ -167,14 +168,17 @@ class PlantDAL(BaseDAL):
                  .where(Plant.active)
                  .where((Plant.count_stored_pollen_containers == 0) |
                         Plant.count_stored_pollen_containers.is_(None))
-                 .where((Plant.deleted.is_(False))))
+                 .where((Plant.deleted.is_(False)))
+                 .options(selectinload(Plant.taxon)))
         plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
         return plants
 
     async def get_plants_with_pollen_containers(self) -> list[Plant]:
         query = (select(Plant)
                  .where(Plant.deleted.is_(False))
-                 .where(Plant.count_stored_pollen_containers >= 1))
+                 .where(Plant.count_stored_pollen_containers >= 1)
+                 .options(selectinload(Plant.taxon))
+                 )
         plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
         return plants
 

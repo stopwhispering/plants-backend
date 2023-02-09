@@ -1,6 +1,7 @@
 import numpy as np
 import sqlalchemy
 import pandas as pd
+import sqlalchemy
 from sklearn import neighbors
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
@@ -10,10 +11,10 @@ from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.utils._testing import ignore_warnings  # noqa
+from sqlalchemy import create_engine
 
 from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
 from plants import local_config
-from plants.extensions.db import create_db_engine
 from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Pollination, Florescence
@@ -63,14 +64,15 @@ def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
 def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe  # noqa
     # i feel more comfortable with joining dataframes than with sqlalchemy...
-    engine = create_db_engine(local_config.connection_string)
+    # todo rework data access completely!!!
+    engine = create_engine(local_config.alembic_connection_string)
     df_pollination = (pd.read_sql_query(sql=sqlalchemy.select(Pollination)
                                         .filter(~Pollination.ongoing,
                                                 Pollination.pollination_status != 'self_pollinated')  # noqa
-                                        , con=engine))
-    df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=engine)
-    df_plant = pd.read_sql_query(sql=sqlalchemy.select(Plant), con=engine)
-    df_taxon = pd.read_sql_query(sql=sqlalchemy.select(Taxon), con=engine)
+                                        , con=engine.connect()))
+    df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=engine.connect())
+    df_plant = pd.read_sql_query(sql=sqlalchemy.select(Plant), con=engine.connect())
+    df_taxon = pd.read_sql_query(sql=sqlalchemy.select(Taxon), con=engine.connect())
 
     # merge with florescences
     df_merged = df_pollination.merge(df_florescence[['id', 'branches_count', 'flowers_count', 'avg_ripening_time']],

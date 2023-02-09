@@ -13,7 +13,7 @@ from plants.modules.pollination.schemas import (
 
 
 async def read_plants_for_new_florescence(plant_dal: PlantDAL) -> list[BPlantForNewFlorescence]:
-    plants: list[Plant] = await plant_dal.get_all_plants()
+    plants: list[Plant] = await plant_dal.get_all_plants_with_taxon()
 
     plants_for_new_florescence = []
     for p in plants:
