@@ -108,9 +108,9 @@ async def delete_pollination(
 
 @router.post('/retrain_probability_pollination_to_seed_model',
              response_model=BResultsRetrainingPollinationToSeedsModel)
-def retrain_probability_pollination_to_seed_model():
+async def retrain_probability_pollination_to_seed_model():
     """retrain the probability_pollination_to_seed ml model"""
-    results = train_model_for_probability_of_seed_production()
+    results = await train_model_for_probability_of_seed_production()
     return results
 
 

@@ -12,6 +12,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.utils._testing import ignore_warnings  # noqa
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import Session
 
 from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
 from plants import local_config
@@ -61,18 +63,28 @@ def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
     return pipeline
 
 
-def _read_db_and_join() -> pd.DataFrame:
+async def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe  # noqa
     # i feel more comfortable with joining dataframes than with sqlalchemy...
     # todo rework data access completely!!!
-    engine = create_engine(local_config.alembic_connection_string)
-    df_pollination = (pd.read_sql_query(sql=sqlalchemy.select(Pollination)
-                                        .filter(~Pollination.ongoing,
-                                                Pollination.pollination_status != 'self_pollinated')  # noqa
-                                        , con=engine.connect()))
-    df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=engine.connect())
-    df_plant = pd.read_sql_query(sql=sqlalchemy.select(Plant), con=engine.connect())
-    df_taxon = pd.read_sql_query(sql=sqlalchemy.select(Taxon), con=engine.connect())
+
+    def read_data(session: Session):
+        conn = session.connection()
+        df_pollination = (pd.read_sql_query(sql=sqlalchemy.select(Pollination)
+                                            .filter(~Pollination.ongoing,
+                                                    Pollination.pollination_status != 'self_pollinated')  # noqa
+                                            , con=conn))
+        df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=conn)
+        df_plant = pd.read_sql_query(sql=sqlalchemy.select(Plant), con=conn)
+        df_taxon = pd.read_sql_query(sql=sqlalchemy.select(Taxon), con=conn)
+        return df_pollination, df_florescence, df_plant, df_taxon
+
+    engine = create_async_engine(local_config.connection_string)
+
+    # async with engine.begin() as conn:
+    async with AsyncSession(engine) as session:
+        session: AsyncSession
+        df_pollination, df_florescence, df_plant, df_taxon = await session.run_sync(read_data)
 
     # merge with florescences
     df_merged = df_pollination.merge(df_florescence[['id', 'branches_count', 'flowers_count', 'avg_ripening_time']],
@@ -148,8 +160,8 @@ def _create_features() -> FeatureContainer:
     return feature_container
 
 
-def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
-    df = _read_db_and_join()
+async def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
+    df = await _read_db_and_join()
 
     # add some custom features
     df['same_genus'] = df['genus_pollen_donor'] == df['genus_seed_capsule']
@@ -174,10 +186,10 @@ def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
     return {'mean_f1_score': np.mean(scores)}
 
 
-def train_model_for_probability_of_seed_production() -> dict:
+async def train_model_for_probability_of_seed_production() -> dict:
     """predict whether a pollination attempt is goint to reach SEED status"""
     feature_container = _create_features()
-    df = _create_data(feature_container=feature_container)
+    df = await _create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)
     assert not set(df.pollination_status.unique()) - {'seed_capsule', 'germinated', 'seed', 'attempt'}
     y = df['pollination_status'].apply(lambda s: 1 if s in {'seed_capsule', 'seed', 'germinated'} else 0)
