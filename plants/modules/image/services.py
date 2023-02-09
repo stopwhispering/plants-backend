@@ -200,33 +200,14 @@ def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
     return path
 
 
-async def read_image_by_size(filename: str, width: int | None, height: int | None, image_dal: ImageDAL) -> bytes:
-    """return the image in specified size as bytes"""
-    path = await get_image_path_by_size(filename=filename,
-                                        width=width,
-                                        height=height,
-                                        image_dal=image_dal)
-
-    if not path.is_file():
-        # return default image on dev environment where most photos are missing
-        if local_config.log_settings.ignore_missing_image_files:
-            path = get_dummy_image_path_by_size(width=width, height=height)
-        else:
-            logger.error(err_msg := f'Image file not found: {path}')
-            throw_exception(err_msg)
-
-    async with aiofiles.open(path, 'rb') as file:
-        image_bytes: bytes = await file.read()
-
-    # with open(path, "rb") as image:
-    #     image_bytes: bytes = image.read()
-
-    return image_bytes
-
-
-async def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: int, taxon_dal: TaxonDAL):
+async def get_occurrence_thumbnail_path(gbif_id: int, occurrence_id: int, img_no: int, taxon_dal: TaxonDAL) -> Path:
     taxon_occurrence_images: list[TaxonOccurrenceImage] = await taxon_dal.get_taxon_occurrence_image_by_filter(
-        {'gbif_id': gbif_id, 'occurrence_id': occurrence_id, 'img_no': img_no})
+        {
+            'gbif_id': gbif_id,
+            'occurrence_id': occurrence_id,
+            'img_no': img_no
+        }
+    )
 
     if not taxon_occurrence_images:
         logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
@@ -235,31 +216,12 @@ async def read_occurrence_thumbnail(gbif_id: int, occurrence_id: int, img_no: in
     assert len(taxon_occurrence_images) == 1
     taxon_occurrence_image = taxon_occurrence_images[0]
 
-    # taxon_occurrence_image: TaxonOccurrenceImage = (db.query(TaxonOccurrenceImage).filter(
-    #                                 TaxonOccurrenceImage.gbif_id == gbif_id,
-    #                                 TaxonOccurrenceImage.occurrence_id == occurrence_id,
-    #                                 TaxonOccurrenceImage.img_no == img_no).first())
     if not taxon_occurrence_image:
         logger.error(err_msg := f'Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}')
         throw_exception(err_msg)
 
     path = settings.paths.path_generated_thumbnails_taxon.joinpath(taxon_occurrence_image.filename_thumbnail)
-    if not path.is_file():
-        # return default image on dev environment where most photos are missing
-        if local_config.log_settings.ignore_missing_image_files:
-            path = get_dummy_image_path_by_size(width=settings.images.size_thumbnail_image_taxon[0],
-                                                height=settings.images.size_thumbnail_image_taxon[1])
-        else:
-            logger.error(err_msg := f'Occurence thumbnail file not found: {path}')
-            throw_exception(err_msg)
-
-    # with open(path, "rb") as image:
-    #     image_bytes: bytes = image.read()
-
-    async with aiofiles.open(path, 'rb') as file:
-        image_bytes: bytes = await file.read()
-
-    return image_bytes
+    return path
 
 
 def _generate_missing_thumbnails(images: list[Image]):

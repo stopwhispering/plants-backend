@@ -46,7 +46,7 @@ class PlantBase(BaseSchema):
     active: bool
     cancellation_reason: FBCancellationReason | None
     cancellation_date: date | None
-    generation_notes: constr(min_length=1, max_length=250) | None
+    generation_notes: constr(max_length=250) | None
     taxon_id: int | None
 
     parent_plant: ShortPlant | None

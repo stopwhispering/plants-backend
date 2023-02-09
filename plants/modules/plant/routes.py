@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 import logging
 import datetime
 
+from fastapi.responses import ORJSONResponse, UJSONResponse
+
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
 from plants.shared.history_dal import HistoryDAL

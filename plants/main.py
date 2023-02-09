@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from plants import local_config
+from plants.extensions.config_values import Environment
 from plants.extensions.db import create_db_engine
 from plants.extensions.orm import init_orm
 from plants.modules.event.routes import router as event_router
@@ -24,9 +25,10 @@ logger = logging.getLogger(__name__)
 
 COMMON_PREFIX: Final[str] = '/api'
 app = FastAPI(
-    docs_url=COMMON_PREFIX + "/docs",
-    redoc_url=COMMON_PREFIX + "/redoc",
-    openapi_url=COMMON_PREFIX + "/openapi.json"
+    title="Plants",
+    docs_url=COMMON_PREFIX + "/docs" if local_config.environment == Environment.DEV else None,
+    redoc_url=COMMON_PREFIX + "/redoc" if local_config.environment == Environment.DEV else None,
+    openapi_url=COMMON_PREFIX + "/openapi.json" if local_config.environment == Environment.DEV else None,
 )
 
 # we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
@@ -70,4 +72,3 @@ async def startup_event():
     logger.info("Starting up, starting with DB connection")
     engine = create_db_engine(local_config.connection_string)
     await init_orm(engine=engine)
-
