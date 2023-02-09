@@ -47,20 +47,6 @@ async def rename_plant_in_image_files(plant: Plant, plant_name_old: str, image_d
     images = await image_dal.by_ids([i.id for i in plant.images])
     await run_in_threadpool(_rename_plant_in_image_files, images=images, exif=exif)
 
-
-    #
-    # await run_in_threadpool(exif.rewrite_plant_assignments,
-    #                         absolute_path=image.absolute_path,
-    #                         plants=plant_names)
-    # for image in images:
-    #     # reload image including it's relationships (lazy loading not allowed in async mode)
-    #     _rename_plant_in_image_files(image, exif)
-    #     # await run_in_threadpool(exif.rewrite_plant_assignments,
-    #     #                         absolute_path=image.absolute_path,
-    #     #                         plants=plant_names)
-    #     # PhotoMetadataAccessExifTags().rewrite_plant_assignments(absolute_path=image.absolute_path,
-    #     #                                                         plants=plant_names)
-
     # note: there's no need to upload the cache as we did modify directly in the cache above
     return len(images)
 
