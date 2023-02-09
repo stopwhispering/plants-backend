@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 import logging
 
 from plants.modules.event.event_dal import EventDAL
+from plants.modules.event.models import Soil
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.message_services import get_message
@@ -44,10 +45,10 @@ async def create_new_soil(new_soil: SoilCreate, event_dal: EventDAL = Depends(ge
 @router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
 async def update_existing_soil(updated_soil: SoilUpdate, event_dal: EventDAL = Depends(get_event_dal)):
     """update soil attributes"""
-    soil = await update_soil(soil=updated_soil, event_dal=event_dal)
+    soil: Soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
     logger.info(msg := f'Updated soil with ID {soil.id}')
-    return {'soil': soil.as_dict(),
+    return {'soil': soil,
             'message': get_message(msg, message_type=BMessageType.DEBUG)}
 
 

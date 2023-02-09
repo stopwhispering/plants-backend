@@ -9,7 +9,6 @@ from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
 
-from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 
@@ -31,7 +30,7 @@ class Distribution(Base):
     taxon = relationship("Taxon", back_populates="distribution")
 
 
-class Taxon(Base, OrmAsDict):
+class Taxon(Base):
     """
     botanical details
     non-technical key is name (unique constraint)
@@ -76,16 +75,6 @@ class Taxon(Base, OrmAsDict):
     plants = relationship("Plant", back_populates="taxon")
     distribution = relationship("Distribution", back_populates="taxon")
 
-    # # 1:n relationship to the taxon/traits link table
-    # traits = relationship(
-    #     "Trait",
-    #     secondary='taxon_to_trait_association'
-    # )
-    # taxon_to_trait_associations = relationship("TaxonToTraitAssociation",
-    #                                            back_populates="taxon",
-    #                                            overlaps="traits",  # silence warnings
-    #                                            )
-
     # 1:n relationship to the photo_file/taxon link table
     images = relationship(
         "Image",
@@ -105,21 +94,11 @@ class Taxon(Base, OrmAsDict):
     # taxon to taxon property values: 1:n
     property_values_taxon = relationship("PropertyValue", back_populates="taxon")
 
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict, especially from relationships"""
-        as_dict = super(Taxon, self).as_dict()
-        if not as_dict['synonym']:  # overwrite None with False
-            as_dict['synonym'] = False
-
-        # as_dict['ipni_id_short'] = self.fq_id if self.fq_id else None
-
-        return as_dict
-
     def __repr__(self):
         return f'<Taxon - {self.id} - {self.name}>'
 
 
-class TaxonOccurrenceImage(Base, OrmAsDict):
+class TaxonOccurrenceImage(Base):
     """botanical details"""
     __tablename__ = 'taxon_ocurrence_image'
 
@@ -140,23 +119,17 @@ class TaxonOccurrenceImage(Base, OrmAsDict):
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
-    # relationship to taxa (m:n) via gbif_id
-    # taxon = relationship("Taxon",
-    #                      back_populates="occurrence_images",
-    #                      # foreign_keys=[taxon_id]
-    #                      )
-
     # relationship to Taxon (m:n) via TaxonToOccurrenceImageAssociation
     taxa = relationship("Taxon",
                         secondary='taxon_to_occurrence_association',
                         back_populates="occurrence_images",
                         )
-    # taxon_to_occurrence_associations = relationship("TaxonToOccurrenceImageAssociation",
-    #                                                 foreign_keys=[occurrence_id, img_no, gbif_id]
-    #                                                 )
+
+    def __repr__(self):
+        return f'<TaxonOccurrenceImage - {self.occurrence_id} - {self.img_no} {self.gbif_id}>'
 
 
-class TaxonToOccurrenceAssociation(Base, OrmAsDict):
+class TaxonToOccurrenceAssociation(Base):
     """link table for taxon to occurrence images"""
     __tablename__ = 'taxon_to_occurrence_association'
 
@@ -172,8 +145,3 @@ class TaxonToOccurrenceAssociation(Base, OrmAsDict):
                                             TaxonOccurrenceImage.img_no,
                                             TaxonOccurrenceImage.gbif_id)),
                       {})
-    # taxon = relationship("Taxon", back_populates="taxon_to_occurrence_associations")
-    # occurrence = relationship("TaxonOccurrenceImage",
-    #                           back_populates="taxon_to_occurrence_associations",
-    #                           foreign_keys=[occurrence_id, img_no, gbif_id]
-    #                           )

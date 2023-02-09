@@ -11,13 +11,12 @@ import logging
 from sqlalchemy.orm import relationship
 
 from plants.modules.pollination.enums import FlorescenceStatus, FlowerColorDifferentiation, StigmaPosition
-from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class Florescence(Base, OrmAsDict):
+class Florescence(Base):
     """flowering period of a plant"""
     __tablename__ = 'florescence'
     id: int = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -59,15 +58,8 @@ class Florescence(Base, OrmAsDict):
                                 back_populates="florescence",
                                 foreign_keys="Pollination.florescence_id")
 
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict"""
-        as_dict = super(Florescence, self).as_dict()
-        as_dict['plant_name'] = (self.plant.plant_name
-                                 if self.plant else None)
-        return as_dict
 
-
-class Pollination(Base, OrmAsDict):
+class Pollination(Base):
     """pollination attempts of a plant
     note: we don't make a composite key of inflorence_id and pollen_donor_id because we might have multiple
     differing attempts to pollinate for the same inflorence and pollen donor"""
@@ -122,11 +114,3 @@ class Pollination(Base, OrmAsDict):
 
     # todo via 1:n association table: plants
 
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict"""
-        as_dict = super(Pollination, self).as_dict()
-        as_dict['seed_capsule_plant_name'] = (self.seed_capsule_plant.plant_name
-                                              if self.seed_capsule_plant else None)
-        as_dict['pollen_donor_plant_name'] = (self.pollen_donor_plant.plant_name
-                                              if self.pollen_donor_plant else None)
-        return as_dict

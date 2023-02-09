@@ -30,10 +30,9 @@ class SoilCreate(SoilBase):
 
 
 class SoilRead(SoilBase):
-    id: int
-
-    class Config:
-        extra = Extra.ignore  # todo required?
+    pass
+    # class Config:
+    #     extra = Extra.ignore  # todo required?
 
 
 class SoilWithCountRead(SoilBase):

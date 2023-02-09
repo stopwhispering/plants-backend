@@ -166,7 +166,7 @@ class BPollinationResultingPlant(BaseSchema):
 
 class BPotentialPollenDonor(BaseSchema):
     plant_id: int
-    plant_name: str  # from as_dict
+    plant_name: str
     pollen_type: str  # PollenType (fresh | frozen | unknown)
     count_stored_pollen_containers: int | None  # only relevant for frozen
     already_ongoing_attempt: bool

@@ -8,13 +8,12 @@ from sqlalchemy.types import DateTime
 import logging
 import datetime
 
-from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class Plant(Base, OrmAsDict):
+class Plant(Base):
     """my plants"""
     __tablename__ = 'plants'
     id: int = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -155,13 +154,8 @@ class Plant(Base, OrmAsDict):
         if self.taxon:
             return self.taxon.authors
 
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict, especially from relationships
-        merge descendant_plants_pollen into descendant_plants"""
-        raise NotImplementedError('use get_plant_as_dict() instead')
 
-
-class Tag(Base, OrmAsDict):
+class Tag(Base):
     """tags displayed in master view and created/deleted in details view"""
     __tablename__ = 'tags'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)

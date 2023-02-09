@@ -5,13 +5,12 @@ from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, Dat
 from sqlalchemy.orm import relationship
 import logging
 
-from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class Soil(Base, OrmAsDict):
+class Soil(Base):
     __tablename__ = "soil"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     soil_name = Column(VARCHAR(100), nullable=False)  # todo make unique
@@ -25,7 +24,7 @@ class Soil(Base, OrmAsDict):
     events = relationship("Event", back_populates="soil")
 
 
-class Pot(Base, OrmAsDict):
+class Pot(Base):
     __tablename__ = "pot"
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
     material = Column(VARCHAR(50))  # todo enum
@@ -41,7 +40,7 @@ class Pot(Base, OrmAsDict):
     events = relationship("Event", back_populates="pot")
 
 
-class Observation(Base, OrmAsDict):
+class Observation(Base):
     """formerly: Measurement"""
     __tablename__ = 'observation'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -59,7 +58,7 @@ class Observation(Base, OrmAsDict):
     event = relationship("Event", back_populates="observation", uselist=False)
 
 
-class Event(Base, OrmAsDict):
+class Event(Base):
     """events"""
     __tablename__ = 'event'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -94,48 +93,3 @@ class Event(Base, OrmAsDict):
     image_to_event_associations = relationship("ImageToEventAssociation",
                                                back_populates="event",
                                                overlaps="events,images")  # silence warnings
-
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict, especially from relationships"""
-        as_dict = super(Event, self).as_dict()
-
-        # delete db foreign keys not meant for frontend usage
-        del as_dict['soil_id']
-        del as_dict['pot_id']
-        del as_dict['observation_id']
-
-        # read segments from their respective linked tables
-        if self.observation:
-            as_dict['observation'] = self.observation.as_dict()
-            # if as_dict['observation'].get('height'):
-            #     as_dict['observation']['height'] = as_dict['observation']['height'] / 10  # mm to cm
-            # if as_dict['observation'].get('stem_max_diameter'):
-            #     as_dict['observation']['stem_max_diameter'] = as_dict['observation']['stem_max_diameter'] / 10
-        else:
-            as_dict['observation'] = None
-
-        if self.pot:
-            as_dict['pot'] = self.pot.as_dict()
-            # if as_dict['pot'].get('diameter_width'):
-            #     as_dict['pot']['diameter_width'] = as_dict['pot']['diameter_width'] / 10
-        else:
-            as_dict['pot'] = None
-
-        if self.soil:
-            as_dict['soil'] = self.soil.as_dict()
-        else:
-            as_dict['soil'] = None
-
-        if self.images:
-            as_dict['images'] = []
-            for image_obj in self.images:
-                # path_small = get_thumbnail_relative_path_for_relative_path(PurePath(image_obj.relative_path),
-                #                                                            size=config.size_thumbnail_image)
-                as_dict['images'].append({'id':            image_obj.id,
-                                          'filename':      image_obj.filename,
-                                          # 'relative_path': image_obj.relative_path
-                                          })
-        else:
-            as_dict['images'] = []
-
-        return as_dict

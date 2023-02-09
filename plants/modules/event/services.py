@@ -45,9 +45,10 @@ async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
 
 async def update_soil(soil: SoilUpdate, event_dal: EventDAL) -> Soil:
     """update existing soil in database"""
-    # make sure there isn't another soil with same name
+    # make sure there isn't another soil with same name in case of renaming
     same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
-    if len(same_name_soils) > 1 or same_name_soils[0].id != soil.id:
+    same_name_soils = [s for s in same_name_soils if s.id != soil.id]
+    if same_name_soils:
         raise SoilNotUnique(soil.soil_name.strip())
 
     soil_obj: Soil = await event_dal.get_soil_by_id(soil.id)

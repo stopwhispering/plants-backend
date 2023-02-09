@@ -1,5 +1,7 @@
 from typing import List, Dict, Optional
 
+from sqlalchemy import inspect
+
 from plants import constants
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
@@ -55,8 +57,7 @@ class LoadProperties:
 
     async def get_properties_for_plant(self, plant: Plant) -> List:
         property_objects = await self.property_dal.get_property_values_by_plant_id(plant.id)
-        # property_objects = PropertyValue.get_by_plant_id(plant.id, db, raise_exception=False)
-        property_dicts = [p.as_dict() for p in property_objects]
+        property_dicts = [self._property_value_as_dict(p) for p in property_objects]
 
         # build category / property hierarchy
         # distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts])
@@ -83,10 +84,21 @@ class LoadProperties:
         await self._add_empty_categories(categories)
         return categories
 
+    @staticmethod
+    def _property_value_as_dict(property_value: PropertyValue) -> Dict:
+        as_dict = {c.key: getattr(property_value, c.key) for c in inspect(property_value).mapper.column_attrs}
+        as_dict['property_value_id'] = property_value.id
+        del as_dict['id']
+        as_dict['property_name'] = property_value.property_name.property_name
+        as_dict['property_name_id'] = property_value.property_name.id
+        as_dict['category_name'] = property_value.property_name.property_category.category_name
+        as_dict['category_id'] = property_value.property_name.property_category.id
+        return as_dict
+
     async def get_properties_for_taxon(self, taxon_id: int) -> Dict[int, Dict]:
         taxon = await self.taxon_dal.by_id(taxon_id)
         property_objects_taxon = taxon.property_values_taxon
-        property_dicts_taxon = [p.as_dict() for p in property_objects_taxon]
+        property_dicts_taxon = [self._property_value_as_dict(p) for p in property_objects_taxon]
 
         # distinct_categories = set([(p['category_name'], p['category_id'], p['sort'],) for p in property_dicts_taxon])
         distinct_categories = set([(p['category_name'], p['category_id'],) for p in property_dicts_taxon])

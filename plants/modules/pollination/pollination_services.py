@@ -259,7 +259,7 @@ async def update_pollination(pollination: Pollination,
     else:
         germination_rate = None
 
-    updates = pollination_data.__dict__.copy()
+    updates = pollination_data.dict(exclude={})
     updates['pollination_timestamp'] = parse_api_datetime(pollination_data.pollination_timestamp)
     updates['labels_color'] = label_color
     updates['harvest_date'] = parse_api_date(pollination_data.harvest_date)

@@ -4,13 +4,12 @@ from datetime import datetime
 from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, Identity, DateTime
 from sqlalchemy.orm import relationship
 
-from plants.shared.orm_utils import OrmAsDict
 from plants.extensions.orm import Base
 
 logger = logging.getLogger(__name__)
 
 
-class PropertyCategory(Base, OrmAsDict):
+class PropertyCategory(Base):
     """property categories"""
     __tablename__ = 'property_category'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -23,7 +22,7 @@ class PropertyCategory(Base, OrmAsDict):
     property_names = relationship("PropertyName", back_populates="property_category")
 
 
-class PropertyName(Base, OrmAsDict):
+class PropertyName(Base):
     """new named properties - property names"""
     __tablename__ = 'property_name'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -39,7 +38,7 @@ class PropertyName(Base, OrmAsDict):
     property_values = relationship("PropertyValue")
 
 
-class PropertyValue(Base, OrmAsDict):
+class PropertyValue(Base):
     """new named properties - property values for plants and taxa"""
     __tablename__ = 'property_value'
     id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
@@ -58,18 +57,3 @@ class PropertyValue(Base, OrmAsDict):
 
     taxon_id = Column(INTEGER, ForeignKey('taxon.id'))
     taxon = relationship("Taxon", back_populates="property_values_taxon")
-
-    def as_dict(self):
-        """add some additional fields to mixin's as_dict, especially from relationships"""
-        as_dict = super(PropertyValue, self).as_dict()
-        as_dict['property_value_id'] = self.id
-        del as_dict['id']
-
-        # read segments from their respective linked tables
-        as_dict['property_name'] = self.property_name.property_name
-        as_dict['property_name_id'] = self.property_name.id
-        as_dict['category_name'] = self.property_name.property_category.category_name
-        as_dict['category_id'] = self.property_name.property_category.id
-        # as_dict['sort'] = self.property_name.property_category.sort
-
-        return as_dict
