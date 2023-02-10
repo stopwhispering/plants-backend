@@ -4,7 +4,8 @@ from sqlalchemy import select, Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import PlantNotFound, TagNotFound, TagNotAssignedToPlant
+from plants.exceptions import PlantNotFound, TagNotFound, TagNotAssignedToPlant, CriterionNotImplemented, \
+    UpdateNotImplemented
 from plants.modules.event.models import Event
 from plants.modules.image.models import ImageToPlantAssociation, Image
 from plants.modules.plant.models import Plant, Tag
@@ -93,7 +94,7 @@ class PlantDAL(BaseDAL):
                 value: str
                 query = query.filter(Plant.field_number == value)
             else:
-                raise NotImplementedError(f'Criterion {key} not implemented')
+                raise CriterionNotImplemented(key)
         plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
         return plants
 
@@ -272,7 +273,7 @@ class PlantDAL(BaseDAL):
                 value: Taxon | None
                 plant.taxon = value
             else:
-                raise NotImplementedError(f'Update of {key} not implemented')
+                raise UpdateNotImplemented(key)
 
         await self.session.flush()
 

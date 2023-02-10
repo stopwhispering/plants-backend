@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends
 import logging
 import datetime
 
+from starlette import status as starlette_status
+
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
+from plants.scripts.flowering_dates import status
 from plants.shared.history_dal import HistoryDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
@@ -33,7 +36,7 @@ router = APIRouter(
 )
 
 
-@router.post("/{plant_id}/clone", response_model=BResultsPlantCloned)
+@router.post("/{plant_id}/clone", response_model=BResultsPlantCloned, status_code=starlette_status.HTTP_201_CREATED)
 async def clone_plant(
         plant_name_clone: str,
         plant_original: Plant = Depends(valid_plant),

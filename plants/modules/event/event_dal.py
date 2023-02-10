@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import EventNotFound, SoilNotFound
+from plants.exceptions import EventNotFound, SoilNotFound, UpdateNotImplemented
 from plants.modules.event.models import Event, Soil, Observation, Pot
 from plants.modules.image.models import Image, ImageToEventAssociation
 from plants.modules.plant.models import Plant
@@ -79,7 +79,7 @@ class EventDAL(BaseDAL):
                 value: str
                 soil.mix = value
             else:
-                raise NotImplemented(f'Invalid soil update key: {key}')
+                raise UpdateNotImplemented(key)
 
         await self.session.flush()
 
