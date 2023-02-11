@@ -17,10 +17,8 @@ from plants.modules.taxon.models import Taxon
 
 async def get_db():
     """generator for db sessions"""
-    db: AsyncSession = orm.SessionFactory.create_session()
-    yield db
-    await db.commit()
-    await db.close()
+    async with orm.SessionFactory.create_session() as db:
+        yield db
 
 
 def get_pollination_dal(db: AsyncSession = Depends(get_db)):

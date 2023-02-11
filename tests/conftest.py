@@ -33,14 +33,20 @@ def event_loop():
     return asyncio.get_event_loop()
 
 
-async def _reset_db() -> None:
-    """Create & Reset database to initial state."""
-    # Create a engine/connection used for creating the test database
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def setup_db() -> None:
+
+    """Setup test database:
+    Create & Reset database to initial state;
+    Create all database tables as declared in SQLAlchemy models;
+    """
+    # PostGres does not allow to create/drop databases in a transaction, therefore we need
+    # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
     engine_for_db_setup = create_async_engine(generate_db_url(),
                                               isolation_level='AUTOCOMMIT')
 
-    # AsyncEngine.begin() provides a context manager that auto-commits at the end (or rolls back in
-    # case of an error). Closes the connection at the end.
+    # AsyncEngine.begin() provides a context manager that commits (not required with AUTOCOMMIT) at the end
+    # (or rolls back in case of an error). Closes the connection at the end.
     async with engine_for_db_setup.begin() as setup_connection:
         setup_connection: AsyncConnection
         q = await setup_connection.execute(text(f"SELECT datname FROM pg_catalog.pg_database "
@@ -49,36 +55,32 @@ async def _reset_db() -> None:
             await setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
         await setup_connection.execute(text(f"CREATE DATABASE {TEST_DB_NAME} ENCODING 'utf8'"))
 
-
-@pytest_asyncio.fixture(scope="session")
-async def connection() -> AsyncConnection:
-    """Drop and Create a test database, yield a connection.
-    Executed once per test session."""
-    # Create a engine/connection used for creating the test database
-    await _reset_db()
-
-    # Create a new engine/connection that will actually connect
-    # to the test database we just created. This will be the
-    # connection used by the test suite run.
-    engine: AsyncEngine = create_async_engine(generate_db_url(TEST_DB_NAME))
-    async with engine.begin() as conn:
-        yield conn
-
-    # # setup_connection = engine_for_db_setup.connect()
-    # with engine_for_db_setup.connect() as setup_connection:
-    #     setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
+        Base.metadata.bind = setup_connection
+        await init_orm(engine=setup_connection.engine)
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def setup_db(connection: AsyncConnection) -> None:
-    """Setup test database.
-    Creates all database tables as declared in SQLAlchemy models,
-    then proceeds to drop all the created tables after all tests
-    have finished running.
-    Executed once per test session.
+@pytest_asyncio.fixture(scope="function")
+async def db() -> AsyncSession:
     """
-    Base.metadata.bind = connection
-    await init_orm(engine=connection.engine)
+    Wrapper fot get_table that truncates tables after each test function run.
+    """
+    db = await anext(get_db())
+    yield db
+
+    # we need to execute single statements with an async connection
+    conn = await db.connection()
+    await conn.execute(text("DELETE FROM history;"))
+    await conn.execute(text("DELETE FROM tags;"))
+    await conn.execute(text("DELETE FROM pollination;"))
+    await conn.execute(text("DELETE FROM florescence;"))
+    await conn.execute(text("DELETE FROM image;"))
+    await conn.execute(text("DELETE FROM soil;"))
+    await conn.execute(text("DELETE FROM pot;"))
+    await conn.execute(text("DELETE FROM event;"))
+    await conn.execute(text("DELETE FROM plants;"))
+    # TRUNCATE table_a, table_b, …, table_z;
+    await conn.commit()
+    await conn.close()
 
 
 @pytest.fixture(scope="function")
@@ -114,30 +116,6 @@ def property_dal(db: AsyncSession) -> PropertyDAL:
     """
     """
     yield PropertyDAL(db)
-
-
-@pytest_asyncio.fixture(scope="function")
-async def db() -> AsyncSession:
-    """
-    Create a new session for each test function.
-    Truncate tables after each test.
-    """
-    db = await anext(get_db())
-    yield db
-
-    # we need to execute single statements with an async connection
-    conn = await db.connection()
-    await conn.execute(text("DELETE FROM history;"))
-    await conn.execute(text("DELETE FROM tags;"))
-    await conn.execute(text("DELETE FROM pollination;"))
-    await conn.execute(text("DELETE FROM florescence;"))
-    await conn.execute(text("DELETE FROM image;"))
-    await conn.execute(text("DELETE FROM soil;"))
-    await conn.execute(text("DELETE FROM pot;"))
-    await conn.execute(text("DELETE FROM event;"))
-    await conn.execute(text("DELETE FROM plants;"))
-    # TRUNCATE table_a, table_b, …, table_z;
-    await conn.commit()
 
 
 @pytest_asyncio.fixture(scope="function")

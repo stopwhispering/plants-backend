@@ -6,7 +6,6 @@ from starlette import status as starlette_status
 
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
-from plants.scripts.flowering_dates import status
 from plants.shared.history_dal import HistoryDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
