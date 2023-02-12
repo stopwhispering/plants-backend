@@ -1,10 +1,8 @@
-/plants.log
-*.prof
-/deploy.bat
-/database.db
-/pollination_estimator.pkl
-/package-lock.json
-/package.json
-/plants/scripts/migrate_db.py
 /backup/
 *.env
+/.idea
+/.coverage
+__pycache__/
+.pytest_cache/
+/local.py
+*.pyc

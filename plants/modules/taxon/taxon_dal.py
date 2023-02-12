@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
-from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon
+from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon, CriterionNotImplemented
 from plants.modules.image.models import ImageToTaxonAssociation, Image
 from plants.modules.plant.models import Plant
 from plants.modules.taxon.models import Taxon, TaxonToOccurrenceAssociation, TaxonOccurrenceImage
@@ -61,7 +61,7 @@ class TaxonDAL(BaseDAL):
                 value: int
                 query = query.where(TaxonOccurrenceImage.img_no == value)
             else:
-                raise NotImplemented(f'Invalid filter key: {key}')
+                raise CriterionNotImplemented(key)
 
         images: list[TaxonOccurrenceImage] = (await self.session.scalars(query)).all()  # noqa
         return images

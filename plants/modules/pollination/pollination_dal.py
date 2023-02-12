@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import PollinationNotFound
+from plants.exceptions import PollinationNotFound, CriterionNotImplemented
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Pollination
 from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
@@ -117,7 +117,7 @@ class PollinationDAL(BaseDAL):
                 value: str
                 query = query.where(Pollination.label_color == value)
             else:
-                raise NotImplemented(f'Unknown filter key: {key}')
+                raise CriterionNotImplemented(key)
 
         pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations
