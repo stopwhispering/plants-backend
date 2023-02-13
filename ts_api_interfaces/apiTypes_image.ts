@@ -1,11 +1,10 @@
 
-export type FBImages = FBImage[];
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
 
 export interface BImageUpdated {
-  ImagesCollection: FBImages;
+  ImagesCollection: ImageCreateUpdate[];
 }
-export interface FBImage {
+export interface ImageCreateUpdate {
   id: number;
   filename: string;
   keywords: FBKeyword[];
@@ -26,15 +25,28 @@ export interface BResultsImageDeleted {
   message: BMessage;
 }
 export interface BResultsImageResource {
-  ImagesCollection: FBImages;
+  action?: string;
   message: BMessage;
+  ImagesCollection: ImageRead[];
+}
+export interface ImageRead {
+  id: number;
+  filename: string;
+  keywords: FBKeyword[];
+  plants: FBImagePlantTag[];
+  description?: string;
+  record_date_time?: string;
 }
 export interface BResultsImagesUploaded {
-  action: string;
+  action?: string;
   message: BMessage;
-  images: FBImages;
+  images: ImageRead[];
 }
-export interface FImageUploadedMetadata {
-  plants: number[];
-  keywords: string[];
+export interface ImageBase {
+  id: number;
+  filename: string;
+  keywords: FBKeyword[];
+  plants: FBImagePlantTag[];
+  description?: string;
+  record_date_time?: string;
 }

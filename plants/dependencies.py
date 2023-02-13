@@ -18,6 +18,7 @@ async def get_db():
     """generator for db sessions"""
     async with orm.SessionFactory.create_session() as db:
         yield db
+        await db.commit()
 
 
 def get_pollination_dal(db: AsyncSession = Depends(get_db)):

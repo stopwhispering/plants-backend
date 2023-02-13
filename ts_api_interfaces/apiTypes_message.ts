@@ -1,12 +1,6 @@
 
 export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Error" | "Debug";
-export type FBMajorResource =
-  | "PlantResource"
-  | "ImageResource"
-  | "TaxonResource"
-  | "EventResource"
-  | "PlantPropertyResource"
-  | "TaxonPropertyResource";
+export type FBMajorResource = "PlantResource" | "ImageResource" | "TaxonResource" | "EventResource";
 
 export interface BConfirmation {
   action: string;

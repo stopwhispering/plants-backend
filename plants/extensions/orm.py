@@ -39,10 +39,6 @@ async def init_orm(engine: AsyncEngine):
 
     await create_tables_if_required(engine)
 
-    # initially populate tables with default data
-    # from plants.modules.property.populate_table import insert_property_categories
-    # await insert_property_categories(SessionFactory.create_session())
-
 
 async def create_tables_if_required(engine: AsyncEngine):
     """uses metadata's connection if no engine supplied"""

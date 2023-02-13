@@ -44,8 +44,8 @@ async def clone_plant(
         history_dal: HistoryDAL = Depends(get_history_dal),
 ):
     """
-    clone plant with supplied plant_id; include duplication of events and
-    properties; excludes regular image assignments (only to events)
+    clone plant with supplied plant_id; include duplication of events;
+    excludes regular image assignments (only to events)
     """
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
         raise PlantAlreadyExists(plant_name_clone)
