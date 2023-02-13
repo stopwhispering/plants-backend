@@ -6,9 +6,6 @@ from pydantic2ts import generate_typescript_defs
 REMOVE_COMMENTS_BEGIN_WITH = ['/*', '*/', '* ', ' *']
 
 
-
-
-
 @dataclass
 class PydanticModel:
     path_pydantic: str
