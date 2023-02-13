@@ -33,10 +33,10 @@ node "Backend Server" {
 
         package "Traefik Endpoint Routing" {
 
-            component  "plants.astroloba.net/api" as plants_be_ep
-            component "plants.astroloba.net" as plants_fe_ep
-            component "traefik.astroloba.net" as dashboard_ep
-            component "pgadmin.astroloba.net" as pgadmin_ep
+            component  "plants.example.net/api" as plants_be_ep
+            component "plants.example.net" as plants_fe_ep
+            component "traefik.example.net" as dashboard_ep
+            component "pgadmin.example.net" as pgadmin_ep
             traefik -down-> plants_be_ep: "443"
             traefik -down-> plants_fe_ep: "443"
             traefik -down-> dashboard_ep: "443"

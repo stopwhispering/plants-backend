@@ -14,12 +14,13 @@ services:
       environment:
   #        set LOG_LEVEL for Gunicorn, default is "info"
           - LOG_LEVEL=info
-          - MAX_WORKERS=5
+#          - MAX_WORKERS=5
 
           - ENVIRONMENT=${ENVIRONMENT:?err}
           - CONNECTION_STRING=${CONNECTION_STRING:?err}
           - MAX_IMAGES_PER_TAXON=${MAX_IMAGES_PER_TAXON:-20}
           - ALLOW_CORS=${ALLOW_CORS:-False}
+          - HOSTNAME=${HOSTNAME:?err}
           - LOG_SETTINGS__LOG_LEVEL_CONSOLE=${LOG_SETTINGS__LOG_LEVEL_CONSOLE:?err}
           - LOG_SETTINGS__LOG_LEVEL_FILE=${LOG_SETTINGS__LOG_LEVEL_FILE:?err}
           - LOG_SETTINGS__LOG_FILE_PATH=${LOG_SETTINGS__LOG_FILE_PATH:?err}

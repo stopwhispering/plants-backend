@@ -1,5 +1,6 @@
 /backup/
 *.env
+!.example.env
 /.idea
 /.coverage
 __pycache__/
