@@ -3,47 +3,47 @@ export type BMessageType = "Information" | "None" | "Success" | "Warning" | "Err
 export type FBRank = "gen." | "spec." | "subsp." | "var." | "forma";
 
 export interface BCreatedTaxonResponse {
-  action: string;
+  action?: string;
   message: BMessage;
-  new_taxon: BTaxon;
+  new_taxon: TaxonRead;
 }
-export interface BTaxon {
-  id: number;
-  name: string;
-  is_custom: boolean;
+export interface TaxonRead {
+  rank: string;
+  family: string;
+  genus: string;
   species?: string;
   infraspecies?: string;
-  cultivar?: string;
-  affinis?: string;
-  genus: string;
-  family: string;
-  rank: string;
-  taxonomic_status?: string;
-  name_published_in_year?: number;
+  lsid: string;
+  taxonomic_status: string;
   synonym: boolean;
-  lsid?: string;
-  authors?: string;
+  authors: string;
+  name_published_in_year?: number;
   basionym?: string;
-  synonyms_concat?: string;
-  distribution_concat?: string;
   hybrid: boolean;
   hybridgenus: boolean;
+  synonyms_concat?: string;
+  distribution_concat?: string;
+  is_custom: boolean;
+  cultivar?: string;
+  affinis?: string;
+  id: number;
+  name: string;
   gbif_id?: number;
   custom_notes?: string;
-  distribution: FBDistribution;
-  images: BTaxonImage[];
-  occurrence_images: BTaxonOccurrenceImage[];
+  distribution: DistributionRead;
+  images: TaxonImageRead[];
+  occurrence_images: TaxonOccurrenceImageRead[];
 }
-export interface FBDistribution {
+export interface DistributionRead {
   native: string[];
   introduced: string[];
 }
-export interface BTaxonImage {
+export interface TaxonImageRead {
   id: number;
   filename: string;
   description?: string;
 }
-export interface BTaxonOccurrenceImage {
+export interface TaxonOccurrenceImageRead {
   occurrence_id: number;
   img_no: number;
   gbif_id: number;
@@ -86,29 +86,33 @@ export interface BKewSearchResultEntry {
   distribution_concat?: string;
 }
 export interface BResultsFetchTaxonImages {
-  action: string;
+  action?: string;
   message: BMessage;
-  occurrence_images: BTaxonOccurrenceImage[];
+  occurrence_images: TaxonOccurrenceImageRead[];
 }
 export interface BResultsGetBotanicalName {
   full_html_name: string;
   name: string;
 }
 export interface BResultsGetTaxon {
-  action: string;
+  action?: string;
   message: BMessage;
-  taxon: BTaxon;
+  taxon: TaxonRead;
 }
 export interface BResultsRetrieveTaxonDetailsRequest {
-  action: string;
+  action?: string;
   message: BMessage;
   botanical_name: string;
-  taxon_data: BTaxon;
+  taxon_data: TaxonRead;
 }
 export interface BResultsTaxonInfoRequest {
-  action: string;
+  action?: string;
   message: BMessage;
   ResultsCollection: BKewSearchResultEntry[];
+}
+export interface DistributionUpdate {
+  native: string[];
+  introduced: string[];
 }
 export interface FBotanicalAttributes {
   rank: string;
@@ -130,41 +134,9 @@ export interface FFetchTaxonOccurrenceImagesRequest {
   gbif_id: number;
 }
 export interface FModifiedTaxa {
-  ModifiedTaxaCollection: FTaxon[];
+  ModifiedTaxaCollection: TaxonUpdate[];
 }
-export interface FTaxon {
-  id: number;
-  name: string;
-  is_custom: boolean;
-  species?: string;
-  genus: string;
-  family: string;
-  infraspecies?: string;
-  cultivar?: string;
-  affinis?: string;
-  rank: string;
-  taxonomic_status?: string;
-  name_published_in_year?: number;
-  synonym: boolean;
-  lsid?: string;
-  authors?: string;
-  basionym?: string;
-  synonyms_concat?: string;
-  distribution_concat?: string;
-  hybrid: boolean;
-  hybridgenus: boolean;
-  gbif_id?: number;
-  custom_notes?: string;
-  distribution?: FBDistribution;
-  images?: FTaxonImage[];
-}
-export interface FTaxonImage {
-  id: number;
-  filename: string;
-  description?: string;
-}
-export interface FNewTaxon {
-  id?: number;
+export interface TaxonUpdate {
   rank: string;
   family: string;
   genus: string;
@@ -181,11 +153,19 @@ export interface FNewTaxon {
   synonyms_concat?: string;
   distribution_concat?: string;
   is_custom: boolean;
-  custom_rank?: FBRank;
-  custom_infraspecies?: string;
   cultivar?: string;
   affinis?: string;
-  custom_suffix?: string;
+  id: number;
+  name: string;
+  gbif_id?: number;
+  custom_notes?: string;
+  distribution?: DistributionUpdate;
+  images?: TaxonImageUpdate[];
+}
+export interface TaxonImageUpdate {
+  id: number;
+  filename: string;
+  description?: string;
 }
 export interface FRetrieveTaxonDetailsRequest {
   lsid?: string;
@@ -200,7 +180,56 @@ export interface FTaxonInfoRequest {
   taxon_name_pattern: string;
   search_for_genus_not_species: boolean;
 }
-export interface FTaxonOccurrenceImage {
+export interface TaxonBase {
+  rank: string;
+  family: string;
+  genus: string;
+  species?: string;
+  infraspecies?: string;
+  lsid: string;
+  taxonomic_status: string;
+  synonym: boolean;
+  authors: string;
+  name_published_in_year?: number;
+  basionym?: string;
+  hybrid: boolean;
+  hybridgenus: boolean;
+  synonyms_concat?: string;
+  distribution_concat?: string;
+  is_custom: boolean;
+  cultivar?: string;
+  affinis?: string;
+}
+export interface TaxonCreate {
+  rank: string;
+  family: string;
+  genus: string;
+  species?: string;
+  infraspecies?: string;
+  lsid: string;
+  taxonomic_status: string;
+  synonym: boolean;
+  authors: string;
+  name_published_in_year?: number;
+  basionym?: string;
+  hybrid: boolean;
+  hybridgenus: boolean;
+  synonyms_concat?: string;
+  distribution_concat?: string;
+  is_custom: boolean;
+  cultivar?: string;
+  affinis?: string;
+  id?: number;
+  custom_rank?: FBRank;
+  custom_infraspecies?: string;
+  custom_suffix?: string;
+}
+export interface TaxonImageBase {
+  id: number;
+  filename: string;
+  description?: string;
+}
+export interface TaxonOccurrenceImageBase {
   occurrence_id: number;
   img_no: number;
   gbif_id: number;

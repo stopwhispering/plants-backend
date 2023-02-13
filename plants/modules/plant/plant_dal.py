@@ -35,7 +35,6 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.events).selectinload(Event.pot),
             selectinload(Plant.events).selectinload(Event.images),
             selectinload(Plant.images).selectinload(Image.keywords),
-            selectinload(Plant.property_values_plant),
             selectinload(Plant.florescences)
         )
         return query
@@ -340,7 +339,6 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.images),
             # selectinload(Plant.latest_image),  # property
 
-            # selectinload(Plant.property_values_plant),  # not required
             # selectinload(Plant.image_to_plant_associations),  # not required
             # selectinload(Plant.florescences),  # not required
         )

@@ -6,7 +6,7 @@ from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.property.property_dal import PropertyDAL
+# from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
 from plants.modules.plant.schemas import PlantCreateUpdate, FBPlantTag
@@ -21,6 +21,7 @@ async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
     return new_plant
 
 
+# todo this is still required (otherwise save error) - why? replcae
 def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str | None:
     """we actually set the path to preview photo_file (the original photo_file, not the thumbnail) excluding
     the photos-subdir part of the uri
@@ -54,7 +55,7 @@ async def update_plants_from_list_of_dicts(plants: List[PlantCreateUpdate],
 
         updates['parent_plant_id'] = plant.parent_plant.id if plant.parent_plant else None
         updates['parent_plant_pollen_id'] = plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
-        updates['filename_previewimage'] = _get_filename_previewimage(plant)  # todo still required?
+        updates['filename_previewimage'] = _get_filename_previewimage(plant)
         updates['taxon'] = await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
 
         await plant_dal.update(record_update, updates)
@@ -84,10 +85,11 @@ async def deep_clone_plant(plant_original: Plant,
                            plant_name_clone: str,
                            plant_dal: PlantDAL,
                            event_dal: EventDAL,
-                           property_dal: PropertyDAL, ):
+                           # property_dal: PropertyDAL,
+                           ):
     """
     clone supplied plant
-    includes duplication of events, photo_file-to-event assignments, properties, tags
+    includes duplication of events, photo_file-to-event assignments, tags
     excludes descendant plants
     assignments to same instances of parent plants, parent plants pollen (nothing to do here)
     """
@@ -115,15 +117,6 @@ async def deep_clone_plant(plant_original: Plant,
 
     if cloned_events:
         await event_dal.create_events(cloned_events)
-
-    cloned_property_values = []
-    for property_value in plant_original.property_values_plant:
-        property_value_clone = _clone_instance(property_value)  # noqa
-        property_value_clone.plant = plant_clone
-        cloned_property_values.append(property_value_clone)
-
-    if cloned_property_values:
-        await property_dal.create_property_values(cloned_property_values)
 
     await plant_dal.create_plant(plant_clone)
 

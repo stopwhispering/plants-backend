@@ -91,8 +91,6 @@ class Taxon(Base):
                                      secondary='taxon_to_occurrence_association'
                                      )
 
-    # taxon to taxon property values: 1:n
-    property_values_taxon = relationship("PropertyValue", back_populates="taxon")
 
     def __repr__(self):
         return f'<Taxon - {self.id} - {self.name}>'

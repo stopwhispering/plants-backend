@@ -20,17 +20,20 @@ export type FBCancellationReason =
   | "Gift"
   | "Sale"
   | "Others";
-export type FBTagState = "None" | "Indication01" | "Success" | "Information" | "Error" | "Warning";
-export type FBMajorResource =
-  | "PlantResource"
-  | "ImageResource"
-  | "TaxonResource"
-  | "EventResource"
-  | "PlantPropertyResource"
-  | "TaxonPropertyResource";
+export type TagState = "None" | "Indication01" | "Success" | "Information" | "Error" | "Warning";
+export type FBMajorResource = "PlantResource" | "ImageResource" | "TaxonResource" | "EventResource";
 
-export interface BPlant {
-  id: number;
+export interface BPlantsRenameRequest {
+  plant_id: number;
+  old_plant_name: string;
+  new_plant_name: string;
+}
+export interface BResultsPlantCloned {
+  action?: string;
+  message: BMessage;
+  plant: PlantRead;
+}
+export interface PlantRead {
   plant_name: string;
   field_number?: string;
   geographic_origin?: string;
@@ -41,67 +44,59 @@ export interface BPlant {
   cancellation_date?: string;
   generation_notes?: string;
   taxon_id?: number;
+  parent_plant?: ShortPlant;
+  parent_plant_pollen?: ShortPlant;
+  plant_notes?: string;
+  filename_previewimage?: string;
+  tags: FBPlantTag[];
+  id: number;
   taxon_authors?: string;
   botanical_name?: string;
   full_botanical_html_name?: string;
-  parent_plant?: FBAssociatedPlantExtractForPlant;
-  parent_plant_pollen?: FBAssociatedPlantExtractForPlant;
-  plant_notes?: string;
-  filename_previewimage?: string;
+  created_at: string;
   last_update?: string;
-  descendant_plants_all: FBAssociatedPlantExtractForPlant[];
-  sibling_plants: FBAssociatedPlantExtractForPlant[];
-  same_taxon_plants: FBAssociatedPlantExtractForPlant[];
-  current_soil?: FBPlantCurrentSoil;
-  latest_image?: FBPlantLatestImage;
-  tags: FBPlantTag[];
+  descendant_plants_all: ShortPlant[];
+  sibling_plants: ShortPlant[];
+  same_taxon_plants: ShortPlant[];
+  current_soil?: PlantCurrentSoil;
+  latest_image?: PlantLatestImage;
 }
-export interface FBAssociatedPlantExtractForPlant {
+export interface ShortPlant {
   id: number;
   plant_name: string;
   active: boolean;
 }
-export interface FBPlantCurrentSoil {
-  soil_name: string;
-  date: string;
-}
-export interface FBPlantLatestImage {
-  path: string;
-  date: string;
-}
 export interface FBPlantTag {
   id?: number;
-  state: FBTagState;
+  state: TagState;
   text: string;
   last_update?: string;
   plant_id: number;
 }
-export interface BPlantsRenameRequest {
-  OldPlantName: string;
-  NewPlantName: string;
+export interface PlantCurrentSoil {
+  soil_name: string;
+  date: string;
 }
-export interface BResultsPlantCloned {
-  action: string;
-  message: BMessage;
-  plant: BPlant;
+export interface PlantLatestImage {
+  path: string;
+  date: string;
 }
 export interface BResultsPlants {
-  action: string;
+  action?: string;
   message: BMessage;
-  PlantsCollection: BPlant[];
+  PlantsCollection: PlantRead[];
 }
 export interface BResultsPlantsUpdate {
-  action: string;
-  resource: FBMajorResource;
+  action?: string;
   message: BMessage;
-  plants: BPlant[];
+  resource: FBMajorResource;
+  plants: PlantRead[];
 }
 export interface BResultsProposeSubsequentPlantName {
   original_plant_name: string;
   subsequent_plant_name: string;
 }
-export interface FPlant {
-  id?: number;
+export interface PlantCreateUpdate {
   plant_name: string;
   field_number?: string;
   geographic_origin?: string;
@@ -112,24 +107,27 @@ export interface FPlant {
   cancellation_date?: string;
   generation_notes?: string;
   taxon_id?: number;
-  taxon_authors?: string;
-  botanical_name?: string;
-  full_botanical_html_name?: string;
-  parent_plant?: FBAssociatedPlantExtractForPlant;
-  parent_plant_pollen?: FBAssociatedPlantExtractForPlant;
+  parent_plant?: ShortPlant;
+  parent_plant_pollen?: ShortPlant;
   plant_notes?: string;
   filename_previewimage?: string;
-  last_update?: string;
-  descendant_plants_all: FBAssociatedPlantExtractForPlant[];
-  sibling_plants: FBAssociatedPlantExtractForPlant[];
-  same_taxon_plants: FBAssociatedPlantExtractForPlant[];
-  current_soil?: FBPlantCurrentSoil;
-  latest_image?: FBPlantLatestImage;
   tags: FBPlantTag[];
+  id?: number;
 }
-export interface FPlantsDeleteRequest {
-  plant_id: number;
-}
-export interface FPlantsUpdateRequest {
-  PlantsCollection: FPlant[];
+export interface PlantBase {
+  plant_name: string;
+  field_number?: string;
+  geographic_origin?: string;
+  nursery_source?: string;
+  propagation_type?: FBPropagationType;
+  active: boolean;
+  cancellation_reason?: FBCancellationReason;
+  cancellation_date?: string;
+  generation_notes?: string;
+  taxon_id?: number;
+  parent_plant?: ShortPlant;
+  parent_plant_pollen?: ShortPlant;
+  plant_notes?: string;
+  filename_previewimage?: string;
+  tags: FBPlantTag[];
 }

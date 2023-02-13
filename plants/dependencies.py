@@ -7,7 +7,6 @@ from plants.shared.history_dal import HistoryDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Pollination, Florescence
@@ -19,6 +18,7 @@ async def get_db():
     """generator for db sessions"""
     async with orm.SessionFactory.create_session() as db:
         yield db
+        await db.commit()
 
 
 def get_pollination_dal(db: AsyncSession = Depends(get_db)):
@@ -27,10 +27,6 @@ def get_pollination_dal(db: AsyncSession = Depends(get_db)):
 
 def get_florescence_dal(db: AsyncSession = Depends(get_db)):
     return FlorescenceDAL(db)
-
-
-def get_property_dal(db: AsyncSession = Depends(get_db)):
-    return PropertyDAL(db)
 
 
 def get_history_dal(db: AsyncSession = Depends(get_db)):

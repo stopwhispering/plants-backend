@@ -6,9 +6,6 @@ from pydantic2ts import generate_typescript_defs
 REMOVE_COMMENTS_BEGIN_WITH = ['/*', '*/', '* ', ' *']
 
 
-
-
-
 @dataclass
 class PydanticModel:
     path_pydantic: str
@@ -30,15 +27,9 @@ models = [
     PydanticModel(r".\plants\modules\taxon\schemas.py",
                   r"./ts_api_interfaces/apiTypes_taxon.ts",
                   exclude),
-    PydanticModel(r".\plants\modules\property\schemas.py",
-                  r"./ts_api_interfaces/apiTypes_property.ts",
-                  exclude),
     PydanticModel(r".\plants\modules\plant\schemas.py",
                   r"./ts_api_interfaces/apiTypes_plant.ts",
                   exclude),
-    # PydanticModel(r".\plants\shared\proposal_schemas.py",
-    #               r"./ts_api_interfaces/apiTypes_selection.ts",
-    #               exclude),  # todo fix
     PydanticModel(r".\plants\shared\message_schemas.py",
                   r"./ts_api_interfaces/apiTypes_message.ts",
                   ()),

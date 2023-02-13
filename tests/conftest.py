@@ -6,7 +6,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, AsyncSession
 
 
 from plants.dependencies import get_db
@@ -16,7 +16,7 @@ from plants.modules.event.event_dal import EventDAL
 from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.property.property_dal import PropertyDAL
+# from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
@@ -111,11 +111,11 @@ def event_dal(db: AsyncSession) -> EventDAL:
     yield EventDAL(db)
 
 
-@pytest.fixture(scope="function")
-def property_dal(db: AsyncSession) -> PropertyDAL:
-    """
-    """
-    yield PropertyDAL(db)
+# @pytest.fixture(scope="function")
+# def property_dal(db: AsyncSession) -> PropertyDAL:
+#     """
+#     """
+#     yield PropertyDAL(db)
 
 
 @pytest_asyncio.fixture(scope="function")

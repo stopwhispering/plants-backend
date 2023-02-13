@@ -15,8 +15,6 @@ class FBMajorResource(str, Enum):
     IMAGE = "ImageResource"
     TAXON = "TaxonResource"
     EVENT = "EventResource"
-    PLANT_PROPERTIES = "PlantPropertyResource"
-    TAXON_PROPERTIES = "TaxonPropertyResource"
 
 
 class BMessageType(str, Enum):

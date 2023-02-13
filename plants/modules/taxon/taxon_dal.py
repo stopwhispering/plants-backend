@@ -19,7 +19,6 @@ class TaxonDAL(BaseDAL):
         query = (
             select(Taxon)
             .where(Taxon.id == taxon_id)  # noqa
-            .options(selectinload(Taxon.property_values_taxon))
             .options(selectinload(Taxon.occurrence_images))
             .options(selectinload(Taxon.images).selectinload(Image.image_to_taxon_associations))
             .options(selectinload(Taxon.distribution))

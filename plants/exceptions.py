@@ -137,16 +137,3 @@ class ImageNotFound(BaseError):
     def __init__(self, image_id: int | str):
         super().__init__(detail=f"Image {image_id} not found in database", status_code=status.HTTP_404_NOT_FOUND)
 
-
-class PropertyCategoryNotFound(BaseError):
-    """Raised when property category, looked for by ID, not found in database"""
-
-    def __init__(self, property_category_id: int | str):
-        super().__init__(detail=f"Property category {str(property_category_id)} not found in database", status_code=status.HTTP_404_NOT_FOUND)
-
-
-class PropertyValueNotFound(BaseError):
-    """Raised when property value, looked for by ID, not found in database"""
-
-    def __init__(self, property_value_id: int | str):
-        super().__init__(detail=f"Property value {str(property_value_id)} not found in database", status_code=status.HTTP_status.HTTP_404_NOT_FOUND_NOT_FOUND)
