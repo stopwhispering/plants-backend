@@ -4,7 +4,7 @@ services:
       restart: unless-stopped
       labels:
         - traefik.http.routers.plants-backend.entrypoints=https-ep
-        - traefik.http.routers.plants-backend.rule=Host(`plants.${HOSTNAME:?err}) && PathPrefix(`/api`)
+        - traefik.http.routers.plants-backend.rule=Host(`plants.${HOSTNAME:?err}`) && PathPrefix(`/api`)
         - traefik.http.routers.plants-backend.tls=true
         - traefik.http.routers.plants-backend.tls.certresolver=le
 
