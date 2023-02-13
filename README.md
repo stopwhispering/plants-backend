@@ -80,6 +80,9 @@ LOG_SETTINGS__LOG_FILE_PATH=/common/plants/plants.log
 ```
 
 Create & Run Docker Container
+Deployment with the contained docker-compose and Dockerfile files requires a running 
+[Traefik reverse proxy](https://github.com/stopwhispering/traefik-via-docker-with-sample-services) as well as
+a running [PostgreSQL database](https://github.com/stopwhispering/postgresql-via-traefik).
 ```
 # dev
 docker-compose -f ./docker-compose.base.yml -f ./docker-compose.dev.yml up --build --detach

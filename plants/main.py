@@ -33,7 +33,7 @@ app = FastAPI(
 
 # we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
 ORIGINS: Final[list[str]] = ["http://pollination.localhost",
-                             "https://pollination.astroloba.net", ]
+                             "https://pollination." + local_config.hostname, ]
 # additional CORS for development only
 if local_config.allow_cors:
     # if config.allow_cors:

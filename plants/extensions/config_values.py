@@ -110,6 +110,7 @@ class LocalConfig(BaseSettings):
     max_images_per_taxon: int = 20
     allow_cors: bool = False
     log_settings: LogSettings
+    hostname: str
 
     class Config:
         env_file = Path(__file__).resolve().parent.parent.parent.joinpath('.env')
