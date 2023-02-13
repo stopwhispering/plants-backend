@@ -6,7 +6,7 @@ from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.property.property_dal import PropertyDAL
+# from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.plant.util import has_roman_plant_index, parse_roman_plant_index, roman_to_int, int_to_roman
 from plants.modules.plant.schemas import PlantCreateUpdate, FBPlantTag
@@ -84,7 +84,8 @@ async def deep_clone_plant(plant_original: Plant,
                            plant_name_clone: str,
                            plant_dal: PlantDAL,
                            event_dal: EventDAL,
-                           property_dal: PropertyDAL, ):
+                           # property_dal: PropertyDAL,
+                           ):
     """
     clone supplied plant
     includes duplication of events, photo_file-to-event assignments, properties, tags
@@ -122,8 +123,8 @@ async def deep_clone_plant(plant_original: Plant,
         property_value_clone.plant = plant_clone
         cloned_property_values.append(property_value_clone)
 
-    if cloned_property_values:
-        await property_dal.create_property_values(cloned_property_values)
+    # if cloned_property_values:
+    #     await property_dal.create_property_values(cloned_property_values)
 
     await plant_dal.create_plant(plant_clone)
 

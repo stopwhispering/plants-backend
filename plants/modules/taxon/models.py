@@ -92,7 +92,7 @@ class Taxon(Base):
                                      )
 
     # taxon to taxon property values: 1:n
-    property_values_taxon = relationship("PropertyValue", back_populates="taxon")
+    # property_values_taxon = relationship("PropertyValue", back_populates="taxon")
 
     def __repr__(self):
         return f'<Taxon - {self.id} - {self.name}>'

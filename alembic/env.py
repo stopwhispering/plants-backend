@@ -25,7 +25,6 @@ import plants.modules.event.models  # noqa
 import plants.shared.history_models  # noqa
 import plants.modules.image.models  # noqa
 import plants.modules.plant.models  # noqa
-import plants.modules.property.models  # noqa
 import plants.modules.taxon.models  # noqa
 import plants.modules.pollination.models  # noqa
 from plants.extensions.orm import Base  # noqa

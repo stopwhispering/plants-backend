@@ -9,10 +9,9 @@ from plants.modules.event.event_dal import EventDAL
 from plants.shared.history_dal import HistoryDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message
-from plants.dependencies import (valid_plant, get_plant_dal, get_property_dal, get_event_dal, get_history_dal,
+from plants.dependencies import (valid_plant, get_plant_dal, get_event_dal, get_history_dal,
                                  get_taxon_dal, get_image_dal)
 from plants.modules.plant.models import Plant
 from plants.shared.history_services import create_history_entry
@@ -41,7 +40,7 @@ async def clone_plant(
         plant_original: Plant = Depends(valid_plant),
         plant_dal: PlantDAL = Depends(get_plant_dal),
         event_dal: EventDAL = Depends(get_event_dal),
-        property_dal: PropertyDAL = Depends(get_property_dal),
+        # property_dal: PropertyDAL = Depends(get_property_dal),
         history_dal: HistoryDAL = Depends(get_history_dal),
 ):
     """
@@ -55,7 +54,8 @@ async def clone_plant(
                            plant_name_clone,
                            plant_dal=plant_dal,
                            event_dal=event_dal,
-                           property_dal=property_dal, )
+                           # property_dal=property_dal,
+                           )
 
     plant_clone = await plant_dal.by_name(plant_name_clone)
     await create_history_entry(description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",

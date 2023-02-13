@@ -77,9 +77,6 @@ class Plant(Base):
     # plant to event: 1:n
     events = relationship("Event", back_populates="plant")
 
-    # plant to plant property values: 1:n
-    property_values_plant = relationship("PropertyValue", back_populates="plant")
-
     # plant to florescences: 1:n
     florescences = relationship("Florescence", back_populates="plant")
 

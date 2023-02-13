@@ -1,4 +1,3 @@
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -41,8 +40,8 @@ async def init_orm(engine: AsyncEngine):
     await create_tables_if_required(engine)
 
     # initially populate tables with default data
-    from plants.modules.property.populate_table import insert_property_categories
-    await insert_property_categories(SessionFactory.create_session())
+    # from plants.modules.property.populate_table import insert_property_categories
+    # await insert_property_categories(SessionFactory.create_session())
 
 
 async def create_tables_if_required(engine: AsyncEngine):
@@ -53,7 +52,6 @@ async def create_tables_if_required(engine: AsyncEngine):
     import plants.shared.history_models  # noqa
     import plants.modules.image.models  # noqa
     import plants.modules.plant.models  # noqa
-    import plants.modules.property.models  # noqa
     import plants.modules.taxon.models  # noqa
     import plants.modules.pollination.models  # noqa
 

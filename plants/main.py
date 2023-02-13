@@ -15,7 +15,7 @@ from plants.modules.pollination.routes import router as pollination_router
 from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
 from plants.modules.biodiversity.routes import router as biodiversity_router
-from plants.modules.property.routes import router as properties_router
+# from plants.modules.property.routes import router as properties_router
 from plants.extensions.logging import configure_root_logger
 
 configure_root_logger(log_severity_console=local_config.log_settings.log_level_console,
@@ -62,7 +62,7 @@ app.include_router(plant_router.router, prefix=COMMON_PREFIX)
 app.include_router(image_router, prefix=COMMON_PREFIX)
 app.include_router(event_router, prefix=COMMON_PREFIX)
 app.include_router(pollination_router, prefix=COMMON_PREFIX)
-app.include_router(properties_router, prefix=COMMON_PREFIX)
+# app.include_router(properties_router, prefix=COMMON_PREFIX)
 app.include_router(shared_router, prefix=COMMON_PREFIX)
 app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 
