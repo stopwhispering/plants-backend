@@ -33,7 +33,7 @@ PostgreSQL is used as the database, and SQLAlchemy is used as the ORM.
 
 My sample PostgreSQL database is running in a separate container as described in [postgresql-via-traefik](https://github.com/stopwhispering/postgresql-via-traefik).
 
-One can, of course, run the application standalone on a local system, provided a running database,  with Uvicorn only:
+One can, of course, run the application standalone on a local system, provided a running database exists,  with Uvicorn only:
 ```
 uvicorn plants.main:app --host localhost --port 5000
 ```
@@ -42,19 +42,19 @@ uvicorn plants.main:app --host localhost --port 5000
 
 ## Configuration
 plants-backend requires environment-specific settings to be set via environment variables, preferably 
-via a .env file, see .example.env for an example.
+via a `.env` file, see `.example.env` for an example.
 The following settings are required:
-ENVIRONMENT (dev or prod)
-HOSTNAME (e.g. localhost or example.com)
-CONNECTION_STRING (e.g. postgresql+asyncpg://plants:mypassword@postgres.localhost:5432/plants)
-LOG_SETTINGS__LOG_LEVEL_CONSOLE (DEBUG, INFO, WARNING, or ERROR)
-LOG_SETTINGS__LOG_LEVEL_FILE (DEBUG, INFO, WARNING, or ERROR)
-LOG_SETTINGS__LOG_FILE_PATH (e.g. /common/plants/plants.log)
+- ENVIRONMENT (dev or prod)
+- HOSTNAME (e.g. localhost or example.com)
+- CONNECTION_STRING (e.g. postgresql+asyncpg://plants:mypassword@postgres.localhost:5432/plants)
+- LOG_SETTINGS__LOG_LEVEL_CONSOLE (DEBUG, INFO, WARNING, or ERROR)
+- LOG_SETTINGS__LOG_LEVEL_FILE (DEBUG, INFO, WARNING, or ERROR)
+- LOG_SETTINGS__LOG_FILE_PATH (e.g. /common/plants/plants.log)
 
 Optional settings:
-MAX_IMAGES_PER_TAXON (default: 20)
-ALLOW_CORS (default: false)
-LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES (default: False)
+- MAX_IMAGES_PER_TAXON (default: 20)
+- ALLOW_CORS (default: false)
+- LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES (default: False)
 
 ## Database
 The sample architecture uses PostgreSQL as a database. Thanks to SQLAlchemy, switching to any other major
@@ -65,7 +65,7 @@ with other databases.
 
 ### Database Migration
 Database migration is handled by [Alembic](https://alembic.sqlalchemy.org/en/latest/). The migration scripts are located in the ./alembic/versions folder. The
-official FastAPI Docker image contains a hook that automatically runs the migration scripts on startup (see ./prestart.sh).
+official FastAPI Docker image contains a hook that automatically runs the migration scripts on startup (see `./prestart.sh`).
 
 ## Execution Mode
 The majority of path functions are asynchronous, and the application is therefore designed to run in an asynchronous mode. It requires an
@@ -88,8 +88,8 @@ mkdir -p /common/plants/db
 mkdir /common/plants/db
 ```
 
-Create .env in same folder as docker-compose files file and insert environment-specific settings, see configuration
-options above and .example.env for help.
+Create `.env` in same folder as docker-compose files file and insert environment-specific settings, see configuration
+options above and `.example.env` for help.
 
 Create & Run Docker Container
 Deployment with the contained docker-compose and Dockerfile files requires a running 
