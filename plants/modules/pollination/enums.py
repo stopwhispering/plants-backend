@@ -89,6 +89,7 @@ class FlorescenceStatus(str, enum.Enum):
 class FlowerColorDifferentiation(str, enum.Enum):
     TOP_BOTTOM = "top_bottom"
     OVARY_MOUTH = "ovary_mouth"
+    STRIPED = "striped"
     UNIFORM = "uniform"
 
 
