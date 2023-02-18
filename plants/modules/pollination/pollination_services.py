@@ -10,7 +10,7 @@ from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import (Florescence, Pollination)
 from plants.modules.pollination.enums import PollinationStatus, PollenType, Context, Location, COLORS_MAP, \
-    COLORS_MAP_TO_RGB, FlorescenceStatus
+    COLORS_MAP_TO_RGB, FlorescenceStatus, PollenQuality
 from plants.modules.pollination.ml_prediction import predict_probability_of_seed_production
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.shared.api_utils import format_api_date, format_api_datetime, parse_api_datetime, parse_api_date
@@ -212,6 +212,7 @@ async def save_new_pollination(new_pollination_data: PollinationCreate,
         pollen_donor_plant_id=new_pollination_data.pollen_donor_plant_id,
         pollen_donor_plant=pollen_donor_plant,
         pollen_type=new_pollination_data.pollen_type,
+        pollen_quality=new_pollination_data.pollen_quality,
         count=new_pollination_data.count,
         location=new_pollination_data.location,
         pollination_timestamp=pollination_timestamp,
@@ -311,6 +312,7 @@ async def read_ongoing_pollinations(pollination_dal: PollinationDAL) -> list[Pol
             'pollination_timestamp': format_api_datetime(p.pollination_timestamp),  # e.g. '2022-11-16 12:06'
             'pollen_type': p.pollen_type,
             'count': p.count,
+            'pollen_quality': p.pollen_quality,
             'location': p.location,
             'location_text': LOCATION_TEXTS[p.location],
             'label_color_rgb': label_color_rgb,

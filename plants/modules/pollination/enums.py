@@ -98,3 +98,9 @@ class StigmaPosition(str, enum.Enum):
     MOUTH = "mouth"
     INSERTED = "inserted"
     DEEPLY_INSERTED = "deeply_inserted"
+
+
+class PollenQuality(str, Enum):
+    GOOD = 'good'
+    BAD = 'bad'
+    UNKNOWN = 'unknown'

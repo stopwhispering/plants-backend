@@ -78,6 +78,7 @@ class Pollination(Base):
                                       foreign_keys=[pollen_donor_plant_id])
 
     pollen_type = Column(VARCHAR(20), nullable=False)  # PollenType (fresh | frozen | unknown)
+    pollen_quality = Column(VARCHAR(10), nullable=False)  # PollenQuality (good | bad | unknown)
     # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))
     location = Column(VARCHAR(100), nullable=False)
 

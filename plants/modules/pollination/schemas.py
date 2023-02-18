@@ -1,10 +1,10 @@
 from typing import List
 from decimal import Decimal
 
-from pydantic import Extra, constr, condecimal, conint
+from pydantic import Extra, constr, condecimal, conint, root_validator
 
 from plants.modules.pollination.enums import BFloweringState, PollinationStatus, PollenType, FlorescenceStatus, \
-    FlowerColorDifferentiation, StigmaPosition
+    FlowerColorDifferentiation, StigmaPosition, PollenQuality
 from plants.shared.base_schema import BaseSchema, ResponseContainer, RequestContainer
 from plants.constants import REGEX_DATE
 
@@ -57,6 +57,8 @@ class PollinationRead(PollinationBase):
     first_seeds_sown: int | None
     first_seeds_germinated: int | None
     germination_rate: float | None
+    pollen_quality: PollenQuality
+
 
 
 class PollinationUpdate(PollinationBase):
@@ -85,6 +87,7 @@ class PollinationUpdate(PollinationBase):
 
 class PollinationCreate(PollinationBase):
     florescenceId: int
+    pollen_quality: PollenQuality
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
