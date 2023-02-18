@@ -115,6 +115,8 @@ async def read_potential_pollen_donors(florescence: Florescence,
     # fresh_pollen_donors = query.all()
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status([FlorescenceStatus.FLOWERING])
     for f in fresh_pollen_donors:
+        if f is florescence:
+            continue
         already_ongoing_attempt = await _plants_have_ongoing_pollination(plant, f.plant, pollination_dal=pollination_dal)
         # already_ongoing_attempt = db.query(Pollination).filter(Pollination.ongoing,
         #                                                        Pollination.seed_capsule_plant == plant,
@@ -147,6 +149,9 @@ async def read_potential_pollen_donors(florescence: Florescence,
 
     for frozen_pollen_plant in frozen_pollen_plants:
         frozen_pollen_plant: Plant
+
+        if frozen_pollen_plant.id == florescence.plant_id:
+            continue
 
         already_ongoing_attempt = await _plants_have_ongoing_pollination(plant, frozen_pollen_plant,
                                                                          pollination_dal=pollination_dal)
