@@ -175,4 +175,5 @@ def read_record_datetime_from_exif_tags(absolute_path: Path) -> datetime.datetim
     else:
         # get creation date from file system (todo linux has only modifed date, does this still work or abort?)
         ts = absolute_path.stat().st_ctime
-        return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
+        # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
+        return datetime.datetime.fromtimestamp(ts)

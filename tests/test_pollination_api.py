@@ -31,11 +31,13 @@ async def test_florescence_create_valid(ac: AsyncClient,
     assert plant2.count_stored_pollen_containers == 4
 
     # create a florescence from active florescence and container
+    # PollinationCreate
     payload = {
         'florescenceId': plant_valid_with_active_florescence_in_db.florescences[0].id,
         'seed_capsule_plant_id': plant_valid_with_active_florescence_in_db.id,
         'pollen_donor_plant_id': plant2.id,
         'pollen_type': 'frozen',
+        'pollen_quality': 'good',
         'pollination_timestamp': '2022-11-16 12:06',
         'label_color_rgb': '#ff7c09',
         'location': 'indoor',

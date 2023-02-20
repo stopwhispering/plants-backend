@@ -15,12 +15,12 @@ async def dummy() -> None:
 
 
 @pytest.mark.asyncio
-async def test_plant_invalid(db: AsyncSession, plant_dal: PlantDAL, dummy):  # noqa
+async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):  # noqa
     plant = Plant(field_number='A100')  # plant_name, active, deleted are required
-    db.add(plant)
+    test_db.add(plant)
     with pytest.raises(IntegrityError):
-        await db.commit()
-    await db.rollback()
+        await test_db.commit()
+    await test_db.rollback()
 
     plants = await plant_dal.get_plant_by_criteria({'field_number': 'A100'})
     assert len(plants) == 0
@@ -38,11 +38,11 @@ async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
 
 
 @pytest.mark.asyncio
-async def test_plant_duplicate_name(db, dummy):  # noqa
-    db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
-    await db.flush()
+async def test_plant_duplicate_name(test_db, dummy):  # noqa
+    test_db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
+    await test_db.flush()
 
-    db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
+    test_db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
     with pytest.raises(IntegrityError):
-        await db.commit()
-    await db.rollback()
+        await test_db.commit()
+    await test_db.rollback()

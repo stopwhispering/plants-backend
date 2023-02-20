@@ -1,18 +1,21 @@
 import asyncio
+import shutil
 from datetime import date
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import AsyncClient
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, AsyncSession
 
-
+from plants.extensions import orm
 from plants.dependencies import get_db
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.event.event_dal import EventDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
@@ -20,7 +23,7 @@ from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
-from tests.config_test import generate_db_url
+from tests.config_test import generate_db_url, create_tables_if_required
 import plants as plants_package
 
 TEST_DB_NAME = 'test_plants'
@@ -33,93 +36,141 @@ def event_loop():
     return asyncio.get_event_loop()
 
 
+# @pytest_asyncio.fixture(scope="session", autouse=True)
+# async def setup_db() -> None:
+#
+#     """Setup test database:
+#     Create & Reset database to initial state;
+#     Create all database tables as declared in SQLAlchemy models;
+#     """
+#     # PostGres does not allow to create/drop databases in a transaction, therefore we need
+#     # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
+#     engine_for_db_setup = create_async_engine(generate_db_url(),
+#                                               isolation_level='AUTOCOMMIT')
+#
+#     # AsyncEngine.begin() provides a context manager that commits (not required with AUTOCOMMIT) at the end
+#     # (or rolls back in case of an error). Closes the connection at the end.
+#     # async with engine_for_db_setup.begin() as setup_connection:  # somehow blcok is not executed anymore
+#
+#     setup_connection = await engine_for_db_setup.connect()
+#     setup_connection: AsyncConnection
+#     q = await setup_connection.execute(text(f"SELECT datname FROM pg_catalog.pg_database "
+#                                             f"where datname ='{TEST_DB_NAME}'"))
+#     if q.rowcount:
+#         dropped = await setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
+#     await setup_connection.execute(text(f"CREATE DATABASE {TEST_DB_NAME} ENCODING 'utf8'"))
+#
+#     Base.metadata.bind = setup_connection
+#     await init_orm(engine=setup_connection.engine)
+#     await create_tables_if_required(engine=setup_connection.engine)
+#
+#     await setup_connection.commit()
+#     await setup_connection.close()
+
+
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db() -> None:
-
     """Setup test database:
     Create & Reset database to initial state;
     Create all database tables as declared in SQLAlchemy models;
     """
     # PostGres does not allow to create/drop databases in a transaction, therefore we need
     # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
-    engine_for_db_setup = create_async_engine(generate_db_url(),
+    engine_for_db_setup = create_async_engine(generate_db_url(TEST_DB_NAME),
                                               isolation_level='AUTOCOMMIT')
 
     # AsyncEngine.begin() provides a context manager that commits (not required with AUTOCOMMIT) at the end
     # (or rolls back in case of an error). Closes the connection at the end.
-    async with engine_for_db_setup.begin() as setup_connection:
-        setup_connection: AsyncConnection
-        q = await setup_connection.execute(text(f"SELECT datname FROM pg_catalog.pg_database "
-                                                f"where datname ='{TEST_DB_NAME}'"))
-        if q.rowcount:
-            await setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
-        await setup_connection.execute(text(f"CREATE DATABASE {TEST_DB_NAME} ENCODING 'utf8'"))
+    # async with engine_for_db_setup.begin() as setup_connection:  # somehow blcok is not executed anymore
 
-        Base.metadata.bind = setup_connection
-        await init_orm(engine=setup_connection.engine)
+    setup_connection = await engine_for_db_setup.connect()
+    setup_connection: AsyncConnection
+    r1 = await setup_connection.execute(text(f"DROP SCHEMA public CASCADE;"))
+    r2 = await setup_connection.execute(text(f"CREATE SCHEMA public;"))
+
+    Base.metadata.bind = setup_connection
+    await init_orm(engine=setup_connection.engine)
+    await create_tables_if_required(engine=setup_connection.engine)
+
+    # await setup_connection.commit()
+    await setup_connection.close()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def db() -> AsyncSession:
+async def test_db(request) -> AsyncSession:
     """
-    Wrapper fot get_table that truncates tables after each test function run.
+    Wrapper fot get_db that truncates tables after each test function run.
     """
-    db = await anext(get_db())
-    yield db
+    # db = await anext(get_db())
+    db = orm.SessionFactory.create_session()
 
-    # we need to execute single statements with an async connection
-    conn = await db.connection()
-    await conn.execute(text("DELETE FROM history;"))
-    await conn.execute(text("DELETE FROM tags;"))
-    await conn.execute(text("DELETE FROM pollination;"))
-    await conn.execute(text("DELETE FROM florescence;"))
-    await conn.execute(text("DELETE FROM image;"))
-    await conn.execute(text("DELETE FROM soil;"))
-    await conn.execute(text("DELETE FROM pot;"))
-    await conn.execute(text("DELETE FROM event;"))
-    await conn.execute(text("DELETE FROM plants;"))
-    # TRUNCATE table_a, table_b, …, table_z;
-    await conn.commit()
-    await conn.close()
+    try:
+        yield db
 
-
-@pytest.fixture(scope="function")
-def plant_dal(db: AsyncSession) -> PlantDAL:
-    """
-    """
-    yield PlantDAL(db)
-
-
-@pytest.fixture(scope="function")
-def pollination_dal(db: AsyncSession) -> PollinationDAL:
-    """
-    """
-    yield PollinationDAL(db)
+    finally:
+        # if db.is_active:
+        # we need to execute single statements with an async connection
+        conn = await db.connection()
+        await conn.execute(text("DELETE FROM history;"))
+        await conn.execute(text("DELETE FROM tags;"))
+        await conn.execute(text("DELETE FROM pollination;"))
+        await conn.execute(text("DELETE FROM florescence;"))
+        await conn.execute(text("DELETE FROM image_keywords;"))
+        await conn.execute(text("DELETE FROM image_to_plant_association;"))
+        await conn.execute(text("DELETE FROM image;"))
+        await conn.execute(text("DELETE FROM soil;"))
+        await conn.execute(text("DELETE FROM pot;"))
+        await conn.execute(text("DELETE FROM event;"))
+        await conn.execute(text("DELETE FROM plants;"))
+        # TRUNCATE table_a, table_b, …, table_z;
+        await conn.commit()
+        await conn.close()
 
 
 @pytest.fixture(scope="function")
-def history_dal(db: AsyncSession) -> HistoryDAL:
+def plant_dal(test_db: AsyncSession) -> PlantDAL:
     """
     """
-    yield HistoryDAL(db)
+    yield PlantDAL(test_db)
 
 
 @pytest.fixture(scope="function")
-def event_dal(db: AsyncSession) -> EventDAL:
+def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
     """
     """
-    yield EventDAL(db)
+    yield PollinationDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def history_dal(test_db: AsyncSession) -> HistoryDAL:
+    """
+    """
+    yield HistoryDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def event_dal(test_db: AsyncSession) -> EventDAL:
+    """
+    """
+    yield EventDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def image_dal(test_db: AsyncSession) -> ImageDAL:
+    """
+    """
+    yield ImageDAL(test_db)
 
 
 # @pytest.fixture(scope="function")
-# def property_dal(db: AsyncSession) -> PropertyDAL:
+# def property_dal(test_db: AsyncSession) -> PropertyDAL:
 #     """
 #     """
-#     yield PropertyDAL(db)
+#     yield PropertyDAL(test_db)
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid() -> Plant:
+async def plant_valid(request) -> Plant:
     plant = Plant(plant_name='Aloe Vera',
                   field_number="A100",
                   active=True,
@@ -134,14 +185,20 @@ async def plant_valid() -> Plant:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid_in_db(db, plant_valid) -> Plant:
-    db.add(plant_valid)
-    await db.commit()
+async def plant_valid_in_db(test_db, plant_valid) -> Plant:
+    test_db.add(plant_valid)
+    await test_db.commit()
     return plant_valid
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid_with_active_florescence() -> Plant:
+async def plant_valid_with_active_florescence(test_db) -> Plant:
+    # query = (select(Plant)
+    #          .where(Plant.plant_name == 'Gasteria obtusa')  # noqa
+    #          # .limit(1)
+    #          )
+    # plant_todo_delme: Plant = (await test_db.scalars(query)).first()
+
     plant = Plant(plant_name='Gasteria obtusa',
                   active=True,
                   deleted=False,
@@ -153,13 +210,26 @@ async def plant_valid_with_active_florescence() -> Plant:
                       florescence_status="flowering",
                       creation_context='manual'
                   )])
+
+    query = (select(Plant)
+             .where(Plant.plant_name == 'Gasteria obtusa')  # noqa
+             # .limit(1)
+             )
+    plant_todo_delme: Plant = (await test_db.scalars(query)).first()
+
     return plant
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid_with_active_florescence_in_db(db: AsyncSession, plant_valid_with_active_florescence) -> Plant:
-    db.add(plant_valid_with_active_florescence)
-    await db.commit()
+async def plant_valid_with_active_florescence_in_db(test_db: AsyncSession,
+                                                    plant_valid_with_active_florescence: Plant) -> Plant:
+    # query = (select(Plant)
+    #          .where(Plant.plant_name == plant_valid_with_active_florescence.plant_name)  # noqa
+    #          .limit(1))
+    # plant_todo_delme: Plant = (await test_db.scalars(query)).first()
+
+    test_db.add(plant_valid_with_active_florescence)
+    await test_db.commit()
     return plant_valid_with_active_florescence
 
 
@@ -171,8 +241,24 @@ def app() -> FastAPI:
     we also override the get_db dependency called by most api endpoints to return a test database session
     """
     plants_package.local_config.connection_string = generate_db_url(TEST_DB_NAME)
+
     plants_package.local_config.log_settings.log_level_console = LogLevel.WARNING
     plants_package.local_config.log_settings.log_level_file = LogLevel.NONE
+
+    plants_package.settings.paths.path_photos = Path("/common/plants_test/photos")
+    plants_package.settings.paths.path_deleted_photos = Path("/common/plants_test/photos/deleted")
+    plants_package.settings.paths.path_pickled_ml_models = Path('/common/plants_test/pickled')
+
+    # cf. parse_settings()
+    for path in [plants_package.settings.paths.path_deleted_photos,
+                 plants_package.settings.paths.path_generated_thumbnails,
+                 plants_package.settings.paths.path_generated_thumbnails_taxon,
+                 plants_package.settings.paths.path_original_photos_uploaded,
+                 plants_package.settings.paths.path_pickled_ml_models]:
+        if path.exists():
+            shutil.rmtree(path)
+        path.mkdir(parents=True)
+
     from plants.main import app as main_app
     return main_app
 

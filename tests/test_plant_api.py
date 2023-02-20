@@ -41,7 +41,7 @@ async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict):
 
 
 @pytest.mark.asyncio
-async def test_plant_rename_valid(db, ac: AsyncClient, plant_valid_in_db, plant_dal, history_dal):
+async def test_plant_rename_valid(test_db, ac: AsyncClient, plant_valid_in_db, plant_dal, history_dal):
     payload = {
         'plant_id': plant_valid_in_db.id,
         'old_plant_name': plant_valid_in_db.plant_name,
@@ -49,7 +49,7 @@ async def test_plant_rename_valid(db, ac: AsyncClient, plant_valid_in_db, plant_
     response = await ac.put("/api/plants/", json=payload)
     assert response.status_code == 200
 
-    await db.refresh(plant_valid_in_db)
+    await test_db.refresh(plant_valid_in_db)
     assert not await plant_dal.exists(payload['old_plant_name'])
     assert plant_valid_in_db.plant_name == "Aloe ferox var. ferox 'variegata'"
 

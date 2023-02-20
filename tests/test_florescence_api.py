@@ -79,7 +79,7 @@ async def test_florescence_create_valid(ac: AsyncClient, valid_simple_plant_dict
 
 
 @pytest.mark.asyncio
-async def test_create_and_abort_florescence(db, ac: AsyncClient, plant_valid_in_db: Plant, plant_dal: PlantDAL):
+async def test_create_and_abort_florescence(test_db, ac: AsyncClient, plant_valid_in_db: Plant, plant_dal: PlantDAL):
     # FRequestNewFlorescence
     payload = {
         "plant_id": plant_valid_in_db.id,
@@ -102,11 +102,11 @@ async def test_create_and_abort_florescence(db, ac: AsyncClient, plant_valid_in_
     }
     response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert 400 <= response.status_code <= 499
-    await db.refresh(florescence_in_db)  # reloads (only) attributes, no relationships are set to not loaded
+    await test_db.refresh(florescence_in_db)  # reloads (only) attributes, no relationships are set to not loaded
     assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     payload['florescence_status'] = "aborted"
     response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert response.status_code == 200
-    await db.refresh(florescence_in_db)
+    await test_db.refresh(florescence_in_db)
     assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED

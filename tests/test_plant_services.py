@@ -7,13 +7,13 @@ from plants.modules.plant.services import deep_clone_plant
 
 
 @pytest.mark.asyncio
-async def test_deep_clone_plant(db: AsyncSession,
+async def test_deep_clone_plant(test_db: AsyncSession,
                                 plant_valid,
                                 plant_dal: PlantDAL,
                                 event_dal: EventDAL,
                                 ):
-    db.add(plant_valid)
-    await db.commit()
+    test_db.add(plant_valid)
+    await test_db.commit()
     plant_valid = await plant_dal.by_id(plant_valid.id)
 
     await deep_clone_plant(plant_valid,
@@ -22,7 +22,7 @@ async def test_deep_clone_plant(db: AsyncSession,
                            event_dal=event_dal,
                            # property_dal=property_dal
                            )
-    await db.commit()
+    await test_db.commit()
 
     cloned_plant = await plant_dal.by_name('Aloe Vera Clone')
     assert cloned_plant is not None

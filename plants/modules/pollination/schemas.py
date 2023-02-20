@@ -196,7 +196,7 @@ class FRequestPollenContainers(RequestContainer):
 ####################################################################################################
 # Response Containers
 ####################################################################################################
-class BResultsSettings(BaseSchema):
+class SettingsRead(BaseSchema):
     colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
 
 

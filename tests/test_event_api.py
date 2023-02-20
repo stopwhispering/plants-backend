@@ -37,6 +37,3 @@ async def test_create_event(ac: AsyncClient, plant_valid_in_db):
     assert event.get('plant_id') == plant_id
     assert event.get('event_notes') == 'first event via api'
     assert event.get('date') == '2023-01-01'
-
-
-

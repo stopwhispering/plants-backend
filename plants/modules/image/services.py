@@ -311,6 +311,7 @@ async def _create_image(image_dal: ImageDAL,
                   )
     # get the image id
     await image_dal.create_image(image)
+    image = await image_dal.by_id(image.id)
 
     if keywords:
         keywords_orm = [

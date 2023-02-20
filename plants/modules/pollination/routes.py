@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
@@ -15,7 +15,7 @@ from plants.modules.pollination.pollination_services import (save_new_pollinatio
                                                              read_potential_pollen_donors)
 from plants.modules.pollination.schemas import (BResultsOngoingPollinations,
                                                 PollinationCreate,
-                                                BResultsSettings,
+                                                SettingsRead,
                                                 BResultsPollenContainers, FRequestPollenContainers,
                                                 BResultsRetrainingPollinationToSeedsModel, BResultsActiveFlorescences,
                                                 BResultsPotentialPollenDonors,
@@ -73,7 +73,7 @@ async def get_ongoing_pollinations(pollination_dal=Depends(get_pollination_dal))
 
 
 @router.get("/pollinations/settings",
-            response_model=BResultsSettings)
+            response_model=SettingsRead)
 async def get_pollination_settings():
     colors = list(COLORS_MAP.keys())
     return {

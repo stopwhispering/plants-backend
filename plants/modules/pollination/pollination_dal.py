@@ -119,6 +119,7 @@ class PollinationDAL(BaseDAL):
             else:
                 raise CriterionNotImplemented(key)
 
+        pollinations: list[Pollination] = (await self.session.scalars(select(Pollination))).all()  # noqa
         pollinations: list[Pollination] = (await self.session.scalars(query)).all()  # noqa
         return pollinations
 

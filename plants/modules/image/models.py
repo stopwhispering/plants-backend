@@ -46,6 +46,9 @@ class ImageToPlantAssociation(Base):
         overlaps="images,plants"  # silence warnings
     )
 
+    def __repr__(self):
+        return f'<ImageToPlantAssociation {self.image_id} {self.plant_id}>'
+
 
 class Image(Base):
     """image paths"""
@@ -60,6 +63,9 @@ class Image(Base):
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Image {self.id} {self.filename}>'
 
     @property
     def absolute_path(self):
