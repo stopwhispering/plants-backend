@@ -31,22 +31,24 @@ class PhotoMetadataAccessExifTags:
         return self._parse_exif_tags(absolute_path=absolute_path)
 
     async def save_photo_metadata(self,
-                            image_id: int,
+                                  image_absolute_path: Path,
+                            # image_id: int,
                             plant_names: list[str],
                             keywords: list[str],
                             description: str,
-                            image_dal: ImageDAL,
+                            # image_dal: ImageDAL,
                             ) -> None:
         """save/update photo_file metadata"""
         # get file system path to the image
-        image = await image_dal.by_id(image_id)
+        # image = await image_dal.by_id(image_id)
 
         metadata = MetadataDTO(plant_names=plant_names,
                                keywords=keywords,
                                description=description,
                                )
         self._write_exif_tags(metadata=metadata,
-                              absolute_path=image.absolute_path)
+                              absolute_path=image_absolute_path)
+                              # absolute_path=image.absolute_path)
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
         """rewrite the plants assigned to the photo_file at the supplied path"""

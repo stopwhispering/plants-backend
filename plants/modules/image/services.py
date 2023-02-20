@@ -1,5 +1,5 @@
 from pathlib import Path, PurePath
-from typing import List, Sequence
+from typing import Sequence
 import logging
 import os
 from datetime import datetime
@@ -51,63 +51,66 @@ async def rename_plant_in_image_files(plant: Plant, plant_name_old: str, image_d
     return len(images)
 
 
-async def save_image_files(files: List[UploadFile],
+async def save_image_to_db(path: Path,
                            image_dal: ImageDAL,
                            plant_dal: PlantDAL,
                            plant_ids: tuple[int] = (),
                            keywords: tuple[str] = ()
-                           ) -> list[ImageCreateUpdate]:
+                           ) -> ImageCreateUpdate:
+    # add to db
+    record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
+    plants = [await plant_dal.by_id(p) for p in plant_ids]
+    image: Image = await _create_image_in_db(image_dal=image_dal,
+                                             relative_path=get_relative_path(path),
+                                             record_date_time=record_datetime,
+                                             keywords=keywords,
+                                             plants=plants)
+    return _to_response_image(image)
+
+
+async def save_image_file(file: UploadFile,
+                          plant_names: list[str],
+                          keywords: tuple[str] = ()
+                          ) -> Path:
     """save the files supplied as starlette uploadfiles on os; assign plants and keywords"""
-    images = []
-    for photo_upload in files:
-        # save to file system
-        path = settings.paths.path_original_photos_uploaded.joinpath(photo_upload.filename)
-        logger.info(f'Saving {path}.')
+    # save to file system
+    path = settings.paths.path_original_photos_uploaded.joinpath(file.filename)
+    logger.info(f'Saving {path}.')
 
-        async with aiofiles.open(path, 'wb') as out_file:
-            content = await photo_upload.read()  # async read
-            await out_file.write(content)  # async write
+    async with aiofiles.open(path, 'wb') as out_file:
+        content = await file.read()  # async read
+        await out_file.write(content)  # async write
 
-        # photo_upload.save(path)  # we can't use object first and then save as this alters file object
+    # photo_upload.save(path)  # we can't use object first and then save as this alters file object
 
-        # resize file by lowering resolution if required
-        if not settings.images.resizing_size:
-            pass
-        elif not resizing_required(path, settings.images.resizing_size):
-            logger.info(f'No resizing required.')
-        else:
-            logger.info(f'Saving and resizing {path}.')
-            resize_image(path=path,
-                         save_to_path=with_suffix(path, constants.RESIZE_SUFFIX),
-                         size=settings.images.resizing_size,
-                         quality=settings.images.jpg_quality)
-            path = with_suffix(path, constants.RESIZE_SUFFIX)
+    # resize file by lowering resolution if required
+    if not settings.images.resizing_size:
+        pass
+    elif not resizing_required(path, settings.images.resizing_size):
+        logger.info(f'No resizing required.')
+    else:
+        logger.info(f'Saving and resizing {path}.')
+        resize_image(path=path,
+                     save_to_path=with_suffix(path, constants.RESIZE_SUFFIX),
+                     size=settings.images.resizing_size,
+                     quality=settings.images.jpg_quality)
+        path = with_suffix(path, constants.RESIZE_SUFFIX)
 
-        # add to db
-        record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
-        plants = [await plant_dal.by_id(p) for p in plant_ids]
-        image: Image = await _create_image(image_dal=image_dal,
-                                           relative_path=get_relative_path(path),
-                                           record_date_time=record_datetime,
-                                           keywords=keywords,
-                                           plants=plants)
+    # generate thumbnails for frontend display
+    for size in settings.images.sizes:
+        generate_thumbnail(image=path,
+                           size=size,
+                           path_thumbnail=settings.paths.path_generated_thumbnails,
+                           ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
 
-        # generate thumbnails for frontend display
-        for size in settings.images.sizes:
-            generate_thumbnail(image=path,
-                               size=size,
-                               path_thumbnail=settings.paths.path_generated_thumbnails,
-                               ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files)
+    # save metadata in jpg exif tags
+    # plants = [await plant_dal.by_id(p) for p in plant_ids]
+    await PhotoMetadataAccessExifTags().save_photo_metadata(image_absolute_path=path,
+                                                            plant_names=plant_names,  # [p.plant_name for p in plants],
+                                                            keywords=list(keywords),
+                                                            description='', )
 
-        # save metadata in jpg exif tags
-        await PhotoMetadataAccessExifTags().save_photo_metadata(image_id=image.id,
-                                                                plant_names=[p.plant_name for p in plants],
-                                                                keywords=list(keywords),
-                                                                description='',
-                                                                image_dal=image_dal)
-        images.append(image)
-
-    return [_to_response_image(i) for i in images]
+    return path
 
 
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
@@ -291,14 +294,14 @@ def _shorten_plant_name(plant_name: str) -> str:
             else plant_name)
 
 
-async def _create_image(image_dal: ImageDAL,
-                        relative_path: PurePath,
-                        record_date_time: datetime,
-                        description: str = None,
-                        plants: list[Plant] = None,
-                        keywords: Sequence[str] = (),
-                        # events and taxa are saved elsewhere
-                        ) -> Image:
+async def _create_image_in_db(image_dal: ImageDAL,
+                              relative_path: PurePath,
+                              record_date_time: datetime,
+                              description: str = None,
+                              plants: list[Plant] = None,
+                              keywords: Sequence[str] = (),
+                              # events and taxa are saved elsewhere
+                              ) -> Image:
     if await image_dal.get_image_by_relative_path(relative_path.as_posix()):
         # if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
         raise ValueError(f'Image already exists in db: {relative_path.as_posix()}')
