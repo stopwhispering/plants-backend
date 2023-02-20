@@ -22,8 +22,8 @@ async def test_upload_images(ac: AsyncClient,
                              image_dal: ImageDAL,
                              ):
     # we need to wrap files and additional data in a way that matches the UI5 file uploader (which is a kind of odd way)
-    files = [("files[]", ("demo_image1.jpg", open(r"C:\temp\demo_image1.jpg", "rb"))),
-             ("files[]", ("demo_image2.jpg", open(r"C:\temp\demo_image2.jpg", "rb")))]
+    files = [("files[]", ("demo_image1.jpg", open(r"./static/demo_image1.jpg", "rb"))),
+             ("files[]", ("demo_image2.jpg", open(r"./static/demo_image2.jpg", "rb")))]
 
     payload = {  # FImageUploadedMetadata
         "files-data": json.dumps({
@@ -70,13 +70,13 @@ async def test_upload_images(ac: AsyncClient,
 
 @pytest.mark.asyncio
 async def test_upload_image_for_plant(ac: AsyncClient,
-                                       plant_valid_in_db: Plant,
-                                       image_dal: ImageDAL,
-                                       plant_dal: PlantDAL,
-                                       ):
+                                      plant_valid_in_db: Plant,
+                                      image_dal: ImageDAL,
+                                      plant_dal: PlantDAL,
+                                      ):
     # we need to wrap files and additional data in a way that matches the UI5 file uploader (which is a kind of odd way)
     files = [
-        ("files[]", ("demo_image_plant.jpg", open(r"C:\temp\demo_image_plant.jpg", "rb"))),
+        ("files[]", ("demo_image_plant.jpg", open(r"./static/demo_image_plant.jpg", "rb"))),
     ]
 
     response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
