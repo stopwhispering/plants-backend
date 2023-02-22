@@ -79,21 +79,19 @@ async def setup_db() -> None:
     engine_for_db_setup = create_async_engine(generate_db_url(TEST_DB_NAME),
                                               isolation_level='AUTOCOMMIT')
 
-    # AsyncEngine.begin() provides a context manager that commits (not required with AUTOCOMMIT) at the end
-    # (or rolls back in case of an error). Closes the connection at the end.
-    # async with engine_for_db_setup.begin() as setup_connection:  # somehow blcok is not executed anymore
+    # AsyncConnection.begin() actually AsyncConnection.connect() and yields the
+    # AsyncConnection after starting the AsyncTransaction with AsyncConnection.begin()
+    # The AsyncTransaction is commited or rolled back when the AsyncConnection is closed,
+    # i.e. after the asynccontextmanager exits.
+    async with engine_for_db_setup.begin() as setup_connection:
+        setup_connection: AsyncConnection
 
-    setup_connection = await engine_for_db_setup.connect()
-    setup_connection: AsyncConnection
-    r1 = await setup_connection.execute(text(f"DROP SCHEMA public CASCADE;"))
-    r2 = await setup_connection.execute(text(f"CREATE SCHEMA public;"))
+        await setup_connection.execute(text(f"DROP SCHEMA public CASCADE;"))
+        await setup_connection.execute(text(f"CREATE SCHEMA public;"))
 
-    Base.metadata.bind = setup_connection
-    await init_orm(engine=setup_connection.engine)
-    await create_tables_if_required(engine=setup_connection.engine)
-
-    # await setup_connection.commit()
-    await setup_connection.close()
+        Base.metadata.bind = setup_connection
+        await init_orm(engine=setup_connection.engine)
+        await create_tables_if_required(engine=setup_connection.engine)
 
 
 @pytest_asyncio.fixture(scope="function")

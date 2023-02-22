@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncConnection
 from plants.extensions.orm import Base
 
 
-class TestConfig(BaseSettings):
+class ConfigTest(BaseSettings):
     """Secrets and other environment-specific settings are specified in environment variables (or .env file)
     they are case-insensitive by default"""
     test_db_drivername: constr(min_length=1, strip_whitespace=True)
@@ -21,7 +21,7 @@ class TestConfig(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
-test_config = TestConfig()
+test_config = ConfigTest()
 
 
 def generate_db_url(database: str = 'postgres') -> URL:
@@ -55,6 +55,6 @@ async def create_tables_if_required(engine: AsyncEngine):
     async with engine.begin() as conn:
         conn: AsyncConnection
         await conn.run_sync(Base.metadata.create_all)
-        await conn.commit()
+        # await conn.commit()
         # await conn.close()
 

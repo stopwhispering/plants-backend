@@ -1,8 +1,8 @@
 from enum import Enum
 from pathlib import Path, PurePath
 from typing import Tuple
+import tomllib
 
-import toml
 from pydantic import BaseModel, BaseSettings, constr
 
 from plants.shared.path_utils import create_if_not_exists
@@ -79,7 +79,8 @@ class Settings(BaseModel):
 
 def parse_settings() -> Settings:
     config_toml_path = Path(__file__).resolve().parent.parent.parent.joinpath('config.toml')
-    settings = Settings.parse_obj(toml.load(config_toml_path))
+    with open(config_toml_path, "rb") as f:
+        settings = Settings.parse_obj(tomllib.load(f))
 
     create_if_not_exists(folders=[settings.paths.path_deleted_photos,
                                   settings.paths.path_generated_thumbnails,
