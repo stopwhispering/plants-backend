@@ -155,7 +155,8 @@ async def rename_plant(
     """We use the put method to rename a plant."""  # todo use id
     plant = await plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
-    # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
+    # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db,
+    # raise_exception=True)
 
     if await plant_dal.exists(args.new_plant_name):
         raise PlantAlreadyExists(args.new_plant_name)
@@ -163,7 +164,8 @@ async def rename_plant(
     # rename plant name
     plant.plant_name = args.new_plant_name
 
-    # most difficult task: jpg exif tags use plant name not id; we need to change each plant name occurence
+    # most difficult task: jpg exif tags use plant name not id; we need to change
+    # each plant name occurence
     count_modified_images = await rename_plant_in_image_files(
         plant=plant, plant_name_old=args.old_plant_name, image_dal=image_dal
     )

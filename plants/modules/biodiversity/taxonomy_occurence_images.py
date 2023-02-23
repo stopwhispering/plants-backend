@@ -40,7 +40,7 @@ class TaxonOccurencesLoader:
                 ],  # redundant, but show as additional info
                 "basis_of_record": occ["basisOfRecord"],
                 "verbatim_locality": occ.get("verbatimLocality") or occ.get("locality"),
-                "date": dateutil.parser.isoparse(
+                "date": dateutil.parser.isoparse(  # noqa
                     m.get("created") or occ.get("eventDate")
                 ),  # noqa
                 "creator_identifier": m.get("identifiedBy")
@@ -120,7 +120,9 @@ class TaxonOccurencesLoader:
                 size=settings.images.size_thumbnail_image_taxon,
                 path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
                 filename_thumb=filename,
-                ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
+                ignore_missing_image_files=(
+                    local_config.log_settings.ignore_missing_image_files
+                ),
             )
         except OSError as err:
             logger.warning(f"Could not load as image: {info['href']} ({str(err)}")
@@ -170,8 +172,6 @@ class TaxonOccurencesLoader:
         # cleanup existing entries for taxon
         await self.taxon_dal.delete_taxon_to_occurrence_associations_by_gbif_id(gbif_id)
         await self.taxon_dal.delete_taxon_occurrence_image_by_gbif_id(gbif_id)
-        # db.query(TaxonToOccurrenceAssociation).filter(TaxonToOccurrenceAssociation.gbif_id == gbif_id).delete()
-        # db.query(TaxonOccurrenceImage).filter(TaxonOccurrenceImage.gbif_id == gbif_id).delete()
 
         # insert new entries
         new_occurrence_images: list[TaxonOccurrenceImage] = []

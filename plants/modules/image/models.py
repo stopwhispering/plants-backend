@@ -41,7 +41,8 @@ class ImageToPlantAssociation(Base):
         INTEGER, ForeignKey("plants.id"), primary_key=True, nullable=False
     )
 
-    # silence warnings for deletions of associated entities (image has image_to_plant_association and plants)
+    # silence warnings for deletions of associated entities
+    # (image has image_to_plant_association and plants)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
     }
@@ -75,7 +76,7 @@ class Image(Base):
         nullable=False,
     )
     filename = Column(VARCHAR(150), unique=True, nullable=False)  # pseudo-key
-    relative_path = Column(
+    relative_path: str = Column(
         VARCHAR(240)
     )  # relative path to the original image file incl. file name
     description = Column(VARCHAR(500))
@@ -133,7 +134,8 @@ class ImageToEventAssociation(Base):
     image_id = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
     event_id = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
 
-    # silence warnings for deletions of associated entities (image has image_to_event_association and events)
+    # silence warnings for deletions of associated entities (image has
+    # image_to_event_association and events)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
     }
@@ -157,7 +159,8 @@ class ImageToTaxonAssociation(Base):
 
     description = Column(TEXT)
 
-    # silence warnings for deletions of associated entities (image has image_to_taxa_association and taxa)
+    # silence warnings for deletions of associated entities (image has
+    # image_to_taxa_association and taxa)
     __mapper_args__ = {
         "confirm_deleted_rows": False,
     }

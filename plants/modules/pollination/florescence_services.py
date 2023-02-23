@@ -72,8 +72,8 @@ async def read_active_florescences(
                 flor.first_flower_opening_date
             ),
             "last_flower_closing_date": format_api_date(flor.last_flower_closing_date),
-            "available_colors_rgb": await pollination_dal.get_available_colors_for_plant(
-                plant=flor.plant
+            "available_colors_rgb": (
+                await pollination_dal.get_available_colors_for_plant(plant=flor.plant)
             ),
         }
         florescences.append(FlorescenceRead.parse_obj(f_dict))

@@ -59,7 +59,8 @@ def make_dict_values_json_serializable(d: dict):
         key
     ) in (
         d.keys()
-    ):  # can't loop at items() as value will then be a copy, not a reference to orig obj
+    ):  # can't loop at items() as value will then be a copy, not a reference to orig
+        # obj
         if type(d[key]) is dict:
             make_dict_values_json_serializable(d[key])
         else:

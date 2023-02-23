@@ -346,15 +346,17 @@ class PlantDAL(BaseDAL):
     async def get_all_plants_with_relationships_loaded(
         self, include_deleted=False
     ) -> list[Plant]:
-        # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
+        # filter out hidden ("deleted" in frontend but actually only flagged hidden)
+        # plants
         query = select(Plant)
 
         if not include_deleted:
             # sqlite does not like "is None" and pylint doesn't like "== None"
             query = query.where(Plant.deleted.is_(False))
 
-        # early-load all relationship tables for Plant model relevant for PResultsPlants
-        # to save around 90% (postgres) of the time in comparison to lazy loading (80% for sqlite)
+        # early-load all relationship tables for Plant model relevant for
+        # PResultsPlants to save around 90% (postgres) of the time in comparison to
+        # lazy loading (80% for sqlite)
         query = query.options(
             selectinload(Plant.parent_plant),
             selectinload(Plant.parent_plant_pollen),
@@ -379,7 +381,8 @@ class PlantDAL(BaseDAL):
     async def get_all_plants_with_events_loaded(
         self, include_deleted=False
     ) -> list[Plant]:
-        # filter out hidden ("deleted" in frontend but actually only flagged hidden) plants
+        # filter out hidden ("deleted" in frontend but actually only flagged hidden)
+        # plants
         query = select(Plant).options(
             selectinload(Plant.events).selectinload(Event.soil)
         )

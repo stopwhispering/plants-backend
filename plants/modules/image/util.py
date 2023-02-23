@@ -36,12 +36,14 @@ def generate_thumbnail(
     if isinstance(image, Path) and not image.is_file():
         if not ignore_missing_image_files:
             logger.error(
-                f"Original Image of default photo_file does not exist. Can't generate thumbnail. {image}"
+                f"Original Image of default photo_file does not exist. Can't generate "
+                f"thumbnail. {image}"
             )
         return
     im = Image.open(image)
 
-    # there's a bug in chrome: it's not respecting the orientation exif (unless directly opened in chrome)
+    # there's a bug in chrome: it's not respecting the orientation exif (unless directly
+    # opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
     exif_obj = im._getexif()  # noqa

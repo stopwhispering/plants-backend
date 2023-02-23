@@ -13,7 +13,8 @@ def create_features(model_type: ModelType) -> FeatureContainer:
     # plant and flower features all models
     features = [
         Feature(column="pollen_type", scale=Scale.NOMINAL_BIVALUE),
-        # Feature(column='flowers_count', scale=Scale.METRIC),  # activate some features once we have more data
+        # Feature(column='flowers_count', scale=Scale.METRIC),  # activate some
+        # features once we have more data
         # Feature(column='branches_count', scale=Scale.METRIC),
         Feature(column="species_seed_capsule", scale=Scale.NOMINAL),
         Feature(column="species_pollen_donor", scale=Scale.NOMINAL),

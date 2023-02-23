@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from plants import settings
 from plants.exceptions import PlantAlreadyExists
+from plants.extensions.orm import Base
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
@@ -82,7 +83,7 @@ async def update_plants_from_list_of_dicts(
     return plants_saved
 
 
-def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
+def _clone_instance(model_instance: Base, clone_attrs: Optional[dict] = None):
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
     table = model_instance.__table__
@@ -104,7 +105,7 @@ async def deep_clone_plant(
     assignments, tags excludes descendant plants assignments to same instances of parent
     plants, parent plants pollen (nothing to do here)"""
     plant_clone: Plant = _clone_instance(
-        plant_original,
+        plant_original,  # noqa
         {
             "plant_name": plant_name_clone,  # noqa
             "filename_previewimage": None,
@@ -126,7 +127,8 @@ async def deep_clone_plant(
         event_clone.plant = plant_clone
         cloned_events.append(event_clone)
 
-        # photo_file-to-event associations via photo_file instances (no need to update these explicitly)
+        # photo_file-to-event associations via photo_file instances (no need to update
+        # these explicitly)
         await event_dal.add_images_to_event(event_clone, event.images)
 
     if cloned_events:

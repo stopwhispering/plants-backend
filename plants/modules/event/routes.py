@@ -91,10 +91,12 @@ async def create_or_update_events(
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
     """save n events for n plants in database (add, modify, delete)"""
-    # frontend submits a dict with events for those plants where at least one event has been changed, added, or
+    # frontend submits a dict with events for those plants where at least one event has
+    # been changed, added, or
     # deleted. it does, however, always submit all these plants' events
 
-    # loop at the plants and their events, identify additions, deletions, and updates and save them
+    # loop at the plants and their events, identify additions, deletions, and updates
+    # and save them
     counts = defaultdict(int)
     for plant_id, events in events_request.plants_to_events.items():
         await create_or_update_event(

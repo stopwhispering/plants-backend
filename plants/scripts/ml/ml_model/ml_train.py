@@ -36,7 +36,8 @@ def apply_grid_search(
         param_grid=param_grid,
         cv=group_kfold,
         scoring="f1",
-        refit="f1",  # at the end, refit the best estimator on the whole dataset as best_estimator_
+        refit="f1",  # at the end, refit the best estimator on the whole dataset as
+        # best_estimator_
     )
     search.fit(X=x, y=y, groups=kfold_groups)
     print(f'{"Best params:": <45.45}{search.best_params_}')
@@ -136,7 +137,8 @@ def optimize_knn_classifier(x, y, feature_container: FeatureContainer):
         )
         print(trained_pipeline)
     # Results:
-    # {'estimator__algorithm': 'ball_tree', 'estimator__leaf_size': 20, 'estimator__n_neighbors': 10,
+    # {'estimator__algorithm': 'ball_tree', 'estimator__leaf_size': 20,
+    # 'estimator__n_neighbors': 10,
     # 'estimator__p': 2, 'estimator__weights': 'distance'} has an F1 of 0.60
 
 
@@ -195,5 +197,6 @@ def optimize_randomforest_classifier(x, y, feature_container: FeatureContainer):
         )
         print(trained_pipeline)
     # Results:
-    # {'estimator__n_estimators': 5, 'estimator__min_samples_split': 0.01, 'estimator__max_features': None}
+    # {'estimator__n_estimators': 5, 'estimator__min_samples_split': 0.01,
+    # 'estimator__max_features': None}
     # has an F1 of 0.49

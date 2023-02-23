@@ -24,8 +24,10 @@ async def remove_files_already_existing(
     """Iterates over file objects, checks whether a file with that name already exists
     in filesystem and/or in database.
 
-    - if we have an orphaned file in filesystem, missing in database, it will be deleted with a messasge
-    - if we have have an orphaned entry in database, missing in filesystem, it will be deleted with a messasge
+    - if we have an orphaned file in filesystem, missing in database, it will be
+    deleted with a messasge
+    - if we have have an orphaned entry in database, missing in filesystem, it will
+    be deleted with a messasge
     - if existent in both filesystem and db, remove it from  files list with a message
     """
     duplicate_filenames = []
@@ -33,8 +35,6 @@ async def remove_files_already_existing(
     for photo_upload in files[
         :
     ]:  # need to loop on copy if we want to delete within loop
-        # path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
-        # logger.debug(f'Checking uploaded photo_file ({photo_upload.content_type}) to be saved as {path}.')
         exists_in_filesystem = _original_image_file_exists(
             filename=photo_upload.filename
         )
@@ -42,14 +42,16 @@ async def remove_files_already_existing(
         if exists_in_filesystem and not exists_in_db:
             _remove_image_from_filesystem(filename=photo_upload.filename)
             logger.warning(
-                warning := "Found orphaned image {photo_upload.filename} in filesystem, "
+                warning := "Found orphaned image {photo_upload.filename} in "
+                "filesystem, "
                 "but not in database. Deletied image file."
             )
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:
             await image_dal.delete_image_by_filename(filename=photo_upload.filename)
             logger.warning(
-                warning := f"Found orphaned db entry for uploaded image  {photo_upload.filename} with no "
+                warning := f"Found orphaned db entry for uploaded image  "
+                f"{photo_upload.filename} with no "
                 f"corresponsing file. Removed db entry."
             )
             warnings.append(warning)

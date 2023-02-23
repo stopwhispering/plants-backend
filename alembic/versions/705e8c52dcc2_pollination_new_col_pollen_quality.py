@@ -22,7 +22,8 @@ def upgrade() -> None:
         "pollination", sa.Column("pollen_quality", sa.VARCHAR(length=10), nullable=True)
     )
     op.execute(
-        "UPDATE pollination SET pollen_quality = 'unknown' WHERE pollen_quality is null;"
+        "UPDATE pollination SET pollen_quality = 'unknown' "
+        "WHERE pollen_quality is null;"
     )
     op.execute("ALTER TABLE pollination ALTER pollen_quality SET NOT NULL;")
 

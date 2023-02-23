@@ -16,7 +16,6 @@ class PydanticModel:
 shared_message: Tuple[str, ...] = ("BMessage", "BConfirmation")
 exclude = shared_message
 
-
 models = [
     PydanticModel(
         r".\plants\modules\event\schemas.py",

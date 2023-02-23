@@ -67,8 +67,8 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     except ValueError as e:
         # treat error "Given thumbnail is too large. max 64kB"
         logger.warning(
-            f"Catched exception when auto-rotating image file: {str(e)}. Trying again after deleting "
-            "embedded thumbnail."
+            f"Catched exception when auto-rotating image file: {str(e)}. Trying again "
+            f"after deleting embedded thumbnail."
         )
         del exif_dict["thumbnail"]
         exif_bytes = piexif.dump(exif_dict)
@@ -78,7 +78,8 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     if orientation == 2:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
         logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: flip left ot right."
+            f"Rotating {filename} with orientation exif tag {orientation}: flip left "
+            f"or right."
         )
     elif orientation == 3:
         img = img.rotate(180)
@@ -88,12 +89,14 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     elif orientation == 4:
         img = img.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
         logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: 180 & flip left to right."
+            f"Rotating {filename} with orientation exif tag {orientation}: 180 & flip "
+            f"left to right."
         )
     elif orientation == 5:
         img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
         logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: -90 & flip left to right."
+            f"Rotating {filename} with orientation exif tag {orientation}: -90 & flip "
+            f"left to right."
         )
     elif orientation == 6:
         img = img.rotate(-90, expand=True)
@@ -103,7 +106,8 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     elif orientation == 7:
         img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
         logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: 90 & flip left to right."
+            f"Rotating {filename} with orientation exif tag {orientation}: 90 & flip "
+            f"left to right."
         )
     elif orientation == 8:
         img = img.rotate(90, expand=True)
@@ -165,7 +169,8 @@ def read_record_datetime_from_exif_tags(
         exif_dict = piexif.load(absolute_path.as_posix())
     except InvalidImageDataError:
         logger.warning(
-            f"Invalid Image Type Error occured when reading EXIF Tags for {absolute_path}."
+            f"Invalid Image Type Error occured when reading EXIF Tags for "
+            f"{absolute_path}."
         )
         return None
     except ValueError as e:
@@ -176,7 +181,8 @@ def read_record_datetime_from_exif_tags(
     ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
     else:
-        # get creation date from file system (todo linux has only modifed date, does this still work or abort?)
+        # get creation date from file system (todo linux has only modifed date, does
+        #  this still work or abort?)
         ts = absolute_path.stat().st_ctime
         # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
         return datetime.datetime.fromtimestamp(ts)

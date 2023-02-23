@@ -38,7 +38,8 @@ app = FastAPI(
     else None,
 )
 
-# we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
+# we are using this backend for two frontends: plants (same hostname, no cors
+# required) and pollinations (cors required)
 ORIGINS: Final[list[str]] = [
     "http://pollination.localhost",
     "https://pollination." + local_config.hostname,

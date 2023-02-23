@@ -84,7 +84,8 @@ class EventDAL(BaseDAL):
         await self.session.flush()
 
     async def get_soils_by_name(self, soil_name: str) -> list[Soil]:
-        # todo: once we have made soil names unique, we can change this with singular version
+        # todo: once we have made soil names unique, we can change this with singular
+        #  version
         query = select(Soil).where(Soil.soil_name == soil_name)  # noqa
         soils: list[Soil] = (await self.session.scalars(query)).all()  # noqa
         return soils

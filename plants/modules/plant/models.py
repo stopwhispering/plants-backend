@@ -112,13 +112,15 @@ class Plant(Base):
 
     sibling_plants = relationship(
         "Plant",
-        primaryjoin="(foreign(Plant.parent_plant_id) == remote(Plant.parent_plant_id)) & "
+        primaryjoin="(foreign(Plant.parent_plant_id) == "
+        "remote(Plant.parent_plant_id)) & "
         "("
         "   ("
         "       (foreign(Plant.parent_plant_pollen_id.is_(None))) & "
         "       (remote(Plant.parent_plant_pollen_id.is_(None)))"
         "   ) | ("
-        "       (foreign(Plant.parent_plant_pollen_id) == remote(Plant.parent_plant_pollen_id)) "
+        "       (foreign(Plant.parent_plant_pollen_id) == "
+        "remote(Plant.parent_plant_pollen_id)) "
         "   )"
         ") & "
         "(foreign(Plant.id) != remote(Plant.id)) ",
@@ -129,10 +131,6 @@ class Plant(Base):
 
     same_taxon_plants = relationship(
         "Plant",
-        # primaryjoin="Plant.taxon_id == Plant.taxon_id",  # works
-        # primaryjoin="foreign(Plant.taxon_id) == remote(Plant.taxon_id)",  # works
-        # primaryjoin="and_(foreign(Plant.taxon_id) == remote(Plant.taxon_id), foreign(Plant.id) != remote("
-        #             "Plant.id))",  # works
         primaryjoin="(~Plant.plant_name.contains('×')) & "
         "(foreign(Plant.taxon_id) == remote(Plant.taxon_id)) & "
         "(foreign(Plant.id) != remote(Plant.id))",

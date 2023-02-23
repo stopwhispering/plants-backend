@@ -74,7 +74,8 @@ class PollinationRead(PollinationBase):
 class PollinationUpdate(PollinationBase):
     id: int
 
-    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
+    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown |
+    # self_pollinated )
     pollination_status: PollinationStatus
     ongoing: bool
 
@@ -104,13 +105,10 @@ class PollinationCreate(PollinationBase):
         use_enum_values = True
 
 
-####################################################################################################
-# Entities used only in API Responses from Backend (B...)
-####################################################################################################
 class FlorescenceBase(BaseSchema):
     plant_id: int
-
-    florescence_status: FlorescenceStatus  # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    # FlorescenceStatus (inflorescence_appeared | flowering | finished)
+    florescence_status: FlorescenceStatus
     inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
     comment: str | None  # e.g. location if multiple plants in one container
 
@@ -137,7 +135,8 @@ class FlorescenceUpdate(FlorescenceBase):
     flower_color_second: constr(
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_colors_differentiation: FlowerColorDifferentiation | None  # if flower_color_second set
+    # if flower_color_second set
+    flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
     first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
@@ -167,7 +166,8 @@ class FlorescenceRead(FlorescenceBase):
     flower_color_second: constr(
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_colors_differentiation: FlowerColorDifferentiation | None  # if flower_color_second set
+    # if flower_color_second set
+    flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
     first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
@@ -218,13 +218,10 @@ class FRequestPollenContainers(RequestContainer):
     pollenContainerCollection: list[PollenContainerCreateUpdate]
 
 
-####################################################################################################
-# Response Containers
-####################################################################################################
 class SettingsRead(BaseSchema):
     colors: list[
         str
-    ]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
+    ]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#000000']
 
 
 class BResultsActiveFlorescences(ResponseContainer):

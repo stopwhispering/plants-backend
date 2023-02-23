@@ -28,7 +28,8 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
     elif type(transformer) is Pipeline:
         # call same function recursively for the first step of the pipeline
         # todo not really working; make this better
-        # if last step is a scaler, use the first step, otherwise the last (e.g. onehotencoder)
+        # if last step is a scaler, use the first step, otherwise the last
+        # (e.g. onehotencoder)
         if str(transformer.steps[-1][1]).find("Scaler") >= 0:
             relevant_pipeline_trf = transformer.steps[0][1]
         else:
@@ -41,11 +42,13 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
         # return names
 
     elif type(transformer) is KNNImputer:
-        # KNNImputer has no get_feature_names fn, but doesn't alter columns count anyway)
+        # KNNImputer has no get_feature_names fn, but doesn't alter columns count
+        # anyway)
         return [n for n in columns]
 
     # elif isinstance(transformer, _OneToOneFeatureMixin):
-    #     # _OneToOneFeatureMixin provides get_feature_names_out() for one-in-one-out-transformers
+    #     # _OneToOneFeatureMixin provides get_feature_names_out() for
+    #     one-in-one-out-transformers
     #     return list(transformer.get_feature_names_out())
 
     else:
@@ -54,7 +57,7 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
                 transformer.get_feature_names_out()
             )  # list() does not result in cx if is already list
             return names
-        except AttributeError as e:
+        except AttributeError:
             pass
 
         try:
@@ -73,7 +76,8 @@ def get_transformed_df_from_column_transformer(
     create a DataFrame from transformed data with the found column names
     todo: incomplete and buggy; only ad-hoc-usage
     Example Usage:
-        feature_names, df_transformed = get_transformed_df_from_column_transformer(column_transformer, x)
+        feature_names, df_transformed =
+            get_transformed_df_from_column_transformer(column_transformer, x)
     """
     feature_names = []
     transformed_arr = []
@@ -108,7 +112,8 @@ def get_transformed_df_from_column_transformer(
     values = np.concatenate(transformed_arr, axis=1)
     df_transformed = pd.DataFrame(values, columns=feature_names)
 
-    # assert our self-assembled values from all steps' transformations are equal to the whole column
+    # assert our self-assembled values from all steps' transformations are equal to the
+    # whole column
     # transformer's transformation
     df_transformed_at_once = pd.DataFrame(
         column_transformer.transform(x), columns=feature_names

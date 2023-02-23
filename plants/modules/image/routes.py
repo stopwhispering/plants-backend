@@ -69,7 +69,8 @@ async def upload_images_plant(
 ):
     """Upload images and directly assign them to supplied plant; no keywords included.
 
-    # the ui5 uploader control does somehow not work with the expected form/multipart format expected
+    # the ui5 uploader control does somehow not work with the expected form/multipart
+    format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
     """
@@ -83,7 +84,8 @@ async def upload_images_plant(
     )
 
     # schedule and run tasks to save images concurrently
-    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions don't allow
+    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
+    # don't allow
     # to be run concurrently - at least writing stops with "Session is already flushing"
     # InvalidRequestError) (2023-02)
     plant_names = [(await plant_dal.by_id(plant.id)).plant_name]
@@ -154,20 +156,19 @@ async def update_images(
 ):
     """Modify existing photo_file's metadata."""
     logger.info(
-        f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and exif tags."
+        f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and "
+        f"exif tags."
     )
     for image_ext in modified_ext.ImagesCollection:
         # alter metadata in jpg exif tags
         logger.info(f"Updating {image_ext.filename}")
         image = await image_dal.by_id(image_ext.id)
-        await PhotoMetadataAccessExifTags().save_photo_metadata(  # image_id=image_ext.id,
+        await PhotoMetadataAccessExifTags().save_photo_metadata(
             image_absolute_path=image.absolute_path,
             plant_names=[p.plant_name for p in image_ext.plants],
             keywords=[k.keyword for k in image_ext.keywords],
             description=image_ext.description or "",
-            # image_dal=image_dal
         )
-        # image = Image.get_image_by_filename(filename=image_ext.filename, db=db)
         image = await image_dal.get_image_by_filename(filename=image_ext.filename)
         await _update_image_if_altered(
             image=image,
@@ -193,7 +194,8 @@ async def upload_images(
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
     """upload new photo_file(s)"""
-    # the ui5 uploader control does somehow not work with the expected form/multipart format expected
+    # the ui5 uploader control does somehow not work with the expected form/multipart
+    # format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
     form = await request.form()
@@ -213,7 +215,8 @@ async def upload_images(
     )
 
     # schedule and run tasks to save images concurrently
-    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions don't allow
+    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
+    # don't allow
     # to be run concurrently - at least writing stops with "Session is already flushing"
     # InvalidRequestError) (2023-02)
     plant_names = [
@@ -276,8 +279,10 @@ async def delete_image(
         image = await image_dal.by_id(image_id=image_to_delete.id)
         if image.filename != image_to_delete.filename:
             logger.error(
-                err_msg := f"Image {image.id} has unexpected filename: {image.filename}. "
-                f"Expected filename: {image_to_delete.filename}. Analyze this inconsistency!"
+                err_msg := f"Image {image.id} has unexpected filename: "
+                f"{image.filename}. "
+                f"Expected filename: {image_to_delete.filename}. Analyze this "
+                f"inconsistency!"
             )
             throw_exception(err_msg)
 
@@ -352,7 +357,8 @@ async def _update_image_if_altered(
     plant_dal: PlantDAL,
     image_dal: ImageDAL,
 ):
-    """compare current database record for image with supplied field values; update db entry if different;
+    """compare current database record for image with supplied field values; update db
+    entry if different;
     Note: record_date_time is only set at upload, so we're not comparing or updating it.
     """
     # description

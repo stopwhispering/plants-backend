@@ -105,7 +105,8 @@ class Event(Base):
     date = Column(VARCHAR(12), nullable=False)  # yyyy-mm-dd  # todo make it 10
     event_notes = Column(TEXT)
 
-    # 1:1 relationship to observation (joins usually from event to observation, not the other way around)
+    # 1:1 relationship to observation (joins usually from event to observation, not the
+    # other way around)
     observation_id = Column(INTEGER, ForeignKey("observation.id"))
     observation = relationship("Observation", back_populates="event")
 

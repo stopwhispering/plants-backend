@@ -49,10 +49,12 @@ async def search_taxa_by_name(
 
     if not results:  # noqa
         logger.info(
-            f'No search result for search term "{taxon_info_request.taxon_name_pattern}".'
+            f"No search result for search term "
+            f'"{taxon_info_request.taxon_name_pattern}".'
         )
         throw_exception(
-            f'No search result for search term "{taxon_info_request.taxon_name_pattern}".',
+            f"No search result for search term "
+            f'"{taxon_info_request.taxon_name_pattern}".',
             request=request,
         )
 
@@ -82,7 +84,10 @@ async def fetch_taxon_occurrence_images(
         gbif_id=fetch_taxon_occurrence_images_request.gbif_id
     )
 
-    message = f"Refetched occurences for GBIF ID {fetch_taxon_occurrence_images_request.gbif_id}"
+    message = (
+        f"Refetched occurences for GBIF ID "
+        f"{fetch_taxon_occurrence_images_request.gbif_id}"
+    )
     logger.info(message)
 
     results = {

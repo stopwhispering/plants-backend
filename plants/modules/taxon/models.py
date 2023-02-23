@@ -122,7 +122,6 @@ class TaxonOccurrenceImage(Base):
 
     occurrence_id = Column(BIGINT, primary_key=True, nullable=False)
     img_no = Column(INTEGER, primary_key=True, nullable=False)
-    # gbif_id = Column(INTEGER, ForeignKey('taxon.gbif_id'), primary_key=True, nullable=False)
     gbif_id = Column(INTEGER, primary_key=True, nullable=False)
     scientific_name = Column(VARCHAR(100))
     basis_of_record = Column(VARCHAR(25))
@@ -147,7 +146,10 @@ class TaxonOccurrenceImage(Base):
     )
 
     def __repr__(self):
-        return f"<TaxonOccurrenceImage - {self.occurrence_id} - {self.img_no} {self.gbif_id}>"
+        return (
+            f"<TaxonOccurrenceImage - {self.occurrence_id} - {self.img_no} "
+            f"{self.gbif_id}>"
+        )
 
 
 class TaxonToOccurrenceAssociation(Base):

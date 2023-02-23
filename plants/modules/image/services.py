@@ -96,8 +96,6 @@ async def save_image_file(
         content = await file.read()  # async read
         await out_file.write(content)  # async write
 
-    # photo_upload.save(path)  # we can't use object first and then save as this alters file object
-
     # resize file by lowering resolution if required
     if not settings.images.resizing_size:
         pass
@@ -119,7 +117,9 @@ async def save_image_file(
             image=path,
             size=size,
             path_thumbnail=settings.paths.path_generated_thumbnails,
-            ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
+            ignore_missing_image_files=(
+                local_config.log_settings.ignore_missing_image_files
+            ),
         )
 
     # save metadata in jpg exif tags
@@ -138,7 +138,8 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
     """Delete image file and entries in db."""
     if image.image_to_event_associations:
         logger.info(
-            f"Deleting {len(image.image_to_event_associations)} associated Image to Event associations."
+            f"Deleting {len(image.image_to_event_associations)} associated Image to "
+            f"Event associations."
         )
         await image_dal.delete_image_to_event_associations(
             image, image.image_to_event_associations
@@ -146,7 +147,8 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
         image.events = []
     if image.image_to_plant_associations:
         logger.info(
-            f"Deleting {len(image.image_to_plant_associations)} associated Image to Plant associations."
+            f"Deleting {len(image.image_to_plant_associations)} associated Image to "
+            f"Plant associations."
         )
         await image_dal.delete_image_to_plant_associations(
             image, image.image_to_plant_associations
@@ -154,7 +156,8 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
         image.plants = []
     if image.image_to_taxon_associations:
         logger.info(
-            f"Deleting {len(image.image_to_taxon_associations)} associated Image to Taxon associations."
+            f"Deleting {len(image.image_to_taxon_associations)} associated Image to "
+            f"Taxon associations."
         )
         await image_dal.delete_image_to_taxon_associations(
             image, image.image_to_taxon_associations
@@ -208,9 +211,9 @@ async def get_image_path_by_size(
         return Path(image.absolute_path)
 
     else:
-        # the pixel size is part of the resized images' filenames rem size must be converted to px
+        # the pixel size is part of the resized images' filenames rem size must be
+        # converted to px
         filename_sized = get_generated_filename(filename, (width, height))
-        # return get_absolute_path_for_generated_image(filename_sized, settings.paths.path_generated_thumbnails)
         return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 
@@ -238,7 +241,8 @@ async def get_occurrence_thumbnail_path(
 
     if not taxon_occurrence_images:
         logger.error(
-            err_msg := f"Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}"
+            err_msg := f"Occurrence thumbnail file not found: {gbif_id}/"
+            f"{occurrence_id}/{img_no}"
         )
         throw_exception(err_msg)
 
@@ -247,7 +251,8 @@ async def get_occurrence_thumbnail_path(
 
     if not taxon_occurrence_image:
         logger.error(
-            err_msg := f"Occurrence thumbnail file not found: {gbif_id}/{occurrence_id}/{img_no}"
+            err_msg := f"Occurrence thumbnail file not found: {gbif_id}/"
+            f"{occurrence_id}/{img_no}"
         )
         throw_exception(err_msg)
 
@@ -279,7 +284,9 @@ def _generate_missing_thumbnails(images: list[Image]):
                     image=image.absolute_path,
                     size=size,
                     path_thumbnail=settings.paths.path_generated_thumbnails,
-                    ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
+                    ignore_missing_image_files=(
+                        local_config.log_settings.ignore_missing_image_files
+                    ),
                 )
                 count_generated += 1
                 logger.info(
@@ -370,7 +377,6 @@ async def _create_image_in_db(
     # events and taxa are saved elsewhere
 ) -> Image:
     if await image_dal.get_image_by_relative_path(relative_path.as_posix()):
-        # if db.query(Image).filter(Image.relative_path == relative_path.as_posix()).first():
         raise ValueError(f"Image already exists in db: {relative_path.as_posix()}")
 
     image = Image(

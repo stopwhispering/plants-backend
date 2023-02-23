@@ -60,7 +60,8 @@ async def test_florescence_create_valid(
     assert active_florescence.get("flower_colors_differentiation") == "ovary_mouth"
     assert active_florescence.get("stigma_position") == "deeply_inserted"
 
-    # update florescence (invalid): flower_colors_differentiation only allowed if flower_color_second is set
+    # update florescence (invalid): flower_colors_differentiation only allowed if
+    # flower_color_second is set
     del payload["flower_color_second"]
     response = await ac.put(
         f"/api/active_florescences/{active_florescence.get('id')}", json=payload

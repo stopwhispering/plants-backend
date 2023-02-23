@@ -34,51 +34,21 @@ def event_loop():
     return asyncio.get_event_loop()
 
 
-# @pytest_asyncio.fixture(scope="session", autouse=True)
-# async def setup_db() -> None:
-#
-#     """Setup test database:
-#     Create & Reset database to initial state;
-#     Create all database tables as declared in SQLAlchemy models;
-#     """
-#     # PostGres does not allow to create/drop databases in a transaction, therefore we need
-#     # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
-#     engine_for_db_setup = create_async_engine(generate_db_url(),
-#                                               isolation_level='AUTOCOMMIT')
-#
-#     # AsyncEngine.begin() provides a context manager that commits (not required with AUTOCOMMIT) at the end
-#     # (or rolls back in case of an error). Closes the connection at the end.
-#     # async with engine_for_db_setup.begin() as setup_connection:  # somehow blcok is not executed anymore
-#
-#     setup_connection = await engine_for_db_setup.connect()
-#     setup_connection: AsyncConnection
-#     q = await setup_connection.execute(text(f"SELECT datname FROM pg_catalog.pg_database "
-#                                             f"where datname ='{TEST_DB_NAME}'"))
-#     if q.rowcount:
-#         dropped = await setup_connection.execute(text(f"DROP DATABASE {TEST_DB_NAME} WITH (FORCE);"))
-#     await setup_connection.execute(text(f"CREATE DATABASE {TEST_DB_NAME} ENCODING 'utf8'"))
-#
-#     Base.metadata.bind = setup_connection
-#     await init_orm(engine=setup_connection.engine)
-#     await create_tables_if_required(engine=setup_connection.engine)
-#
-#     await setup_connection.commit()
-#     await setup_connection.close()
-
-
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db() -> None:
     """Setup test database: Create & Reset database to initial state; Create all
     database tables as declared in SQLAlchemy models;"""
-    # PostGres does not allow to create/drop databases in a transaction, therefore we need
-    # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
+    # PostGres does not allow to create/drop databases in a transaction, therefore we
+    # need a separate engine for that that has isolation_level='AUTOCOMMIT'
+    # (unlike default 'READ COMMITTED')
     engine_for_db_setup = create_async_engine(
         generate_db_url(TEST_DB_NAME), isolation_level="AUTOCOMMIT"
     )
 
     # AsyncConnection.begin() actually AsyncConnection.connect() and yields the
     # AsyncConnection after starting the AsyncTransaction with AsyncConnection.begin()
-    # The AsyncTransaction is commited or rolled back when the AsyncConnection is closed,
+    # The AsyncTransaction is commited or rolled back when the AsyncConnection is
+    # closed,
     # i.e. after the asynccontextmanager exits.
     async with engine_for_db_setup.begin() as setup_connection:
         setup_connection: AsyncConnection
@@ -92,7 +62,7 @@ async def setup_db() -> None:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def test_db(request) -> AsyncSession:
+async def test_db(request) -> AsyncSession:  # noqa
     """Wrapper fot get_db that truncates tables after each test function run."""
     # db = await anext(get_db())
     db = orm.SessionFactory.create_session()
@@ -158,7 +128,7 @@ def image_dal(test_db: AsyncSession) -> ImageDAL:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid(request) -> Plant:
+async def plant_valid(request) -> Plant:  # noqa
     plant = Plant(
         plant_name="Aloe Vera",
         field_number="A100",

@@ -70,7 +70,8 @@ class Florescence(Base):
     first_seed_ripening_date = Column(DATE)
     last_seed_ripening_date = Column(DATE)
     avg_ripening_time = Column(FLOAT)  # in days
-    # todo via relationship: first_seed_ripe_date, last_seed_ripe_date, average_ripening_time
+    # todo via relationship: first_seed_ripe_date, last_seed_ripe_date,
+    #  average_ripening_time
 
     comment = Column(
         TEXT
@@ -93,7 +94,8 @@ class Florescence(Base):
 
 class Pollination(Base):
     """pollination attempts of a plant
-    note: we don't make a composite key of inflorence_id and pollen_donor_id because we might have multiple
+    note: we don't make a composite key of inflorence_id and pollen_donor_id because
+    we might have multiple
     differing attempts to pollinate for the same inflorence and pollen donor"""
 
     __tablename__ = "pollination"
@@ -125,14 +127,16 @@ class Pollination(Base):
     pollen_quality = Column(
         VARCHAR(10), nullable=False
     )  # PollenQuality (good | bad | unknown)
-    # location at the very moment of pollination attempt (Location (indoor | outdoor | indoor_led | unknown))
+    # location at the very moment of pollination attempt (Location (indoor | outdoor
+    # | indoor_led | unknown))
     location = Column(VARCHAR(100), nullable=False)
 
     count = Column(INTEGER)
 
     pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
     label_color = Column(VARCHAR(60))
-    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
+    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown
+    # | self_pollinated )
     pollination_status = Column(VARCHAR(40), nullable=False)
     ongoing = Column(BOOLEAN, nullable=False)
 

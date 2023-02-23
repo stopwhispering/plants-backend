@@ -26,12 +26,13 @@ def configure_root_logger(
     if not log_severity_file == LogLevel.NONE:
         # create file handler
         file_handler = logging.FileHandler(log_file_path)
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        format_fh = "%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s"
+        format_fh = (
+            "%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - "
+            "%(levelname)s - %(message)s"
+        )
         formatter = logging.Formatter(format_fh)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(log_severity_file.value)
-        # format_file = '%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s'
         # file_handler.setFormatter(logging.Formatter(format_file))
         logger.handlers = []
         logger.addHandler(file_handler)

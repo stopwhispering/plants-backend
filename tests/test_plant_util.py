@@ -1,4 +1,5 @@
-# testing utility functions, i.e. no fixtures, database dependencies or test client required
+"""Testing utility functions, i.e. no fixtures, database dependencies or test client
+required."""
 import pytest
 
 from plants.modules.plant.util import (

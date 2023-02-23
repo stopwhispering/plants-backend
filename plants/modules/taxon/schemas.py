@@ -190,7 +190,7 @@ class TaxonRead(TaxonBase):
 
     @validator("images", pre=True)
     def _transform_images(
-        cls, images: list[Image], values, **kwargs
+        cls, images: list[Image], values, **kwargs  # noqa
     ) -> list[TaxonImageRead]:  # noqa
         """Extract major information from Image model; and read the description from
         taxon-to-image link table, not from image itself."""
@@ -213,7 +213,7 @@ class TaxonRead(TaxonBase):
 
     @validator("distribution", pre=True)
     def _transform_distribution(
-        cls, distribution: list[Distribution]
+        cls, distribution: list[Distribution]  # noqa
     ) -> DistributionRead:  # noqa
         # distribution codes according to WGSRPD (level 3)
         results = {"native": [], "introduced": []}

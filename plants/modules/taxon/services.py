@@ -139,12 +139,9 @@ async def save_new_taxon(
 
     await taxon_dal.create(taxon)
 
-    # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image URLs
+    # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image
+    # URLs
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
-
-    # logger.info(f'Starting thread to load occurences for gbif_id {gbif_id}')
-    # thread = Thread(target=loader.scrape_occurrences_for_taxon, args=[gbif_id])
-    # thread.start()
 
     logger.info(f"Starting background task to load occurences for gbif_id {gbif_id}")
     background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
@@ -183,12 +180,7 @@ async def modify_taxon(
     # newly assigned images
     if taxon_modified.images:
         for image in taxon_modified.images:
-            # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).first()
             image_obj = await image_dal.by_id(image.id)
-            # if not image_obj:
-            # if not Image.exists(filename=image.filename, db=db):
-            #     # not assigned to any event, yet
-            #     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
 
             # update link table including the photo_file description
             current_taxon_to_image_link = [
@@ -211,6 +203,7 @@ async def modify_taxon(
             elif current_taxon_to_image_link[0].description != image.description:
                 current_taxon_to_image_link[0].description = image.description
                 logger.info(
-                    f"Update description of link between image {image_obj.relative_path} and taxon"
+                    f"Update description of link between image "
+                    f"{image_obj.relative_path} and taxon"
                     f" {taxon.name}"
                 )

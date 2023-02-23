@@ -92,9 +92,7 @@ class TaxonomySearch:
             "name_published_in_year": taxon.name_published_in_year,
             "basionym": taxon.basionym,
             # 'phylum': taxon.phylum,
-            "synonyms_concat": taxon.synonyms_concat
-            # if taxon.distribution_concat and len(taxon.distribution_concat) >= 150:
-            #     result['distribution_concat'] = query.distribution_concat[:147] + '...'
+            "synonyms_concat": taxon.synonyms_concat,
         }
         return search_result_entry
 
@@ -133,17 +131,20 @@ class ApiSearcher:
     ) -> list[dict]:
         """Searches term in kew's International Plant Name Index ("IPNI") and Plants of
         the World ("POWO"); ignores entries included in the local_results list."""
-        # First step: search in the International Plant Names Index (IPNI) which has slightly more items than POWO
+        # First step: search in the International Plant Names Index (IPNI) which has
+        # slightly more items than POWO
         results, lsid_in_powo = self._search_taxa_in_ipni_api(
             plant_name_pattern=plant_name_pattern, ignore_local_db_results=local_results
         )
 
-        # Second step: for each IPNI result, search in POWO for more details if available
+        # Second step: for each IPNI result, search in POWO for more details if
+        # available
         bad_todo = []
         for result in results[:]:  # can't remove from oneself
             result: dict
 
-            # for those entries without POWO data, we add a warning concerning acceptance status first
+            # for those entries without POWO data, we add a warning concerning
+            # acceptance status first
             if result["lsid"] not in lsid_in_powo:
                 results.remove(result)
                 bad_todo.append(result)
@@ -153,7 +154,8 @@ class ApiSearcher:
             self._update_taxon_from_powo_api(result)
 
         logger.info(
-            f'Found {len(results)} results from IPNI/POWO search for search term "{plant_name_pattern}".'
+            f"Found {len(results)} results from IPNI/POWO search for search term "
+            f'"{plant_name_pattern}".'
         )
         return results
 
@@ -171,7 +173,10 @@ class ApiSearcher:
             ipni_query = {Name.genus: plant_name_pattern, Name.rank: "gen."}
             ipni_search = ipni.search(ipni_query)
         if ipni_search.size() > settings.plants.taxon_search_max_results:
-            msg = f'Too many search results for search term "{plant_name_pattern}": {ipni_search.size()}'
+            msg = (
+                f'Too many search results for search term "{plant_name_pattern}": '
+                f"{ipni_search.size()}"
+            )
             raise TooManyResultsError(msg)
 
         elif ipni_search.size() == 0:
@@ -180,7 +185,7 @@ class ApiSearcher:
         for ipni_result in ipni_search:
             ipni_result: dict
 
-            # check if that item is already included in the local results; if so, skip it
+            # check if that item is already included in the local results; if so, skip
             if [
                 r
                 for r in ignore_local_db_results

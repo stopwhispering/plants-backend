@@ -105,7 +105,8 @@ class FloweringPlant:
                 )
             else:
                 logger.warning(
-                    f"Abandoned inflorescence {florescence.id} for plant {self.plant.plant_name}"
+                    f"Abandoned inflorescence {florescence.id} for plant "
+                    f"{self.plant.plant_name}"
                 )
                 return None
 
@@ -132,8 +133,8 @@ class FloweringPlant:
 
         else:
             logger.warning(
-                f"Can't determine inflorescence period - Unknown dates for {florescence.plant.plant_name}. "
-                f"Comment: {florescence.comment}"
+                f"Can't determine inflorescence period - Unknown dates for "
+                f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
             )
             return None
 
@@ -168,7 +169,8 @@ class FloweringPlant:
                 )
             else:
                 logger.warning(
-                    f"Abandoned flowering {florescence.id} for plant {self.plant.plant_name}"
+                    f"Abandoned flowering {florescence.id} for plant "
+                    f"{self.plant.plant_name}"
                 )
                 return None
 
@@ -194,7 +196,8 @@ class FloweringPlant:
             )
         else:
             logger.warning(
-                f"Can't determine flowering period - Unknown dates for {florescence.plant.plant_name}. "
+                f"Can't determine flowering period - Unknown dates for "
+                f"{florescence.plant.plant_name}. "
                 f"Comment: {florescence.comment}"
             )
 
@@ -237,7 +240,8 @@ class FloweringPlant:
                 )
             else:
                 logger.warning(
-                    f"Abandoned seed ripening {florescence.id} for plant {self.plant.plant_name}"
+                    f"Abandoned seed ripening {florescence.id} for plant "
+                    f"{self.plant.plant_name}"
                 )
                 return None
             return FloweringPeriod(
@@ -263,7 +267,8 @@ class FloweringPlant:
 
         else:
             logger.warning(
-                f"Can't determine seed ripening period - Unknown dates for {florescence.plant.plant_name}. "
+                f"Can't determine seed ripening period - Unknown dates for "
+                f"{florescence.plant.plant_name}. "
                 f"Comment: {florescence.comment}"
             )
             return None
@@ -287,19 +292,6 @@ async def generate_flower_history(florescence_dal: FlorescenceDAL):
     flowering_plants.sort(key=lambda fp: fp.get_earliest_period_start())
     earliest_date = flowering_plants[0].get_earliest_period_start()
 
-    # # for each month (between earliest_date and today) and plant, get the flowering
-    # # state with highest priority (flowering > seeds ripening > inflorescence)
-    # plant_to_periods: dict[str, dict[date, BFloweringState]] = {}
-    # for fp in flowering_plants:
-    #     period_to_status: dict[date, BFloweringState] = {}
-    #     for month in rrule.rrule(rrule.MONTHLY, dtstart=earliest_date, until=date.today()):
-    #         month: datetime
-    #         status: BFloweringState = fp.get_state_at_date(month.date())
-    #         period_to_status[month.date()] = status
-    #     plant_to_periods[fp.plant.plant_name] = period_to_status
-
-    # for fp in flowering_plants:
-    #
     datetimes: list[datetime] = list(
         rrule.rrule(rrule.MONTHLY, dtstart=earliest_date, until=date.today())
     )

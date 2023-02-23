@@ -86,7 +86,8 @@ async def save_taxon(
     """Save a custom or non-custom taxon from search results list; if taxon already is
     in db, just return it."""
     logger.info(
-        f"Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}"
+        f"Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: "
+        f"{new_taxon_data.lsid}"
     )
     if new_taxon_data.id:
         taxon: Taxon = await taxon_dal.by_id(new_taxon_data.id)

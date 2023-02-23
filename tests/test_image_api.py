@@ -23,7 +23,8 @@ async def test_upload_images(
     plant_valid_in_db: Plant,
     image_dal: ImageDAL,
 ):
-    # we need to wrap files and additional data in a way that matches the UI5 file uploader (which is a kind of odd way)
+    # we need to wrap files and additional data in a way that matches the UI5 file
+    # uploader (which is a kind of odd way)
     files = [
         ("files[]", ("demo_image1.jpg", open(r"./static/demo_image1.jpg", "rb"))),
         ("files[]", ("demo_image2.jpg", open(r"./static/demo_image2.jpg", "rb"))),
@@ -86,7 +87,8 @@ async def test_upload_image_for_plant(
     image_dal: ImageDAL,
     plant_dal: PlantDAL,
 ):
-    # we need to wrap files and additional data in a way that matches the UI5 file uploader (which is a kind of odd way)
+    # we need to wrap files and additional data in a way that matches the UI5 file
+    # uploader (which is a kind of odd way)
     print(os.getcwd())
     files = [
         (

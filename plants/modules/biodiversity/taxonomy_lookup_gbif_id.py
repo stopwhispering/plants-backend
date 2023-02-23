@@ -43,7 +43,8 @@ class GBIFIdentifierLookup:
             ipni_record = next(
                 (r for r in resp.json().get("results") if r.get("taxonID") == lsid), {}
             )
-            # ... and make sure it has the correct identifier; if it has, we know we have the correct gbif id (=nubKey)
+            # ... and make sure it has the correct identifier; if it has, we know we
+            # have the correct gbif id (=nubKey)
             if ipni_record.get("taxonID") == lsid:
                 return nub_key
 
@@ -70,7 +71,8 @@ class GBIFIdentifierLookup:
 
         # didn't find via PyGbif; try REST API directly
         logger.info(
-            "No results on IPNI Dataset at GBIF matching IPNI ID via PyGbif. Trying REST API."
+            "No results on IPNI Dataset at GBIF matching IPNI ID via PyGbif. Trying "
+            "REST API."
         )
         for r in (r for r in lookup["results"] if r.get("nubKey")):
             gbif_id = self._gbif_id_from_rest_api(nub_key=r.get("nubKey"), lsid=lsid)
@@ -104,7 +106,8 @@ class GBIFIdentifierLookup:
             return
         logger.debug(f"Search results on wikidata: {len(tag_search_results)}")
 
-        # use first (use that with a correct subheader/description; there are often two, whatever the reason is)
+        # use first (use that with a correct subheader/description; there are often
+        # two, whatever the reason is)
         tag_search_result = None
         for t in tag_search_results:
             desc = t.find("span", class_="wb-itemlink-description")
@@ -134,7 +137,8 @@ class GBIFIdentifierLookup:
             if lsid_found == lsid_number:
                 correct_found = True
 
-        # alternatively, wikidata might have the plants of the world online (powo) id, which is the same
+        # alternatively, wikidata might have the plants of the world online (powo) id,
+        # which is the same
         # (sometimes, ipni is a synonym and powo is the correct one)
         # noinspection PyUnresolvedReferences
         powo_claim = wikidata_object.data["claims"].get(WIKIDATA_POWO_PROPERTY_ID)

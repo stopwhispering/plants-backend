@@ -58,13 +58,9 @@ async def _read_pollination_attempts(
     """Read all pollination attempts for a plant and a pollen donor plus the other way
     around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
-    # attempts_orm = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == plant.id,
-    #                                             Pollination.pollen_donor_plant_id == pollen_donor.id).all()
     attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(
         pollen_donor, plant
     )
-    # attempts_orm_reverse = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == pollen_donor.id,
-    #                                                     Pollination.pollen_donor_plant_id == plant.id).all()
     attempts = []
     for pollination in attempts_orm + attempts_orm_reverse:
         pollination: Pollination
@@ -94,11 +90,7 @@ async def _read_resulting_plants(
     resulting_plants_orm: list[Plant] = await plant_dal.get_children(
         plant, pollen_donor
     )
-    # resulting_plants_orm = db.query(Plant).filter(Plant.parent_plant_id == plant.id,
-    #                                               Plant.parent_plant_pollen_id == pollen_donor.id).all()
     resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
-    # resulting_plants_orm_reverse = db.query(Plant).filter(Plant.parent_plant_id == pollen_donor.id,
-    #                                                       Plant.parent_plant_pollen_id == plant.id).all()
     resulting_plants = []
     for plant in resulting_plants_orm + resulting_plants_orm_reverse:
         plant: Plant
@@ -164,9 +156,6 @@ async def read_potential_pollen_donors(
         already_ongoing_attempt = await _plants_have_ongoing_pollination(
             plant, f.plant, pollination_dal=pollination_dal
         )
-        # already_ongoing_attempt = db.query(Pollination).filter(Pollination.ongoing,
-        #                                                        Pollination.seed_capsule_plant == plant,
-        #                                                        Pollination.pollen_donor_plant == f.plant).count() > 0
         potential_pollen_donor_flowering = {
             "plant_id": f.plant_id,
             "plant_name": f.plant.plant_name,
@@ -190,10 +179,6 @@ async def read_potential_pollen_donors(
         )
 
     # 2. frozen pollen
-    # query = (db.query(Plant).filter(  # Plant.florescence_status == FlorescenceStatus.FINISHED.value,
-    #     Plant.id != florescence.plant_id,
-    #     Plant.count_stored_pollen_containers >= 1))
-    # frozen_pollen_plants = query.all()
     frozen_pollen_plants_ = await plant_dal.get_plants_with_pollen_containers()
     frozen_pollen_plants = [
         plant for plant in frozen_pollen_plants_ if plant.id != florescence.plant_id
@@ -209,14 +194,13 @@ async def read_potential_pollen_donors(
             plant, frozen_pollen_plant, pollination_dal=pollination_dal
         )
 
-        # already_ongoing_attempt = db.query(Pollination).filter(
-        #     Pollination.ongoing,
-        #     Pollination.seed_capsule_plant == plant,
         potential_pollen_donor_frozen = {
             "plant_id": frozen_pollen_plant.id,
             "plant_name": frozen_pollen_plant.plant_name,
             "pollen_type": PollenType.FROZEN.value,
-            "count_stored_pollen_containers": frozen_pollen_plant.count_stored_pollen_containers,
+            "count_stored_pollen_containers": (
+                frozen_pollen_plant.count_stored_pollen_containers
+            ),
             "already_ongoing_attempt": already_ongoing_attempt,
             "probability_pollination_to_seed": get_probability_pollination_to_seed(
                 florescence=florescence,
@@ -365,30 +349,6 @@ async def update_pollination(
     updates["last_update_context"] = Context.API.value
     await pollination_dal.update(pollination, updates)
 
-    # # update pollination orm object and write it to db
-    # pollination.pollen_type = pollination_data.pollen_type
-    # pollination.location = pollination_data.location
-    # pollination.pollination_timestamp = parse_api_datetime(pollination_data.pollination_timestamp)
-    # pollination.count = pollination_data.count
-    # pollination.label_color = label_color
-    # pollination.pollination_status = pollination_data.pollination_status
-    # pollination.ongoing = pollination_data.ongoing
-    # pollination.harvest_date = parse_api_date(pollination_data.harvest_date)
-    # pollination.seed_capsule_length = pollination_data.seed_capsule_length
-    # pollination.seed_capsule_width = pollination_data.seed_capsule_width
-    # pollination.seed_length = pollination_data.seed_length
-    # pollination.seed_width = pollination_data.seed_width
-    # pollination.seed_count = pollination_data.seed_count
-    # pollination.seed_capsule_description = pollination_data.seed_capsule_description
-    # pollination.seed_description = pollination_data.seed_description
-    # pollination.days_until_first_germination = pollination_data.days_until_first_germination
-    # pollination.first_seeds_sown = pollination_data.first_seeds_sown
-    # pollination.first_seeds_germinated = pollination_data.first_seeds_germinated
-    # pollination.germination_rate = germination_rate
-    #
-    # # pollination.last_update_at = datetime.now()
-    # pollination.last_update_context = Context.API.value
-
 
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
@@ -485,8 +445,6 @@ async def update_pollen_containers(
     pollen_containers_data: list[PollenContainerCreateUpdate], plant_dal: PlantDAL
 ):
     for pollen_container_data in pollen_containers_data:
-        # plant = Plant.by_id(pollen_container_data.plant_id, db)
-        # plant.count_stored_pollen_containers = pollen_container_data.count_stored_pollen_containers
         plant = await plant_dal.by_id(pollen_container_data.plant_id)
         await plant_dal.set_count_stored_pollen_containers(
             plant, pollen_container_data.count_stored_pollen_containers

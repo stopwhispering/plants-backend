@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[dict]:
     """Read events from event database table."""
-    # plant has .events loaded, but not all sub-relationships; therefore, we load them here
+    # plant has .events loaded, but not all sub-relationships; therefore, we load them
+    # here
     events: list[Event] = await event_dal.get_events_by_plant(plant)
     return events
 
@@ -76,9 +77,12 @@ async def create_or_update_event(
 
     # todo remove that comment if no need
     # event might have no id in browser but already in backend from earlier save
-    # so try to get eventid  from plant name and date (pseudo-key) to avoid events being deleted
-    # note: if we "replace" an event in the browser  (i.e. for a specific date, we delete an event and
-    # create a new one, then that event in database will be modified, not deleted and re-created
+    # so try to get eventid  from plant name and date (pseudo-key) to avoid events
+    # being deleted
+    # note: if we "replace" an event in the browser  (i.e. for a specific date, we
+    # delete an event and
+    # create a new one, then that event in database will be modified, not deleted
+    # and re-created
     for event in [e for e in events if not e.id]:
         existing_event = await event_dal.get_event_by_plant_and_date(
             plant_obj, event.date
@@ -105,7 +109,8 @@ async def create_or_update_event(
             await event_dal.delete_event(event_obj)
             counts["Deleted Events"] += 1
 
-    # loop at the current plant's events from frontend to find new events and modify existing ones
+    # loop at the current plant's events from frontend to find new events and modify
+    # existing ones
     for event in events:
         # new event
         if not event.id:
@@ -117,7 +122,8 @@ async def create_or_update_event(
             await event_dal.create_event(event_obj)
             counts["Added Events"] += 1
 
-            # as async does not allow for lazy loading, we need to reloda the event including
+            # as async does not allow for lazy loading, we need to reloda the event
+            # including
             # it's relationships
             event_obj = await event_dal.by_id(event_obj.id)
 
@@ -131,12 +137,6 @@ async def create_or_update_event(
                 continue
             event_obj.event_notes = event.event_notes
             event_obj.date = event.date
-
-            # except InvalidRequestError as e:
-            #     db.rollback()
-            #     logger.error('Serious error occured at event resource (POST). Rollback. See log.',
-            #                  stack_info=True, exc_info=e)
-            #     throw_exception('Serious error occured at event resource (POST). Rollback. See log.')
 
         # segments observation, pot, and soil
         if event.observation and not event_obj.observation:
@@ -157,10 +157,6 @@ async def create_or_update_event(
             event_obj.observation.stem_max_diameter = (
                 event.observation.stem_max_diameter
             )
-            # # cm to mm
-            # event_obj.observation.height = event.observation.height * 10 if event.observation.height else None
-            # event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter * 10 if \
-            #     event.observation.stem_max_diameter else None
 
         if not event.pot:
             # event_obj.pot_event_type = None
@@ -175,15 +171,16 @@ async def create_or_update_event(
                 event_obj.pot = pot_obj
                 counts["Added Pots"] += 1
 
-            # pot objects have an id but are not "reused" for other events, so we may change it here
+            # pot objects have an id but are not "reused" for other events, so we may
+            # change it here
             event_obj.pot.material = event.pot.material
             event_obj.pot.shape_side = event.pot.shape_side
             event_obj.pot.shape_top = event.pot.shape_top
             event_obj.pot.diameter_width = event.pot.diameter_width
-            # event_obj.pot.diameter_width = event.pot.diameter_width * 10 if event.pot.diameter_width else None
 
         # remove soil from event
-        #  (event to soil is n:1 so we don't delete the soil object but only the assignment)
+        #  (event to soil is n:1 so we don't delete the soil object but only the
+        #  assignment)
         if not event.soil:
             # event_obj.soil_event_type = None
             if event_obj.soil:
@@ -222,9 +219,6 @@ async def create_or_update_event(
         if event.images:
             for image in event.images:
                 image_obj = await image_dal.get_image_by_filename(image.filename)
-                # image_obj = db.query(Image).filter(Image.relative_path == image.relative_path.as_posix()).scalar()
-                # if not image_obj:
-                #     raise ValueError(f'Image not in db: {image.relative_path.as_posix()}')
 
                 # not assigned to that specific event, yet
                 if image_obj not in event_obj.images:

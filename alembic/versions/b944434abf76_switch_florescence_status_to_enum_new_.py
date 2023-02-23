@@ -32,16 +32,20 @@ def upgrade() -> None:
     )
 
     op.execute(
-        "UPDATE florescence SET florescence_status = 'FLOWERING' WHERE florescence_status = 'flowering';"
+        "UPDATE florescence SET florescence_status = 'FLOWERING' "
+        "WHERE florescence_status = 'flowering';"
     )
     op.execute(
-        "UPDATE florescence SET florescence_status = 'INFLORESCENCE_APPEARED' WHERE florescence_status = 'inflorescence_appeared';"
+        "UPDATE florescence SET florescence_status = 'INFLORESCENCE_APPEARED' "
+        "WHERE florescence_status = 'inflorescence_appeared';"
     )
     op.execute(
-        "UPDATE florescence SET florescence_status = 'FINISHED' WHERE florescence_status = 'finished';"
+        "UPDATE florescence SET florescence_status = 'FINISHED' "
+        "WHERE florescence_status = 'finished';"
     )
     op.execute(
-        "ALTER TABLE florescence ALTER COLUMN florescence_status TYPE florescencestatus USING florescence_status::florescencestatus;"
+        "ALTER TABLE florescence ALTER COLUMN florescence_status "
+        "TYPE florescencestatus USING florescence_status::florescencestatus;"
     )
     # ### end Alembic commands ###
 
