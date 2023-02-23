@@ -4,7 +4,7 @@ RUN pip3 install poetry
 COPY ./pyproject.toml ./poetry.lock* /tmp/
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.10
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11
 # switch working directory to have module "plants" available
 WORKDIR "/app/"
 COPY ./prestart.sh ./alembic.ini /app/
