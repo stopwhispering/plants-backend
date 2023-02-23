@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from typing import Optional, Final
 from wikidata.client import Client
 from pygbif import species
-import requests
+import requests  # todo replace with async http client
 
 URL_PATTERN_WIKIDATA_SEARCH: Final[str] = r'https://www.wikidata.org/w/index.php?search={}'
 WIKIDATA_IPNI_PROPERTY_ID: Final[str] = 'P961'

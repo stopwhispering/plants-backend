@@ -6,5 +6,7 @@
 __pycache__/
 .pytest_cache/
 /local.py
+/local2.py
 *.pyc
 .coverage
+htmlcov

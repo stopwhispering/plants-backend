@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "plants-backend"
+version = "0.1.0"
+description = "FastAPI-based RESTful Database Application for Tracking Plants"
+authors = ["Johannes <stopwhispering314@gmail.com>"]
+readme = "README.md"
+packages = [{include = "plants"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.92.0"
+sqlalchemy = "^2.0.4"
+pydantic = {extras = ["dotenv"], version = "^1.10.5"}
+asyncpg = "^0.27.0"
+aiofiles = "^23.1.0"
+piexif = "^1.1.3"
+pytz = "^2022.7.1"
+alembic = "^1.9.4"
+wikidata = "^0.7.0"
+pykew = "^0.1.3"
+pillow = "^9.4.0"
+beautifulsoup4 = "^4.11.2"
+numpy = "^1.24.2"
+pygbif = "^0.6.2"
+requests = "^2.28.2"
+python-multipart = "^0.0.5"
+pandas = "^1.5.3"
+scikit-learn = "^1.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+pytest-asyncio = "^0.20.3"
+httpx = "^0.23.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
