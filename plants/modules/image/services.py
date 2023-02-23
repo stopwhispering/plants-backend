@@ -18,9 +18,6 @@ from plants.modules.image.image_services_simple import (
 from plants.modules.image.models import (
     Image,
     ImageKeyword,
-    ImageToEventAssociation,
-    ImageToPlantAssociation,
-    ImageToTaxonAssociation,
 )
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
@@ -55,16 +52,19 @@ async def rename_plant_in_image_files(
     plant: Plant, plant_name_old: str, image_dal: ImageDAL
 ) -> int:
     """
-    in each photo_file file that has the old plant name tagged, fit tag to the new plant name
+    in each photo_file file that has the old plant name tagged, fit tag to the new plant
+    name
     """
     if not plant.images:
         logger.info(f"No photo_file tag to change for {plant_name_old}.")
     exif = PhotoMetadataAccessExifTags()
-    # reload images to include their relationships (lazy loading not allowed in async mode)
+    # reload images to include their relationships (lazy loading not allowed in
+    # async mode)
     images = await image_dal.by_ids([i.id for i in plant.images])
     await run_in_threadpool(_rename_plant_in_image_files, images=images, exif=exif)
 
-    # note: there's no need to upload the cache as we did modify directly in the cache above
+    # note: there's no need to upload the cache as we did modify directly in the
+    # cache above
     return len(images)
 
 
@@ -140,9 +140,6 @@ async def save_image_file(
 
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
     """delete image file and entries in db"""
-    ai: ImageToEventAssociation
-    ap: ImageToPlantAssociation
-    at: ImageToTaxonAssociation
     if image.image_to_event_associations:
         logger.info(
             f"Deleting {len(image.image_to_event_associations)} associated Image to Event associations."
@@ -330,7 +327,6 @@ def _to_response_image(image: Image) -> ImageCreateUpdate:
     # if 'plants' in ins.unloaded or 'keywords' in ins.unloaded:
     #     a = 1
 
-    k: ImageKeyword
     return ImageCreateUpdate(
         id=image.id,
         filename=image.filename or "",

@@ -213,7 +213,6 @@ async def create_or_update_event(
             if image_obj.filename not in filenames_saved:
                 # don't delete photo_file object, but only the association
                 # (photo_file might be assigned to other events)
-                li: ImageToEventAssociation
                 link: ImageToEventAssociation = next(
                     li
                     for li in event_obj.image_to_event_associations

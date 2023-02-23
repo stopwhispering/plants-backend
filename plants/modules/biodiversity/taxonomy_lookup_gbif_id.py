@@ -148,7 +148,8 @@ class GBIFIdentifierLookup:
         if not powo_claim and not ipni_claim:
             logger.warning("Could not determine correctness of site. Aborting.")
             return
-        elif not correct_found:
+
+        if not correct_found:
             logger.warning("Wikidata site is not the correct one. Aborting.")
             return
 

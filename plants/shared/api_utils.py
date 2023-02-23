@@ -27,11 +27,11 @@ def treat_non_serializable(x):
         make_dict_values_json_serializable(x)
         return x
     elif isinstance(x, list):
-        for i, l in enumerate(x):
+        for i, li in enumerate(x):
             try:
-                _ = json.dumps(l)
+                _ = json.dumps(li)
             except TypeError:
-                x[i] = treat_non_serializable(l)
+                x[i] = treat_non_serializable(li)
         return x
     elif isinstance(x, Path):
         return x.as_posix()
