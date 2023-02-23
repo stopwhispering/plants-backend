@@ -1,32 +1,39 @@
 import asyncio
-from pathlib import Path
-from typing import List, Sequence
 import json
 import logging
+from pathlib import Path
+from typing import List, Sequence
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
-from fastapi import UploadFile, BackgroundTasks
-from fastapi import APIRouter, Depends, Request
 from starlette.responses import FileResponse
 
-from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
-from plants.modules.image.services import (
-    save_image_file, delete_image_file_and_db_entries, trigger_generation_of_missing_thumbnails,
-    fetch_images_for_plant, fetch_untagged_images,
-    get_image_path_by_size, get_occurrence_thumbnail_path, save_image_to_db)
-from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.dependencies import (get_image_dal, get_plant_dal, get_taxon_dal,
+                                 valid_plant)
+from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.image_services_simple import \
+    remove_files_already_existing
+from plants.modules.image.models import (Image, ImageKeyword,
+                                         ImageToPlantAssociation)
+from plants.modules.image.photo_metadata_access_exif import \
+    PhotoMetadataAccessExifTags
+from plants.modules.image.schemas import (BImageUpdated, BResultsImageDeleted,
+                                          BResultsImageResource,
+                                          BResultsImagesUploaded,
+                                          FImageUploadedMetadata,
+                                          ImageCreateUpdate, ImageRead)
+from plants.modules.image.services import (
+    delete_image_file_and_db_entries, fetch_images_for_plant,
+    fetch_untagged_images, get_image_path_by_size,
+    get_occurrence_thumbnail_path, save_image_file, save_image_to_db,
+    trigger_generation_of_missing_thumbnails)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import valid_plant, get_image_dal, get_taxon_dal, get_plant_dal
-from plants.modules.image.schemas import (BResultsImageResource, BImageUpdated, FImageUploadedMetadata,
-                                          BResultsImagesUploaded, ImageCreateUpdate, ImageRead)
-from plants.modules.image.image_services_simple import remove_files_already_existing
-from plants.modules.event.schemas import FImagesToDelete
-from plants.modules.image.schemas import BResultsImageDeleted
-from plants.shared.message_schemas import BSaveConfirmation, BConfirmation
-from plants.shared.enums import FBMajorResource, BMessageType
+from plants.shared.enums import BMessageType, FBMajorResource
+from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
+from plants.shared.message_services import get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 

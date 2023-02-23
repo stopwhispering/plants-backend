@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime
-from sqlalchemy import Column, INTEGER, ForeignKey, TEXT, Identity, VARCHAR, DateTime, Numeric
-from sqlalchemy.orm import relationship
 import logging
+from datetime import datetime
+
+from sqlalchemy import (INTEGER, TEXT, VARCHAR, Column, DateTime, ForeignKey,
+                        Identity, Numeric)
+from sqlalchemy.orm import relationship
 
 from plants.extensions.orm import Base
 

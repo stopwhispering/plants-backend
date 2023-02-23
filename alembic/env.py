@@ -1,9 +1,9 @@
-from logging.config import fileConfig
 import asyncio
+from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from alembic import context
 from plants import LocalConfig
 
 local_config = LocalConfig()
@@ -22,11 +22,11 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 import plants.modules.event.models  # noqa
-import plants.shared.history_models  # noqa
 import plants.modules.image.models  # noqa
 import plants.modules.plant.models  # noqa
-import plants.modules.taxon.models  # noqa
 import plants.modules.pollination.models  # noqa
+import plants.modules.taxon.models  # noqa
+import plants.shared.history_models  # noqa
 from plants.extensions.orm import Base  # noqa
 
 target_metadata = Base.metadata

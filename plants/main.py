@@ -7,15 +7,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from plants import local_config
 from plants.extensions.config_values import Environment
 from plants.extensions.db import create_db_engine
+from plants.extensions.logging import configure_root_logger
 from plants.extensions.orm import init_orm
+from plants.modules.biodiversity.routes import router as biodiversity_router
 from plants.modules.event.routes import router as event_router
 from plants.modules.image.routes import router as image_router
 from plants.modules.plant import routes as plant_router
 from plants.modules.pollination.routes import router as pollination_router
 from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
-from plants.modules.biodiversity.routes import router as biodiversity_router
-from plants.extensions.logging import configure_root_logger
 
 configure_root_logger(log_severity_console=local_config.log_settings.log_level_console,
                       log_severity_file=local_config.log_settings.log_level_file,

@@ -1,18 +1,20 @@
-from typing import List, Dict, Optional
+import logging
+from io import BytesIO
+from typing import Dict, List, Optional
+
+import dateutil
 import requests
 from pydantic.error_wrappers import ValidationError
 from pygbif import occurrences as occ_api
-from io import BytesIO
-import logging
-import dateutil
 from sqlalchemy.exc import IntegrityError
 
 from plants import local_config, settings
+from plants.modules.image.util import generate_thumbnail
+from plants.modules.taxon.models import (TaxonOccurrenceImage,
+                                         TaxonToOccurrenceAssociation)
+from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
-from plants.modules.taxon.models import TaxonOccurrenceImage, TaxonToOccurrenceAssociation
-from plants.modules.image.util import generate_thumbnail
-from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
 
 logger = logging.getLogger(__name__)
 

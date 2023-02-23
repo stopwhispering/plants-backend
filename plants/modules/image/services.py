@@ -1,29 +1,33 @@
-from pathlib import Path, PurePath
-from typing import Sequence
 import logging
 import os
 from datetime import datetime
+from pathlib import Path, PurePath
+from typing import Sequence
 
 import aiofiles
-from fastapi import UploadFile, BackgroundTasks
+from fastapi import BackgroundTasks, UploadFile
 from starlette.concurrency import run_in_threadpool
 
-from plants import local_config, settings, constants
-from plants.modules.image.models import Image, ImageToPlantAssociation, ImageToEventAssociation, \
-    ImageToTaxonAssociation, ImageKeyword
-from plants.modules.image.schemas import ImageCreateUpdate, FBImagePlantTag
+from plants import constants, local_config, settings
+from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.image_services_simple import (get_relative_path,
+                                                        resizing_required)
+from plants.modules.image.models import (Image, ImageKeyword,
+                                         ImageToEventAssociation,
+                                         ImageToPlantAssociation,
+                                         ImageToTaxonAssociation)
+from plants.modules.image.photo_metadata_access_exif import \
+    PhotoMetadataAccessExifTags
+from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
+from plants.modules.image.util import (generate_thumbnail, get_thumbnail_name,
+                                       resize_image)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.taxon.models import TaxonOccurrenceImage
-
-from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.modules.image.image_services_simple import resizing_required, get_relative_path
-from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
-from plants.modules.image.util import resize_image, generate_thumbnail, get_thumbnail_name
-from plants.shared.path_utils import with_suffix, get_generated_filename
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
+from plants.shared.path_utils import get_generated_filename, with_suffix
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,9 @@
 import logging
-from pathlib import PurePath
 from datetime import datetime
+from pathlib import PurePath
 
-from sqlalchemy import Column, INTEGER, VARCHAR, ForeignKey, TEXT, TIMESTAMP, Identity, DateTime
+from sqlalchemy import (INTEGER, TEXT, TIMESTAMP, VARCHAR, Column, DateTime,
+                        ForeignKey, Identity)
 from sqlalchemy.orm import relationship
 
 from plants import settings

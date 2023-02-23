@@ -1,21 +1,26 @@
+import logging
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends
-import logging
 
+from plants.dependencies import (get_event_dal, get_image_dal, get_plant_dal,
+                                 valid_plant)
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Soil
+from plants.modules.event.schemas import (BPResultsUpdateCreateSoil,
+                                          BResultsEventResource,
+                                          BResultsSoilsResource,
+                                          FRequestCreateOrUpdateEvent,
+                                          SoilCreate, SoilUpdate)
+from plants.modules.event.services import (create_or_update_event, create_soil,
+                                           fetch_soils, read_events_for_plant,
+                                           update_soil)
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.shared.message_services import get_message
-from plants.dependencies import valid_plant, get_event_dal, get_plant_dal, get_image_dal
-from plants.modules.event.services import create_soil, update_soil, read_events_for_plant, create_or_update_event, \
-    fetch_soils
-from plants.shared.message_schemas import BSaveConfirmation
-from plants.shared.enums import FBMajorResource, BMessageType
 from plants.modules.plant.models import Plant
-from plants.modules.event.schemas import (BResultsEventResource, BPResultsUpdateCreateSoil,
-                                          BResultsSoilsResource, SoilCreate, FRequestCreateOrUpdateEvent, SoilUpdate)
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.shared.enums import BMessageType, FBMajorResource
+from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
 

@@ -5,10 +5,10 @@ Revises: 20e1b5087385
 Create Date: 2023-02-04 13:38:56.015631
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 from plants.modules.pollination.enums import FlorescenceStatus
 
 # revision identifiers, used by Alembic.

@@ -7,13 +7,13 @@ from sklearn import neighbors
 from plants import local_config
 from plants.dependencies import get_db
 from plants.extensions.db import create_db_engine
-from plants.extensions.orm import init_orm
 from plants.extensions.ml_models import pickle_pipeline
+from plants.extensions.orm import init_orm
 from plants.scripts.ml.ml_model.ml_data import create_data
 from plants.scripts.ml.ml_model.ml_features import ModelType, create_features
 from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
-from plants.scripts.ml.ml_model.ml_train import (optimize_knn_classifier, optimize_randomforest_classifier,
-                                                 cv_classifier)
+from plants.scripts.ml.ml_model.ml_train import (
+    cv_classifier, optimize_knn_classifier, optimize_randomforest_classifier)
 
 logging.basicConfig(level=logging.DEBUG, force=True)
 

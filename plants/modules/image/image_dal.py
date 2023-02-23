@@ -1,9 +1,11 @@
-from sqlalchemy import select, Select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import ImageNotFound
-from plants.modules.image.models import Image, ImageToEventAssociation, ImageToPlantAssociation, \
-    ImageToTaxonAssociation, ImageKeyword
+from plants.modules.image.models import (Image, ImageKeyword,
+                                         ImageToEventAssociation,
+                                         ImageToPlantAssociation,
+                                         ImageToTaxonAssociation)
 from plants.shared.base_dal import BaseDAL
 
 

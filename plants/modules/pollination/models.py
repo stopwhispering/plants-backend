@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
-from sqlalchemy import Column, VARCHAR, INTEGER, ForeignKey, TEXT, DATE, FLOAT, BOOLEAN, Identity, Numeric, Enum
 import sqlalchemy
-
-from sqlalchemy.types import DateTime
-import logging
-
+from sqlalchemy import (BOOLEAN, DATE, FLOAT, INTEGER, TEXT, VARCHAR, Column,
+                        Enum, ForeignKey, Identity, Numeric)
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import DateTime
 
-from plants.modules.pollination.enums import FlorescenceStatus, FlowerColorDifferentiation, StigmaPosition
 from plants.extensions.orm import Base
+from plants.modules.pollination.enums import (FlorescenceStatus,
+                                              FlowerColorDifferentiation,
+                                              StigmaPosition)
 
 logger = logging.getLogger(__name__)
 

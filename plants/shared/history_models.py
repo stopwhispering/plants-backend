@@ -1,4 +1,4 @@
-from sqlalchemy import Column, VARCHAR, INTEGER, TEXT, Identity
+from sqlalchemy import INTEGER, TEXT, VARCHAR, Column, Identity
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base

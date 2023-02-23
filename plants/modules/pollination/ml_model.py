@@ -1,5 +1,4 @@
 import numpy as np
-import sqlalchemy
 import pandas as pd
 import sqlalchemy
 from sklearn import neighbors
@@ -9,17 +8,17 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._testing import ignore_warnings  # noqa
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
-from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
+from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
 from plants import local_config
 from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
 
 

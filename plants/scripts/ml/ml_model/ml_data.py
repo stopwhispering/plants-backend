@@ -1,13 +1,13 @@
-import sqlalchemy
 import pandas as pd
+import sqlalchemy
 
 from ml_helpers.preprocessing.features import FeatureContainer
 from plants import local_config
-from plants.modules.plant.models import Plant
 from plants.dependencies import get_db
 from plants.extensions.db import create_db_engine
 from plants.extensions.orm import init_orm
-from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.plant.models import Plant
+from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
 
 init_orm(engine=create_db_engine(local_config.connection_string))

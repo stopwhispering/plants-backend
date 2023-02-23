@@ -3,15 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.extensions import orm
 from plants.modules.event.event_dal import EventDAL
-from plants.shared.history_dal import HistoryDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import Pollination, Florescence
+from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.taxon.models import Taxon
+from plants.modules.taxon.taxon_dal import TaxonDAL
+from plants.shared.history_dal import HistoryDAL
 
 
 async def get_db():

@@ -1,17 +1,18 @@
 import logging
 
-from pykew import ipni as ipni, powo as powo
-from pykew.ipni_terms import Name
 from fastapi.concurrency import run_in_threadpool
+from pykew import ipni as ipni
+from pykew import powo as powo
+from pykew.ipni_terms import Name
 
 from plants import settings
 from plants.exceptions import TooManyResultsError
-from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.modules.taxon.models import Taxon
 from plants.modules.biodiversity.taxonomy_shared_functions import (
-    create_synonym_label_if_only_a_synonym, create_distribution_concat)
-from plants.shared.message_services import throw_exception
+    create_distribution_concat, create_synonym_label_if_only_a_synonym)
 from plants.modules.taxon.enums import FBRank
+from plants.modules.taxon.models import Taxon
+from plants.modules.taxon.taxon_dal import TaxonDAL
+from plants.shared.message_services import throw_exception
 
 logger = logging.getLogger(__name__)
 

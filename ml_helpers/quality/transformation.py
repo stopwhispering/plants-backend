@@ -1,11 +1,12 @@
 from typing import List, Tuple
+
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import RobustScaler, MinMaxScaler, StandardScaler
-import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 
 def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]:

@@ -1,10 +1,13 @@
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime, date
 from typing import Optional
 
-from pydantic import Field, Extra, constr
-from plants.modules.plant.enums import FBPropagationType, FBCancellationReason, TagState
-from plants.shared.base_schema import BaseSchema, ResponseContainer, MajorResponseContainer, RequestContainer
+from pydantic import Extra, Field, constr
+
+from plants.modules.plant.enums import (FBCancellationReason,
+                                        FBPropagationType, TagState)
+from plants.shared.base_schema import (BaseSchema, MajorResponseContainer,
+                                       RequestContainer, ResponseContainer)
 
 
 class FBPlantTag(BaseSchema):

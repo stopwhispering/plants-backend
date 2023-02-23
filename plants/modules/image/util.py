@@ -1,9 +1,10 @@
-from pathlib import Path, PurePath
-from typing import Union, Optional, Tuple
-import piexif
-from PIL import Image
 import logging
 from io import BytesIO
+from pathlib import Path, PurePath
+from typing import Optional, Tuple, Union
+
+import piexif
+from PIL import Image
 from PIL.JpegImagePlugin import JpegImageFile
 
 logger = logging.getLogger(__name__)

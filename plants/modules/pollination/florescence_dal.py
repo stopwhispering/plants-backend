@@ -6,8 +6,8 @@ from sqlalchemy.orm import selectinload
 
 from plants.exceptions import FlorescenceNotFound
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.enums import FlorescenceStatus
+from plants.modules.pollination.models import Florescence
 from plants.shared.base_dal import BaseDAL
 
 

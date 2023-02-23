@@ -1,18 +1,22 @@
 import logging
 
-from pykew import powo
 from fastapi import BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
+from pykew import powo
 
 from plants.exceptions import TaxonAlreadyExists
-from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
-from plants.modules.biodiversity.taxonomy_name_formatter import BotanicalNameInput, create_formatted_botanical_name
-from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
+from plants.modules.biodiversity.taxonomy_lookup_gbif_id import \
+    GBIFIdentifierLookup
+from plants.modules.biodiversity.taxonomy_name_formatter import (
+    BotanicalNameInput, create_formatted_botanical_name)
+from plants.modules.biodiversity.taxonomy_occurence_images import \
+    TaxonOccurencesLoader
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.models import Image, ImageToTaxonAssociation
+from plants.modules.taxon.models import Distribution, Taxon
+from plants.modules.taxon.schemas import (TaxonCreate, TaxonImageUpdate,
+                                          TaxonUpdate)
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.modules.taxon.models import Taxon, Distribution
-from plants.modules.image.models import ImageToTaxonAssociation, Image
-from plants.modules.taxon.schemas import TaxonUpdate, TaxonImageUpdate, TaxonCreate
 
 logger = logging.getLogger(__name__)
 

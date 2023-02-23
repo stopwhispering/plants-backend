@@ -1,12 +1,11 @@
+from decimal import Decimal
 from typing import Optional
 
 from pydantic import Extra, constr
 
-from decimal import Decimal
-
-from plants.modules.event.enums import FBShapeTop, FBShapeSide
-from plants.shared.base_schema import BaseSchema, ResponseContainer
 from plants.constants import REGEX_DATE
+from plants.modules.event.enums import FBShapeSide, FBShapeTop
+from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 
 class FBImageAssignedToEvent(BaseSchema):

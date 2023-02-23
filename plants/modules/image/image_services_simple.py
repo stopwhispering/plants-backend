@@ -1,6 +1,6 @@
-from pathlib import PurePath, Path
-from typing import List, Tuple
 import logging
+from pathlib import Path, PurePath
+from typing import List, Tuple
 
 from PIL import Image
 

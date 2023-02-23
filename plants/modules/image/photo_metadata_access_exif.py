@@ -1,15 +1,19 @@
 import datetime
+import logging
 from dataclasses import dataclass
 from pathlib import Path
-import logging
 
 import piexif
 from piexif import InvalidImageDataError
 
 from plants import local_config
-from plants.modules.image.exif_utils import (auto_rotate_jpeg, decode_keywords_tag, decode_record_date_time,
-                                             encode_keywords_tag, exif_dict_has_all_relevant_tags, modified_date,
-                                             encode_record_date_time, set_modified_date)
+from plants.modules.image.exif_utils import (auto_rotate_jpeg,
+                                             decode_keywords_tag,
+                                             decode_record_date_time,
+                                             encode_keywords_tag,
+                                             encode_record_date_time,
+                                             exif_dict_has_all_relevant_tags,
+                                             modified_date, set_modified_date)
 from plants.modules.image.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)

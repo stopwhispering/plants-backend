@@ -1,6 +1,6 @@
 from enum import Enum
 
-from ml_helpers.preprocessing.features import (FeatureContainer, Scale, Feature)
+from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
 
 
 class ModelType(Enum):

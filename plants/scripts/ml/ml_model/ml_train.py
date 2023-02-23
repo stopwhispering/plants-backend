@@ -1,9 +1,10 @@
-import pandas as pd
 import numpy as np
-from sklearn import dummy, linear_model, svm, neighbors, gaussian_process, naive_bayes, tree, ensemble, neural_network
+import pandas as pd
+from sklearn import (dummy, ensemble, gaussian_process, linear_model,
+                     naive_bayes, neighbors, neural_network, svm, tree)
 from sklearn.dummy import DummyClassifier
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import GroupKFold, GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.utils._testing import ignore_warnings  # noqa
 

@@ -1,17 +1,18 @@
 import logging
 from collections import defaultdict
-from typing import Optional
 from operator import attrgetter
+from typing import Optional
 
 from plants.exceptions import SoilNotUnique
-from plants.modules.event.models import Soil, Event, Observation, Pot
-from plants.modules.image.models import ImageToEventAssociation, Image
 from plants.modules.event.event_dal import EventDAL
+from plants.modules.event.models import Event, Observation, Pot, Soil
+from plants.modules.event.schemas import (EventCreateUpdate, SoilCreate,
+                                          SoilUpdate)
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.models import Image, ImageToEventAssociation
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.message_services import throw_exception
-from plants.modules.event.schemas import SoilCreate, SoilUpdate, EventCreateUpdate
 
 logger = logging.getLogger(__name__)
 

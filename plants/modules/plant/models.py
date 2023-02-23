@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from operator import attrgetter
-from sqlalchemy import Column, INTEGER, BOOLEAN, ForeignKey, TEXT, Identity, VARCHAR
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import foreign, remote  # noqa
-from sqlalchemy.types import DateTime
-import logging
 import datetime
+import logging
+from operator import attrgetter
+
+from sqlalchemy import (BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey,
+                        Identity)
+from sqlalchemy.orm import foreign, relationship, remote  # noqa
+from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
 

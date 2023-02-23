@@ -1,17 +1,17 @@
-from fastapi import APIRouter, Depends
 import logging
 
+from fastapi import APIRouter, Depends
 from starlette.requests import Request
 
+from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.proposal_schemas import BResultsProposals, BResultsSelection
-from plants.shared.enums import FProposalEntity
-from plants.shared.proposal_services import build_taxon_tree
 from plants.shared.api_utils import make_list_items_json_serializable
-from plants.shared.message_services import throw_exception, get_message
-from plants.dependencies import get_image_dal, get_taxon_dal, get_plant_dal
+from plants.shared.enums import FProposalEntity
+from plants.shared.message_services import get_message, throw_exception
+from plants.shared.proposal_schemas import BResultsProposals, BResultsSelection
+from plants.shared.proposal_services import build_taxon_tree
 
 logger = logging.getLogger(__name__)
 

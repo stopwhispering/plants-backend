@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import Extra
 from pydantic.main import BaseModel
 
-from plants.shared.enums import FBMajorResource, BMessageType
+from plants.shared.enums import BMessageType, FBMajorResource
 
 
 class BMessage(BaseModel):

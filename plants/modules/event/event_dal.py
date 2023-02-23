@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import EventNotFound, SoilNotFound, UpdateNotImplemented
-from plants.modules.event.models import Event, Soil, Observation, Pot
+from plants.modules.event.models import Event, Observation, Pot, Soil
 from plants.modules.image.models import Image, ImageToEventAssociation
 from plants.modules.plant.models import Plant
 from plants.shared.base_dal import BaseDAL

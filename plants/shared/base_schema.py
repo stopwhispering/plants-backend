@@ -2,8 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Extra
 
-from plants.shared.message_schemas import BMessage
 from plants.shared.enums import FBMajorResource
+from plants.shared.message_schemas import BMessage
 
 
 class BaseSchema(BaseModel):

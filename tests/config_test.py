@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from sqlalchemy.engine import URL
 from pydantic import BaseSettings, constr
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncConnection
+from sqlalchemy.engine import URL
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from plants.extensions.orm import Base
 
@@ -45,11 +45,11 @@ async def create_tables_if_required(engine: AsyncEngine):
     # import all orm tables. don't remove!
     # this populates Base.metadata's list of tables
     import plants.modules.event.models  # noqa
-    import plants.shared.history_models  # noqa
     import plants.modules.image.models  # noqa
     import plants.modules.plant.models  # noqa
-    import plants.modules.taxon.models  # noqa
     import plants.modules.pollination.models  # noqa
+    import plants.modules.taxon.models  # noqa
+    import plants.shared.history_models  # noqa
 
     # create db tables if not existing
     async with engine.begin() as conn:

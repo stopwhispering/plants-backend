@@ -1,13 +1,15 @@
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
-from plants.exceptions import TaxonNotFound, ImageNotAssignedToTaxon, CriterionNotImplemented
-from plants.modules.image.models import ImageToTaxonAssociation, Image
+from plants.exceptions import (CriterionNotImplemented,
+                               ImageNotAssignedToTaxon, TaxonNotFound)
+from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.plant.models import Plant
-from plants.modules.taxon.models import Taxon, TaxonToOccurrenceAssociation, TaxonOccurrenceImage
 from plants.modules.taxon.enums import FBRank
+from plants.modules.taxon.models import (Taxon, TaxonOccurrenceImage,
+                                         TaxonToOccurrenceAssociation)
 from plants.shared.base_dal import BaseDAL
 
 

@@ -3,8 +3,8 @@ from httpx import AsyncClient
 
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.enums import FlorescenceStatus
+from plants.modules.pollination.models import Florescence
 
 
 @pytest.mark.asyncio

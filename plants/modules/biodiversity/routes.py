@@ -1,19 +1,20 @@
-from json.decoder import JSONDecodeError
-from fastapi import APIRouter, Depends
 import logging
+from json.decoder import JSONDecodeError
 
+from fastapi import APIRouter, Depends
 from starlette.requests import Request
 
 from plants.dependencies import get_taxon_dal
-from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.message_services import throw_exception, get_message
 from plants.exceptions import TooManyResultsError
-from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.modules.taxon.schemas import (
-    FTaxonInfoRequest, BResultsTaxonInfoRequest, FFetchTaxonOccurrenceImagesRequest,
-    BResultsFetchTaxonImages
-)
+from plants.modules.biodiversity.taxonomy_occurence_images import \
+    TaxonOccurencesLoader
 from plants.modules.biodiversity.taxonomy_search import TaxonomySearch
+from plants.modules.taxon.schemas import (BResultsFetchTaxonImages,
+                                          BResultsTaxonInfoRequest,
+                                          FFetchTaxonOccurrenceImagesRequest,
+                                          FTaxonInfoRequest)
+from plants.modules.taxon.taxon_dal import TaxonDAL
+from plants.shared.message_services import get_message, throw_exception
 
 logger = logging.getLogger(__name__)
 

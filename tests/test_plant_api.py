@@ -1,8 +1,8 @@
 import pytest
 from httpx import AsyncClient
 
-from plants.shared.history_dal import HistoryDAL
 from plants.modules.plant.models import Plant
+from plants.shared.history_dal import HistoryDAL
 
 
 @pytest.mark.asyncio

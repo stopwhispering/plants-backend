@@ -1,14 +1,13 @@
+import json
 import os
 
 import pytest
 from httpx import AsyncClient
 
-import json
-
+import plants as plants_package
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-import plants as plants_package
 
 
 @pytest.mark.asyncio
