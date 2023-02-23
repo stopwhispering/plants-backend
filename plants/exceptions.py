@@ -136,4 +136,3 @@ class ImageNotFound(BaseError):
 
     def __init__(self, image_id: int | str):
         super().__init__(detail=f"Image {image_id} not found in database", status_code=status.HTTP_404_NOT_FOUND)
-

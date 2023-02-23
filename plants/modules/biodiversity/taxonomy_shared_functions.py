@@ -33,8 +33,3 @@ def create_synonyms_concat(powo_lookup: dict) -> Optional[str]:
         return ', '.join([s['name'] for s in powo_lookup['synonyms']])
     else:
         return None
-
-
-
-
-

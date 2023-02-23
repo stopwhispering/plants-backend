@@ -99,5 +99,3 @@ def resize_image(path: Path, save_to_path: Path, size: Tuple[int, int], quality:
 
     if path != save_to_path:
         path.unlink()  # delete file
-
-

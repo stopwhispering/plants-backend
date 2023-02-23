@@ -57,4 +57,3 @@ async def create_tables_if_required(engine: AsyncEngine):
         await conn.run_sync(Base.metadata.create_all)
         # await conn.commit()
         # await conn.close()
-

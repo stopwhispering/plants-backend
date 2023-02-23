@@ -147,6 +147,3 @@ class ImageToTaxonAssociation(Base):
                          back_populates='image_to_taxon_associations',
                          overlaps="images,taxa"  # silence warnings
                          )
-
-
-

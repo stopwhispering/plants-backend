@@ -1,0 +1,43 @@
+default_language_version:
+    python: python3.11
+repos:
+#-   repo: https://github.com/psf/black
+#    rev: 23.1.0
+#    hooks:
+#    -   id: black
+#-   repo: https://github.com/charliermarsh/ruff-pre-commit
+#    rev: v0.0.252
+#    hooks:
+#    -   id: ruff
+#        args:
+#        - --fix
+#-   repo: https://github.com/pycqa/isort
+#    rev: 5.12.0
+#    hooks:
+#      - id: isort
+#        name: isort (python)
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+#    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-toml
+    -   id: check-json
+    -   id: pretty-format-json  # sets a standard for formatting json files
+    -   id: check-added-large-files
+    -   id: check-ast  # simply checks whether the files parse as valid python.
+    -   id: check-case-conflict  #  checks for files that would conflict in case-insensitive filesystems
+    -   id: debug-statements  # checks for debugger imports and py37+ `breakpoint()` calls in python source.
+#- repo: local  # pylint works only with the local repo
+#  hooks:
+#    - id: pylint
+#      name: pylint
+#      entry: pylint
+#      language: system
+#      types: [python]
+#      args:
+#        [
+#          "-rn", # Only display messages
+#          "-sn", # Don't display the score
+#        ]

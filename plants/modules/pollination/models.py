@@ -114,4 +114,3 @@ class Pollination(Base):
     creation_at_context = Column(VARCHAR(30), nullable=False)
 
     # todo via 1:n association table: plants
-
