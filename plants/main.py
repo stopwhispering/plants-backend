@@ -17,29 +17,41 @@ from plants.modules.pollination.routes import router as pollination_router
 from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
 
-configure_root_logger(log_severity_console=local_config.log_settings.log_level_console,
-                      log_severity_file=local_config.log_settings.log_level_file,
-                      log_file_path=local_config.log_settings.log_file_path)
+configure_root_logger(
+    log_severity_console=local_config.log_settings.log_level_console,
+    log_severity_file=local_config.log_settings.log_level_file,
+    log_file_path=local_config.log_settings.log_file_path,
+)
 logger = logging.getLogger(__name__)
 
-COMMON_PREFIX: Final[str] = '/api'
+COMMON_PREFIX: Final[str] = "/api"
 app = FastAPI(
     title="Plants",
-    docs_url=COMMON_PREFIX + "/docs" if local_config.environment == Environment.DEV else None,
-    redoc_url=COMMON_PREFIX + "/redoc" if local_config.environment == Environment.DEV else None,
-    openapi_url=COMMON_PREFIX + "/openapi.json" if local_config.environment == Environment.DEV else None,
+    docs_url=COMMON_PREFIX + "/docs"
+    if local_config.environment == Environment.DEV
+    else None,
+    redoc_url=COMMON_PREFIX + "/redoc"
+    if local_config.environment == Environment.DEV
+    else None,
+    openapi_url=COMMON_PREFIX + "/openapi.json"
+    if local_config.environment == Environment.DEV
+    else None,
 )
 
 # we are using this backend for two frontends: plants (same hostname, no cors required) and pollinations (cors required)
-ORIGINS: Final[list[str]] = ["http://pollination.localhost",
-                             "https://pollination." + local_config.hostname, ]
+ORIGINS: Final[list[str]] = [
+    "http://pollination.localhost",
+    "https://pollination." + local_config.hostname,
+]
 # additional CORS for development only
 if local_config.allow_cors:
     # if config.allow_cors:
-    ORIGINS.extend([
-        "http://localhost:5000",
-        "http://localhost:8080",
-    ])
+    ORIGINS.extend(
+        [
+            "http://localhost:5000",
+            "http://localhost:8080",
+        ]
+    )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,

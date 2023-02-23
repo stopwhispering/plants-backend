@@ -31,6 +31,7 @@ class BSaveConfirmation(BaseModel):
     we need to return the updated resource to the frontend
     to enable the frontend to identify when all resources have been saved
     """
+
     resource: FBMajorResource
     message: BMessage
 

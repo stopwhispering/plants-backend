@@ -4,16 +4,17 @@ from typing import List, Optional
 from pydantic import constr
 
 from plants import settings
-from plants.shared.base_schema import (BaseSchema, RequestContainer,
-                                       ResponseContainer)
+from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 from plants.shared.message_schemas import BMessage
 
 
 class FBImagePlantTag(BaseSchema):
     plant_id: int
     plant_name: constr(min_length=1, max_length=100)
-    plant_name_short: constr(min_length=1,
-                             max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag)
+    plant_name_short: constr(
+        min_length=1,
+        max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag,
+    )
 
 
 class FBKeyword(BaseSchema):

@@ -67,30 +67,46 @@ class FloweringPlant:
         else:
             return BFloweringState.NOT_FLOWERING
 
-    def _get_inflorescence_period(self, florescence: Florescence) -> FloweringPeriod | None:
+    def _get_inflorescence_period(
+        self, florescence: Florescence
+    ) -> FloweringPeriod | None:
         # simple case - inflorescence period is known
-        if florescence.inflorescence_appearance_date and florescence.first_flower_opening_date:
+        if (
+            florescence.inflorescence_appearance_date
+            and florescence.first_flower_opening_date
+        ):
             return FloweringPeriod(
                 start=florescence.inflorescence_appearance_date,
                 start_verified=True,
                 end=florescence.first_flower_opening_date - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING
+                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
 
         # start is known, end is not
-        elif florescence.inflorescence_appearance_date and not florescence.first_flower_opening_date:
+        elif (
+            florescence.inflorescence_appearance_date
+            and not florescence.first_flower_opening_date
+        ):
             if florescence.last_flower_closing_date:
-                estimated_first_flower_date = (florescence.last_flower_closing_date -
-                                               timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER))
+                estimated_first_flower_date = (
+                    florescence.last_flower_closing_date
+                    - timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER)
+                )
             elif florescence.first_seed_ripening_date:
-                estimated_first_flower_date = (florescence.first_seed_ripening_date -
-                                               timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
+                estimated_first_flower_date = (
+                    florescence.first_seed_ripening_date
+                    - timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED)
+                )
             elif florescence.last_seed_ripening_date:
-                estimated_first_flower_date = (florescence.last_seed_ripening_date -
-                                               timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
+                estimated_first_flower_date = (
+                    florescence.last_seed_ripening_date
+                    - timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED)
+                )
             else:
-                logger.warning(f'Abandoned inflorescence {florescence.id} for plant {self.plant.plant_name}')
+                logger.warning(
+                    f"Abandoned inflorescence {florescence.id} for plant {self.plant.plant_name}"
+                )
                 return None
 
             return FloweringPeriod(
@@ -98,46 +114,62 @@ class FloweringPlant:
                 start_verified=True,
                 end=estimated_first_flower_date - timedelta(days=1),
                 end_verified=False,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING
+                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
 
         # end date is known, start is not
         elif florescence.first_flower_opening_date:
             return FloweringPeriod(
-                start=(florescence.first_flower_opening_date -
-                       timedelta(days=AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER)),
+                start=(
+                    florescence.first_flower_opening_date
+                    - timedelta(days=AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER)
+                ),
                 start_verified=False,
                 end=florescence.first_flower_opening_date - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING
+                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
 
         else:
-            logger.warning(f"Can't determine inflorescence period - Unknown dates for {florescence.plant.plant_name}. "
-                           f"Comment: {florescence.comment}")
+            logger.warning(
+                f"Can't determine inflorescence period - Unknown dates for {florescence.plant.plant_name}. "
+                f"Comment: {florescence.comment}"
+            )
             return None
 
     def _get_flowering_period(self, florescence: Florescence) -> FloweringPeriod | None:
         # simple case - start and end dates are known
-        if florescence.first_flower_opening_date and florescence.last_flower_closing_date:
+        if (
+            florescence.first_flower_opening_date
+            and florescence.last_flower_closing_date
+        ):
             return FloweringPeriod(
                 start=florescence.first_flower_opening_date,
                 start_verified=True,
                 end=florescence.last_flower_closing_date - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.FLOWERING
+                flowering_state=BFloweringState.FLOWERING,
             )
 
         # start is known, end is not
-        elif florescence.first_flower_opening_date and not florescence.last_flower_closing_date:
+        elif (
+            florescence.first_flower_opening_date
+            and not florescence.last_flower_closing_date
+        ):
             if florescence.first_seed_ripening_date:
-                estimated_last_flower_date = (florescence.first_seed_ripening_date -
-                                              timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED))
+                estimated_last_flower_date = (
+                    florescence.first_seed_ripening_date
+                    - timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_FIRST_SEED)
+                )
             elif florescence.last_seed_ripening_date:
-                estimated_last_flower_date = (florescence.last_seed_ripening_date -
-                                              timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED))
+                estimated_last_flower_date = (
+                    florescence.last_seed_ripening_date
+                    - timedelta(days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED)
+                )
             else:
-                logger.warning(f'Abandoned flowering {florescence.id} for plant {self.plant.plant_name}')
+                logger.warning(
+                    f"Abandoned flowering {florescence.id} for plant {self.plant.plant_name}"
+                )
                 return None
 
             return FloweringPeriod(
@@ -145,31 +177,44 @@ class FloweringPlant:
                 start_verified=True,
                 end=estimated_last_flower_date - timedelta(days=1),
                 end_verified=False,
-                flowering_state=BFloweringState.FLOWERING
+                flowering_state=BFloweringState.FLOWERING,
             )
 
         # end date is known, start is not
         elif florescence.last_flower_closing_date:
             return FloweringPeriod(
-                start=(florescence.last_flower_closing_date -
-                       timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER)),
+                start=(
+                    florescence.last_flower_closing_date
+                    - timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER)
+                ),
                 start_verified=False,
                 end=florescence.last_flower_closing_date - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.FLOWERING
+                flowering_state=BFloweringState.FLOWERING,
             )
         else:
-            logger.warning(f"Can't determine flowering period - Unknown dates for {florescence.plant.plant_name}. "
-                           f"Comment: {florescence.comment}")
+            logger.warning(
+                f"Can't determine flowering period - Unknown dates for {florescence.plant.plant_name}. "
+                f"Comment: {florescence.comment}"
+            )
 
-    def _get_seed_ripening_period(self, florescence: Florescence) -> FloweringPeriod | None:
-
+    def _get_seed_ripening_period(
+        self, florescence: Florescence
+    ) -> FloweringPeriod | None:
         # beginning is estimated to be inbetween first and last flower
         calculated_start: date | None
-        if florescence.first_flower_opening_date and florescence.last_flower_closing_date:
-            calculated_start = florescence.first_flower_opening_date + (
-                    florescence.last_flower_closing_date - florescence.first_flower_opening_date
-            ) / 2
+        if (
+            florescence.first_flower_opening_date
+            and florescence.last_flower_closing_date
+        ):
+            calculated_start = (
+                florescence.first_flower_opening_date
+                + (
+                    florescence.last_flower_closing_date
+                    - florescence.first_flower_opening_date
+                )
+                / 2
+            )
         else:
             calculated_start = None
 
@@ -180,39 +225,47 @@ class FloweringPlant:
                 start_verified=True,  # !
                 end=florescence.last_seed_ripening_date,
                 end_verified=True,
-                flowering_state=BFloweringState.SEEDS_RIPENING
+                flowering_state=BFloweringState.SEEDS_RIPENING,
             )
 
         # start is known, end is not
         elif calculated_start:
             if florescence.first_seed_ripening_date:
-                estimated_last_seed_date = (florescence.first_seed_ripening_date
-                                            + timedelta(days=AVG_DURATION_FIRST_TO_LAST_SEED))
+                estimated_last_seed_date = (
+                    florescence.first_seed_ripening_date
+                    + timedelta(days=AVG_DURATION_FIRST_TO_LAST_SEED)
+                )
             else:
-                logger.warning(f'Abandoned seed ripening {florescence.id} for plant {self.plant.plant_name}')
+                logger.warning(
+                    f"Abandoned seed ripening {florescence.id} for plant {self.plant.plant_name}"
+                )
                 return None
             return FloweringPeriod(
                 start=calculated_start,
                 start_verified=True,  # !
                 end=estimated_last_seed_date,
                 end_verified=False,
-                flowering_state=BFloweringState.SEEDS_RIPENING
+                flowering_state=BFloweringState.SEEDS_RIPENING,
             )
 
         # end is known, start is not
         elif florescence.last_seed_ripening_date:
             return FloweringPeriod(
-                start=(florescence.last_seed_ripening_date -
-                       timedelta(days=AVG_DURATION_FIRST_TO_LAST_SEED)),
+                start=(
+                    florescence.last_seed_ripening_date
+                    - timedelta(days=AVG_DURATION_FIRST_TO_LAST_SEED)
+                ),
                 start_verified=False,
                 end=florescence.last_seed_ripening_date,
                 end_verified=True,
-                flowering_state=BFloweringState.SEEDS_RIPENING
+                flowering_state=BFloweringState.SEEDS_RIPENING,
             )
 
         else:
-            logger.warning(f"Can't determine seed ripening period - Unknown dates for {florescence.plant.plant_name}. "
-                           f"Comment: {florescence.comment}")
+            logger.warning(
+                f"Can't determine seed ripening period - Unknown dates for {florescence.plant.plant_name}. "
+                f"Comment: {florescence.comment}"
+            )
             return None
 
 
@@ -247,22 +300,26 @@ async def generate_flower_history(florescence_dal: FlorescenceDAL):
 
     # for fp in flowering_plants:
     #
-    datetimes: list[datetime] = list(rrule.rrule(rrule.MONTHLY, dtstart=earliest_date, until=date.today()))
+    datetimes: list[datetime] = list(
+        rrule.rrule(rrule.MONTHLY, dtstart=earliest_date, until=date.today())
+    )
     months = [d.strftime(FORMAT_YYYY_MM) for d in datetimes]
 
     flower_history = []
     for fp in flowering_plants:
         fp: FloweringPlant
         plant_flower_history = {
-            'plant_id': fp.plant.id,
-            'plant_name': fp.plant.plant_name,
-            'periods': [],
+            "plant_id": fp.plant.id,
+            "plant_name": fp.plant.plant_name,
+            "periods": [],
         }
         for dt in datetimes:
-            plant_flower_history['periods'].append({
-                'month': dt.strftime(FORMAT_YYYY_MM),
-                'flowering_state': fp.get_state_at_date(dt.date())
-            })
+            plant_flower_history["periods"].append(
+                {
+                    "month": dt.strftime(FORMAT_YYYY_MM),
+                    "flowering_state": fp.get_state_at_date(dt.date()),
+                }
+            )
         BPlantFlowerHistory.validate(plant_flower_history)
         flower_history.append(plant_flower_history)
 

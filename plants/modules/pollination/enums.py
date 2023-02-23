@@ -6,10 +6,11 @@ from enum import Enum
 
 class BFloweringState(Enum):
     """state of flowering"""
-    INFLORESCENCE_GROWING = 'inflorescence_growing'
-    FLOWERING = 'flowering'
-    SEEDS_RIPENING = 'seeds_ripening'
-    NOT_FLOWERING = 'not_flowering'
+
+    INFLORESCENCE_GROWING = "inflorescence_growing"
+    FLOWERING = "flowering"
+    SEEDS_RIPENING = "seeds_ripening"
+    NOT_FLOWERING = "not_flowering"
 
 
 # keep in sync with formatter.js in frontend
@@ -54,19 +55,19 @@ class Location(str, enum.Enum):
 
 
 COLORS_MAP: dict[str, str] = {
-    '#f2f600': 'yellow',
-    '#d21d26': 'red',
-    '#ffffff': 'white',
-    '#f5bfd9': 'pale rose',
-    '#9a5abf': 'purple',
-    '#008b3c': 'green',
-    '#ff7c09': 'orange',
-    '#16161b': 'black',
-    '#909090': 'gray',
-    '#6b492b': 'brown',
-    '#104e8b': 'dark blue',
-    '#b0e2ff': 'light blue',
-    '#46f953': 'neon green',
+    "#f2f600": "yellow",
+    "#d21d26": "red",
+    "#ffffff": "white",
+    "#f5bfd9": "pale rose",
+    "#9a5abf": "purple",
+    "#008b3c": "green",
+    "#ff7c09": "orange",
+    "#16161b": "black",
+    "#909090": "gray",
+    "#6b492b": "brown",
+    "#104e8b": "dark blue",
+    "#b0e2ff": "light blue",
+    "#46f953": "neon green",
 }
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}
 
@@ -101,6 +102,6 @@ class StigmaPosition(str, enum.Enum):
 
 
 class PollenQuality(str, Enum):
-    GOOD = 'good'
-    BAD = 'bad'
-    UNKNOWN = 'unknown'
+    GOOD = "good"
+    BAD = "bad"
+    UNKNOWN = "unknown"

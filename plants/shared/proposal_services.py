@@ -30,10 +30,7 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
         # get family node
         if current_family != previous_family:
             new_family = True
-            family_node = {'key':   current_family,
-                           'nodes': [],
-                           'level': 0,
-                           'count': 0}
+            family_node = {"key": current_family, "nodes": [], "level": 0, "count": 0}
             tree.append(family_node)
         else:
             new_family = False
@@ -41,35 +38,37 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
         # get genus node
         if (current_genus != previous_genus) or new_family:
             new_genus = True
-            genus_node = {'key':   current_genus,
-                          'nodes': [],
-                          'level': 1,
-                          'count': 0}
-            family_node['nodes'].append(genus_node)
+            genus_node = {"key": current_genus, "nodes": [], "level": 1, "count": 0}
+            family_node["nodes"].append(genus_node)
         else:
             new_genus = False
 
         # create species leaf
-        current_species = current_species or '[Custom]'
+        current_species = current_species or "[Custom]"
         if (current_species != previous_species) or new_genus:
-            species_leaf = {'key':       current_species,
-                            'level':     2,
-                            'plant_ids': [],
-                            'count':     0}
-            genus_node['nodes'].append(species_leaf)
+            species_leaf = {
+                "key": current_species,
+                "level": 2,
+                "plant_ids": [],
+                "count": 0,
+            }
+            genus_node["nodes"].append(species_leaf)
 
         # we might have multiple taxon ids for that species (e.g. varieties), for each of them, get plant ids
         # todo: do a join at the top so we don't need that lookup here
-        plant_ids_tuple = await plant_dal.get_plant_ids_by_taxon_id(taxon_id=current_taxon_id,
-                                                                    eager_load=False)  # load no relationships
+        plant_ids_tuple = await plant_dal.get_plant_ids_by_taxon_id(
+            taxon_id=current_taxon_id, eager_load=False
+        )  # load no relationships
         # plant_ids_tuple = db.query(Plant.id).filter(Plant.taxon_id == current_taxon_id,
         #                                             Plant.active.is_(True)).all()
         # species_leaf['plant_ids'].extend([t[0] for t in plant_ids_tuple])
-        species_leaf['plant_ids'].extend([t for t in plant_ids_tuple])  # todo inner comprehension redundant?
+        species_leaf["plant_ids"].extend(
+            [t for t in plant_ids_tuple]
+        )  # todo inner comprehension redundant?
 
-        genus_node['count'] += (plants_current_taxon := len(plant_ids_tuple))
-        family_node['count'] += plants_current_taxon
-        species_leaf['count'] += plants_current_taxon
+        genus_node["count"] += (plants_current_taxon := len(plant_ids_tuple))
+        family_node["count"] += plants_current_taxon
+        species_leaf["count"] += plants_current_taxon
 
         previous_family = current_family
         previous_genus = current_genus
@@ -82,8 +81,23 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
         # plant_ids_empty_tuples = db.query(Plant.id).filter(and_(plant_exists_filter, Plant.taxon_id.is_(None))).all()
         # plant_ids_empty = [t[0] for t in plant_ids_empty_tuples]
         plant_ids_empty = await plant_dal.get_plants_ids_without_taxon()
-        node_empty_species = {'key': '', 'level': 2, 'count': count_empty, 'plant_ids': plant_ids_empty}
-        node_empty_genus = {'key': '', 'level': 1, 'count': count_empty, 'nodes': [node_empty_species]}
-        node_empty_family = {'key': '', 'level': 0, 'count': count_empty, 'nodes': [node_empty_genus]}
+        node_empty_species = {
+            "key": "",
+            "level": 2,
+            "count": count_empty,
+            "plant_ids": plant_ids_empty,
+        }
+        node_empty_genus = {
+            "key": "",
+            "level": 1,
+            "count": count_empty,
+            "nodes": [node_empty_species],
+        }
+        node_empty_family = {
+            "key": "",
+            "level": 0,
+            "count": count_empty,
+            "nodes": [node_empty_genus],
+        }
         tree.append(node_empty_family)
     return tree

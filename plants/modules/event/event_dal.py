@@ -14,13 +14,14 @@ class EventDAL(BaseDAL):
 
     async def get_events_by_plant(self, plant: Plant) -> list[Event]:
         """read all events for supplied plant, including related images, observations, soils and pots"""
-        query = (select(Event)
-                 .where(Event.plant_id == plant.id)
-                 .options(selectinload(Event.images))
-                 .options(selectinload(Event.observation))
-                 .options(selectinload(Event.soil))
-                 .options(selectinload(Event.pot))
-                 )
+        query = (
+            select(Event)
+            .where(Event.plant_id == plant.id)
+            .options(selectinload(Event.images))
+            .options(selectinload(Event.observation))
+            .options(selectinload(Event.soil))
+            .options(selectinload(Event.pot))
+        )
         events: list[Event] = (await self.session.scalars(query)).all()  # noqa
         return events
 
@@ -59,9 +60,7 @@ class EventDAL(BaseDAL):
         return soils
 
     async def get_soil_by_id(self, soil_id: int) -> Soil:
-        query = (select(Soil)
-                 .where(Soil.id == soil_id)  # noqa
-                 .limit(1))
+        query = select(Soil).where(Soil.id == soil_id).limit(1)  # noqa
         soil: Soil = (await self.session.scalars(query)).first()
         if not soil:
             raise SoilNotFound(soil_id)
@@ -69,13 +68,13 @@ class EventDAL(BaseDAL):
 
     async def update_soil(self, soil: Soil, updates: dict):
         for key, value in updates.items():
-            if key == 'soil_name':
+            if key == "soil_name":
                 value: str
                 soil.soil_name = value
-            elif key == 'description':
+            elif key == "description":
                 value: str
                 soil.description = value
-            elif key == 'mix':
+            elif key == "mix":
                 value: str
                 soil.mix = value
             else:
@@ -85,34 +84,38 @@ class EventDAL(BaseDAL):
 
     async def get_soils_by_name(self, soil_name: str) -> list[Soil]:
         # todo: once we have made soil names unique, we can change this with singular version
-        query = (select(Soil)
-                 .where(Soil.soil_name == soil_name)  # noqa
-                 )
+        query = select(Soil).where(Soil.soil_name == soil_name)  # noqa
         soils: list[Soil] = (await self.session.scalars(query)).all()  # noqa
         return soils
 
     async def get_event_by_plant_and_date(self, plant: Plant, event_date: str) -> Event:
-        query = (select(Event)
-                 .where(Event.plant_id == plant.id)
-                 .where(Event.date == event_date)  # yyyy-mm-dd
-                 .limit(1))
+        query = (
+            select(Event)
+            .where(Event.plant_id == plant.id)
+            .where(Event.date == event_date)  # yyyy-mm-dd
+            .limit(1)
+        )
         event: Event = (await self.session.scalars(query)).first()
         return event
 
     async def by_id(self, event_id) -> Event:
-        query = (select(Event)
-                 .where(Event.id == event_id)  # noqa
-                 .options(selectinload(Event.images))
-                 .options(selectinload(Event.observation))
-                 .options(selectinload(Event.pot))
-                 .options(selectinload(Event.soil))
-                 .limit(1))
+        query = (
+            select(Event)
+            .where(Event.id == event_id)  # noqa
+            .options(selectinload(Event.images))
+            .options(selectinload(Event.observation))
+            .options(selectinload(Event.pot))
+            .options(selectinload(Event.soil))
+            .limit(1)
+        )
         event: Event = (await self.session.scalars(query)).first()
         if not event:
             raise EventNotFound(event_id)
         return event
 
-    async def delete_image_to_event_associations(self, links: list[ImageToEventAssociation], event: Event = None):
+    async def delete_image_to_event_associations(
+        self, links: list[ImageToEventAssociation], event: Event = None
+    ):
         for link in links:
             if event:
                 event.image_to_event_associations.remove(link)

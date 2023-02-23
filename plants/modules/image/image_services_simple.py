@@ -18,7 +18,9 @@ def _remove_image_from_filesystem(filename: str) -> None:
     settings.paths.path_original_photos_uploaded.joinpath(filename).unlink()
 
 
-async def remove_files_already_existing(files: List, image_dal: ImageDAL) -> Tuple[list[str], list[str]]:
+async def remove_files_already_existing(
+    files: List, image_dal: ImageDAL
+) -> Tuple[list[str], list[str]]:
     """
     iterates over file objects, checks whether a file with that name already exists in filesystem and/or in database
      - if we have an orphaned file in filesystem, missing in database, it will be deleted with a messasge
@@ -27,26 +29,36 @@ async def remove_files_already_existing(files: List, image_dal: ImageDAL) -> Tup
     """
     duplicate_filenames = []
     warnings = []
-    for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
+    for photo_upload in files[
+        :
+    ]:  # need to loop on copy if we want to delete within loop
         # path = config.path_original_photos_uploaded.joinpath(photo_upload.filename)
         # logger.debug(f'Checking uploaded photo_file ({photo_upload.content_type}) to be saved as {path}.')
-        exists_in_filesystem = _original_image_file_exists(filename=photo_upload.filename)
+        exists_in_filesystem = _original_image_file_exists(
+            filename=photo_upload.filename
+        )
         exists_in_db = await image_dal.image_exists(filename=photo_upload.filename)
         if exists_in_filesystem and not exists_in_db:
             _remove_image_from_filesystem(filename=photo_upload.filename)
-            logger.warning(warning := f'Found orphaned image {{photo_upload.filename}} in filesystem, '
-                                      f'but not in database. Deletied image file.')
+            logger.warning(
+                warning := f"Found orphaned image {{photo_upload.filename}} in filesystem, "
+                f"but not in database. Deletied image file."
+            )
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:
             await image_dal.delete_image_by_filename(filename=photo_upload.filename)
-            logger.warning(warning := f'Found orphaned db entry for uploaded image  {photo_upload.filename} with no '
-                           f'corresponsing file. Removed db entry.')
+            logger.warning(
+                warning := f"Found orphaned db entry for uploaded image  {photo_upload.filename} with no "
+                f"corresponsing file. Removed db entry."
+            )
             warnings.append(warning)
         # if path.is_file() or with_suffix(path, suffix).is_file():
         elif exists_in_filesystem and exists_in_db:
             files.remove(photo_upload)
             duplicate_filenames.append(photo_upload.filename)
-            logger.warning(f'Skipping file upload (duplicate) for: {photo_upload.filename}')
+            logger.warning(
+                f"Skipping file upload (duplicate) for: {photo_upload.filename}"
+            )
     return duplicate_filenames, warnings
 
 
@@ -74,4 +86,6 @@ def get_relative_path(absolute_path: Path) -> PurePath:
     # todo better with .parent?
     rel_path_photos_original = settings.paths.rel_path_photos_original.as_posix()
     absolute_path_str = absolute_path.as_posix()
-    return PurePath(absolute_path_str[absolute_path_str.find(rel_path_photos_original):])
+    return PurePath(
+        absolute_path_str[absolute_path_str.find(rel_path_photos_original) :]
+    )

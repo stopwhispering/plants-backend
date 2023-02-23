@@ -6,8 +6,14 @@ from plants.extensions.orm import Base
 
 class History(Base):
     """history of certain events; used for error-finding et alia"""
-    __tablename__ = 'history'
-    id = Column(INTEGER, Identity(start=1, cycle=True, always=False), primary_key=True, nullable=False)
+
+    __tablename__ = "history"
+    id = Column(
+        INTEGER,
+        Identity(start=1, cycle=True, always=False),
+        primary_key=True,
+        nullable=False,
+    )
 
     timestamp = Column(DateTime(timezone=True))  # todo rename
     plant_id = Column(INTEGER)

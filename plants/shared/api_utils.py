@@ -4,16 +4,15 @@ from pathlib import Path
 
 from starlette.requests import Request
 
-from plants.shared.api_constants import (FORMAT_API_YYYY_MM_DD_HH_MM,
-                                         FORMAT_YYYY_MM_DD)
+from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM, FORMAT_YYYY_MM_DD
 
 
 def parse_resource_from_request(req: Request):
-    items = req.get('path').split('/')
-    index_start = items.index('api') + 1
-    resource_name = '/'.join(items[index_start:])
-    if '?' in resource_name:
-        resource_name = resource_name[:resource_name.find('?')]
+    items = req.get("path").split("/")
+    index_start = items.index("api") + 1
+    resource_name = "/".join(items[index_start:])
+    if "?" in resource_name:
+        resource_name = resource_name[: resource_name.find("?")]
 
     return resource_name
 
@@ -55,7 +54,11 @@ def make_list_items_json_serializable(items: list):
 def make_dict_values_json_serializable(d: dict):
     """tries to convert the values of a dict into something that is json serializable if it is not;
     works recursively for nested dicts, i.e. if value is also a dict"""
-    for key in d.keys():  # can't loop at items() as value will then be a copy, not a reference to orig obj
+    for (
+        key
+    ) in (
+        d.keys()
+    ):  # can't loop at items() as value will then be a copy, not a reference to orig obj
         if type(d[key]) is dict:
             make_dict_values_json_serializable(d[key])
         else:

@@ -39,11 +39,11 @@ def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
     from b"YYYY:MM:DD HH:MM:SS" to datetime object
     """
     try:
-        s_dt = date_time_bin.decode('utf-8')
-        s_format = '%Y:%m:%d %H:%M:%S'
+        s_dt = date_time_bin.decode("utf-8")
+        s_format = "%Y:%m:%d %H:%M:%S"
     except AttributeError:  # manually entered string
         s_dt = date_time_bin
-        s_format = '%Y-%m-%d'
+        s_format = "%Y-%m-%d"
     return datetime.datetime.strptime(s_dt, s_format)
 
 
@@ -52,9 +52,9 @@ def encode_record_date_time(dt: datetime.datetime):
     encode datetime into format required by exif tag
     from datetime object to b"YYYY:MM:DD HH:MM:SS"
     """
-    s_format = '%Y:%m:%d %H:%M:%S'
+    s_format = "%Y:%m:%d %H:%M:%S"
     s_dt = dt.strftime(s_format)
-    return s_dt.encode('utf-8')
+    return s_dt.encode("utf-8")
 
 
 def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
@@ -63,9 +63,11 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     applies a recompression with high quality; re-attaches the original exif files to the new file but without the
     orientation tag
     """
-    if (not exif_dict
-            or piexif.ImageIFD.Orientation not in exif_dict["0th"]
-            or exif_dict["0th"][piexif.ImageIFD.Orientation] == 1):
+    if (
+        not exif_dict
+        or piexif.ImageIFD.Orientation not in exif_dict["0th"]
+        or exif_dict["0th"][piexif.ImageIFD.Orientation] == 1
+    ):
         return
 
     img = Image.open(path_image)
@@ -75,34 +77,48 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
         exif_bytes = piexif.dump(exif_dict)
     except ValueError as e:
         # treat error "Given thumbnail is too large. max 64kB"
-        logger.warning(f'Catched exception when auto-rotating image file: {str(e)}. Trying again after deleting '
-                       'embedded thumbnail.')
-        del exif_dict['thumbnail']
+        logger.warning(
+            f"Catched exception when auto-rotating image file: {str(e)}. Trying again after deleting "
+            "embedded thumbnail."
+        )
+        del exif_dict["thumbnail"]
         exif_bytes = piexif.dump(exif_dict)
 
     filename = path_image.name
 
     if orientation == 2:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: flip left ot right.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: flip left ot right."
+        )
     elif orientation == 3:
         img = img.rotate(180)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: 180.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: 180."
+        )
     elif orientation == 4:
         img = img.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: 180 & flip left to right.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: 180 & flip left to right."
+        )
     elif orientation == 5:
         img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: -90 & flip left to right.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: -90 & flip left to right."
+        )
     elif orientation == 6:
         img = img.rotate(-90, expand=True)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: -90.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: -90."
+        )
     elif orientation == 7:
         img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: 90 & flip left to right.')
+        logger.info(
+            f"Rotating {filename} with orientation exif tag {orientation}: 90 & flip left to right."
+        )
     elif orientation == 8:
         img = img.rotate(90, expand=True)
-        logger.info(f'Rotating {filename} with orientation exif tag {orientation}: 90.')
+        logger.info(f"Rotating {filename} with orientation exif tag {orientation}: 90.")
 
     img.save(path_image, exif=exif_bytes, quality=90)
 
@@ -113,9 +129,9 @@ def decode_keywords_tag(t: tuple) -> List[str]:
     format coming from exif tags
     """
     chars_iter = map(chr, t)
-    chars = ''.join(chars_iter)
-    chars = chars.replace('\x00', '')  # remove null bytes after each character
-    return chars.split(';')
+    chars = "".join(chars_iter)
+    chars = chars.replace("\x00", "")  # remove null bytes after each character
+    return chars.split(";")
 
 
 def encode_keywords_tag(keywords: list[str]) -> Tuple:
@@ -147,30 +163,36 @@ def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
     are extant in supplied exif dict
     """
     try:
-        _ = exif_dict['0th'][270]  # description
-        _ = exif_dict['0th'][40094]  # keywords
-        _ = exif_dict['0th'][315]  # authors (used for plants)
+        _ = exif_dict["0th"][270]  # description
+        _ = exif_dict["0th"][40094]  # keywords
+        _ = exif_dict["0th"][315]  # authors (used for plants)
     except KeyError:
         return False
     return True
 
 
-def read_record_datetime_from_exif_tags(absolute_path: Path) -> datetime.datetime | None:
+def read_record_datetime_from_exif_tags(
+    absolute_path: Path,
+) -> datetime.datetime | None:
     """
     open jpeg file and read exif tags; decode and return original record datetime
     """
     if not absolute_path:
-        raise ValueError('File path not set.')
+        raise ValueError("File path not set.")
 
     try:
         exif_dict = piexif.load(absolute_path.as_posix())
     except InvalidImageDataError:
-        logger.warning(f'Invalid Image Type Error occured when reading EXIF Tags for {absolute_path}.')
+        logger.warning(
+            f"Invalid Image Type Error occured when reading EXIF Tags for {absolute_path}."
+        )
         return None
     except ValueError as e:
         raise e
 
-    if 36867 in exif_dict["Exif"]:  # DateTimeOriginal (date and time when the original image data was generated)
+    if (
+        36867 in exif_dict["Exif"]
+    ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
     else:
         # get creation date from file system (todo linux has only modifed date, does this still work or abort?)

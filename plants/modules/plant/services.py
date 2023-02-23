@@ -7,8 +7,13 @@ from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
-from plants.modules.plant.util import (has_roman_plant_index, int_to_roman,
-                                       parse_roman_plant_index, roman_to_int)
+from plants.modules.plant.util import (
+    has_roman_plant_index,
+    int_to_roman,
+    parse_roman_plant_index,
+    roman_to_int,
+)
+
 # from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 
@@ -34,14 +39,16 @@ def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str
 
     # rmeove photos-subdir from path if required (todo: still required somewhere?)
     if plant.filename_previewimage.is_relative_to(settings.paths.subdirectory_photos):
-        return plant.filename_previewimage.relative_to(settings.paths.subdirectory_photos).as_posix()
+        return plant.filename_previewimage.relative_to(
+            settings.paths.subdirectory_photos
+        ).as_posix()
     else:
         return plant.filename_previewimage.as_posix()
 
 
-async def update_plants_from_list_of_dicts(plants: List[PlantCreateUpdate],
-                                           plant_dal: PlantDAL,
-                                           taxon_dal: TaxonDAL) -> List[Plant]:
+async def update_plants_from_list_of_dicts(
+    plants: List[PlantCreateUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
+) -> List[Plant]:
     plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
@@ -52,12 +59,20 @@ async def update_plants_from_list_of_dicts(plants: List[PlantCreateUpdate],
             record_update = await plant_dal.by_id(plant.id)
 
         # update plant
-        updates = plant.dict(exclude={'id', 'tags', 'parent_plant', 'parent_plant_pollen'})
+        updates = plant.dict(
+            exclude={"id", "tags", "parent_plant", "parent_plant_pollen"}
+        )
 
-        updates['parent_plant_id'] = plant.parent_plant.id if plant.parent_plant else None
-        updates['parent_plant_pollen_id'] = plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
-        updates['filename_previewimage'] = _get_filename_previewimage(plant)
-        updates['taxon'] = await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
+        updates["parent_plant_id"] = (
+            plant.parent_plant.id if plant.parent_plant else None
+        )
+        updates["parent_plant_pollen_id"] = (
+            plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
+        )
+        updates["filename_previewimage"] = _get_filename_previewimage(plant)
+        updates["taxon"] = (
+            await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
+        )
 
         await plant_dal.update(record_update, updates)
 
@@ -82,21 +97,26 @@ def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
     return model_instance.__class__(**data)
 
 
-async def deep_clone_plant(plant_original: Plant,
-                           plant_name_clone: str,
-                           plant_dal: PlantDAL,
-                           event_dal: EventDAL,
-                           # property_dal: PropertyDAL,
-                           ):
+async def deep_clone_plant(
+    plant_original: Plant,
+    plant_name_clone: str,
+    plant_dal: PlantDAL,
+    event_dal: EventDAL,
+    # property_dal: PropertyDAL,
+):
     """
     clone supplied plant
     includes duplication of events, photo_file-to-event assignments, tags
     excludes descendant plants
     assignments to same instances of parent plants, parent plants pollen (nothing to do here)
     """
-    plant_clone: Plant = _clone_instance(plant_original, {'plant_name': plant_name_clone,  # noqa
-                                                          'filename_previewimage': None,
-                                                          })
+    plant_clone: Plant = _clone_instance(
+        plant_original,
+        {
+            "plant_name": plant_name_clone,  # noqa
+            "filename_previewimage": None,
+        },
+    )
 
     cloned_tags = []
     for tag in plant_original.tags:
@@ -128,10 +148,11 @@ async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL)
 
     # create new tags
     for tag in [t for t in tags if t.id is None]:
-        new_tag: Tag = Tag(text=tag.text,
-                           state=tag.state,
-                           plant=plant,
-                           )
+        new_tag: Tag = Tag(
+            text=tag.text,
+            state=tag.state,
+            plant=plant,
+        )
         new_tags.append(new_tag)
     await plant_dal.create_tags(new_tags)
 
@@ -147,7 +168,9 @@ async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL)
 
 
 async def fetch_plants(plant_dal: PlantDAL) -> list[Plant]:
-    plants = await plant_dal.get_all_plants_with_relationships_loaded(include_deleted=not settings.plants.filter_hidden)
+    plants = await plant_dal.get_all_plants_with_relationships_loaded(
+        include_deleted=not settings.plants.filter_hidden
+    )
     return plants
 
 

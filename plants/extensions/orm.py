@@ -17,11 +17,13 @@ class SessionFactory:
     @classmethod
     def create_sessionmaker(cls, engine: AsyncEngine) -> None:
         """Create a sessionmaker for a given db engine."""
-        cls.session_factory = sessionmaker(engine,  # noqa
-                                           autocommit=False,
-                                           autoflush=False,
-                                           expire_on_commit=False,
-                                           class_=AsyncSession)
+        cls.session_factory = sessionmaker(
+            engine,  # noqa
+            autocommit=False,
+            autoflush=False,
+            expire_on_commit=False,
+            class_=AsyncSession,
+        )
 
     @classmethod
     def create_session(cls):

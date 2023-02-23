@@ -44,15 +44,15 @@ class PathSettings(BaseModel):
 
     @property
     def path_original_photos_uploaded(self) -> Path:
-        return self.path_photos.joinpath('original/uploaded')
+        return self.path_photos.joinpath("original/uploaded")
 
     @property
     def path_generated_thumbnails(self) -> Path:
-        return self.path_photos.joinpath('generated')
+        return self.path_photos.joinpath("generated")
 
     @property
     def path_generated_thumbnails_taxon(self) -> Path:
-        return self.path_photos.joinpath('generated_taxon')
+        return self.path_photos.joinpath("generated_taxon")
 
     @property
     def rel_path_photos_generated_taxon(self) -> PurePath:
@@ -78,34 +78,44 @@ class Settings(BaseModel):
 
 
 def parse_settings() -> Settings:
-    config_toml_path = Path(__file__).resolve().parent.parent.parent.joinpath('config.toml')
+    config_toml_path = (
+        Path(__file__).resolve().parent.parent.parent.joinpath("config.toml")
+    )
     with open(config_toml_path, "rb") as f:
         settings = Settings.parse_obj(tomllib.load(f))
 
-    create_if_not_exists(folders=[settings.paths.path_deleted_photos,
-                                  settings.paths.path_generated_thumbnails,
-                                  settings.paths.path_generated_thumbnails_taxon,
-                                  settings.paths.path_original_photos_uploaded,
-                                  settings.paths.path_pickled_ml_models], parents=True)
+    create_if_not_exists(
+        folders=[
+            settings.paths.path_deleted_photos,
+            settings.paths.path_generated_thumbnails,
+            settings.paths.path_generated_thumbnails_taxon,
+            settings.paths.path_original_photos_uploaded,
+            settings.paths.path_pickled_ml_models,
+        ],
+        parents=True,
+    )
 
     return settings
 
 
 class Environment(str, Enum):
-    DEV = 'dev'
-    PROD = 'prod'
+    DEV = "dev"
+    PROD = "prod"
 
 
 class LogSettings(BaseSettings):
     log_level_console: LogLevel
     log_level_file: LogLevel
     log_file_path: Path
-    ignore_missing_image_files: bool = False  # if True, missing image files will not result in Error; set in DEV only
+    ignore_missing_image_files: bool = (
+        False  # if True, missing image files will not result in Error; set in DEV only
+    )
 
 
 class LocalConfig(BaseSettings):
     """Secrets and other environment-specific settings are specified in environment variables (or .env file)
     they are case-insensitive by default"""
+
     environment: Environment
     connection_string: constr(min_length=1, strip_whitespace=True)
     max_images_per_taxon: int = 20
@@ -114,6 +124,6 @@ class LocalConfig(BaseSettings):
     hostname: str
 
     class Config:
-        env_file = Path(__file__).resolve().parent.parent.parent.joinpath('.env')
-        env_file_encoding = 'utf-8'
-        env_nested_delimiter = '__'
+        env_file = Path(__file__).resolve().parent.parent.parent.joinpath(".env")
+        env_file_encoding = "utf-8"
+        env_nested_delimiter = "__"

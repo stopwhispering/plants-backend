@@ -4,20 +4,26 @@ from typing import List
 from pydantic import Extra, condecimal, conint, constr, root_validator
 
 from plants.constants import REGEX_DATE
-from plants.modules.pollination.enums import (BFloweringState,
-                                              FlorescenceStatus,
-                                              FlowerColorDifferentiation,
-                                              PollenQuality, PollenType,
-                                              PollinationStatus,
-                                              StigmaPosition)
-from plants.shared.base_schema import (BaseSchema, RequestContainer,
-                                       ResponseContainer)
+from plants.modules.pollination.enums import (
+    BFloweringState,
+    FlorescenceStatus,
+    FlowerColorDifferentiation,
+    PollenQuality,
+    PollenType,
+    PollinationStatus,
+    StigmaPosition,
+)
+from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 
 class PollenContainerBase(BaseSchema):
     plant_id: int
-    plant_name: constr(min_length=1, max_length=100)  # todo remove/ignore for CreateUpdate
-    genus: constr(min_length=1, max_length=100) | None  # todo remove/ignore for CreateUpdate
+    plant_name: constr(
+        min_length=1, max_length=100
+    )  # todo remove/ignore for CreateUpdate
+    genus: constr(
+        min_length=1, max_length=100
+    ) | None  # todo remove/ignore for CreateUpdate
     count_stored_pollen_containers: int  # mandatory in this case
 
 
@@ -65,7 +71,6 @@ class PollinationRead(PollinationBase):
     pollen_quality: PollenQuality
 
 
-
 class PollinationUpdate(PollinationBase):
     id: int
 
@@ -111,7 +116,6 @@ class FlorescenceBase(BaseSchema):
 
 
 class FlorescenceCreate(FlorescenceBase):
-
     class Config:
         use_enum_values = True  # todo remove
 
@@ -121,10 +125,18 @@ class FlorescenceUpdate(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(ge=Decimal(0.1), le=Decimal(99.9)) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(ge=Decimal(0.1), le=Decimal(9.9)) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
+    perianth_length: condecimal(
+        ge=Decimal(0.1), le=Decimal(99.9)
+    ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: condecimal(
+        ge=Decimal(0.1), le=Decimal(9.9)
+    ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: constr(
+        min_length=7, max_length=7, to_lower=True
+    ) | None  # hex color code, e.g. #f2f600
+    flower_color_second: constr(
+        min_length=7, max_length=7, to_lower=True
+    ) | None  # hex color code, e.g. #f2f600
     flower_colors_differentiation: FlowerColorDifferentiation | None  # if flower_color_second set
     stigma_position: StigmaPosition | None
 
@@ -143,10 +155,18 @@ class FlorescenceRead(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(ge=Decimal(0.1), le=Decimal(99.9)) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(ge=Decimal(0.1), le=Decimal(9.9)) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(min_length=7, max_length=7, to_lower=True) | None  # hex color code, e.g. #f2f600
+    perianth_length: condecimal(
+        ge=Decimal(0.1), le=Decimal(99.9)
+    ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: condecimal(
+        ge=Decimal(0.1), le=Decimal(9.9)
+    ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: constr(
+        min_length=7, max_length=7, to_lower=True
+    ) | None  # hex color code, e.g. #f2f600
+    flower_color_second: constr(
+        min_length=7, max_length=7, to_lower=True
+    ) | None  # hex color code, e.g. #f2f600
     flower_colors_differentiation: FlowerColorDifferentiation | None  # if flower_color_second set
     stigma_position: StigmaPosition | None
 
@@ -202,7 +222,9 @@ class FRequestPollenContainers(RequestContainer):
 # Response Containers
 ####################################################################################################
 class SettingsRead(BaseSchema):
-    colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
+    colors: list[
+        str
+    ]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF', '#000000']
 
 
 class BResultsActiveFlorescences(ResponseContainer):
@@ -248,7 +270,6 @@ class BFloweringPeriodState(BaseSchema):
 
 
 class BPlantFlowerHistory(BaseSchema):
-
     plant_id: int
     plant_name: str
 

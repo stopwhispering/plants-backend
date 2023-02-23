@@ -4,17 +4,19 @@ from pathlib import Path
 
 
 class LogLevel(str, Enum):
-    DEBUG = 'DEBUG'
-    INFO = 'INFO'
-    WARNING = 'WARNING'
-    ERROR = 'ERROR'
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
     NONE = None
 
 
-def configure_root_logger(log_severity_console: LogLevel,
-                          log_severity_file: LogLevel,
-                          log_file_path: Path = Path('./plants.log'),
-                          log_filter: logging.Filter = None):
+def configure_root_logger(
+    log_severity_console: LogLevel,
+    log_severity_file: LogLevel,
+    log_file_path: Path = Path("./plants.log"),
+    log_filter: logging.Filter = None,
+):
     """configure the root logger; each module's default (__name__) logger will inherit these settings"""
     logger = logging.getLogger()  # no name returns the root logger
     logger.setLevel(logging.DEBUG)  # global min. level
@@ -24,7 +26,7 @@ def configure_root_logger(log_severity_console: LogLevel,
         # create file handler
         file_handler = logging.FileHandler(log_file_path)
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        format_fh = '%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s'
+        format_fh = "%(asctime)s - %(threadName)-9s - %(funcName)s - %(name)s - %(levelname)s - %(message)s"
         formatter = logging.Formatter(format_fh)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(log_severity_file.value)
@@ -36,7 +38,7 @@ def configure_root_logger(log_severity_console: LogLevel,
     if not log_severity_console == LogLevel.NONE:
         # create console handler
         stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(log_severity_console.value)
 
@@ -46,10 +48,14 @@ def configure_root_logger(log_severity_console: LogLevel,
         logger.addHandler(stream_handler)
 
     # mute some module's loggers
-    logging.getLogger('multipart.multipart').setLevel(logging.WARNING)  # starlette file requests
-    logging.getLogger('PIL.TiffImagePlugin').setLevel(logging.WARNING)  # PIL Exif
-    logging.getLogger('httpx._client').setLevel(logging.INFO)  # HTTPx (Requests replacement)
-    logging.getLogger('asyncio').setLevel(logging.INFO)  # HTTPx (Requests replacement)
+    logging.getLogger("multipart.multipart").setLevel(
+        logging.WARNING
+    )  # starlette file requests
+    logging.getLogger("PIL.TiffImagePlugin").setLevel(logging.WARNING)  # PIL Exif
+    logging.getLogger("httpx._client").setLevel(
+        logging.INFO
+    )  # HTTPx (Requests replacement)
+    logging.getLogger("asyncio").setLevel(logging.INFO)  # HTTPx (Requests replacement)
 
     if log_filter:
         logger.addFilter(log_filter)

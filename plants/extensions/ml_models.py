@@ -8,17 +8,19 @@ from plants import settings
 from plants.shared.message_services import throw_exception
 
 logger = logging.getLogger(__name__)
-FILENAME_PICKLED_POLLINATION_ESTIMATOR = 'pollination_estimator.pkl'
+FILENAME_PICKLED_POLLINATION_ESTIMATOR = "pollination_estimator.pkl"
 pipeline, feature_container = None, None
 
 
 def _unpickle_pipeline() -> tuple[Pipeline, FeatureContainer]:
-    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
+    path = settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_PICKLED_POLLINATION_ESTIMATOR
+    )
     if not path.is_file():
-        throw_exception(f'Pipeline not found at {path.as_posix()}')
-    logger.info(f'Unpickling pipeline from {path.as_posix()}.')
+        throw_exception(f"Pipeline not found at {path.as_posix()}")
+    logger.info(f"Unpickling pipeline from {path.as_posix()}.")
     dump = pickle.load(open(path, "rb"))
-    return dump['pipeline'], dump['feature_container']
+    return dump["pipeline"], dump["feature_container"]
 
 
 def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContainer]:
@@ -31,8 +33,9 @@ def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContain
 
 def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer):
     """called from manually executed script, not used in application/frontend/automatically"""
-    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
-    logger.info(f'Pickling pipeline to {path.as_posix()}.')
-    dump = {'pipeline': pipeline,
-            'feature_container': feature_container}
+    path = settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_PICKLED_POLLINATION_ESTIMATOR
+    )
+    logger.info(f"Pickling pipeline to {path.as_posix()}.")
+    dump = {"pipeline": pipeline, "feature_container": feature_container}
     pickle.dump(dump, open(path, "wb"))

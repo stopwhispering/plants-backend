@@ -4,10 +4,13 @@ from typing import Optional
 
 from pydantic import Extra, Field, constr
 
-from plants.modules.plant.enums import (FBCancellationReason,
-                                        FBPropagationType, TagState)
-from plants.shared.base_schema import (BaseSchema, MajorResponseContainer,
-                                       RequestContainer, ResponseContainer)
+from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
+from plants.shared.base_schema import (
+    BaseSchema,
+    MajorResponseContainer,
+    RequestContainer,
+    ResponseContainer,
+)
 
 
 class FBPlantTag(BaseSchema):
@@ -33,8 +36,8 @@ class PlantCurrentSoil(BaseSchema):
 
 
 class PlantLatestImage(BaseSchema):
-    relative_path: Path = Field(alias='path')  # todo remove alias
-    record_date_time: datetime = Field(alias='date')  # todo remove alias
+    relative_path: Path = Field(alias="path")  # todo remove alias
+    record_date_time: datetime = Field(alias="date")  # todo remove alias
 
     class Config:
         allow_population_by_field_name = True
