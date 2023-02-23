@@ -14,9 +14,9 @@ def throw_exception(
     description: str = None,
     request: Request = None,
 ):
-    """Hands over supplied message details for ui5 frontend to be displayed as
-    toast and added to message collection; adds header info from starlette
-    request if available."""
+    """Hands over supplied message details for ui5 frontend to be displayed as toast and
+    added to message collection; adds header info from starlette request if
+    available."""
     description_text = ""
     if request:
         # todo remove? !
@@ -40,8 +40,8 @@ def get_message(
     additional_text: str = None,
     description: str = None,
 ) -> dict:
-    """Generates a message to be userd in a ui5 frontend; uses flask request
-    which is not required as a paramter."""
+    """Generates a message to be userd in a ui5 frontend; uses flask request which is
+    not required as a paramter."""
     msg = {
         "type": message_type.value,
         "message": message,

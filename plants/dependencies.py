@@ -58,8 +58,7 @@ def get_event_dal(db: AsyncSession = Depends(get_db)):
 async def valid_plant(
     plant_id: int, plant_dal: PlantDAL = Depends(get_plant_dal)
 ) -> Plant:
-    """Injects a plant orm object into the route function if plant_id is
-    valid."""
+    """Injects a plant orm object into the route function if plant_id is valid."""
     plant = await plant_dal.by_id(plant_id)
     return plant
 
@@ -67,8 +66,8 @@ async def valid_plant(
 async def valid_pollination(
     pollination_id: int, pollination_dal: PollinationDAL = Depends(get_pollination_dal)
 ) -> Pollination:
-    """Injects a pollination orm object into the route function if
-    pollination_id is valid."""
+    """Injects a pollination orm object into the route function if pollination_id is
+    valid."""
     pollination = await pollination_dal.by_id(pollination_id)
     return pollination
 
@@ -76,8 +75,8 @@ async def valid_pollination(
 async def valid_florescence(
     florescence_id: int, florescence_dal: FlorescenceDAL = Depends(get_florescence_dal)
 ) -> Florescence:
-    """Injects a florescence orm object into the route function if
-    florescence_id is valid."""
+    """Injects a florescence orm object into the route function if florescence_id is
+    valid."""
     florescence = await florescence_dal.by_id(florescence_id)
     return florescence
 
@@ -85,7 +84,6 @@ async def valid_florescence(
 async def valid_taxon(
     taxon_id: int, taxon_dal: TaxonDAL = Depends(get_taxon_dal)
 ) -> Taxon:
-    """Injects a taxon orm object into the route function if taxon_id is
-    valid."""
+    """Injects a taxon orm object into the route function if taxon_id is valid."""
     taxon = await taxon_dal.by_id(taxon_id)
     return taxon

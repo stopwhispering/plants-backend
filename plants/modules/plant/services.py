@@ -24,8 +24,8 @@ async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
 
 # todo this is still required (otherwise save error) - why? replcae
 def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str | None:
-    """We actually set the path to preview photo_file (the original photo_file,
-    not the thumbnail) excluding the photos-subdir part of the uri."""
+    """We actually set the path to preview photo_file (the original photo_file, not the
+    thumbnail) excluding the photos-subdir part of the uri."""
     if not plant.filename_previewimage:
         return None
 
@@ -78,8 +78,7 @@ async def update_plants_from_list_of_dicts(
 
 
 def _clone_instance(model_instance, clone_attrs: Optional[dict] = None):
-    """Generate a transient clone of sqlalchemy instance; supply primary key as
-    dict."""
+    """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
     table = model_instance.__table__
     non_pk_columns = [k for k in table.columns.keys() if k not in table.primary_key]
@@ -97,8 +96,8 @@ async def deep_clone_plant(
     # property_dal: PropertyDAL,
 ):
     """clone supplied plant includes duplication of events, photo_file-to-event
-    assignments, tags excludes descendant plants assignments to same instances
-    of parent plants, parent plants pollen (nothing to do here)"""
+    assignments, tags excludes descendant plants assignments to same instances of parent
+    plants, parent plants pollen (nothing to do here)"""
     plant_clone: Plant = _clone_instance(
         plant_original,
         {
@@ -132,8 +131,8 @@ async def deep_clone_plant(
 
 
 async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL):
-    """Update modified tags; returns list of new tags (not yet added or
-    committed); removes deleted tags."""
+    """Update modified tags; returns list of new tags (not yet added or committed);
+    removes deleted tags."""
     new_tags = []
 
     # create new tags
@@ -165,8 +164,8 @@ async def fetch_plants(plant_dal: PlantDAL) -> list[Plant]:
 
 
 def generate_subsequent_plant_name(original_plant_name: str) -> str:
-    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI"
-    for "Aloe depressa V"."""
+    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe
+    depressa V"."""
     if has_roman_plant_index(original_plant_name):
         plant_name, roman_plant_index = parse_roman_plant_index(original_plant_name)
         plant_index = roman_to_int(roman_plant_index)

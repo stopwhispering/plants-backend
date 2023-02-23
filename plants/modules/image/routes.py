@@ -48,8 +48,8 @@ async def get_images_for_plant(
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
 ):
-    """Get photo_file information for requested plant_id including (other)
-    plants and keywords."""
+    """Get photo_file information for requested plant_id including (other) plants and
+    keywords."""
     images = await fetch_images_for_plant(plant, image_dal=image_dal)
     logger.info(f"Returned {len(images)} images for plant {plant.id}.")
     return images
@@ -62,8 +62,7 @@ async def upload_images_plant(
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """Upload images and directly assign them to supplied plant; no keywords
-    included.
+    """Upload images and directly assign them to supplied plant; no keywords included.
 
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
@@ -266,8 +265,8 @@ async def upload_images(
 async def delete_image(
     image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)
 ):
-    """move the file that should be deleted to another folder (not actually
-    deleted, currently)"""
+    """move the file that should be deleted to another folder (not actually deleted,
+    currently)"""
     for image_to_delete in image_container.images:
         image = await image_dal.by_id(image_id=image_to_delete.id)
         if image.filename != image_to_delete.filename:

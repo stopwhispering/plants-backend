@@ -139,8 +139,7 @@ async def get_active_florescences(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ):
-    """Read active florescences, either after inflorescence appeared or
-    flowering."""
+    """Read active florescences, either after inflorescence appeared or flowering."""
     florescences = await read_active_florescences(
         florescence_dal=florescence_dal, pollination_dal=pollination_dal
     )

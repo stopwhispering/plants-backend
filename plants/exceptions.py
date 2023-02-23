@@ -77,8 +77,7 @@ class PlantNotFound(BaseError):
 
 
 class TagNotAssignedToPlant(BaseError):
-    """Raised when tag is unexpectedly not found in tags assigned to a
-    plant."""
+    """Raised when tag is unexpectedly not found in tags assigned to a plant."""
 
     def __init__(self, plant_id: int, tag_id: int):
         super().__init__(
@@ -88,8 +87,7 @@ class TagNotAssignedToPlant(BaseError):
 
 
 class ImageNotAssignedToTaxon(BaseError):
-    """Raised when Image is unexpectedly not found in images assigned to a
-    taxon."""
+    """Raised when Image is unexpectedly not found in images assigned to a taxon."""
 
     def __init__(self, taxon_id: int, image_id: int):
         super().__init__(

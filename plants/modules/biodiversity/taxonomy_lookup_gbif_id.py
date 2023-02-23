@@ -48,13 +48,13 @@ class GBIFIdentifierLookup:
                 return nub_key
 
     def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> Optional[int]:
-        """the GBIF API does not allow searching by other database's taxonId;
-        therefore, we search by botanical name and IPNI dataset key, then we
-        compare the (external) taxonId"; if we have a match, we can return the
-        GBIF taxon ID unfortunately, the attribute taxon ID (= Kew identifier
-        LSID) is not included in the results sometimes (e.g. Aloiampelos
-        ciliaris, nubKey 9527904, although the website and the REST API has it;
-        therefore we use the latter if not found to verify the GBIF record."""
+        """the GBIF API does not allow searching by other database's taxonId; therefore,
+        we search by botanical name and IPNI dataset key, then we compare the (external)
+        taxonId"; if we have a match, we can return the GBIF taxon ID unfortunately, the
+        attribute taxon ID (= Kew identifier LSID) is not included in the results
+        sometimes (e.g. Aloiampelos ciliaris, nubKey 9527904, although the website and
+        the REST API has it; therefore we use the latter if not found to verify the GBIF
+        record."""
         logger.info(f"Searching IPNI Dataset at GBIF for {taxon_name} to get GBIF ID.")
         lookup = species.name_lookup(q=taxon_name, datasetKey=IPNI_DATASET_KEY)
         if not lookup.get("results"):
@@ -81,8 +81,8 @@ class GBIFIdentifierLookup:
 
     @staticmethod
     def _get_gbif_id_from_wikidata(lsid: str) -> Optional[int]:
-        """Get mapping from ipni id to gbif id from wikidata; unfortunately,
-        the wikidata api is defect, thus we parse using beautifulsoup4."""
+        """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
+        wikidata api is defect, thus we parse using beautifulsoup4."""
         # fulltext-search wikidata for ipni id
         lsid_number = lsid[lsid.rfind(":") + 1 :]
         lsid_number_exact = f'"{lsid_number}"'

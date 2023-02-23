@@ -19,8 +19,7 @@ def parse_resource_from_request(req: Request):
 
 
 def treat_non_serializable(x):
-    """Tries to convert a supplied item into something that is json
-    serializable."""
+    """Tries to convert a supplied item into something that is json serializable."""
     if isinstance(x, (datetime, date)):
         return x.isoformat()
     elif isinstance(x, timedelta):
@@ -55,9 +54,8 @@ def make_list_items_json_serializable(items: list):
 
 
 def make_dict_values_json_serializable(d: dict):
-    """Tries to convert the values of a dict into something that is json
-    serializable if it is not; works recursively for nested dicts, i.e. if
-    value is also a dict."""
+    """Tries to convert the values of a dict into something that is json serializable if
+    it is not; works recursively for nested dicts, i.e. if value is also a dict."""
     for (
         key
     ) in (
@@ -85,8 +83,7 @@ def format_api_date(d: date) -> str:
 
 
 def parse_api_datetime(dt_str: str | None) -> datetime:
-    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime
-    object."""
+    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object."""
     if dt_str:
         return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)
 

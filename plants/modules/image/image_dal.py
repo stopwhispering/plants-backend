@@ -15,8 +15,8 @@ class ImageDAL(BaseDAL):
 
     @staticmethod
     def _add_eager_load_options(query: Select) -> Select:
-        """Apply eager loading the query supplied; use only for single- or
-        limited-number select queries to avoid performance issues."""
+        """Apply eager loading the query supplied; use only for single- or limited-
+        number select queries to avoid performance issues."""
         query = query.options(
             selectinload(Image.keywords),
             selectinload(Image.plants),

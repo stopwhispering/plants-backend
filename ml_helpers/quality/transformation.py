@@ -10,8 +10,8 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 
 def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]:
-    """from a supplied transformer (usually step in a ColumnTransformer), try
-    to return meaningful output column name(s)"""
+    """from a supplied transformer (usually step in a ColumnTransformer), try to return
+    meaningful output column name(s)"""
     if name == "drop" or transformer == "drop" or not columns:
         return []
 
@@ -67,8 +67,8 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
 def get_transformed_df_from_column_transformer(
     column_transformer: ColumnTransformer, x: pd.DataFrame
 ) -> Tuple[List[str], pd.DataFrame]:
-    """from a fitted column transformer, extract the new column names, i.e.
-    including one-hot-encoded columns etc.
+    """from a fitted column transformer, extract the new column names, i.e. including
+    one-hot-encoded columns etc.
 
     create a DataFrame from transformed data with the found column names
     todo: incomplete and buggy; only ad-hoc-usage

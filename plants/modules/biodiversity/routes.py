@@ -30,8 +30,8 @@ async def search_taxa_by_name(
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """Searches taxon pattern in (1) local database and (2) in kew databases
-    (powo and ipni) if requested."""
+    """Searches taxon pattern in (1) local database and (2) in kew databases (powo and
+    ipni) if requested."""
     taxonomy_search = TaxonomySearch(
         include_external_apis=taxon_info_request.include_external_apis,
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,

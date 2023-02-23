@@ -5,8 +5,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_synonym_label_if_only_a_synonym(accepted_name: str):
-    """Little method just to make sure the same is stored in local extensions
-    as is displayed in frontend from powo."""
+    """Little method just to make sure the same is stored in local extensions as is
+    displayed in frontend from powo."""
     return "Accepted: " + accepted_name
 
 

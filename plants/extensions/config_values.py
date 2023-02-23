@@ -113,9 +113,8 @@ class LogSettings(BaseSettings):
 
 
 class LocalConfig(BaseSettings):
-    """Secrets and other environment-specific settings are specified in
-    environment variables (or .env file) they are case-insensitive by
-    default."""
+    """Secrets and other environment-specific settings are specified in environment
+    variables (or .env file) they are case-insensitive by default."""
 
     environment: Environment
     connection_string: constr(min_length=1, strip_whitespace=True)

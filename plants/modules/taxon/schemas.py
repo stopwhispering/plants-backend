@@ -48,8 +48,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
     @validator("date")
     def datetime_to_string(cls, v):  # noqa
-        """Validator decorator makes this a class method and enforces cls
-        param."""
+        """Validator decorator makes this a class method and enforces cls param."""
         return v.strftime(
             FORMAT_API_YYYY_MM_DD_HH_MM
         )  # todo required for Backend variant?
@@ -194,8 +193,8 @@ class TaxonRead(TaxonBase):
     def _transform_images(
         cls, images: list[Image], values, **kwargs
     ) -> list[TaxonImageRead]:  # noqa
-        """Extract major information from Image model; and read the description
-        from taxon-to-image link table, not from image itself."""
+        """Extract major information from Image model; and read the description from
+        taxon-to-image link table, not from image itself."""
         results = []
         taxon_id = values["id"]
         for image in images:

@@ -21,8 +21,8 @@ def _remove_image_from_filesystem(filename: str) -> None:
 async def remove_files_already_existing(
     files: List, image_dal: ImageDAL
 ) -> Tuple[list[str], list[str]]:
-    """Iterates over file objects, checks whether a file with that name already
-    exists in filesystem and/or in database.
+    """Iterates over file objects, checks whether a file with that name already exists
+    in filesystem and/or in database.
 
     - if we have an orphaned file in filesystem, missing in database, it will be deleted with a messasge
     - if we have have an orphaned entry in database, missing in filesystem, it will be deleted with a messasge
@@ -64,8 +64,8 @@ async def remove_files_already_existing(
 
 
 def resizing_required(path: str, size: Tuple[int, int]) -> bool:
-    """Checks size of photo_file at supplied path and compares to supplied
-    maximum size."""
+    """Checks size of photo_file at supplied path and compares to supplied maximum
+    size."""
     with Image.open(path) as image:  # only works with path, not file object
         x, y = image.size
     if x > size[0]:

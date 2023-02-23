@@ -44,8 +44,8 @@ def _rename_plant_in_image_files(
 async def rename_plant_in_image_files(
     plant: Plant, plant_name_old: str, image_dal: ImageDAL
 ) -> int:
-    """In each photo_file file that has the old plant name tagged, fit tag to
-    the new plant name."""
+    """In each photo_file file that has the old plant name tagged, fit tag to the new
+    plant name."""
     if not plant.images:
         logger.info(f"No photo_file tag to change for {plant_name_old}.")
     exif = PhotoMetadataAccessExifTags()
@@ -82,8 +82,8 @@ async def save_image_to_db(
 async def save_image_file(
     file: UploadFile, plant_names: list[str], keywords: tuple[str] = ()
 ) -> Path:
-    """Save the files supplied as starlette uploadfiles on os; assign plants
-    and keywords."""
+    """Save the files supplied as starlette uploadfiles on os; assign plants and
+    keywords."""
     # save to file system
     path = settings.paths.path_original_photos_uploaded.joinpath(file.filename)
     logger.info(f"Saving {path}.")

@@ -1,5 +1,5 @@
-"""Services for florescence and pollination-related operations; mostly for
-pollination frontend."""
+"""Services for florescence and pollination-related operations; mostly for pollination
+frontend."""
 
 from fastapi import HTTPException
 

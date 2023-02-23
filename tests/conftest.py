@@ -69,8 +69,8 @@ def event_loop():
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db() -> None:
-    """Setup test database: Create & Reset database to initial state; Create
-    all database tables as declared in SQLAlchemy models;"""
+    """Setup test database: Create & Reset database to initial state; Create all
+    database tables as declared in SQLAlchemy models;"""
     # PostGres does not allow to create/drop databases in a transaction, therefore we need
     # a separate engine for that that has isolation_level='AUTOCOMMIT' (unlike default 'READ COMMITTED')
     engine_for_db_setup = create_async_engine(
@@ -94,8 +94,7 @@ async def setup_db() -> None:
 
 @pytest_asyncio.fixture(scope="function")
 async def test_db(request) -> AsyncSession:
-    """Wrapper fot get_db that truncates tables after each test function
-    run."""
+    """Wrapper fot get_db that truncates tables after each test function run."""
     # db = await anext(get_db())
     db = orm.SessionFactory.create_session()
 
@@ -235,10 +234,9 @@ async def plant_valid_with_active_florescence_in_db(
 def app() -> FastAPI:
     """only here do we import the main module.
 
-    to avoid the regular database being initialized, we override the
-    database url with a test database url we also override the get_db
-    dependency called by most api endpoints to return a test database
-    session
+    to avoid the regular database being initialized, we override the database url with a
+    test database url we also override the get_db dependency called by most api
+    endpoints to return a test database session
     """
     plants_package.local_config.connection_string = generate_db_url(TEST_DB_NAME)
 

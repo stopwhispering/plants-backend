@@ -26,9 +26,9 @@ def generate_thumbnail(
     filename_thumb: Union[PurePath, str] = None,
     ignore_missing_image_files=False,
 ) -> Optional[Path]:
-    """Generates a resized variant of an photo_file; returns the full local
-    path supply original photo_file either as filename or i/o stream if Image
-    is supplied as BytesIO, a filename_thumb <<must>> be supplied."""
+    """Generates a resized variant of an photo_file; returns the full local path supply
+    original photo_file either as filename or i/o stream if Image is supplied as
+    BytesIO, a filename_thumb <<must>> be supplied."""
     if not ignore_missing_image_files:
         logger.debug(f"Generating resized photo_file of {image} in size {size}.")
     # suffix = f'{size[0]}_{size[1]}'
@@ -63,9 +63,9 @@ def generate_thumbnail(
 
 
 def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
-    """Rotate photo_file if exif file has a rotate directive (solves chrome bug
-    not respecting orientation exif tag) no exif tag manipulation required as
-    this is not saved to thumbnails anyway."""
+    """Rotate photo_file if exif file has a rotate directive (solves chrome bug not
+    respecting orientation exif tag) no exif tag manipulation required as this is not
+    saved to thumbnails anyway."""
     if exif_obj:  # the photo_file might have no exif-tags
         # noinspection PyProtectedMember
         exif = dict(exif_obj.items())
@@ -82,8 +82,8 @@ def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
 def resize_image(
     path: Path, save_to_path: Path, size: Tuple[int, int], quality: int
 ) -> None:
-    """load photo_file at supplied path, save resized photo_file to other path;
-    observes size and quality params; original file is finally <<deleted>>"""
+    """load photo_file at supplied path, save resized photo_file to other path; observes
+    size and quality params; original file is finally <<deleted>>"""
     with Image.open(path.as_posix()) as image:
         image.thumbnail(size)  # preserves aspect ratio
         if image.info.get("exif"):

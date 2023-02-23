@@ -51,8 +51,8 @@ async def clone_plant(
     # property_dal: PropertyDAL = Depends(get_property_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
 ):
-    """clone plant with supplied plant_id; include duplication of events;
-    excludes regular image assignments (only to events)"""
+    """clone plant with supplied plant_id; include duplication of events; excludes
+    regular image assignments (only to events)"""
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
         raise PlantAlreadyExists(plant_name_clone)
 
@@ -94,9 +94,9 @@ async def create_or_update_plants(
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """update existing or create new plants if no id is supplied, a new plant
-    is created having the supplied attributes (only plant_name is mandatory,
-    others may be provided)"""
+    """update existing or create new plants if no id is supplied, a new plant is created
+    having the supplied attributes (only plant_name is mandatory, others may be
+    provided)"""
     plants_modified = data.PlantsCollection
 
     # update plants
@@ -194,8 +194,8 @@ async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
     response_model=BResultsProposeSubsequentPlantName,
 )
 async def propose_subsequent_plant_name(original_plant_name: str):
-    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI"
-    for "Aloe depressa V"."""
+    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe
+    depressa V"."""
     subsequent_plant_name = generate_subsequent_plant_name(original_plant_name)
     return {
         "original_plant_name": original_plant_name,

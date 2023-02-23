@@ -29,9 +29,8 @@ class TaxonomySearch:
         self.taxon_dal = taxon_dal
 
     async def search(self, taxon_name_pattern: str) -> list[dict]:
-        """Search for a taxon name via pattern, first in local database, then
-        in external APIs merge results from local database and external
-        APIs."""
+        """Search for a taxon name via pattern, first in local database, then in
+        external APIs merge results from local database and external APIs."""
         # search for taxa already in the database
         local_results = await self._query_taxa_in_local_database(
             taxon_name_pattern=f"%{taxon_name_pattern}%",
@@ -100,8 +99,7 @@ class TaxonomySearch:
     async def _query_taxa_in_local_database(
         self, taxon_name_pattern: str, search_for_genus_not_species: bool
     ) -> list[dict]:
-        """Searches term in local botany database and returns results in web-
-        format."""
+        """Searches term in local botany database and returns results in web- format."""
         if search_for_genus_not_species:
             taxa = await self.taxon_dal.get_taxa_by_name_pattern(
                 taxon_name_pattern, FBRank.GENUS
@@ -131,9 +129,8 @@ class ApiSearcher:
         plant_name_pattern: str,
         local_results: list,
     ) -> list[dict]:
-        """Searches term in kew's International Plant Name Index ("IPNI") and
-        Plants of the World ("POWO"); ignores entries included in the
-        local_results list."""
+        """Searches term in kew's International Plant Name Index ("IPNI") and Plants of
+        the World ("POWO"); ignores entries included in the local_results list."""
         # First step: search in the International Plant Names Index (IPNI) which has slightly more items than POWO
         results, lsid_in_powo = self._search_taxa_in_ipni_api(
             plant_name_pattern=plant_name_pattern, ignore_local_db_results=local_results
@@ -161,8 +158,8 @@ class ApiSearcher:
     def _search_taxa_in_ipni_api(
         self, plant_name_pattern: str, ignore_local_db_results: list[dict]
     ) -> tuple[list[dict], set]:
-        """Search for species / genus pattern in Kew's IPNI database skip if
-        already in local database might raise TooManyResultsError."""
+        """Search for species / genus pattern in Kew's IPNI database skip if already in
+        local database might raise TooManyResultsError."""
         results = []
         lsid_in_powo = set()
 
@@ -250,8 +247,8 @@ class ApiSearcher:
 
     @staticmethod
     def _update_taxon_from_powo_api(result: dict):
-        """For the supplied search result entry, fetch additional information
-        from "Plants of the World" API."""
+        """For the supplied search result entry, fetch additional information from
+        "Plants of the World" API."""
         # POWO uses LSID as ID just like IPNI
         powo_lookup = powo.lookup(result["lsid"], include=["distribution"])
         if "error" in powo_lookup:

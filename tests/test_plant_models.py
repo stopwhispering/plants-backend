@@ -9,8 +9,8 @@ from plants.modules.plant.plant_dal import PlantDAL
 
 @pytest_asyncio.fixture(scope="function")
 async def dummy() -> None:
-    """For whatever reason, the unit tests fail with some database connection
-    closed resource error if they don't use any function-scoped fixtures."""
+    """For whatever reason, the unit tests fail with some database connection closed
+    resource error if they don't use any function-scoped fixtures."""
     pass
 
 

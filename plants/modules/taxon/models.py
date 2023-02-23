@@ -38,9 +38,9 @@ class Distribution(Base):
 
 
 class Taxon(Base):
-    """botanical details non-technical key is name (unique constraint) lsid is
-    unique, too, amont those taxa with is_custom == False (no constraint,
-    asserted programmatically)"""
+    """botanical details non-technical key is name (unique constraint) lsid is unique,
+    too, amont those taxa with is_custom == False (no constraint, asserted
+    programmatically)"""
 
     __tablename__ = "taxon"
 

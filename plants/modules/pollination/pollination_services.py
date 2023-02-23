@@ -42,8 +42,8 @@ LOCATION_TEXTS: Final[dict] = {
 async def _read_pollination_attempts(
     plant: Plant, pollen_donor: Plant, pollination_dal: PollinationDAL
 ) -> list[BPollinationAttempt]:
-    """Read all pollination attempts for a plant and a pollen donor plus the
-    other way around."""
+    """Read all pollination attempts for a plant and a pollen donor plus the other way
+    around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
     # attempts_orm = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == plant.id,
     #                                             Pollination.pollen_donor_plant_id == pollen_donor.id).all()
@@ -103,8 +103,7 @@ async def _read_resulting_plants(
 def get_probability_pollination_to_seed(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
-    """Get the ml prediction for the probability of successful pollination to
-    seed."""
+    """Get the ml prediction for the probability of successful pollination to seed."""
     probability = predict_probability_of_seed_production(
         florescence=florescence, pollen_donor=pollen_donor, pollen_type=pollen_type
     )
@@ -132,8 +131,8 @@ async def read_potential_pollen_donors(
     pollination_dal: PollinationDAL,
     plant_dal: PlantDAL,
 ) -> list[BPotentialPollenDonor]:
-    """Read all potential pollen donors for a flowering plant; this can bei
-    either another flowering plant or frozen pollen."""
+    """Read all potential pollen donors for a flowering plant; this can bei either
+    another flowering plant or frozen pollen."""
     plant = await plant_dal.by_id(florescence.plant_id)
     potential_pollen_donors = []
 

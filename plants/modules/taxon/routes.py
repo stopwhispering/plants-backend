@@ -78,8 +78,8 @@ async def save_taxon(
     background_tasks: BackgroundTasks,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """Save a custom or non-custom taxon from search results list; if taxon
-    already is in db, just return it."""
+    """Save a custom or non-custom taxon from search results list; if taxon already is
+    in db, just return it."""
     logger.info(
         f"Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}"
     )

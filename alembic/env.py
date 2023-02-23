@@ -72,8 +72,8 @@ def do_run_migrations(connection):
 async def run_migrations_online():
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine and associate a
-    connection with the context.
+    In this scenario we need to create an Engine and associate a connection with the
+    context.
     """
 
     connectable = create_async_engine(local_config.connection_string)

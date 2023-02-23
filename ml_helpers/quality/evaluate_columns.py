@@ -4,8 +4,8 @@ from ml_helpers.quality.data_types import derive_dtype
 
 
 def _get_min(ser_report: pd.Series, ser_data: pd.Series):
-    """Get min value for supplied data values ignoring missing values; this
-    requires filling nan before."""
+    """Get min value for supplied data values ignoring missing values; this requires
+    filling nan before."""
     try:
         imp = ser_report["frequent_value"]
         if imp is None:
@@ -18,8 +18,8 @@ def _get_min(ser_report: pd.Series, ser_data: pd.Series):
 
 
 def _get_max(ser_report: pd.Series, ser_data: pd.Series):
-    """Get max value for supplied data values ignoring missing values; this
-    requires filling nan before."""
+    """Get max value for supplied data values ignoring missing values; this requires
+    filling nan before."""
     try:
         imp = ser_report["frequent_value"]
         if imp is None:

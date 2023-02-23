@@ -19,8 +19,7 @@ class FBMajorResource(str, Enum):
 
 
 class BMessageType(str, Enum):
-    """Message types processed by error/success handlers in ui5 web
-    frontend."""
+    """Message types processed by error/success handlers in ui5 web frontend."""
 
     INFORMATION = "Information"
     NONE = "None"

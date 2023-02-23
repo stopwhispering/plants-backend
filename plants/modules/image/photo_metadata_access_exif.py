@@ -55,8 +55,7 @@ class PhotoMetadataAccessExifTags:
         # absolute_path=image.absolute_path)
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
-        """Rewrite the plants assigned to the photo_file at the supplied
-        path."""
+        """Rewrite the plants assigned to the photo_file at the supplied path."""
         self._rewrite_plant_assignments_in_exif_tags(
             absolute_path=absolute_path, plants=plants
         )
@@ -127,9 +126,8 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
-        """adjust exif tags in file described in photo_file object; optionally
-        append to photo_file directory (used for newly uploaded photo_file
-        files)"""
+        """adjust exif tags in file described in photo_file object; optionally append to
+        photo_file directory (used for newly uploaded photo_file files)"""
         tag_descriptions = metadata.description.encode("utf-8")
         tag_keywords = encode_keywords_tag(metadata.keywords)
 
@@ -192,8 +190,8 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]):
-        """rewrite the plants assigned to the photo_file at the supplied path;
-        keep the last-modifide date (called in context of renaming)"""
+        """rewrite the plants assigned to the photo_file at the supplied path; keep the
+        last-modifide date (called in context of renaming)"""
         if (
             not absolute_path.is_file()
             and local_config.log_settings.ignore_missing_image_files
