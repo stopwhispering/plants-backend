@@ -4,13 +4,10 @@ from typing import Optional
 
 from pydantic import Extra, Field, constr
 
-from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
-from plants.shared.base_schema import (
-    BaseSchema,
-    MajorResponseContainer,
-    RequestContainer,
-    ResponseContainer,
-)
+from plants.modules.plant.enums import (FBCancellationReason,
+                                        FBPropagationType, TagState)
+from plants.shared.base_schema import (BaseSchema, MajorResponseContainer,
+                                       RequestContainer, ResponseContainer)
 
 
 class FBPlantTag(BaseSchema):

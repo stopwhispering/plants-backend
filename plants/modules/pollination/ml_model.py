@@ -169,7 +169,7 @@ async def _read_db_and_join() -> pd.DataFrame:
 
 
 def _create_features() -> FeatureContainer:
-    """create a features container for a specific model to be trained"""
+    """Create a features container for a specific model to be trained."""
     features = [
         Feature(column="pollen_type", scale=Scale.NOMINAL_BIVALUE),
         Feature(column="species_seed_capsule", scale=Scale.NOMINAL),
@@ -218,7 +218,7 @@ def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
 
 
 async def train_model_for_probability_of_seed_production() -> dict:
-    """predict whether a pollination attempt is goint to reach SEED status"""
+    """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
     df = await _create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)

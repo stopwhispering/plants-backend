@@ -7,16 +7,13 @@ import piexif
 from piexif import InvalidImageDataError
 
 from plants import local_config
-from plants.modules.image.exif_utils import (
-    auto_rotate_jpeg,
-    decode_keywords_tag,
-    decode_record_date_time,
-    encode_keywords_tag,
-    encode_record_date_time,
-    exif_dict_has_all_relevant_tags,
-    modified_date,
-    set_modified_date,
-)
+from plants.modules.image.exif_utils import (auto_rotate_jpeg,
+                                             decode_keywords_tag,
+                                             decode_record_date_time,
+                                             encode_keywords_tag,
+                                             encode_record_date_time,
+                                             exif_dict_has_all_relevant_tags,
+                                             modified_date, set_modified_date)
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +27,10 @@ class MetadataDTO:
 
 
 class PhotoMetadataAccessExifTags:
-    """ "Access to Photo Metadata via jpeg exif tags"""
+    """"Access to Photo Metadata via jpeg exif tags."""
 
     def read_photo_metadata(self, absolute_path: Path) -> MetadataDTO:
-        """retrieve metadata on photo_file from jpeg file exif tags"""
+        """Retrieve metadata on photo_file from jpeg file exif tags."""
         return self._parse_exif_tags(absolute_path=absolute_path)
 
     async def save_photo_metadata(
@@ -45,7 +42,7 @@ class PhotoMetadataAccessExifTags:
         description: str,
         # image_dal: ImageDAL,
     ) -> None:
-        """save/update photo_file metadata"""
+        """Save/update photo_file metadata."""
         # get file system path to the image
         # image = await image_dal.by_id(image_id)
 
@@ -58,17 +55,16 @@ class PhotoMetadataAccessExifTags:
         # absolute_path=image.absolute_path)
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
-        """rewrite the plants assigned to the photo_file at the supplied path"""
+        """Rewrite the plants assigned to the photo_file at the supplied
+        path."""
         self._rewrite_plant_assignments_in_exif_tags(
             absolute_path=absolute_path, plants=plants
         )
 
     @staticmethod
     def _parse_exif_tags(absolute_path: Path) -> MetadataDTO:
-        """
-        (re-)reads exif info from file in attribute absolute_path and parses information from it (plants list,
-        keywords, description, etc.
-        """
+        """(re-)reads exif info from file in attribute absolute_path and parses
+        information from it (plants list, keywords, description, etc."""
         if not absolute_path:
             raise ValueError("File path not set.")
 
@@ -131,10 +127,9 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
-        """
-        adjust exif tags in file described in photo_file object; optionally append to photo_file directory (used
-        for newly uploaded photo_file files)
-        """
+        """adjust exif tags in file described in photo_file object; optionally
+        append to photo_file directory (used for newly uploaded photo_file
+        files)"""
         tag_descriptions = metadata.description.encode("utf-8")
         tag_keywords = encode_keywords_tag(metadata.keywords)
 
@@ -197,10 +192,8 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]):
-        """
-        rewrite the plants assigned to the photo_file at the supplied path; keep the last-modifide date (called
-        in context of renaming)
-        """
+        """rewrite the plants assigned to the photo_file at the supplied path;
+        keep the last-modifide date (called in context of renaming)"""
         if (
             not absolute_path.is_file()
             and local_config.log_settings.ignore_missing_image_files

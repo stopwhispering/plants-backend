@@ -11,21 +11,14 @@ from starlette.concurrency import run_in_threadpool
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.image_services_simple import (
-    get_relative_path,
-    resizing_required,
-)
-from plants.modules.image.models import (
-    Image,
-    ImageKeyword,
-)
-from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.modules.image.image_services_simple import (get_relative_path,
+                                                        resizing_required)
+from plants.modules.image.models import Image, ImageKeyword
+from plants.modules.image.photo_metadata_access_exif import \
+    PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
-from plants.modules.image.util import (
-    generate_thumbnail,
-    get_thumbnail_name,
-    resize_image,
-)
+from plants.modules.image.util import (generate_thumbnail, get_thumbnail_name,
+                                       resize_image)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.models import TaxonOccurrenceImage
@@ -51,10 +44,8 @@ def _rename_plant_in_image_files(
 async def rename_plant_in_image_files(
     plant: Plant, plant_name_old: str, image_dal: ImageDAL
 ) -> int:
-    """
-    in each photo_file file that has the old plant name tagged, fit tag to the new plant
-    name
-    """
+    """In each photo_file file that has the old plant name tagged, fit tag to
+    the new plant name."""
     if not plant.images:
         logger.info(f"No photo_file tag to change for {plant_name_old}.")
     exif = PhotoMetadataAccessExifTags()
@@ -91,7 +82,8 @@ async def save_image_to_db(
 async def save_image_file(
     file: UploadFile, plant_names: list[str], keywords: tuple[str] = ()
 ) -> Path:
-    """save the files supplied as starlette uploadfiles on os; assign plants and keywords"""
+    """Save the files supplied as starlette uploadfiles on os; assign plants
+    and keywords."""
     # save to file system
     path = settings.paths.path_original_photos_uploaded.joinpath(file.filename)
     logger.info(f"Saving {path}.")
@@ -139,7 +131,7 @@ async def save_image_file(
 
 
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
-    """delete image file and entries in db"""
+    """Delete image file and entries in db."""
     if image.image_to_event_associations:
         logger.info(
             f"Deleting {len(image.image_to_event_associations)} associated Image to Event associations."
@@ -352,7 +344,7 @@ async def fetch_untagged_images(image_dal: ImageDAL) -> list[ImageCreateUpdate]:
 
 
 def _shorten_plant_name(plant_name: str) -> str:
-    """shorten plant name to 20 chars for display in ui5 table"""
+    """Shorten plant name to 20 chars for display in ui5 table."""
     return (
         plant_name[
             : settings.frontend.restrictions.length_shortened_plant_name_for_tag - 3

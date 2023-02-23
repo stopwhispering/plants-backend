@@ -3,13 +3,13 @@ from starlette import status
 
 
 class TooManyResultsError(Exception):
-    """Raised when database query returned too many results"""
+    """Raised when database query returned too many results."""
 
     pass
 
 
 class BaseError(HTTPException):
-    """Base class for exceptions raised by this application"""
+    """Base class for exceptions raised by this application."""
 
     def __init__(self, detail: str | dict, status_code: int = 400):
         super().__init__(status_code=status_code, detail=detail)
@@ -58,14 +58,14 @@ class PlantAlreadyExists(BaseError):
 
 
 class DuplicatePlantName(BaseError):
-    """Base class for exceptions raised by this application"""
+    """Base class for exceptions raised by this application."""
 
     def __init__(self, plant_name: str):
         super().__init__(detail=f"Duplicate Plant Name: {plant_name}")
 
 
 class PlantNotFound(BaseError):
-    """Raised when plant not found in database"""
+    """Raised when plant not found in database."""
 
     def __init__(self, plant_identifier: int | str):
         msg = (
@@ -77,7 +77,8 @@ class PlantNotFound(BaseError):
 
 
 class TagNotAssignedToPlant(BaseError):
-    """Raised when tag is unexpectedly not found in tags assigned to a plant"""
+    """Raised when tag is unexpectedly not found in tags assigned to a
+    plant."""
 
     def __init__(self, plant_id: int, tag_id: int):
         super().__init__(
@@ -87,7 +88,8 @@ class TagNotAssignedToPlant(BaseError):
 
 
 class ImageNotAssignedToTaxon(BaseError):
-    """Raised when Image is unexpectedly not found in images assigned to a taxon"""
+    """Raised when Image is unexpectedly not found in images assigned to a
+    taxon."""
 
     def __init__(self, taxon_id: int, image_id: int):
         super().__init__(
@@ -97,7 +99,7 @@ class ImageNotAssignedToTaxon(BaseError):
 
 
 class PollinationNotFound(BaseError):
-    """Raised when pollination not found in database"""
+    """Raised when pollination not found in database."""
 
     def __init__(self, pollination_id: int):
         super().__init__(
@@ -107,7 +109,7 @@ class PollinationNotFound(BaseError):
 
 
 class TagNotFound(BaseError):
-    """Raised when tag not found in database"""
+    """Raised when tag not found in database."""
 
     def __init__(self, tag_id: int):
         super().__init__(
@@ -117,7 +119,7 @@ class TagNotFound(BaseError):
 
 
 class FlorescenceNotFound(BaseError):
-    """Raised when florescence not found in database"""
+    """Raised when florescence not found in database."""
 
     def __init__(self, florescence_id: int):
         super().__init__(
@@ -127,7 +129,7 @@ class FlorescenceNotFound(BaseError):
 
 
 class TaxonNotFound(BaseError):
-    """Raised when taxon not found in database"""
+    """Raised when taxon not found in database."""
 
     def __init__(self, taxon_identifier: int | str):
         msg = (
@@ -139,7 +141,7 @@ class TaxonNotFound(BaseError):
 
 
 class EventNotFound(BaseError):
-    """Raised when event, looked for by ID, not found in database"""
+    """Raised when event, looked for by ID, not found in database."""
 
     def __init__(self, image_id: int | str):
         super().__init__(
@@ -149,7 +151,7 @@ class EventNotFound(BaseError):
 
 
 class SoilNotFound(BaseError):
-    """Raised when soil, looked for by ID, not found in database"""
+    """Raised when soil, looked for by ID, not found in database."""
 
     def __init__(self, soil_id: int):
         super().__init__(
@@ -159,14 +161,14 @@ class SoilNotFound(BaseError):
 
 
 class SoilNotUnique(BaseError):
-    """Raised when soil to be created with existing name"""
+    """Raised when soil to be created with existing name."""
 
     def __init__(self, soil_name: str):
         super().__init__(detail=f"Soil {soil_name} not unique.")
 
 
 class ImageNotFound(BaseError):
-    """Raised when image, looked for by ID, not found in database"""
+    """Raised when image, looked for by ID, not found in database."""
 
     def __init__(self, image_id: int | str):
         super().__init__(

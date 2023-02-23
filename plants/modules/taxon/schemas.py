@@ -7,7 +7,8 @@ from plants.modules.image.models import Image
 from plants.modules.taxon.enums import FBRank
 from plants.modules.taxon.models import Distribution
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
-from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
+from plants.shared.base_schema import (BaseSchema, RequestContainer,
+                                       ResponseContainer)
 
 
 class DistributionBase(BaseSchema):
@@ -47,7 +48,8 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
     @validator("date")
     def datetime_to_string(cls, v):  # noqa
-        """validator decorator makes this a class method and enforces cls param"""
+        """Validator decorator makes this a class method and enforces cls
+        param."""
         return v.strftime(
             FORMAT_API_YYYY_MM_DD_HH_MM
         )  # todo required for Backend variant?
@@ -192,8 +194,8 @@ class TaxonRead(TaxonBase):
     def _transform_images(
         cls, images: list[Image], values, **kwargs
     ) -> list[TaxonImageRead]:  # noqa
-        """extract major information from Image model; and read the description from
-        taxon-to-image link table, not from image itself"""
+        """Extract major information from Image model; and read the description
+        from taxon-to-image link table, not from image itself."""
         results = []
         taxon_id = values["id"]
         for image in images:

@@ -26,9 +26,8 @@ def int_to_roman(num) -> str:
 
 
 def parse_roman_plant_index(s: str) -> tuple[str, str]:
-    """
-    parse the roman plant index number, e.g. "Aloe depressa VI" -> ("Aloe depressa", "VI")
-    """
+    """parse the roman plant index number, e.g. "Aloe depressa VI" -> ("Aloe
+    depressa", "VI")"""
     s_ending = s.split(" ")[-1]
     if any(s for s in s_ending if s not in ROMAN_DIGITS):
         raise ValueError(f"Invalid roman number: {s_ending}")
@@ -36,8 +35,7 @@ def parse_roman_plant_index(s: str) -> tuple[str, str]:
 
 
 def has_roman_plant_index(s: str) -> bool:
-    """
-    return True if supplied plant name has a roman plant name index, e.g. "Aloe depressa VI"
-    """
+    """Return True if supplied plant name has a roman plant name index, e.g.
+    "Aloe depressa VI"."""
     s_ending = s.split(" ")[-1]
     return not any(s for s in s_ending if s not in ROMAN_DIGITS)

@@ -10,3 +10,6 @@ __pycache__/
 *.pyc
 .coverage
 htmlcov
+.ruff_cache
+.venv
+venv311

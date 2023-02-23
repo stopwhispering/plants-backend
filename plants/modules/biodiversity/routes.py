@@ -6,14 +6,13 @@ from starlette.requests import Request
 
 from plants.dependencies import get_taxon_dal
 from plants.exceptions import TooManyResultsError
-from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
+from plants.modules.biodiversity.taxonomy_occurence_images import \
+    TaxonOccurencesLoader
 from plants.modules.biodiversity.taxonomy_search import TaxonomySearch
-from plants.modules.taxon.schemas import (
-    BResultsFetchTaxonImages,
-    BResultsTaxonInfoRequest,
-    FFetchTaxonOccurrenceImagesRequest,
-    FTaxonInfoRequest,
-)
+from plants.modules.taxon.schemas import (BResultsFetchTaxonImages,
+                                          BResultsTaxonInfoRequest,
+                                          FFetchTaxonOccurrenceImagesRequest,
+                                          FTaxonInfoRequest)
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message, throw_exception
 
@@ -31,11 +30,8 @@ async def search_taxa_by_name(
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """
-    searches taxon pattern in
-        (1) local database and
-        (2) in kew databases (powo and ipni) if requested
-    """
+    """Searches taxon pattern in (1) local database and (2) in kew databases
+    (powo and ipni) if requested."""
     taxonomy_search = TaxonomySearch(
         include_external_apis=taxon_info_request.include_external_apis,
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
@@ -77,7 +73,7 @@ async def fetch_taxon_occurrence_images(
     fetch_taxon_occurrence_images_request: FFetchTaxonOccurrenceImagesRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """(re)fetch taxon images from gbif and create thumbnails"""
+    """(re)fetch taxon images from gbif and create thumbnails."""
 
     # lookup ocurrences & images at gbif and generate thumbnails
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)

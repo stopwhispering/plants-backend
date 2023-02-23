@@ -4,7 +4,8 @@ import datetime
 import logging
 from operator import attrgetter
 
-from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
+from sqlalchemy import (BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey,
+                        Identity)
 from sqlalchemy.orm import foreign, relationship, remote  # noqa
 from sqlalchemy.types import DateTime
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Plant(Base):
-    """my plants"""
+    """My plants."""
 
     __tablename__ = "plants"
     id: int = Column(
@@ -176,7 +177,7 @@ class Plant(Base):
 
 
 class Tag(Base):
-    """tags displayed in master view and created/deleted in details view"""
+    """Tags displayed in master view and created/deleted in details view."""
 
     __tablename__ = "tags"
     id = Column(

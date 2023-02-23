@@ -5,7 +5,7 @@ from plants.extensions.orm import Base
 
 
 class History(Base):
-    """history of certain events; used for error-finding et alia"""
+    """History of certain events; used for error-finding et alia."""
 
     __tablename__ = "history"
     id = Column(

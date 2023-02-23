@@ -10,7 +10,9 @@ def test_parse_roman_plant_index():
     assert subsequent_name == ("Aloe depressa", "VI")
     subsequent_name = parse_roman_plant_index("Aloe depressa I")
     assert subsequent_name == ("Aloe depressa", "I")
-    subsequent_name = parse_roman_plant_index("× Aloe rauhii 'Demi' × Gasteria batesiana IX")
+    subsequent_name = parse_roman_plant_index(
+        "× Aloe rauhii 'Demi' × Gasteria batesiana IX"
+    )
     assert subsequent_name == ("× Aloe rauhii 'Demi' × Gasteria batesiana", "IX")
     with pytest.raises(ValueError):
         parse_roman_plant_index("Aloe depressa")

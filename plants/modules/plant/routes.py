@@ -4,34 +4,22 @@ import logging
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
 
-from plants.dependencies import (
-    get_event_dal,
-    get_history_dal,
-    get_image_dal,
-    get_plant_dal,
-    get_taxon_dal,
-    valid_plant,
-)
+from plants.dependencies import (get_event_dal, get_history_dal, get_image_dal,
+                                 get_plant_dal, get_taxon_dal, valid_plant)
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.schemas import (
-    BPlantsRenameRequest,
-    BResultsPlantCloned,
-    BResultsPlants,
-    BResultsPlantsUpdate,
-    BResultsProposeSubsequentPlantName,
-    FPlantsUpdateRequest,
-)
-from plants.modules.plant.services import (
-    deep_clone_plant,
-    fetch_plants,
-    generate_subsequent_plant_name,
-    update_plants_from_list_of_dicts,
-)
+from plants.modules.plant.schemas import (BPlantsRenameRequest,
+                                          BResultsPlantCloned, BResultsPlants,
+                                          BResultsPlantsUpdate,
+                                          BResultsProposeSubsequentPlantName,
+                                          FPlantsUpdateRequest)
+from plants.modules.plant.services import (deep_clone_plant, fetch_plants,
+                                           generate_subsequent_plant_name,
+                                           update_plants_from_list_of_dicts)
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import FBMajorResource
 from plants.shared.history_dal import HistoryDAL
@@ -63,10 +51,8 @@ async def clone_plant(
     # property_dal: PropertyDAL = Depends(get_property_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
 ):
-    """
-    clone plant with supplied plant_id; include duplication of events;
-    excludes regular image assignments (only to events)
-    """
+    """clone plant with supplied plant_id; include duplication of events;
+    excludes regular image assignments (only to events)"""
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
         raise PlantAlreadyExists(plant_name_clone)
 
@@ -108,11 +94,9 @@ async def create_or_update_plants(
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """
-    update existing or create new plants
-    if no id is supplied, a new plant is created having the supplied attributes (only
-    plant_name is mandatory, others may be provided)
-    """
+    """update existing or create new plants if no id is supplied, a new plant
+    is created having the supplied attributes (only plant_name is mandatory,
+    others may be provided)"""
     plants_modified = data.PlantsCollection
 
     # update plants
@@ -135,7 +119,7 @@ async def create_or_update_plants(
 async def delete_plant(
     plant: Plant = Depends(valid_plant), plant_dal: PlantDAL = Depends(get_plant_dal)
 ):
-    """tag deleted plant as 'deleted' in database"""
+    """Tag deleted plant as 'deleted' in database."""
     await plant_dal.delete(plant)
 
     logger.info(message := f"Deleted plant {plant.plant_name}")
@@ -156,7 +140,7 @@ async def rename_plant(
     history_dal: HistoryDAL = Depends(get_history_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
 ):
-    """we use the put method to rename a plant"""  # todo use id
+    """We use the put method to rename a plant."""  # todo use id
     plant = await plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
     # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db, raise_exception=True)
@@ -194,7 +178,7 @@ async def rename_plant(
 
 @router.get("/", response_model=BResultsPlants)
 async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
-    """read (almost unfiltered) plants information from db"""
+    """Read (almost unfiltered) plants information from db."""
     plants = await fetch_plants(plant_dal=plant_dal)
     results = {
         "action": "Get plants",
@@ -210,9 +194,8 @@ async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
     response_model=BResultsProposeSubsequentPlantName,
 )
 async def propose_subsequent_plant_name(original_plant_name: str):
-    """
-    derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa V"
-    """
+    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI"
+    for "Aloe depressa V"."""
     subsequent_plant_name = generate_subsequent_plant_name(original_plant_name)
     return {
         "original_plant_name": original_plant_name,

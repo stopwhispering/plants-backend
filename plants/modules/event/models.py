@@ -3,16 +3,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from sqlalchemy import (
-    INTEGER,
-    TEXT,
-    VARCHAR,
-    Column,
-    DateTime,
-    ForeignKey,
-    Identity,
-    Numeric,
-)
+from sqlalchemy import (INTEGER, TEXT, VARCHAR, Column, DateTime, ForeignKey,
+                        Identity, Numeric)
 from sqlalchemy.orm import relationship
 
 from plants.extensions.orm import Base
@@ -93,7 +85,7 @@ class Observation(Base):
 
 
 class Event(Base):
-    """events"""
+    """Events."""
 
     __tablename__ = "event"
     id = Column(

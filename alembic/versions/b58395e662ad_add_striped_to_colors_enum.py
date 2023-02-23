@@ -1,17 +1,16 @@
-"""add striped to colors enum
+"""Add striped to colors enum.
 
 Revision ID: b58395e662ad
 Revises: bbceddd14edc
 Create Date: 2023-02-17 12:57:54.316694
-
 """
 import sqlalchemy as sa
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'b58395e662ad'
-down_revision = 'bbceddd14edc'
+revision = "b58395e662ad"
+down_revision = "bbceddd14edc"
 branch_labels = None
 depends_on = None
 

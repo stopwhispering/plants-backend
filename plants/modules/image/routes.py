@@ -8,31 +8,26 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
-from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
+from plants.dependencies import (get_image_dal, get_plant_dal, get_taxon_dal,
+                                 valid_plant)
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.image_services_simple import remove_files_already_existing
-from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
-from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.modules.image.schemas import (
-    BImageUpdated,
-    BResultsImageDeleted,
-    BResultsImageResource,
-    BResultsImagesUploaded,
-    FImageUploadedMetadata,
-    ImageCreateUpdate,
-    ImageRead,
-)
+from plants.modules.image.image_services_simple import \
+    remove_files_already_existing
+from plants.modules.image.models import (Image, ImageKeyword,
+                                         ImageToPlantAssociation)
+from plants.modules.image.photo_metadata_access_exif import \
+    PhotoMetadataAccessExifTags
+from plants.modules.image.schemas import (BImageUpdated, BResultsImageDeleted,
+                                          BResultsImageResource,
+                                          BResultsImagesUploaded,
+                                          FImageUploadedMetadata,
+                                          ImageCreateUpdate, ImageRead)
 from plants.modules.image.services import (
-    delete_image_file_and_db_entries,
-    fetch_images_for_plant,
-    fetch_untagged_images,
-    get_image_path_by_size,
-    get_occurrence_thumbnail_path,
-    save_image_file,
-    save_image_to_db,
-    trigger_generation_of_missing_thumbnails,
-)
+    delete_image_file_and_db_entries, fetch_images_for_plant,
+    fetch_untagged_images, get_image_path_by_size,
+    get_occurrence_thumbnail_path, save_image_file, save_image_to_db,
+    trigger_generation_of_missing_thumbnails)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
@@ -53,9 +48,8 @@ async def get_images_for_plant(
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
 ):
-    """
-    get photo_file information for requested plant_id including (other) plants and keywords
-    """
+    """Get photo_file information for requested plant_id including (other)
+    plants and keywords."""
     images = await fetch_images_for_plant(plant, image_dal=image_dal)
     logger.info(f"Returned {len(images)} images for plant {plant.id}.")
     return images
@@ -68,8 +62,9 @@ async def upload_images_plant(
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """
-    upload images and directly assign them to supplied plant; no keywords included
+    """Upload images and directly assign them to supplied plant; no keywords
+    included.
+
     # the ui5 uploader control does somehow not work with the expected form/multipart format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
@@ -135,9 +130,7 @@ async def upload_images_plant(
 
 @router.get("/images/untagged/", response_model=BResultsImageResource)
 async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)):
-    """
-    get images with no plants assigned, yet
-    """
+    """Get images with no plants assigned, yet."""
     untagged_images: list[ImageCreateUpdate] = await fetch_untagged_images(
         image_dal=image_dal
     )
@@ -155,9 +148,7 @@ async def update_images(
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """
-    modify existing photo_file's metadata
-    """
+    """Modify existing photo_file's metadata."""
     logger.info(
         f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and exif tags."
     )
@@ -275,7 +266,8 @@ async def upload_images(
 async def delete_image(
     image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)
 ):
-    """move the file that should be deleted to another folder (not actually deleted, currently)"""
+    """move the file that should be deleted to another folder (not actually
+    deleted, currently)"""
     for image_to_delete in image_container.images:
         image = await image_dal.by_id(image_id=image_to_delete.id)
         if image.filename != image_to_delete.filename:
@@ -338,7 +330,7 @@ async def get_photo(
 async def trigger_generate_missing_thumbnails(
     background_tasks: BackgroundTasks, image_dal: ImageDAL = Depends(get_image_dal)
 ):
-    """trigger the generation of missing thumbnails for occurrences"""
+    """Trigger the generation of missing thumbnails for occurrences."""
     msg = await trigger_generation_of_missing_thumbnails(
         image_dal=image_dal, background_tasks=background_tasks
     )

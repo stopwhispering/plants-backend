@@ -6,7 +6,8 @@ from typing import Optional
 from plants.exceptions import SoilNotUnique
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Event, Observation, Pot, Soil
-from plants.modules.event.schemas import EventCreateUpdate, SoilCreate, SoilUpdate
+from plants.modules.event.schemas import (EventCreateUpdate, SoilCreate,
+                                          SoilUpdate)
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.models import Image, ImageToEventAssociation
 from plants.modules.plant.models import Plant
@@ -17,16 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[dict]:
-    """
-    read events from event database table
-    """
+    """Read events from event database table."""
     # plant has .events loaded, but not all sub-relationships; therefore, we load them here
     events: list[Event] = await event_dal.get_events_by_plant(plant)
     return events
 
 
 async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
-    """create new soil in database"""
+    """Create new soil in database."""
     if soil.id:
         throw_exception(f"Soil already exists: {soil.id}")
 
@@ -44,7 +43,7 @@ async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
 
 
 async def update_soil(soil: SoilUpdate, event_dal: EventDAL) -> Soil:
-    """update existing soil in database"""
+    """Update existing soil in database."""
     # make sure there isn't another soil with same name in case of renaming
     same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
     same_name_soils = [s for s in same_name_soils if s.id != soil.id]

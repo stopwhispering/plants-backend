@@ -17,7 +17,8 @@ def configure_root_logger(
     log_file_path: Path = Path("./plants.log"),
     log_filter: logging.Filter = None,
 ):
-    """configure the root logger; each module's default (__name__) logger will inherit these settings"""
+    """Configure the root logger; each module's default (__name__) logger will
+    inherit these settings."""
     logger = logging.getLogger()  # no name returns the root logger
     logger.setLevel(logging.DEBUG)  # global min. level
     # logging.basicConfig(level=logging.DEBUG)

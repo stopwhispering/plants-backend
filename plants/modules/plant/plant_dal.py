@@ -4,13 +4,9 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import (
-    CriterionNotImplemented,
-    PlantNotFound,
-    TagNotAssignedToPlant,
-    TagNotFound,
-    UpdateNotImplemented,
-)
+from plants.exceptions import (CriterionNotImplemented, PlantNotFound,
+                               TagNotAssignedToPlant, TagNotFound,
+                               UpdateNotImplemented)
 from plants.modules.event.models import Event
 from plants.modules.image.models import Image, ImageToPlantAssociation
 from plants.modules.plant.models import Plant, Tag
@@ -24,9 +20,8 @@ class PlantDAL(BaseDAL):
 
     @staticmethod
     def _add_eager_load_options(query: Select) -> Select:
-        """apply eager loading the query supplied;
-        use only for single- or limited-number select queries to avoid performance issues
-        """
+        """Apply eager loading the query supplied; use only for single- or
+        limited-number select queries to avoid performance issues."""
         query = query.options(
             selectinload(Plant.parent_plant),
             selectinload(Plant.parent_plant_pollen),

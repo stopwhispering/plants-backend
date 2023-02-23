@@ -10,24 +10,26 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 
 def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]:
-    """from a supplied transformer (usually step in a ColumnTransformer), try to return meaningful
-    output column name(s)"""
-    if name == 'drop' or transformer == 'drop' or not columns:
+    """from a supplied transformer (usually step in a ColumnTransformer), try
+    to return meaningful output column name(s)"""
+    if name == "drop" or transformer == "drop" or not columns:
         return []
 
-    elif name == 'passthrough':
+    elif name == "passthrough":
         return columns
 
-    elif (isinstance(transformer, RobustScaler)
-          or isinstance(transformer, MinMaxScaler)
-          or isinstance(transformer, StandardScaler)):
+    elif (
+        isinstance(transformer, RobustScaler)
+        or isinstance(transformer, MinMaxScaler)
+        or isinstance(transformer, StandardScaler)
+    ):
         return columns
 
     elif type(transformer) is Pipeline:
         # call same function recursively for the first step of the pipeline
         # todo not really working; make this better
         # if last step is a scaler, use the first step, otherwise the last (e.g. onehotencoder)
-        if str(transformer.steps[-1][1]).find('Scaler') >= 0:
+        if str(transformer.steps[-1][1]).find("Scaler") >= 0:
             relevant_pipeline_trf = transformer.steps[0][1]
         else:
             relevant_pipeline_trf = transformer.steps[-1][1]
@@ -48,7 +50,9 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
 
     else:
         try:
-            names = list(transformer.get_feature_names_out())  # list() does not result in cx if is already list
+            names = list(
+                transformer.get_feature_names_out()
+            )  # list() does not result in cx if is already list
             return names
         except AttributeError as e:
             pass
@@ -60,11 +64,12 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
             raise e
 
 
-def get_transformed_df_from_column_transformer(column_transformer: ColumnTransformer,
-                                               x: pd.DataFrame) -> Tuple[List[str], pd.DataFrame]:
-    """
-    from a fitted column transformer, extract the new column names, i.e. including
-    one-hot-encoded columns etc.
+def get_transformed_df_from_column_transformer(
+    column_transformer: ColumnTransformer, x: pd.DataFrame
+) -> Tuple[List[str], pd.DataFrame]:
+    """from a fitted column transformer, extract the new column names, i.e.
+    including one-hot-encoded columns etc.
+
     create a DataFrame from transformed data with the found column names
     todo: incomplete and buggy; only ad-hoc-usage
     Example Usage:
@@ -74,15 +79,15 @@ def get_transformed_df_from_column_transformer(column_transformer: ColumnTransfo
     transformed_arr = []
 
     # note that column_transformer.transformers contains the <<unfitted>> transformers
-    if not hasattr(column_transformer, 'transformers_'):
-        raise ValueError('column_transformer must be fitted first')
+    if not hasattr(column_transformer, "transformers_"):
+        raise ValueError("column_transformer must be fitted first")
     for name, transformer, columns in column_transformer.transformers_:
         names = _get_feature_names_from_transformer(name, transformer, columns)
         if not names:
             continue
         feature_names.extend(names)
 
-        if transformer == 'passthrough':
+        if transformer == "passthrough":
             transformed_arr.append(x[columns].values)
         # elif transformer == 'drop':
         #     continue
@@ -94,7 +99,9 @@ def get_transformed_df_from_column_transformer(column_transformer: ColumnTransfo
                 arr_current_transformer = arr_current_transformer.todense()
 
             if not arr_current_transformer.shape[1] == len(names):
-                raise ValueError(r"Number of transformed columns doesn't match derived new names.")
+                raise ValueError(
+                    r"Number of transformed columns doesn't match derived new names."
+                )
 
             transformed_arr.append(arr_current_transformer)
 
@@ -103,8 +110,10 @@ def get_transformed_df_from_column_transformer(column_transformer: ColumnTransfo
 
     # assert our self-assembled values from all steps' transformations are equal to the whole column
     # transformer's transformation
-    df_transformed_at_once = pd.DataFrame(column_transformer.transform(x), columns=feature_names)
+    df_transformed_at_once = pd.DataFrame(
+        column_transformer.transform(x), columns=feature_names
+    )
     if not (df_transformed_at_once == df_transformed).all().all():
-        raise ValueError('Some error happened. Should be equal for all columns.')
+        raise ValueError("Some error happened. Should be equal for all columns.")
 
     return feature_names, df_transformed

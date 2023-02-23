@@ -6,43 +6,30 @@ from fastapi import HTTPException
 from plants.exceptions import ColorAlreadyTaken, UnknownColor
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.enums import (
-    COLORS_MAP,
-    COLORS_MAP_TO_RGB,
-    Context,
-    FlorescenceStatus,
-    Location,
-    PollenType,
-    PollinationStatus,
-)
+from plants.modules.pollination.enums import (COLORS_MAP, COLORS_MAP_TO_RGB,
+                                              Context, FlorescenceStatus,
+                                              Location, PollenType,
+                                              PollinationStatus)
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.ml_prediction import (
-    predict_probability_of_seed_production,
-)
+from plants.modules.pollination.ml_prediction import \
+    predict_probability_of_seed_production
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
-from plants.modules.pollination.schemas import PollenContainerCreateUpdate  # noqa
-from plants.modules.pollination.schemas import (
-    BPlantWithoutPollenContainer,
-    BPollinationAttempt,
-    BPollinationResultingPlant,
-    BPotentialPollenDonor,
-    PollenContainerRead,
-    PollinationCreate,
-    PollinationRead,
-    PollinationUpdate,
-)
-from plants.shared.api_constants import (
-    FORMAT_API_YYYY_MM_DD_HH_MM,
-    FORMAT_FULL_DATETIME,
-    FORMAT_YYYY_MM_DD,
-)
-from plants.shared.api_utils import (
-    format_api_date,
-    format_api_datetime,
-    parse_api_date,
-    parse_api_datetime,
-)
+from plants.modules.pollination.schemas import \
+    PollenContainerCreateUpdate  # noqa
+from plants.modules.pollination.schemas import (BPlantWithoutPollenContainer,
+                                                BPollinationAttempt,
+                                                BPollinationResultingPlant,
+                                                BPotentialPollenDonor,
+                                                PollenContainerRead,
+                                                PollinationCreate,
+                                                PollinationRead,
+                                                PollinationUpdate)
+from plants.shared.api_constants import (FORMAT_API_YYYY_MM_DD_HH_MM,
+                                         FORMAT_FULL_DATETIME,
+                                         FORMAT_YYYY_MM_DD)
+from plants.shared.api_utils import (format_api_date, format_api_datetime,
+                                     parse_api_date, parse_api_datetime)
 
 LOCATION_TEXTS: Final[dict] = {
     "indoor": "indoor",
@@ -55,7 +42,8 @@ LOCATION_TEXTS: Final[dict] = {
 async def _read_pollination_attempts(
     plant: Plant, pollen_donor: Plant, pollination_dal: PollinationDAL
 ) -> list[BPollinationAttempt]:
-    """Read all pollination attempts for a plant and a pollen donor plus the other way around"""
+    """Read all pollination attempts for a plant and a pollen donor plus the
+    other way around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
     # attempts_orm = db.query(Pollination).filter(Pollination.seed_capsule_plant_id == plant.id,
     #                                             Pollination.pollen_donor_plant_id == pollen_donor.id).all()
@@ -115,7 +103,8 @@ async def _read_resulting_plants(
 def get_probability_pollination_to_seed(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
-    """Get the ml prediction for the probability of successful pollination to seed"""
+    """Get the ml prediction for the probability of successful pollination to
+    seed."""
     probability = predict_probability_of_seed_production(
         florescence=florescence, pollen_donor=pollen_donor, pollen_type=pollen_type
     )
@@ -143,8 +132,8 @@ async def read_potential_pollen_donors(
     pollination_dal: PollinationDAL,
     plant_dal: PlantDAL,
 ) -> list[BPotentialPollenDonor]:
-    """Read all potential pollen donors for a flowering plant; this can bei either another flowering
-    plant or frozen pollen"""
+    """Read all potential pollen donors for a flowering plant; this can bei
+    either another flowering plant or frozen pollen."""
     plant = await plant_dal.by_id(florescence.plant_id)
     potential_pollen_donors = []
 
@@ -245,7 +234,7 @@ async def save_new_pollination(
     florescence_dal: FlorescenceDAL,
     plant_dal: PlantDAL,
 ):
-    """Save a new pollination attempt"""
+    """Save a new pollination attempt."""
     # validate data quality
     florescence = await florescence_dal.by_id(new_pollination_data.florescenceId)
     seed_capsule_plant = await plant_dal.by_id(
@@ -302,7 +291,7 @@ async def save_new_pollination(
 
 
 async def remove_pollination(pollination: Pollination, pollination_dal: PollinationDAL):
-    """Delete a pollination attempt"""
+    """Delete a pollination attempt."""
     await pollination_dal.delete(pollination)
 
 
@@ -311,7 +300,7 @@ async def update_pollination(
     pollination_data: PollinationUpdate,
     pollination_dal: PollinationDAL,
 ):
-    """Update a pollination attempt"""
+    """Update a pollination attempt."""
 
     # technical validation (some values are not allowed to be changed)
     assert pollination is not None

@@ -2,54 +2,33 @@ import logging
 
 from fastapi import APIRouter, Depends
 
-from plants.dependencies import (
-    get_florescence_dal,
-    get_plant_dal,
-    get_pollination_dal,
-    valid_florescence,
-    valid_pollination,
-)
+from plants.dependencies import (get_florescence_dal, get_plant_dal,
+                                 get_pollination_dal, valid_florescence,
+                                 valid_pollination)
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import COLORS_MAP
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.florescence_services import (
-    create_new_florescence,
-    read_active_florescences,
-    read_plants_for_new_florescence,
-    remove_florescence,
-    update_active_florescence,
-)
-from plants.modules.pollination.flower_history_services import generate_flower_history
-from plants.modules.pollination.ml_model import (
-    train_model_for_probability_of_seed_production,
-)
+    create_new_florescence, read_active_florescences,
+    read_plants_for_new_florescence, remove_florescence,
+    update_active_florescence)
+from plants.modules.pollination.flower_history_services import \
+    generate_flower_history
+from plants.modules.pollination.ml_model import \
+    train_model_for_probability_of_seed_production
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
-    read_ongoing_pollinations,
-    read_plants_without_pollen_containers,
-    read_pollen_containers,
-    read_potential_pollen_donors,
-    remove_pollination,
-    save_new_pollination,
-    update_pollen_containers,
-    update_pollination,
-)
+    read_ongoing_pollinations, read_plants_without_pollen_containers,
+    read_pollen_containers, read_potential_pollen_donors, remove_pollination,
+    save_new_pollination, update_pollen_containers, update_pollination)
 from plants.modules.pollination.schemas import (
-    BResultsActiveFlorescences,
-    BResultsFlowerHistory,
-    BResultsOngoingPollinations,
-    BResultsPlantsForNewFlorescence,
-    BResultsPollenContainers,
-    BResultsPotentialPollenDonors,
-    BResultsRetrainingPollinationToSeedsModel,
-    FlorescenceCreate,
-    FlorescenceUpdate,
-    FRequestPollenContainers,
-    PollinationCreate,
-    PollinationUpdate,
-    SettingsRead,
-)
+    BResultsActiveFlorescences, BResultsFlowerHistory,
+    BResultsOngoingPollinations, BResultsPlantsForNewFlorescence,
+    BResultsPollenContainers, BResultsPotentialPollenDonors,
+    BResultsRetrainingPollinationToSeedsModel, FlorescenceCreate,
+    FlorescenceUpdate, FRequestPollenContainers, PollinationCreate,
+    PollinationUpdate, SettingsRead)
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -114,7 +93,7 @@ async def get_pollination_settings():
 
 @router.get("/pollen_containers", response_model=BResultsPollenContainers)
 async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)):
-    """Get pollen containers plus plants without pollen containers"""
+    """Get pollen containers plus plants without pollen containers."""
     pollen_containers = await read_pollen_containers(plant_dal=plant_dal)
     plants_without_pollen_containers = await read_plants_without_pollen_containers(
         plant_dal=plant_dal
@@ -130,7 +109,7 @@ async def post_pollen_containers(
     pollen_containers_data: FRequestPollenContainers,
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """update pollen containers and add new ones"""
+    """Update pollen containers and add new ones."""
     await update_pollen_containers(
         pollen_containers_data=pollen_containers_data.pollenContainerCollection,
         plant_dal=plant_dal,
@@ -150,7 +129,7 @@ async def delete_pollination(
     response_model=BResultsRetrainingPollinationToSeedsModel,
 )
 async def retrain_probability_pollination_to_seed_model():
-    """retrain the probability_pollination_to_seed ml model"""
+    """Retrain the probability_pollination_to_seed ml model."""
     results = await train_model_for_probability_of_seed_production()
     return results
 
@@ -160,7 +139,8 @@ async def get_active_florescences(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ):
-    """read active florescences, either after inflorescence appeared or flowering"""
+    """Read active florescences, either after inflorescence appeared or
+    flowering."""
     florescences = await read_active_florescences(
         florescence_dal=florescence_dal, pollination_dal=pollination_dal
     )
@@ -175,7 +155,7 @@ async def get_active_florescences(
     "/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence
 )
 async def get_plants_for_new_florescence(plant_dal: PlantDAL = Depends(get_plant_dal)):
-    """read all plants available for new florescence"""
+    """Read all plants available for new florescence."""
     plants = await read_plants_for_new_florescence(plant_dal=plant_dal)
     return {"plantsForNewFlorescenceCollection": plants}
 
@@ -202,7 +182,7 @@ async def post_active_florescence(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """create new florescence for a plant"""
+    """Create new florescence for a plant."""
     await create_new_florescence(
         new_florescence_data=new_florescence_data,
         florescence_dal=florescence_dal,

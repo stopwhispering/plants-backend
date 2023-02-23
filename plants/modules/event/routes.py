@@ -3,24 +3,18 @@ from collections import defaultdict
 
 from fastapi import APIRouter, Depends
 
-from plants.dependencies import get_event_dal, get_image_dal, get_plant_dal, valid_plant
+from plants.dependencies import (get_event_dal, get_image_dal, get_plant_dal,
+                                 valid_plant)
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Soil
-from plants.modules.event.schemas import (
-    BPResultsUpdateCreateSoil,
-    BResultsEventResource,
-    BResultsSoilsResource,
-    FRequestCreateOrUpdateEvent,
-    SoilCreate,
-    SoilUpdate,
-)
-from plants.modules.event.services import (
-    create_or_update_event,
-    create_soil,
-    fetch_soils,
-    read_events_for_plant,
-    update_soil,
-)
+from plants.modules.event.schemas import (BPResultsUpdateCreateSoil,
+                                          BResultsEventResource,
+                                          BResultsSoilsResource,
+                                          FRequestCreateOrUpdateEvent,
+                                          SoilCreate, SoilUpdate)
+from plants.modules.event.services import (create_or_update_event, create_soil,
+                                           fetch_soils, read_events_for_plant,
+                                           update_soil)
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
@@ -50,7 +44,7 @@ async def get_soils(
 async def create_new_soil(
     new_soil: SoilCreate, event_dal: EventDAL = Depends(get_event_dal)
 ):
-    """create new soil and return it with (newly assigned) id"""
+    """Create new soil and return it with (newly assigned) id."""
     soil = await create_soil(soil=new_soil, event_dal=event_dal)
 
     logger.info(msg := f"Created soil with new ID {soil.id}")
@@ -61,7 +55,7 @@ async def create_new_soil(
 async def update_existing_soil(
     updated_soil: SoilUpdate, event_dal: EventDAL = Depends(get_event_dal)
 ):
-    """update soil attributes"""
+    """Update soil attributes."""
     soil: Soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
     logger.info(msg := f"Updated soil with ID {soil.id}")
@@ -72,9 +66,7 @@ async def update_existing_soil(
 async def get_events(
     plant: Plant = Depends(valid_plant), event_dal: EventDAL = Depends(get_event_dal)
 ):
-    """
-    returns events from event database table
-    """
+    """Returns events from event database table."""
     events = await read_events_for_plant(plant, event_dal=event_dal)
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")

@@ -1,16 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn import (
-    dummy,
-    ensemble,
-    gaussian_process,
-    linear_model,
-    naive_bayes,
-    neighbors,
-    neural_network,
-    svm,
-    tree,
-)
+from sklearn import (dummy, ensemble, gaussian_process, linear_model,
+                     naive_bayes, neighbors, neural_network, svm, tree)
 from sklearn.dummy import DummyClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV, GroupKFold, cross_val_score
@@ -24,7 +15,7 @@ from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
 def apply_grid_search(
     x: pd.DataFrame, y: pd.Series, pipeline: Pipeline, param_grid: dict
 ) -> Pipeline:
-    """ """
+    """"""
     n_groups = 3  # test part will be 1/n
     n_splits = 3  # k-fold will score n times; must be <= n_groups
     np.random.seed(42)
@@ -114,7 +105,7 @@ def _try_classifiers(x, y, feature_container: FeatureContainer):
 
 
 def optimize_knn_classifier(x, y, feature_container: FeatureContainer):
-    """optimize KNN classifier"""
+    """Optimize KNN classifier."""
     pipeline = create_pipeline(
         feature_container=feature_container, model=neighbors.KNeighborsClassifier()
     )
@@ -155,7 +146,7 @@ def cv_classifier(x, y, pipeline: Pipeline):
 
 
 def optimize_randomforest_classifier(x, y, feature_container: FeatureContainer):
-    """optimize a RandomForest classifier"""
+    """Optimize a RandomForest classifier."""
     pipeline = create_pipeline(
         feature_container=feature_container, model=ensemble.RandomForestClassifier()
     )

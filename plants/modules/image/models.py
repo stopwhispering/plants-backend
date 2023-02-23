@@ -2,16 +2,8 @@ import logging
 from datetime import datetime
 from pathlib import PurePath
 
-from sqlalchemy import (
-    INTEGER,
-    TEXT,
-    TIMESTAMP,
-    VARCHAR,
-    Column,
-    DateTime,
-    ForeignKey,
-    Identity,
-)
+from sqlalchemy import (INTEGER, TEXT, TIMESTAMP, VARCHAR, Column, DateTime,
+                        ForeignKey, Identity)
 from sqlalchemy.orm import relationship
 
 from plants import settings
@@ -21,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImageKeyword(Base):
-    """keywords tagged at images"""
+    """Keywords tagged at images."""
 
     __tablename__ = "image_keywords"
     image_id = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
@@ -33,7 +25,7 @@ class ImageKeyword(Base):
 
 
 class ImageToPlantAssociation(Base):
-    """plants tagged at images"""
+    """Plants tagged at images."""
 
     __tablename__ = "image_to_plant_association"
     image_id = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
@@ -63,7 +55,7 @@ class ImageToPlantAssociation(Base):
 
 
 class Image(Base):
-    """image paths"""
+    """Image paths."""
 
     # images themselves are stored in file system
     # this table is only used to link events to images

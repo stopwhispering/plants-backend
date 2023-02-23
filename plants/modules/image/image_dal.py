@@ -2,13 +2,10 @@ from sqlalchemy import Select, select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import ImageNotFound
-from plants.modules.image.models import (
-    Image,
-    ImageKeyword,
-    ImageToEventAssociation,
-    ImageToPlantAssociation,
-    ImageToTaxonAssociation,
-)
+from plants.modules.image.models import (Image, ImageKeyword,
+                                         ImageToEventAssociation,
+                                         ImageToPlantAssociation,
+                                         ImageToTaxonAssociation)
 from plants.shared.base_dal import BaseDAL
 
 
@@ -18,9 +15,8 @@ class ImageDAL(BaseDAL):
 
     @staticmethod
     def _add_eager_load_options(query: Select) -> Select:
-        """apply eager loading the query supplied;
-        use only for single- or limited-number select queries to avoid performance issues
-        """
+        """Apply eager loading the query supplied; use only for single- or
+        limited-number select queries to avoid performance issues."""
         query = query.options(
             selectinload(Image.keywords),
             selectinload(Image.plants),
@@ -72,7 +68,7 @@ class ImageDAL(BaseDAL):
         return images
 
     async def get_distinct_image_keywords(self) -> set[str]:
-        """get distinct keyword strings from ImageKeyword table"""
+        """Get distinct keyword strings from ImageKeyword table."""
         query = select(ImageKeyword.keyword).distinct(ImageKeyword.keyword)
         image_keywords: list[ImageKeyword] = (
             await self.session.scalars(query)

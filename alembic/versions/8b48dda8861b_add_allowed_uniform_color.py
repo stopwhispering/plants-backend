@@ -1,17 +1,16 @@
-"""add allowed uniform color
+"""Add allowed uniform color.
 
 Revision ID: 8b48dda8861b
 Revises: 265262ee2f76
 Create Date: 2023-01-28 21:38:33.494543
-
 """
 import sqlalchemy as sa
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '8b48dda8861b'
-down_revision = '265262ee2f76'
+revision = "8b48dda8861b"
+down_revision = "265262ee2f76"
 branch_labels = None
 depends_on = None
 

@@ -29,7 +29,8 @@ repos:
     -   id: check-ast  # simply checks whether the files parse as valid python.
     -   id: check-case-conflict  #  checks for files that would conflict in case-insensitive filesystems
     -   id: debug-statements  # checks for debugger imports and py37+ `breakpoint()` calls in python source.
-#- repo: local  # pylint works only with the local repo
+#- repo: local  # pylint works only with the local repo; pylint is too slow for usage
+                # pylint is too s low for regular usage
 #  hooks:
 #    - id: pylint
 #      name: pylint
@@ -41,3 +42,9 @@ repos:
 #          "-rn", # Only display messages
 #          "-sn", # Don't display the score
 #        ]
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.1
+    hooks:
+      - id: docformatter
+        args:
+        - --in-place

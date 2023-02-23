@@ -12,10 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def modified_date(path_to_file: Path) -> float:
-    """
-    tries to get the file's last modified date (in seconds)
-    see http://stackoverflow.com/a/39501288/1709587 for explanation.
-    """
+    """tries to get the file's last modified date (in seconds) see
+    http://stackoverflow.com/a/39501288/1709587 for explanation."""
     return path_to_file.lstat().st_mtime
     # if platform.system() == 'Windows':
     #     return os.path.getmtime(path_to_file.as_posix())
@@ -25,18 +23,14 @@ def modified_date(path_to_file: Path) -> float:
 
 
 def set_modified_date(path_to_file: Path, modified_time_seconds: float) -> None:
-    """
-    set file's last access and modified time
-    """
+    """Set file's last access and modified time."""
     # todo pathlib
     os.utime(path_to_file.as_posix(), (modified_time_seconds, modified_time_seconds))
 
 
 def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
-    """
-    decode exif tag datetime to regular datetime object
-    from b"YYYY:MM:DD HH:MM:SS" to datetime object
-    """
+    """Decode exif tag datetime to regular datetime object from b"YYYY:MM:DD
+    HH:MM:SS" to datetime object."""
     try:
         s_dt = date_time_bin.decode("utf-8")
         s_format = "%Y:%m:%d %H:%M:%S"
@@ -47,21 +41,18 @@ def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
 
 
 def encode_record_date_time(dt: datetime.datetime):
-    """
-    encode datetime into format required by exif tag
-    from datetime object to b"YYYY:MM:DD HH:MM:SS"
-    """
+    """Encode datetime into format required by exif tag from datetime object to
+    b"YYYY:MM:DD HH:MM:SS"."""
     s_format = "%Y:%m:%d %H:%M:%S"
     s_dt = dt.strftime(s_format)
     return s_dt.encode("utf-8")
 
 
 def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
-    """
-    auto-rotates images according to exif tag; required as chrome does not display them correctly otherwise;
-    applies a recompression with high quality; re-attaches the original exif files to the new file but without the
-    orientation tag
-    """
+    """Auto-rotates images according to exif tag; required as chrome does not
+    display them correctly otherwise; applies a recompression with high
+    quality; re-attaches the original exif files to the new file but without
+    the orientation tag."""
     if (
         not exif_dict
         or piexif.ImageIFD.Orientation not in exif_dict["0th"]
@@ -123,10 +114,8 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
 
 
 def decode_keywords_tag(t: tuple) -> List[str]:
-    """
-    decode a tuple of unicode byte integers (0..255) to a list of strings; required to get keywords into a regular
-    format coming from exif tags
-    """
+    """Decode a tuple of unicode byte integers (0..255) to a list of strings;
+    required to get keywords into a regular format coming from exif tags."""
     chars_iter = map(chr, t)
     chars = "".join(chars_iter)
     chars = chars.replace("\x00", "")  # remove null bytes after each character
@@ -134,9 +123,7 @@ def decode_keywords_tag(t: tuple) -> List[str]:
 
 
 def encode_keywords_tag(keywords: list[str]) -> Tuple:
-    """
-    reverse decode_keywords_tag function
-    """
+    """Reverse decode_keywords_tag function."""
     ord_list = []
     for keyword in keywords:
         ord_list_new = [ord(t) for t in keyword]
@@ -157,10 +144,8 @@ def encode_keywords_tag(keywords: list[str]) -> Tuple:
 
 
 def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
-    """
-    the application uses most of all three exif tags to store information; returns whether all of them
-    are extant in supplied exif dict
-    """
+    """The application uses most of all three exif tags to store information;
+    returns whether all of them are extant in supplied exif dict."""
     try:
         _ = exif_dict["0th"][270]  # description
         _ = exif_dict["0th"][40094]  # keywords
@@ -173,9 +158,8 @@ def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
 def read_record_datetime_from_exif_tags(
     absolute_path: Path,
 ) -> datetime.datetime | None:
-    """
-    open jpeg file and read exif tags; decode and return original record datetime
-    """
+    """Open jpeg file and read exif tags; decode and return original record
+    datetime."""
     if not absolute_path:
         raise ValueError("File path not set.")
 

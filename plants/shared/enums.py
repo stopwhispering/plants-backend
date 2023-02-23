@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class FProposalEntity(str, Enum):
-    """proposal entities that may be requested by frontend"""
+    """Proposal entities that may be requested by frontend."""
 
     SOIL = "SoilProposals"
     NURSERY = "NurserySourceProposals"
@@ -19,7 +19,8 @@ class FBMajorResource(str, Enum):
 
 
 class BMessageType(str, Enum):
-    """message types processed by error/success handlers in ui5 web frontend"""
+    """Message types processed by error/success handlers in ui5 web
+    frontend."""
 
     INFORMATION = "Information"
     NONE = "None"

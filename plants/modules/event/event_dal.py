@@ -13,7 +13,8 @@ class EventDAL(BaseDAL):
         super().__init__(session)
 
     async def get_events_by_plant(self, plant: Plant) -> list[Event]:
-        """read all events for supplied plant, including related images, observations, soils and pots"""
+        """Read all events for supplied plant, including related images,
+        observations, soils and pots."""
         query = (
             select(Event)
             .where(Event.plant_id == plant.id)

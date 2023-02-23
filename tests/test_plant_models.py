@@ -9,26 +9,26 @@ from plants.modules.plant.plant_dal import PlantDAL
 
 @pytest_asyncio.fixture(scope="function")
 async def dummy() -> None:
-    """for whatever reason, the unit tests fail with some database connection closed resource error if they
-    don't use any function-scoped fixtures"""
+    """For whatever reason, the unit tests fail with some database connection
+    closed resource error if they don't use any function-scoped fixtures."""
     pass
 
 
 @pytest.mark.asyncio
 async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):  # noqa
-    plant = Plant(field_number='A100')  # plant_name, active, deleted are required
+    plant = Plant(field_number="A100")  # plant_name, active, deleted are required
     test_db.add(plant)
     with pytest.raises(IntegrityError):
         await test_db.commit()
     await test_db.rollback()
 
-    plants = await plant_dal.get_plant_by_criteria({'field_number': 'A100'})
+    plants = await plant_dal.get_plant_by_criteria({"field_number": "A100"})
     assert len(plants) == 0
 
 
 @pytest.mark.asyncio
 async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
-    plant_name = 'Aloe Vera'
+    plant_name = "Aloe Vera"
     plant = Plant(plant_name=plant_name, active=True, deleted=False)
     await plant_dal.create_plant(plant)
 
@@ -39,10 +39,10 @@ async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
 
 @pytest.mark.asyncio
 async def test_plant_duplicate_name(test_db, dummy):  # noqa
-    test_db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
+    test_db.add(Plant(plant_name="Aloe Vera", active=True, deleted=False))
     await test_db.flush()
 
-    test_db.add(Plant(plant_name='Aloe Vera', active=True, deleted=False))
+    test_db.add(Plant(plant_name="Aloe Vera", active=True, deleted=False))
     with pytest.raises(IntegrityError):
         await test_db.commit()
     await test_db.rollback()

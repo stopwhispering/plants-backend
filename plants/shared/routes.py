@@ -28,7 +28,7 @@ async def get_proposals(
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """returns proposals for selection tables"""
+    """Returns proposals for selection tables."""
 
     results = {}
 
@@ -71,7 +71,7 @@ async def get_selection_data(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """build & return taxon tree for advanced filtering"""
+    """Build & return taxon tree for advanced filtering."""
     taxon_tree = await build_taxon_tree(taxon_dal=taxon_dal, plant_dal=plant_dal)
     make_list_items_json_serializable(taxon_tree)
 

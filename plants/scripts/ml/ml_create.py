@@ -12,9 +12,7 @@ from plants.extensions.orm import init_orm
 from plants.scripts.ml.ml_model.ml_data import create_data
 from plants.scripts.ml.ml_model.ml_features import ModelType, create_features
 from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
-from plants.scripts.ml.ml_model.ml_train import (
-    cv_classifier,
-)
+from plants.scripts.ml.ml_model.ml_train import cv_classifier
 
 logging.basicConfig(level=logging.DEBUG, force=True)
 
@@ -23,7 +21,8 @@ db = next(get_db())
 
 
 def create_model_for_probability_of_successful_germination():
-    """predict whether a seed is going to germinate, i.e. pollination reaches GERMINATED status"""
+    """Predict whether a seed is going to germinate, i.e. pollination reaches
+    GERMINATED status."""
     pass
     # feature_container = create_features(model_type=ModelType.POLLINATION_TO_GERMINATION)
     # df = create_data(feature_container=feature_container)
@@ -31,7 +30,7 @@ def create_model_for_probability_of_successful_germination():
 
 
 def train_model_for_probability_of_seed_production():
-    """predict whether a pollination attempt is goint to reach SEED status"""
+    """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = create_features(model_type=ModelType.POLLINATION_TO_SEED)
     df = create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)

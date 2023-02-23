@@ -2,16 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import (
-    BOOLEAN,
-    INTEGER,
-    TEXT,
-    VARCHAR,
-    Column,
-    ForeignKey,
-    ForeignKeyConstraint,
-    Identity,
-)
+from sqlalchemy import (BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey,
+                        ForeignKeyConstraint, Identity)
 from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import DateTime
@@ -20,7 +12,7 @@ from plants.extensions.orm import Base
 
 
 class Distribution(Base):
-    """geographic distribution"""
+    """Geographic distribution."""
 
     __tablename__ = "distribution"
 
@@ -46,11 +38,9 @@ class Distribution(Base):
 
 
 class Taxon(Base):
-    """
-    botanical details
-    non-technical key is name (unique constraint)
-    lsid is unique, too, amont those taxa with is_custom == False (no constraint, asserted programmatically)
-    """
+    """botanical details non-technical key is name (unique constraint) lsid is
+    unique, too, amont those taxa with is_custom == False (no constraint,
+    asserted programmatically)"""
 
     __tablename__ = "taxon"
 
@@ -118,7 +108,7 @@ class Taxon(Base):
 
 
 class TaxonOccurrenceImage(Base):
-    """botanical details"""
+    """Botanical details."""
 
     __tablename__ = "taxon_ocurrence_image"
 
@@ -153,7 +143,7 @@ class TaxonOccurrenceImage(Base):
 
 
 class TaxonToOccurrenceAssociation(Base):
-    """link table for taxon to occurrence images"""
+    """Link table for taxon to occurrence images."""
 
     __tablename__ = "taxon_to_occurrence_association"
 

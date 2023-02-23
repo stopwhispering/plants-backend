@@ -9,7 +9,7 @@ class ModelType(Enum):
 
 
 def create_features(model_type: ModelType) -> FeatureContainer:
-    """create a features container for a specific model to be trained"""
+    """Create a features container for a specific model to be trained."""
     # plant and flower features all models
     features = [
         Feature(column="pollen_type", scale=Scale.NOMINAL_BIVALUE),

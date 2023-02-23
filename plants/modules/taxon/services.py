@@ -5,25 +5,24 @@ from fastapi.concurrency import run_in_threadpool
 from pykew import powo
 
 from plants.exceptions import TaxonAlreadyExists
-from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
+from plants.modules.biodiversity.taxonomy_lookup_gbif_id import \
+    GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import (
-    BotanicalNameInput,
-    create_formatted_botanical_name,
-)
-from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
+    BotanicalNameInput, create_formatted_botanical_name)
+from plants.modules.biodiversity.taxonomy_occurence_images import \
+    TaxonOccurencesLoader
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.taxon.models import Distribution, Taxon
-from plants.modules.taxon.schemas import TaxonCreate, TaxonImageUpdate, TaxonUpdate
+from plants.modules.taxon.schemas import (TaxonCreate, TaxonImageUpdate,
+                                          TaxonUpdate)
 from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
 
 def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
-    """
-    create a simple and a html-formatted botanical name
-    """
+    """Create a simple and a html-formatted botanical name."""
     botanical_name_input = BotanicalNameInput(
         rank=new_taxon.rank,
         genus=new_taxon.genus,

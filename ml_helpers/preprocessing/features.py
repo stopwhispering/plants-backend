@@ -2,11 +2,11 @@ from enum import Enum
 
 
 class Scale(Enum):
-    NOMINAL = 'nominal'
-    ORDINAL = 'ordinal'
-    METRIC = 'metric'
-    NOMINAL_BIVALUE = 'nominal_bivalue'  # e.g. 'fresh' / 'frozen'
-    BOOLEAN = 'boolean'  # True / False, requires no one-hot-encoding
+    NOMINAL = "nominal"
+    ORDINAL = "ordinal"
+    METRIC = "metric"
+    NOMINAL_BIVALUE = "nominal_bivalue"  # e.g. 'fresh' / 'frozen'
+    BOOLEAN = "boolean"  # True / False, requires no one-hot-encoding
 
 
 class Feature:

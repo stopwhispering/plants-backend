@@ -4,7 +4,8 @@ from typing import List, Optional
 from pydantic import constr
 
 from plants import settings
-from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
+from plants.shared.base_schema import (BaseSchema, RequestContainer,
+                                       ResponseContainer)
 from plants.shared.message_schemas import BMessage
 
 

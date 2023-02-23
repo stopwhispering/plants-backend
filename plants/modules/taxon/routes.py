@@ -5,19 +5,14 @@ from starlette.background import BackgroundTasks
 
 from plants.dependencies import get_image_dal, get_taxon_dal, valid_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import (
-    BotanicalNameInput,
-    create_formatted_botanical_name,
-)
+    BotanicalNameInput, create_formatted_botanical_name)
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.taxon.models import Taxon
-from plants.modules.taxon.schemas import (
-    BCreatedTaxonResponse,
-    BResultsGetBotanicalName,
-    BResultsGetTaxon,
-    FBotanicalAttributes,
-    FModifiedTaxa,
-    TaxonCreate,
-)
+from plants.modules.taxon.schemas import (BCreatedTaxonResponse,
+                                          BResultsGetBotanicalName,
+                                          BResultsGetTaxon,
+                                          FBotanicalAttributes, FModifiedTaxa,
+                                          TaxonCreate)
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import FBMajorResource
@@ -35,8 +30,9 @@ router = APIRouter(
 
 @router.post("/botanical_name", response_model=BResultsGetBotanicalName)
 async def create_botanical_name(botanical_attributes: FBotanicalAttributes):
-    """
-    create a botanical name incl. formatting (italics) for supplied taxon attributes
+    """create a botanical name incl.
+
+    formatting (italics) for supplied taxon attributes
     """
     botanical_name_input = BotanicalNameInput(
         rank=botanical_attributes.rank,
@@ -68,9 +64,7 @@ async def create_botanical_name(botanical_attributes: FBotanicalAttributes):
 
 @router.get("/{taxon_id}", response_model=BResultsGetTaxon)
 async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
-    """
-    returns taxon for requested taxon_id
-    """
+    """Returns taxon for requested taxon_id."""
     return {
         "action": "Get taxa",
         "message": get_message(f"Read taxon {taxon.id} from database."),
@@ -84,9 +78,8 @@ async def save_taxon(
     background_tasks: BackgroundTasks,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
-    """
-    save a custom or non-custom taxon from search results list; if taxon already is in db, just return it
-    """
+    """Save a custom or non-custom taxon from search results list; if taxon
+    already is in db, just return it."""
     logger.info(
         f"Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: {new_taxon_data.lsid}"
     )
@@ -109,9 +102,7 @@ async def update_taxa(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
 ):
-    """
-    update 1..n taxa in database
-    """
+    """Update 1..n taxa in database."""
     modified_taxa = modified_taxa.ModifiedTaxaCollection
     for taxon_modified in modified_taxa:
         await modify_taxon(

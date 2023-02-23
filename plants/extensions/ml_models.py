@@ -32,7 +32,8 @@ def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContain
 
 
 def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer):
-    """called from manually executed script, not used in application/frontend/automatically"""
+    """Called from manually executed script, not used in
+    application/frontend/automatically."""
     path = settings.paths.path_pickled_ml_models.joinpath(
         FILENAME_PICKLED_POLLINATION_ESTIMATOR
     )

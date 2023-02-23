@@ -4,7 +4,8 @@ from pathlib import Path
 
 from starlette.requests import Request
 
-from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM, FORMAT_YYYY_MM_DD
+from plants.shared.api_constants import (FORMAT_API_YYYY_MM_DD_HH_MM,
+                                         FORMAT_YYYY_MM_DD)
 
 
 def parse_resource_from_request(req: Request):
@@ -18,7 +19,8 @@ def parse_resource_from_request(req: Request):
 
 
 def treat_non_serializable(x):
-    """tries to convert a supplied item into something that is json serializable"""
+    """Tries to convert a supplied item into something that is json
+    serializable."""
     if isinstance(x, (datetime, date)):
         return x.isoformat()
     elif isinstance(x, timedelta):
@@ -40,7 +42,8 @@ def treat_non_serializable(x):
 
 
 def make_list_items_json_serializable(items: list):
-    """tries to convert items in a supplied list into something that is json serializable"""
+    """Tries to convert items in a supplied list into something that is json
+    serializable."""
     for count, value in enumerate(items):
         if type(value) is dict:
             make_dict_values_json_serializable(items[count])
@@ -52,8 +55,9 @@ def make_list_items_json_serializable(items: list):
 
 
 def make_dict_values_json_serializable(d: dict):
-    """tries to convert the values of a dict into something that is json serializable if it is not;
-    works recursively for nested dicts, i.e. if value is also a dict"""
+    """Tries to convert the values of a dict into something that is json
+    serializable if it is not; works recursively for nested dicts, i.e. if
+    value is also a dict."""
     for (
         key
     ) in (
@@ -69,7 +73,7 @@ def make_dict_values_json_serializable(d: dict):
 
 
 def parse_api_date(date_str: str | None) -> date:
-    """Parse date from API request (e.g. '2022-11-16') to date object"""
+    """Parse date from API request (e.g. '2022-11-16') to date object."""
     if date_str:
         return datetime.strptime(date_str, FORMAT_YYYY_MM_DD).date()
 
@@ -81,7 +85,8 @@ def format_api_date(d: date) -> str:
 
 
 def parse_api_datetime(dt_str: str | None) -> datetime:
-    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object"""
+    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime
+    object."""
     if dt_str:
         return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)
 

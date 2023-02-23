@@ -168,9 +168,7 @@ def create_formatted_botanical_name(
     include_publication: bool,
     html: bool,
 ) -> str:
-    """
-    create a html-formatted botanical name for supplied taxon
-    """
+    """Create a html-formatted botanical name for supplied taxon."""
     if isinstance(botanical_attributes, Taxon):
         botanical_name_input = BotanicalNameInput(
             rank=botanical_attributes.rank,

@@ -24,7 +24,8 @@ async def test_florescence_flower_attrs(test_db, plant_valid):
         flower_colors_differentiation=FlowerColorDifferentiation.OVARY_MOUTH,
         stigma_position=StigmaPosition.DEEPLY_INSERTED,
         florescence_status=FlorescenceStatus.FLOWERING,
-        creation_context=Context.MANUAL)
+        creation_context=Context.MANUAL,
+    )
     test_db.add(new_florescence)
     await test_db.commit()
 
