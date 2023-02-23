@@ -77,7 +77,7 @@ async def get_selection_data(
 
     results = {
         "action": "Get taxon tree",
-        "message": get_message(f"Loaded selection data."),
+        "message": get_message("Loaded selection data."),
         "Selection": {"TaxonTree": taxon_tree},
     }
 

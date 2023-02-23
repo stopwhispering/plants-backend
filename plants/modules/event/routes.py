@@ -114,7 +114,7 @@ async def create_or_update_events(
     )
     results = {
         "resource": FBMajorResource.EVENT,
-        "message": get_message(f"Updated events in database.", description=description),
+        "message": get_message("Updated events in database.", description=description),
     }
 
     return results

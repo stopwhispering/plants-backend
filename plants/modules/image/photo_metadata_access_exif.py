@@ -17,7 +17,6 @@ from plants.modules.image.exif_utils import (
     modified_date,
     set_modified_date,
 )
-from plants.modules.image.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
 

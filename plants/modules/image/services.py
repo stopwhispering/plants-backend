@@ -106,7 +106,7 @@ async def save_image_file(
     if not settings.images.resizing_size:
         pass
     elif not resizing_required(path, settings.images.resizing_size):
-        logger.info(f"No resizing required.")
+        logger.info("No resizing required.")
     else:
         logger.info(f"Saving and resizing {path}.")
         resize_image(
@@ -206,7 +206,7 @@ async def get_image_path_by_size(
     filename: str, width: int | None, height: int | None, image_dal: ImageDAL
 ) -> Path:
     if (width is None or height is None) and not (width is None and height is None):
-        logger.error(err_msg := f"Either supply width and height or neither of them.")
+        logger.error(err_msg := "Either supply width and height or neither of them.")
         throw_exception(err_msg)
 
     if width is None:

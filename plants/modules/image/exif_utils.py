@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import List, Tuple
 
 import piexif
-import pytz
 from piexif import InvalidImageDataError
 from PIL import Image
 

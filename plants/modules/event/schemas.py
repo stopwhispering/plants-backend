@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import Extra, constr
+from pydantic import constr
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop

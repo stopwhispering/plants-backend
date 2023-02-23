@@ -117,9 +117,9 @@ class TaxonomySearch:
             results.append(result)
 
         logger.info(
-            f"Found query term in plants taxon database."
+            "Found query term in plants taxon database."
             if results
-            else f"Query term not found in plants taxon database."
+            else "Query term not found in plants taxon database."
         )
         return results
 

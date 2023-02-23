@@ -41,8 +41,8 @@ async def remove_files_already_existing(
         if exists_in_filesystem and not exists_in_db:
             _remove_image_from_filesystem(filename=photo_upload.filename)
             logger.warning(
-                warning := f"Found orphaned image {{photo_upload.filename}} in filesystem, "
-                f"but not in database. Deletied image file."
+                warning := "Found orphaned image {photo_upload.filename} in filesystem, "
+                "but not in database. Deletied image file."
             )
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:

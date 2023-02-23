@@ -12,13 +12,11 @@ from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncSession,
                                     create_async_engine)
 
 import plants as plants_package
-from plants.dependencies import get_db
 from plants.extensions import orm
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
-# from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
@@ -87,8 +85,8 @@ async def setup_db() -> None:
     async with engine_for_db_setup.begin() as setup_connection:
         setup_connection: AsyncConnection
 
-        await setup_connection.execute(text(f"DROP SCHEMA public CASCADE;"))
-        await setup_connection.execute(text(f"CREATE SCHEMA public;"))
+        await setup_connection.execute(text("DROP SCHEMA public CASCADE;"))
+        await setup_connection.execute(text("CREATE SCHEMA public;"))
 
         Base.metadata.bind = setup_connection
         await init_orm(engine=setup_connection.engine)
@@ -214,7 +212,7 @@ async def plant_valid_with_active_florescence(test_db) -> Plant:
              .where(Plant.plant_name == 'Gasteria obtusa')  # noqa
              # .limit(1)
              )
-    plant_todo_delme: Plant = (await test_db.scalars(query)).first()
+    (await test_db.scalars(query)).first()
 
     return plant
 

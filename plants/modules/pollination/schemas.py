@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List
 
-from pydantic import Extra, condecimal, conint, constr, root_validator
+from pydantic import Extra, condecimal, conint, constr
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (

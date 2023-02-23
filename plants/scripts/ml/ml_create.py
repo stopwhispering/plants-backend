@@ -14,8 +14,6 @@ from plants.scripts.ml.ml_model.ml_features import ModelType, create_features
 from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
 from plants.scripts.ml.ml_model.ml_train import (
     cv_classifier,
-    optimize_knn_classifier,
-    optimize_randomforest_classifier,
 )
 
 logging.basicConfig(level=logging.DEBUG, force=True)

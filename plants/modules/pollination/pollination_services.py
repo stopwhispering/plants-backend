@@ -13,7 +13,6 @@ from plants.modules.pollination.enums import (
     Context,
     FlorescenceStatus,
     Location,
-    PollenQuality,
     PollenType,
     PollinationStatus,
 )
@@ -338,7 +337,7 @@ async def update_pollination(
         raise HTTPException(
             500,
             detail={
-                "message": f'0 not allowed for "first seeds sown". Set empty instead.'
+                "message": '0 not allowed for "first seeds sown". Set empty instead.'
             },
         )
     if (

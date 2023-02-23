@@ -59,7 +59,7 @@ class GBIFIdentifierLookup:
         logger.info(f"Searching IPNI Dataset at GBIF for {taxon_name} to get GBIF ID.")
         lookup = species.name_lookup(q=taxon_name, datasetKey=IPNI_DATASET_KEY)
         if not lookup.get("results"):
-            logger.info(f"No results on IPNI Dataset at GBIF.")
+            logger.info("No results on IPNI Dataset at GBIF.")
             return None
 
         results_compared = [r for r in lookup["results"] if r.get("taxonID") == lsid]
@@ -71,7 +71,7 @@ class GBIFIdentifierLookup:
 
         # didn't find via PyGbif; try REST API directly
         logger.info(
-            f"No results on IPNI Dataset at GBIF matching IPNI ID via PyGbif. Trying REST API."
+            "No results on IPNI Dataset at GBIF matching IPNI ID via PyGbif. Trying REST API."
         )
         for r in (r for r in lookup["results"] if r.get("nubKey")):
             gbif_id = self._gbif_id_from_rest_api(nub_key=r.get("nubKey"), lsid=lsid)
