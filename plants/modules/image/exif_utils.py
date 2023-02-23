@@ -41,7 +41,7 @@ def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
     try:
         s_dt = date_time_bin.decode('utf-8')
         s_format = '%Y:%m:%d %H:%M:%S'
-    except AttributeError:  # manually entered string 
+    except AttributeError:  # manually entered string
         s_dt = date_time_bin
         s_format = '%Y-%m-%d'
     return datetime.datetime.strptime(s_dt, s_format)

@@ -11,7 +11,7 @@ Docker and Docker Compose are used to run the application in a container.
 - [Docker](https://www.docker.com/) for containerization
 - [Docker Compose](https://docs.docker.com/compose/) for defining and running multi-container Docker applications
 
-Gunicorn and Uvicorn are contained in the [official FastAPI Docker image](https://hub.docker.com/r/tiangolo/uvicorn-gunicorn-fastapi). With 
+Gunicorn and Uvicorn are contained in the [official FastAPI Docker image](https://hub.docker.com/r/tiangolo/uvicorn-gunicorn-fastapi). With
 almost all routes being asynchronous, switching to a Gunicorn alternative would probably be a good idea for the future.
 - [Gunicorn](https://gunicorn.org/) as a process manager
 - [Guvicorn](https://www.uvicorn.org/) as an ASGI web server
@@ -41,7 +41,7 @@ uvicorn plants.main:app --host localhost --port 5000
 ![Architecture](static/plants_backend_deployment_architecture.png?raw=true "Architecture")
 
 ## Configuration
-plants-backend requires environment-specific settings to be set via environment variables, preferably 
+plants-backend requires environment-specific settings to be set via environment variables, preferably
 via a `.env` file, see `.example.env` for an example.
 The following settings are required:
 - ENVIRONMENT (dev or prod)
@@ -70,7 +70,7 @@ official FastAPI Docker image contains a hook that automatically runs the migrat
 ## Execution Mode
 The majority of path functions are asynchronous, and the application is therefore designed to run in an asynchronous mode. It requires an
 asynchronous db driver like [asyncpg](https://magicstack.github.io/asyncpg/current/) which is mentioned in the project requirements file.
-Access to file system is running in a synchronous mode, too. External API calls are run in an external thread pool executor to avoid blocking the event loop. 
+Access to file system is running in a synchronous mode, too. External API calls are run in an external thread pool executor to avoid blocking the event loop.
 Long-running tasks are run as background tasks for the same reason.
 
 ## Deployment
@@ -92,7 +92,7 @@ Create `.env` in same folder as docker-compose files file and insert environment
 options above and `.example.env` for help.
 
 Create & Run Docker Container
-Deployment with the contained docker-compose and Dockerfile files requires a running 
+Deployment with the contained docker-compose and Dockerfile files requires a running
 [Traefik reverse proxy](https://github.com/stopwhispering/traefik-via-docker-with-sample-services) as well as
 a running [PostgreSQL database](https://github.com/stopwhispering/postgresql-via-traefik).
 ```
