@@ -8,8 +8,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncSession,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 import plants as plants_package
 from plants.extensions import orm

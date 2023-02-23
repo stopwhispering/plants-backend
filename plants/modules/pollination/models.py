@@ -4,15 +4,28 @@ import logging
 from datetime import datetime
 
 import sqlalchemy
-from sqlalchemy import (BOOLEAN, DATE, FLOAT, INTEGER, TEXT, VARCHAR, Column,
-                        Enum, ForeignKey, Identity, Numeric)
+from sqlalchemy import (
+    BOOLEAN,
+    DATE,
+    FLOAT,
+    INTEGER,
+    TEXT,
+    VARCHAR,
+    Column,
+    Enum,
+    ForeignKey,
+    Identity,
+    Numeric,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
-from plants.modules.pollination.enums import (FlorescenceStatus,
-                                              FlowerColorDifferentiation,
-                                              StigmaPosition)
+from plants.modules.pollination.enums import (
+    FlorescenceStatus,
+    FlowerColorDifferentiation,
+    StigmaPosition,
+)
 
 logger = logging.getLogger(__name__)
 

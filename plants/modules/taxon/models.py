@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import (BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey,
-                        ForeignKeyConstraint, Identity)
+from sqlalchemy import (
+    BOOLEAN,
+    INTEGER,
+    TEXT,
+    VARCHAR,
+    Column,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Identity,
+)
 from sqlalchemy.dialects.postgresql import BIGINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import DateTime

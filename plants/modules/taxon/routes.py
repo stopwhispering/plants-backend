@@ -5,14 +5,19 @@ from starlette.background import BackgroundTasks
 
 from plants.dependencies import get_image_dal, get_taxon_dal, valid_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import (
-    BotanicalNameInput, create_formatted_botanical_name)
+    BotanicalNameInput,
+    create_formatted_botanical_name,
+)
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.taxon.models import Taxon
-from plants.modules.taxon.schemas import (BCreatedTaxonResponse,
-                                          BResultsGetBotanicalName,
-                                          BResultsGetTaxon,
-                                          FBotanicalAttributes, FModifiedTaxa,
-                                          TaxonCreate)
+from plants.modules.taxon.schemas import (
+    BCreatedTaxonResponse,
+    BResultsGetBotanicalName,
+    BResultsGetTaxon,
+    FBotanicalAttributes,
+    FModifiedTaxa,
+    TaxonCreate,
+)
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import FBMajorResource

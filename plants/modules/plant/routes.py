@@ -4,22 +4,34 @@ import logging
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
 
-from plants.dependencies import (get_event_dal, get_history_dal, get_image_dal,
-                                 get_plant_dal, get_taxon_dal, valid_plant)
+from plants.dependencies import (
+    get_event_dal,
+    get_history_dal,
+    get_image_dal,
+    get_plant_dal,
+    get_taxon_dal,
+    valid_plant,
+)
 from plants.exceptions import PlantAlreadyExists
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.schemas import (BPlantsRenameRequest,
-                                          BResultsPlantCloned, BResultsPlants,
-                                          BResultsPlantsUpdate,
-                                          BResultsProposeSubsequentPlantName,
-                                          FPlantsUpdateRequest)
-from plants.modules.plant.services import (deep_clone_plant, fetch_plants,
-                                           generate_subsequent_plant_name,
-                                           update_plants_from_list_of_dicts)
+from plants.modules.plant.schemas import (
+    BPlantsRenameRequest,
+    BResultsPlantCloned,
+    BResultsPlants,
+    BResultsPlantsUpdate,
+    BResultsProposeSubsequentPlantName,
+    FPlantsUpdateRequest,
+)
+from plants.modules.plant.services import (
+    deep_clone_plant,
+    fetch_plants,
+    generate_subsequent_plant_name,
+    update_plants_from_list_of_dicts,
+)
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import FBMajorResource
 from plants.shared.history_dal import HistoryDAL

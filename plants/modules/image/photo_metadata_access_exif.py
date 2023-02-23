@@ -7,13 +7,16 @@ import piexif
 from piexif import InvalidImageDataError
 
 from plants import local_config
-from plants.modules.image.exif_utils import (auto_rotate_jpeg,
-                                             decode_keywords_tag,
-                                             decode_record_date_time,
-                                             encode_keywords_tag,
-                                             encode_record_date_time,
-                                             exif_dict_has_all_relevant_tags,
-                                             modified_date, set_modified_date)
+from plants.modules.image.exif_utils import (
+    auto_rotate_jpeg,
+    decode_keywords_tag,
+    decode_record_date_time,
+    encode_keywords_tag,
+    encode_record_date_time,
+    exif_dict_has_all_relevant_tags,
+    modified_date,
+    set_modified_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ class MetadataDTO:
 
 
 class PhotoMetadataAccessExifTags:
-    """"Access to Photo Metadata via jpeg exif tags."""
+    """Access to Photo Metadata via jpeg exif tags."""
 
     def read_photo_metadata(self, absolute_path: Path) -> MetadataDTO:
         """Retrieve metadata on photo_file from jpeg file exif tags."""
@@ -62,8 +65,8 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _parse_exif_tags(absolute_path: Path) -> MetadataDTO:
-        """(re-)reads exif info from file in attribute absolute_path and parses
-        information from it (plants list, keywords, description, etc."""
+        """Reads exif info from file in attribute absolute_path and parses information
+        from it (plants list, keywords, description, etc."""
         if not absolute_path:
             raise ValueError("File path not set.")
 
@@ -71,7 +74,8 @@ class PhotoMetadataAccessExifTags:
             exif_dict = piexif.load(absolute_path.as_posix())
         except InvalidImageDataError:
             logger.warning(
-                f"Invalid Image Type Error occured when reading EXIF Tags for {absolute_path}."
+                f"Invalid Image Type Error occured when reading EXIF Tags "
+                f"for {absolute_path}."
             )
             description = ""
             keywords = []
@@ -126,8 +130,8 @@ class PhotoMetadataAccessExifTags:
 
     @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
-        """adjust exif tags in file described in photo_file object; optionally append to
-        photo_file directory (used for newly uploaded photo_file files)"""
+        """Adjust exif tags in file described in photo_file object; optionally append to
+        photo_file directory (used for newly uploaded photo_file files)."""
         tag_descriptions = metadata.description.encode("utf-8")
         tag_keywords = encode_keywords_tag(metadata.keywords)
 
@@ -148,7 +152,8 @@ class PhotoMetadataAccessExifTags:
 
         exif_dict = piexif.load(absolute_path.as_posix())
 
-        # check if any of the tags has been changed or if any of the relevant tags is missing altogether
+        # check if any of the tags has been changed or if any of the relevant
+        # tags is missing altogether
         if (
             not exif_dict_has_all_relevant_tags(exif_dict)
             or exif_dict["0th"][270] != tag_descriptions
@@ -168,15 +173,16 @@ class PhotoMetadataAccessExifTags:
                 b_dt = encode_record_date_time(dt)
                 exif_dict["Exif"][36867] = b_dt
 
-            # fix some problem with windows photo_file editor writing exif tag in wrong format
+            # fix some problem with windows photo_file editor writing exif tag in
+            # wrong format
             if exif_dict.get("GPS") and type(exif_dict["GPS"].get(11)) is bytes:
                 del exif_dict["GPS"][11]
             try:
                 exif_bytes = piexif.dump(exif_dict)
             except ValueError as e:
                 logger.warning(
-                    f"Catched exception when modifying exif: {str(e)}. Trying again after deleting "
-                    "embedded thumbnail."
+                    f"Catched exception when modifying exif: {str(e)}. Trying again "
+                    "after deleting embedded thumbnail."
                 )
                 del exif_dict["thumbnail"]
                 exif_bytes = piexif.dump(exif_dict)
@@ -204,7 +210,8 @@ class PhotoMetadataAccessExifTags:
         # get a new list of plants for the photo_file and convert it to exif tag syntax
         tag_authors_plants = ";".join(plants).encode("utf-8")
 
-        # load file's current exif tags and overwrite the authors tag used for saving plants
+        # load file's current exif tags and overwrite the authors tag used for
+        # saving plants
         exif_dict = piexif.load(absolute_path.as_posix())
         exif_dict["0th"][315] = tag_authors_plants  # Windows Authors Tag
 

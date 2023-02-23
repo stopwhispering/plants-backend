@@ -6,8 +6,7 @@ from typing import Optional
 from plants.exceptions import SoilNotUnique
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Event, Observation, Pot, Soil
-from plants.modules.event.schemas import (EventCreateUpdate, SoilCreate,
-                                          SoilUpdate)
+from plants.modules.event.schemas import EventCreateUpdate, SoilCreate, SoilUpdate
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.models import Image, ImageToEventAssociation
 from plants.modules.plant.models import Plant

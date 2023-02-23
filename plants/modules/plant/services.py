@@ -7,8 +7,13 @@ from plants.modules.event.event_dal import EventDAL
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
-from plants.modules.plant.util import (has_roman_plant_index, int_to_roman,
-                                       parse_roman_plant_index, roman_to_int)
+from plants.modules.plant.util import (
+    has_roman_plant_index,
+    int_to_roman,
+    parse_roman_plant_index,
+    roman_to_int,
+)
+
 # from plants.modules.property.property_dal import PropertyDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 

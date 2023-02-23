@@ -8,26 +8,31 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
-from plants.dependencies import (get_image_dal, get_plant_dal, get_taxon_dal,
-                                 valid_plant)
+from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.image_services_simple import \
-    remove_files_already_existing
-from plants.modules.image.models import (Image, ImageKeyword,
-                                         ImageToPlantAssociation)
-from plants.modules.image.photo_metadata_access_exif import \
-    PhotoMetadataAccessExifTags
-from plants.modules.image.schemas import (BImageUpdated, BResultsImageDeleted,
-                                          BResultsImageResource,
-                                          BResultsImagesUploaded,
-                                          FImageUploadedMetadata,
-                                          ImageCreateUpdate, ImageRead)
+from plants.modules.image.image_services_simple import remove_files_already_existing
+from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
+from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.modules.image.schemas import (
+    BImageUpdated,
+    BResultsImageDeleted,
+    BResultsImageResource,
+    BResultsImagesUploaded,
+    FImageUploadedMetadata,
+    ImageCreateUpdate,
+    ImageRead,
+)
 from plants.modules.image.services import (
-    delete_image_file_and_db_entries, fetch_images_for_plant,
-    fetch_untagged_images, get_image_path_by_size,
-    get_occurrence_thumbnail_path, save_image_file, save_image_to_db,
-    trigger_generation_of_missing_thumbnails)
+    delete_image_file_and_db_entries,
+    fetch_images_for_plant,
+    fetch_untagged_images,
+    get_image_path_by_size,
+    get_occurrence_thumbnail_path,
+    save_image_file,
+    save_image_to_db,
+    trigger_generation_of_missing_thumbnails,
+)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL

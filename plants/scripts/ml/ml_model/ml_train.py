@@ -1,7 +1,16 @@
 import numpy as np
 import pandas as pd
-from sklearn import (dummy, ensemble, gaussian_process, linear_model,
-                     naive_bayes, neighbors, neural_network, svm, tree)
+from sklearn import (
+    dummy,
+    ensemble,
+    gaussian_process,
+    linear_model,
+    naive_bayes,
+    neighbors,
+    neural_network,
+    svm,
+    tree,
+)
 from sklearn.dummy import DummyClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV, GroupKFold, cross_val_score

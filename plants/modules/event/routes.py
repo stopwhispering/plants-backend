@@ -3,18 +3,24 @@ from collections import defaultdict
 
 from fastapi import APIRouter, Depends
 
-from plants.dependencies import (get_event_dal, get_image_dal, get_plant_dal,
-                                 valid_plant)
+from plants.dependencies import get_event_dal, get_image_dal, get_plant_dal, valid_plant
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Soil
-from plants.modules.event.schemas import (BPResultsUpdateCreateSoil,
-                                          BResultsEventResource,
-                                          BResultsSoilsResource,
-                                          FRequestCreateOrUpdateEvent,
-                                          SoilCreate, SoilUpdate)
-from plants.modules.event.services import (create_or_update_event, create_soil,
-                                           fetch_soils, read_events_for_plant,
-                                           update_soil)
+from plants.modules.event.schemas import (
+    BPResultsUpdateCreateSoil,
+    BResultsEventResource,
+    BResultsSoilsResource,
+    FRequestCreateOrUpdateEvent,
+    SoilCreate,
+    SoilUpdate,
+)
+from plants.modules.event.services import (
+    create_or_update_event,
+    create_soil,
+    fetch_soils,
+    read_events_for_plant,
+    update_soil,
+)
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL

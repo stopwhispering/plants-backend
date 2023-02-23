@@ -8,7 +8,9 @@ from pykew.ipni_terms import Name
 from plants import settings
 from plants.exceptions import TooManyResultsError
 from plants.modules.biodiversity.taxonomy_shared_functions import (
-    create_distribution_concat, create_synonym_label_if_only_a_synonym)
+    create_distribution_concat,
+    create_synonym_label_if_only_a_synonym,
+)
 from plants.modules.taxon.enums import FBRank
 from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL

@@ -1,8 +1,12 @@
 # testing utility functions, i.e. no fixtures, database dependencies or test client required
 import pytest
 
-from plants.modules.plant.util import (has_roman_plant_index, int_to_roman,
-                                       parse_roman_plant_index, roman_to_int)
+from plants.modules.plant.util import (
+    has_roman_plant_index,
+    int_to_roman,
+    parse_roman_plant_index,
+    roman_to_int,
+)
 
 
 def test_parse_roman_plant_index():

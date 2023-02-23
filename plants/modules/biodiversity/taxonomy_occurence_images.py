@@ -10,8 +10,10 @@ from sqlalchemy.exc import IntegrityError
 
 from plants import local_config, settings
 from plants.modules.image.util import generate_thumbnail
-from plants.modules.taxon.models import (TaxonOccurrenceImage,
-                                         TaxonToOccurrenceAssociation)
+from plants.modules.taxon.models import (
+    TaxonOccurrenceImage,
+    TaxonToOccurrenceAssociation,
+)
 from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception

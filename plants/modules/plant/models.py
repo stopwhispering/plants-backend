@@ -4,8 +4,7 @@ import datetime
 import logging
 from operator import attrgetter
 
-from sqlalchemy import (BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey,
-                        Identity)
+from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
 from sqlalchemy.orm import foreign, relationship, remote  # noqa
 from sqlalchemy.types import DateTime
 

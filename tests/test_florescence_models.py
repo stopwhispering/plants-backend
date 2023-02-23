@@ -3,9 +3,12 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from plants.modules.pollination.enums import (Context, FlorescenceStatus,
-                                              FlowerColorDifferentiation,
-                                              StigmaPosition)
+from plants.modules.pollination.enums import (
+    Context,
+    FlorescenceStatus,
+    FlowerColorDifferentiation,
+    StigmaPosition,
+)
 from plants.modules.pollination.models import Florescence
 
 

@@ -4,9 +4,13 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import (CriterionNotImplemented, PlantNotFound,
-                               TagNotAssignedToPlant, TagNotFound,
-                               UpdateNotImplemented)
+from plants.exceptions import (
+    CriterionNotImplemented,
+    PlantNotFound,
+    TagNotAssignedToPlant,
+    TagNotFound,
+    UpdateNotImplemented,
+)
 from plants.modules.event.models import Event
 from plants.modules.image.models import Image, ImageToPlantAssociation
 from plants.modules.plant.models import Plant, Tag

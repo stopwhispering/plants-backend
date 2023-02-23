@@ -11,14 +11,18 @@ from starlette.concurrency import run_in_threadpool
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.image_services_simple import (get_relative_path,
-                                                        resizing_required)
+from plants.modules.image.image_services_simple import (
+    get_relative_path,
+    resizing_required,
+)
 from plants.modules.image.models import Image, ImageKeyword
-from plants.modules.image.photo_metadata_access_exif import \
-    PhotoMetadataAccessExifTags
+from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
-from plants.modules.image.util import (generate_thumbnail, get_thumbnail_name,
-                                       resize_image)
+from plants.modules.image.util import (
+    generate_thumbnail,
+    get_thumbnail_name,
+    resize_image,
+)
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.models import TaxonOccurrenceImage
