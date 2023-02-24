@@ -20,7 +20,7 @@ from plants.modules.taxon.schemas import (
 )
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.enums import FBMajorResource
+from plants.shared.enums import MajorResource
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
 
@@ -116,7 +116,7 @@ async def update_taxa(
         )
 
     results = {
-        "resource": FBMajorResource.TAXON,
+        "resource": MajorResource.TAXON,
         "message": get_message(
             msg := f"Updated {len(modified_taxa)} taxa in database."
         ),

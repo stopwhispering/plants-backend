@@ -8,7 +8,7 @@ from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import make_list_items_json_serializable
-from plants.shared.enums import FProposalEntity
+from plants.shared.enums import ProposalEntity
 from plants.shared.message_services import get_message, throw_exception
 from plants.shared.proposal_schemas import BResultsProposals, BResultsSelection
 from plants.shared.proposal_services import build_taxon_tree
@@ -24,7 +24,7 @@ router = APIRouter(
 @router.get("/proposals/{entity_id}", response_model=BResultsProposals)
 async def get_proposals(
     request: Request,
-    entity_id: FProposalEntity,
+    entity_id: ProposalEntity,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
@@ -32,7 +32,7 @@ async def get_proposals(
 
     results = {}
 
-    if entity_id == FProposalEntity.NURSERY:
+    if entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
         nurseries = await plant_dal.get_distinct_nurseries()
         # nurseries_tuples = (db.query(Plant.nursery_source)
@@ -44,7 +44,7 @@ async def get_proposals(
         # else:
         results = {"NurseriesSourcesCollection": [{"name": n} for n in nurseries]}
 
-    elif entity_id == FProposalEntity.KEYWORD:
+    elif entity_id == ProposalEntity.KEYWORD:
         # return collection of all distinct keywords used in images
         # keywords_set = get_distinct_keywords_from_image_files()
         keywords_set = await image_dal.get_distinct_image_keywords()

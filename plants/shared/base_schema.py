@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Extra
 
-from plants.shared.enums import FBMajorResource
+from plants.shared.enums import MajorResource
 from plants.shared.message_schemas import BMessage
 
 
@@ -23,7 +23,7 @@ class ResponseContainer(BaseModel):
 
 
 class MajorResponseContainer(ResponseContainer):
-    resource: FBMajorResource
+    resource: MajorResource
 
 
 class RequestContainer(BaseModel):

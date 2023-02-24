@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 
 
-class FProposalEntity(str, Enum):
+class ProposalEntity(str, Enum):
     """Proposal entities that may be requested by frontend."""
 
     SOIL = "SoilProposals"
@@ -11,14 +11,14 @@ class FProposalEntity(str, Enum):
     KEYWORD = "KeywordProposals"
 
 
-class FBMajorResource(str, Enum):
+class MajorResource(str, Enum):
     PLANT = "PlantResource"
     IMAGE = "ImageResource"
     TAXON = "TaxonResource"
     EVENT = "EventResource"
 
 
-class BMessageType(str, Enum):
+class MessageType(str, Enum):
     """Message types processed by error/success handlers in ui5 web frontend."""
 
     INFORMATION = "Information"

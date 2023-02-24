@@ -24,7 +24,7 @@ from plants.modules.event.services import (
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.shared.enums import BMessageType, FBMajorResource
+from plants.shared.enums import MessageType, MajorResource
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
 
@@ -54,7 +54,7 @@ async def create_new_soil(
     soil = await create_soil(soil=new_soil, event_dal=event_dal)
 
     logger.info(msg := f"Created soil with new ID {soil.id}")
-    return {"soil": soil, "message": get_message(msg, message_type=BMessageType.DEBUG)}
+    return {"soil": soil, "message": get_message(msg, message_type=MessageType.DEBUG)}
 
 
 @router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
@@ -65,7 +65,7 @@ async def update_existing_soil(
     soil: Soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
     logger.info(msg := f"Updated soil with ID {soil.id}")
-    return {"soil": soil, "message": get_message(msg, message_type=BMessageType.DEBUG)}
+    return {"soil": soil, "message": get_message(msg, message_type=MessageType.DEBUG)}
 
 
 @router.get("/events/{plant_id}", response_model=BResultsEventResource)
@@ -79,7 +79,7 @@ async def get_events(
     return {
         "events": events,
         "action": "read events for plant",
-        "message": get_message(msg, message_type=BMessageType.DEBUG),
+        "message": get_message(msg, message_type=MessageType.DEBUG),
     }
 
 
@@ -113,7 +113,7 @@ async def create_or_update_events(
         + (description := ", ".join([f"{key}: {counts[key]}" for key in counts.keys()]))
     )
     results = {
-        "resource": FBMajorResource.EVENT,
+        "resource": MajorResource.EVENT,
         "message": get_message("Updated events in database.", description=description),
     }
 

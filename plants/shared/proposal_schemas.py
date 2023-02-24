@@ -38,3 +38,4 @@ class BTaxonTreeRoot(BaseSchema):
 class BResultsSelection(ResponseContainer):
     action: str
     message: BMessage
+    Selection: BTaxonTreeRoot

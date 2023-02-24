@@ -33,7 +33,7 @@ from plants.modules.plant.services import (
     update_plants_from_list_of_dicts,
 )
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.enums import FBMajorResource
+from plants.shared.enums import MajorResource
 from plants.shared.history_dal import HistoryDAL
 from plants.shared.history_services import create_history_entry
 from plants.shared.message_schemas import BConfirmation
@@ -119,7 +119,7 @@ async def create_or_update_plants(
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
     results = {
         "action": "Saved Plants",
-        "resource": FBMajorResource.PLANT,
+        "resource": MajorResource.PLANT,
         "message": get_message(message),
         "plants": plants_saved,
     }  # return the updated/created plants

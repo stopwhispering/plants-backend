@@ -36,7 +36,7 @@ from plants.modules.image.services import (
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.enums import BMessageType, FBMajorResource
+from plants.shared.enums import MessageType, MajorResource
 from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
 from plants.shared.message_services import get_message, throw_exception
 
@@ -125,9 +125,9 @@ async def upload_images_plant(
     message = get_message(
         msg := f"Saved {len(files)} images."
         + (" Duplicates found." if duplicate_filenames else ""),
-        message_type=BMessageType.WARNING
+        message_type=MessageType.WARNING
         if duplicate_filenames
-        else BMessageType.INFORMATION,
+        else MessageType.INFORMATION,
         description=desc,
     )
     logger.info(msg)
@@ -180,7 +180,7 @@ async def update_images(
         )
 
     return {
-        "resource": FBMajorResource.IMAGE,
+        "resource": MajorResource.IMAGE,
         "message": get_message(
             f"Saved updates for {len(modified_ext.ImagesCollection)} images."
         ),
@@ -259,9 +259,9 @@ async def upload_images(
     message = get_message(
         msg := f"Saved {len(files)} images."
         + (" Duplicates found." if duplicate_filenames else ""),
-        message_type=BMessageType.WARNING
+        message_type=MessageType.WARNING
         if duplicate_filenames
-        else BMessageType.INFORMATION,
+        else MessageType.INFORMATION,
         description=f"Saved: {[p.filename for p in files]}."
         f"\nSkipped Duplicates: {duplicate_filenames}.",
     )

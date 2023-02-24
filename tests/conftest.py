@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
+from sqlalchemy.orm import selectinload
 
 import plants as plants_package
 from plants.extensions import orm
@@ -16,6 +17,7 @@ from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
@@ -61,6 +63,20 @@ async def setup_db() -> None:
         await create_tables_if_required(engine=setup_connection.engine)
 
 
+def _reset_paths():
+    # cf. parse_settings()
+    for path in [
+        plants_package.settings.paths.path_deleted_photos,
+        plants_package.settings.paths.path_generated_thumbnails,
+        plants_package.settings.paths.path_generated_thumbnails_taxon,
+        plants_package.settings.paths.path_original_photos_uploaded,
+        plants_package.settings.paths.path_pickled_ml_models,
+    ]:
+        if path.exists():
+            shutil.rmtree(path)
+        path.mkdir(parents=True)
+
+
 @pytest_asyncio.fixture(scope="function")
 async def test_db(request) -> AsyncSession:  # noqa
     """Wrapper fot get_db that truncates tables after each test function run."""
@@ -89,42 +105,7 @@ async def test_db(request) -> AsyncSession:  # noqa
         await conn.commit()
         await conn.close()
 
-
-@pytest.fixture(scope="function")
-def plant_dal(test_db: AsyncSession) -> PlantDAL:
-    """"""
-    yield PlantDAL(test_db)
-
-
-@pytest.fixture(scope="function")
-def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
-    """"""
-    yield PollinationDAL(test_db)
-
-
-@pytest.fixture(scope="function")
-def history_dal(test_db: AsyncSession) -> HistoryDAL:
-    """"""
-    yield HistoryDAL(test_db)
-
-
-@pytest.fixture(scope="function")
-def event_dal(test_db: AsyncSession) -> EventDAL:
-    """"""
-    yield EventDAL(test_db)
-
-
-@pytest.fixture(scope="function")
-def image_dal(test_db: AsyncSession) -> ImageDAL:
-    """"""
-    yield ImageDAL(test_db)
-
-
-# @pytest.fixture(scope="function")
-# def property_dal(test_db: AsyncSession) -> PropertyDAL:
-#     """
-#     """
-#     yield PropertyDAL(test_db)
+        _reset_paths()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -134,7 +115,7 @@ async def plant_valid(request) -> Plant:  # noqa
         field_number="A100",
         active=True,
         deleted=False,
-        nursery_source="Some Nursery",
+        nursery_source="Worldwide Cactus",
         propagation_type=FBPropagationType.LEAF_CUTTING,
         filename_previewimage="somefile.jpg",
         tags=[
@@ -147,19 +128,41 @@ async def plant_valid(request) -> Plant:  # noqa
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid_in_db(test_db, plant_valid) -> Plant:
+    """create a valid plant in the database and return it."""
     test_db.add(plant_valid)
     await test_db.commit()
     return plant_valid
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid_with_active_florescence(test_db) -> Plant:
-    # query = (select(Plant)
-    #          .where(Plant.plant_name == 'Gasteria obtusa')  # noqa
-    #          # .limit(1)
-    #          )
-    # plant_todo_delme: Plant = (await test_db.scalars(query)).first()
+async def valid_plant_in_db_with_image(ac, test_db, plant_valid_in_db) -> Plant:
+    """upload an image for the plant and return it."""
+    path = Path(__file__).resolve().parent.joinpath("./static/demo_valid_plant.jpg")
+    files = [("files[]", ("demo_image_plant.jpg", open(path, "rb")),)]
+    response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/",
+                             files=files)
+    assert response.status_code == 200
+    resp = response.json()
 
+    # also set some keywords and set a description
+    modified_image = resp['images'][0].copy()
+    modified_image['keywords'] = [{'keyword': 'flower'}, {'keyword': 'new leaf'}]
+    modified_image['description'] = ' some description  '  # will be stripped
+    payload = {'ImagesCollection': [modified_image]}  # BImageUpdated
+    await ac.put("/api/images/", json=payload)
+
+    # reload to have image reations available
+    q = (select(Plant)
+         .where(Plant.id == plant_valid_in_db.id)
+         .options(selectinload(Plant.images).selectinload(Image.keywords),
+                  selectinload(Plant.image_to_plant_associations)
+                  ))
+    plant_valid_in_db = (await test_db.scalars(q)).first()
+    yield plant_valid_in_db
+
+
+@pytest_asyncio.fixture(scope="function")
+async def plant_valid_with_active_florescence() -> Plant:
     plant = Plant(
         plant_name="Gasteria obtusa",
         active=True,
@@ -176,24 +179,13 @@ async def plant_valid_with_active_florescence(test_db) -> Plant:
         ],
     )
 
-    query = (
-        select(Plant).where(Plant.plant_name == "Gasteria obtusa")  # noqa
-        # .limit(1)
-    )
-    (await test_db.scalars(query)).first()
-
     return plant
 
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid_with_active_florescence_in_db(
-    test_db: AsyncSession, plant_valid_with_active_florescence: Plant
+        test_db: AsyncSession, plant_valid_with_active_florescence: Plant
 ) -> Plant:
-    # query = (select(Plant)
-    #          .where(Plant.plant_name == plant_valid_with_active_florescence.plant_name)  # noqa
-    #          .limit(1))
-    # plant_todo_delme: Plant = (await test_db.scalars(query)).first()
-
     test_db.add(plant_valid_with_active_florescence)
     await test_db.commit()
     return plant_valid_with_active_florescence
@@ -220,17 +212,7 @@ def app() -> FastAPI:
         "/common/plants_test/pickled"
     )
 
-    # cf. parse_settings()
-    for path in [
-        plants_package.settings.paths.path_deleted_photos,
-        plants_package.settings.paths.path_generated_thumbnails,
-        plants_package.settings.paths.path_generated_thumbnails_taxon,
-        plants_package.settings.paths.path_original_photos_uploaded,
-        plants_package.settings.paths.path_pickled_ml_models,
-    ]:
-        if path.exists():
-            shutil.rmtree(path)
-        path.mkdir(parents=True)
+    _reset_paths()
 
     from plants.main import app as main_app
 
@@ -278,3 +260,33 @@ def valid_florescence_dict() -> dict:
         "comment": " large & new",
     }
     return valid_florescence
+
+
+@pytest.fixture(scope="function")
+def plant_dal(test_db: AsyncSession) -> PlantDAL:
+    """"""
+    yield PlantDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
+    """"""
+    yield PollinationDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def history_dal(test_db: AsyncSession) -> HistoryDAL:
+    """"""
+    yield HistoryDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def event_dal(test_db: AsyncSession) -> EventDAL:
+    """"""
+    yield EventDAL(test_db)
+
+
+@pytest.fixture(scope="function")
+def image_dal(test_db: AsyncSession) -> ImageDAL:
+    """"""
+    yield ImageDAL(test_db)

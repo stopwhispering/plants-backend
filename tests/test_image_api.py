@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 
 import pytest
 from httpx import AsyncClient
@@ -25,9 +25,11 @@ async def test_upload_images(
 ):
     # we need to wrap files and additional data in a way that matches the UI5 file
     # uploader (which is a kind of odd way)
+    path1 = Path(__file__).resolve().parent.joinpath("./static/demo_image1.jpg")
+    path2 = Path(__file__).resolve().parent.joinpath("./static/demo_image2.jpg")
     files = [
-        ("files[]", ("demo_image1.jpg", open(r"./static/demo_image1.jpg", "rb"))),
-        ("files[]", ("demo_image2.jpg", open(r"./static/demo_image2.jpg", "rb"))),
+        ("files[]", ("demo_image1.jpg", open(path1, "rb"))),
+        ("files[]", ("demo_image2.jpg", open(path2, "rb"))),
     ]
 
     payload = {  # FImageUploadedMetadata
@@ -89,12 +91,12 @@ async def test_upload_image_for_plant(
 ):
     # we need to wrap files and additional data in a way that matches the UI5 file
     # uploader (which is a kind of odd way)
-    print(os.getcwd())
+    path = Path(__file__).resolve().parent.joinpath("./static/demo_image_plant.jpg")
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(r"./static/demo_image_plant.jpg", "rb")),
-        ),  # todo config
+            ("demo_image_plant.jpg", open(path, "rb")),
+        ),
     ]
 
     response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
@@ -131,3 +133,20 @@ async def test_upload_image_for_plant(
             filename
         )
         assert path.is_file()
+
+
+@pytest.mark.asyncio
+async def test_update_image(
+    ac: AsyncClient,
+    valid_plant_in_db_with_image: Plant,
+):
+    """the actual update has been done in the fixture, we just assert that it worked"""
+    response = await ac.get(f"/api/plants/{valid_plant_in_db_with_image.id}/images/")
+    assert response.status_code == 200
+    images = response.json()
+    image = images[0]
+    assert image["description"] == "some description"
+    assert len(image["keywords"]) == 2
+    keywords = [kw["keyword"] for kw in image["keywords"]]
+    assert "flower" in keywords
+    assert "new leaf" in keywords

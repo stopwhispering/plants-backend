@@ -2,13 +2,13 @@ from fastapi import HTTPException
 from starlette.requests import Request
 
 from plants.shared.api_utils import parse_resource_from_request
-from plants.shared.enums import BMessageType
+from plants.shared.enums import MessageType
 from plants.shared.message_schemas import BMessage
 
 
 def throw_exception(
     message: str = None,
-    message_type: BMessageType = BMessageType.ERROR,
+    message_type: MessageType = MessageType.ERROR,
     additional_text: str = None,
     status_code: int = 520,
     description: str = None,
@@ -36,7 +36,7 @@ def throw_exception(
 
 def get_message(
     message: str = None,
-    message_type: BMessageType = BMessageType.INFORMATION,
+    message_type: MessageType = MessageType.INFORMATION,
     additional_text: str = None,
     description: str = None,
 ) -> dict:
