@@ -13,3 +13,4 @@ htmlcov
 .ruff_cache
 .venv
 venv311
+ts_api_interfaces

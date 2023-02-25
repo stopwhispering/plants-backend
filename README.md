@@ -1,4 +1,5 @@
 # plants-backend
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 FastAPI-based RESTful Database Application for Tracking Plants
 
 ## Frontend
