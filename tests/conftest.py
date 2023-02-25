@@ -31,11 +31,14 @@ from tests.config_test import create_tables_if_required, generate_db_url
 TEST_DB_NAME = "test_plants"
 
 
+
+
 # redefine the event_loop fixture to have a session scope,
 # see https://github.com/tortoise/tortoise-orm/issues/638
 @pytest.fixture(scope="session")
 def event_loop():
-    return asyncio.get_event_loop()
+    # return asyncio.get_event_loop()
+    return asyncio.new_event_loop()
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -103,6 +106,7 @@ async def test_db(request) -> AsyncSession:  # noqa
         await conn.execute(text("DELETE FROM pot;"))
         await conn.execute(text("DELETE FROM event;"))
         await conn.execute(text("DELETE FROM plants;"))
+        await conn.execute(text("DELETE FROM distribution;"))
         await conn.execute(text("DELETE FROM taxon;"))
         # TRUNCATE table_a, table_b, …, table_z;
         await conn.commit()
