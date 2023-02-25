@@ -92,3 +92,17 @@ def format_api_datetime(dt: datetime) -> str:
     """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
     if dt:
         return dt.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
+
+
+def date_hook(json_dict):
+    """very simple hook to convert json date strings to datetime objects
+    usage: json.loads(dumped_dict, object_hook=date_hook)"""
+    for key, value in json_dict.items():
+        try:
+            json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            try:
+                json_dict[key] = date.fromisoformat(value)
+            except Exception:
+                pass
+    return json_dict

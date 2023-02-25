@@ -1,13 +1,15 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.pollination.models import Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 
 
 @pytest.mark.asyncio
-async def test_florescence_create_valid(
+async def test_create_pollination(
     ac: AsyncClient,
     plant_valid_with_active_florescence_in_db: Plant,
     valid_simple_plant_dict,
@@ -60,3 +62,36 @@ async def test_florescence_create_valid(
     assert pollination.pollen_type == "frozen"
     assert pollination.location == "indoor"
     assert pollination.count == 3
+
+
+@pytest.mark.asyncio
+async def test_update_pollination(
+    ac: AsyncClient,
+    test_db: AsyncSession,
+    pollination_in_db: Pollination,
+):
+    """Update a pollination."""
+    # get pollination via test client
+    response = await ac.get("/api/ongoing_pollinations")
+    assert response.status_code == 200
+    resp = response.json()
+    pollination = next(
+        p
+        for p in resp["ongoingPollinationCollection"]
+        if p["id"] == pollination_in_db.id
+    )
+
+    # update attributes and send via test client
+    pollination["location"] = "indoor"
+    pollination["count"] = 2
+    pollination["seed_capsule_length"] = 14.5
+    pollination["label_color_rgb"] = "#ffffff"
+    response = await ac.put(f"/api/pollinations/{pollination['id']}", json=pollination)
+    assert response.status_code == 200
+
+    # check if attributes have been updated
+    await test_db.refresh(pollination_in_db)
+    assert pollination_in_db.location == "indoor"
+    assert pollination_in_db.count == 2
+    assert pollination_in_db.seed_capsule_length == 14.5
+    assert pollination_in_db.label_color == "white"

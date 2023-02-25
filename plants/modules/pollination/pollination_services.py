@@ -343,7 +343,7 @@ async def update_pollination(
     updates["pollination_timestamp"] = parse_api_datetime(
         pollination_data.pollination_timestamp
     )
-    updates["labels_color"] = label_color
+    updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["germination_rate"] = germination_rate
     updates["last_update_context"] = Context.API.value

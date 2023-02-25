@@ -22,9 +22,10 @@ from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.models import Florescence
+from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.taxon.models import Taxon
+from plants.shared.api_utils import date_hook
 from plants.shared.history_dal import HistoryDAL
 from tests.config_test import create_tables_if_required, generate_db_url
 
@@ -320,3 +321,49 @@ async def taxon_in_db(request, test_db) -> Taxon:  # noqa
     await test_db.commit()
 
     yield taxon
+
+
+@pytest_asyncio.fixture(scope="function")
+async def florescence_dict() -> dict:
+    """Read florescence dict from json; has no plant attached."""
+    path_florescence = (
+        Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
+    )
+    with open(path_florescence, "r") as f:
+        florescence_dict = json.load(f, object_hook=date_hook)
+    return florescence_dict
+
+
+@pytest_asyncio.fixture(scope="function")
+async def pollination_dict() -> dict:
+    """Read pollination dict from json; has no florescence, seed_capsule_plant, or
+    pollen_donor_plant attached."""
+    path_pollination = (
+        Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
+    )
+    with open(path_pollination, "r") as f:
+        pollination_dict = json.load(f, object_hook=date_hook)
+    return pollination_dict
+
+
+@pytest_asyncio.fixture(scope="function")
+async def pollination_in_db(
+    test_db,
+    florescence_dict: dict,
+    pollination_dict: dict,
+    plant_valid_in_db: Plant,
+    another_valid_plant_in_db: Plant,
+) -> Pollination:  # noqa
+    """Create a valid pollination in the db and return it."""
+    florescence = Florescence(**florescence_dict, plant=plant_valid_in_db)
+    pollination = Pollination(
+        **pollination_dict,
+        florescence=florescence,
+        seed_capsule_plant=plant_valid_in_db,
+        pollen_donor_plant=another_valid_plant_in_db,
+    )
+
+    test_db.add(pollination)
+    await test_db.commit()
+
+    yield pollination

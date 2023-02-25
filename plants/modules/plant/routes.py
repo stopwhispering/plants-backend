@@ -151,7 +151,7 @@ async def rename_plant(
     history_dal: HistoryDAL = Depends(get_history_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
 ):
-    """We use the put method to rename a plant."""  # todo use id
+    """We use the put method to rename a plant."""
     plant = await plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
 
