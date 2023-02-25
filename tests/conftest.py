@@ -31,8 +31,6 @@ from tests.config_test import create_tables_if_required, generate_db_url
 TEST_DB_NAME = "test_plants"
 
 
-
-
 # redefine the event_loop fixture to have a session scope,
 # see https://github.com/tortoise/tortoise-orm/issues/638
 @pytest.fixture(scope="session")
@@ -146,25 +144,32 @@ async def plant_valid_in_db(test_db, plant_valid, taxon_in_db: Taxon) -> Plant:
 async def valid_plant_in_db_with_image(ac, test_db, plant_valid_in_db) -> Plant:
     """upload an image for the plant and return it."""
     path = Path(__file__).resolve().parent.joinpath("./static/demo_valid_plant.jpg")
-    files = [("files[]", ("demo_image_plant.jpg", open(path, "rb")),)]
-    response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/",
-                             files=files)
+    files = [
+        (
+            "files[]",
+            ("demo_image_plant.jpg", open(path, "rb")),
+        )
+    ]
+    response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
     assert response.status_code == 200
     resp = response.json()
 
     # also set some keywords and set a description
-    modified_image = resp['images'][0].copy()
-    modified_image['keywords'] = [{'keyword': 'flower'}, {'keyword': 'new leaf'}]
-    modified_image['description'] = ' some description  '  # will be stripped
-    payload = {'ImagesCollection': [modified_image]}  # BImageUpdated
+    modified_image = resp["images"][0].copy()
+    modified_image["keywords"] = [{"keyword": "flower"}, {"keyword": "new leaf"}]
+    modified_image["description"] = " some description  "  # will be stripped
+    payload = {"ImagesCollection": [modified_image]}  # BImageUpdated
     await ac.put("/api/images/", json=payload)
 
     # reload to have image reations available
-    q = (select(Plant)
-         .where(Plant.id == plant_valid_in_db.id)
-         .options(selectinload(Plant.images).selectinload(Image.keywords),
-                  selectinload(Plant.image_to_plant_associations)
-                  ))
+    q = (
+        select(Plant)
+        .where(Plant.id == plant_valid_in_db.id)
+        .options(
+            selectinload(Plant.images).selectinload(Image.keywords),
+            selectinload(Plant.image_to_plant_associations),
+        )
+    )
     plant_valid_in_db = (await test_db.scalars(q)).first()
     yield plant_valid_in_db
 
@@ -192,7 +197,7 @@ async def plant_valid_with_active_florescence() -> Plant:
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid_with_active_florescence_in_db(
-        test_db: AsyncSession, plant_valid_with_active_florescence: Plant
+    test_db: AsyncSession, plant_valid_with_active_florescence: Plant
 ) -> Plant:
     test_db.add(plant_valid_with_active_florescence)
     await test_db.commit()
@@ -302,13 +307,12 @@ def image_dal(test_db: AsyncSession) -> ImageDAL:
 
 @pytest_asyncio.fixture(scope="function")
 async def taxon_in_db(request, test_db) -> Taxon:  # noqa
-    """create a valid taxon in the db and return it"""
+    """Create a valid taxon in the db and return it."""
     path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         taxon_dict = json.load(f)
 
-    taxon = Taxon(
-        **taxon_dict)
+    taxon = Taxon(**taxon_dict)
 
     test_db.add(taxon)
     await test_db.commit()
