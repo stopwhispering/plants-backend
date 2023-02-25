@@ -165,13 +165,14 @@ class TaxonBase(BaseSchema):
     affinis: str | None
 
 
-class TaxonUpdate(TaxonBase):
+# class TaxonUpdate(TaxonBase):
+class TaxonUpdate(BaseSchema):
     id: int
-    name: constr(min_length=1, max_length=100)
+    # name: constr(min_length=1, max_length=100)
 
-    gbif_id: Optional[int]
+    # gbif_id: Optional[int]
     custom_notes: Optional[str]
-    distribution: Optional[DistributionUpdate]  # not filled for each request
+    # distribution: Optional[DistributionUpdate]  # not filled for each request
     images: Optional[List[TaxonImageUpdate]]  # not filled for each request
 
     class Config:

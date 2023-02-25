@@ -1,13 +1,10 @@
 import logging
-from json.decoder import JSONDecodeError
 
 from fastapi import APIRouter, Depends
-from starlette.requests import Request
 
 from plants.dependencies import get_taxon_dal
-from plants.exceptions import TooManyResultsError
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.modules.biodiversity.taxonomy_search import TaxonomySearch
+from plants.modules.biodiversity.taxonomy_search import TaxonomySearch, SearchResult
 from plants.modules.taxon.schemas import (
     BResultsFetchTaxonImages,
     BResultsTaxonInfoRequest,
@@ -27,7 +24,6 @@ router = APIRouter(
 
 @router.post("/search_taxa_by_name", response_model=BResultsTaxonInfoRequest)
 async def search_taxa_by_name(
-    request: Request,
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ):
@@ -36,35 +32,23 @@ async def search_taxa_by_name(
     taxonomy_search = TaxonomySearch(
         include_external_apis=taxon_info_request.include_external_apis,
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
-        taxon_dal=taxon_dal,
-    )
-    try:
-        results = await taxonomy_search.search(taxon_info_request.taxon_name_pattern)
-    except TooManyResultsError as e:
-        logger.error("Exception catched.", exc_info=e)
-        throw_exception(e.args[0], request=request)
-    except JSONDecodeError as e:
-        logger.error("ipni.search method raised an Exception.", exc_info=e)
-        throw_exception("ipni.search method raised an Exception.", request=request)
+        taxon_dal=taxon_dal)
+    search_results: list[SearchResult] = await taxonomy_search.search(
+        taxon_info_request.taxon_name_pattern)
 
-    if not results:  # noqa
-        logger.info(
-            f"No search result for search term "
-            f'"{taxon_info_request.taxon_name_pattern}".'
-        )
+    if not search_results:  # noqa
         throw_exception(
             f"No search result for search term "
             f'"{taxon_info_request.taxon_name_pattern}".',
-            request=request,
         )
 
     results = {
         "action": "Search Taxa",
-        "ResultsCollection": results,
+        "ResultsCollection": search_results,
         "message": get_message(
             "Received species search results",
             additional_text=f'Search term "{taxon_info_request.taxon_name_pattern}"',
-            description=f"Count: {len(results)}",
+            description=f"Count: {len(search_results)}",
         ),
     }
 

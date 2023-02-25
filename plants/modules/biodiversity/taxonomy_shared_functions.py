@@ -4,13 +4,17 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-def create_synonym_label_if_only_a_synonym(accepted_name: str):
-    """Little method just to make sure the same is stored in local extensions as is
-    displayed in frontend from powo."""
-    return "Accepted: " + accepted_name
+def get_accepted_synonym_label(powo_lookup: dict) -> str | None:
+    """Parses synonyms from powo lookup dictionary into a string."""
+    if powo_lookup.get("synonym"):
+        if "accepted" in powo_lookup and (
+                accepted_name := powo_lookup["accepted"].get("name")):
+            return "Accepted: " + accepted_name
+        else:
+            return "Accepted: unknown"
 
 
-def create_distribution_concat(powo_lookup: dict) -> Optional[str]:
+def get_concatenated_distribution(powo_lookup: dict) -> str | None:
     """Parses areas from powo lookup dictionary into a string."""
     if "distribution" in powo_lookup and "natives" in powo_lookup["distribution"]:
         result = (

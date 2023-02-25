@@ -3,6 +3,7 @@ from httpx import AsyncClient
 
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
+from plants.modules.taxon.models import Taxon
 from plants.shared.enums import ProposalEntity
 
 
@@ -19,7 +20,7 @@ async def test_get_nursery_proposals(ac: AsyncClient, plant_valid_in_db: Plant):
 @pytest.mark.asyncio
 async def test_get_image_keyword_proposals(
         ac: AsyncClient,
-        valid_plant_in_db_with_image: Plant,
+        valid_plant_in_db_with_image: Plant,  # noqa
         image_dal: ImageDAL,):
     response = await ac.get(f"/api/proposals/{ProposalEntity.KEYWORD.value}")
     assert response.status_code == 200
@@ -32,7 +33,9 @@ async def test_get_image_keyword_proposals(
 @pytest.mark.asyncio
 async def test_get_taxon_tree(
         ac: AsyncClient,
-        valid_plant_in_db_with_image: Plant,):
+        taxon_in_db: Taxon,
+        plant_valid_in_db: Plant,
+):
     response = await ac.get("/api/selection_data/")
     assert response.status_code == 200
     resp = response.json()
@@ -40,4 +43,12 @@ async def test_get_taxon_tree(
     assert 'TaxonTree' in resp['Selection']
     assert len(resp['Selection']['TaxonTree']) >= 1
 
-    # todo more checks after we have taxa in test db
+    node_family = next(t for t in resp['Selection']['TaxonTree']
+                       if t['key'] == taxon_in_db.family)
+    node_genus = next(t for t in node_family['nodes']
+                      if t['key'] == taxon_in_db.genus)
+    node_species = next(t for t in node_genus['nodes']
+                        if t['key'] == taxon_in_db.species)
+    assert node_species['level'] == 2
+    assert node_species['count'] >= 1
+    assert plant_valid_in_db.id in node_species['plant_ids']

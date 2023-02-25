@@ -1,4 +1,5 @@
 import asyncio
+import json
 import shutil
 from datetime import date
 from pathlib import Path
@@ -23,6 +24,7 @@ from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.pollination_dal import PollinationDAL
+from plants.modules.taxon.models import Taxon
 from plants.shared.history_dal import HistoryDAL
 from tests.config_test import create_tables_if_required, generate_db_url
 
@@ -101,6 +103,7 @@ async def test_db(request) -> AsyncSession:  # noqa
         await conn.execute(text("DELETE FROM pot;"))
         await conn.execute(text("DELETE FROM event;"))
         await conn.execute(text("DELETE FROM plants;"))
+        await conn.execute(text("DELETE FROM taxon;"))
         # TRUNCATE table_a, table_b, …, table_z;
         await conn.commit()
         await conn.close()
@@ -127,8 +130,9 @@ async def plant_valid(request) -> Plant:  # noqa
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid_in_db(test_db, plant_valid) -> Plant:
+async def plant_valid_in_db(test_db, plant_valid, taxon_in_db: Taxon) -> Plant:
     """create a valid plant in the database and return it."""
+    plant_valid.taxon = taxon_in_db
     test_db.add(plant_valid)
     await test_db.commit()
     return plant_valid
@@ -179,7 +183,7 @@ async def plant_valid_with_active_florescence() -> Plant:
         ],
     )
 
-    return plant
+    yield plant
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -290,3 +294,19 @@ def event_dal(test_db: AsyncSession) -> EventDAL:
 def image_dal(test_db: AsyncSession) -> ImageDAL:
     """"""
     yield ImageDAL(test_db)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def taxon_in_db(request, test_db) -> Taxon:  # noqa
+    """create a valid taxon in the db and return it"""
+    path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
+    with open(path, 'r') as f:
+        taxon_dict = json.load(f)
+
+    taxon = Taxon(
+        **taxon_dict)
+
+    test_db.add(taxon)
+    await test_db.commit()
+
+    yield taxon
