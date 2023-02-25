@@ -60,7 +60,6 @@ async def clone_plant(
     plant_original: Plant = Depends(valid_plant),
     plant_dal: PlantDAL = Depends(get_plant_dal),
     event_dal: EventDAL = Depends(get_event_dal),
-    # property_dal: PropertyDAL = Depends(get_property_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
 ):
     """clone plant with supplied plant_id; include duplication of events; excludes
@@ -155,8 +154,6 @@ async def rename_plant(
     """We use the put method to rename a plant."""  # todo use id
     plant = await plant_dal.by_id(args.plant_id)
     assert plant.plant_name == args.old_plant_name
-    # plant_obj = Plant.get_plant_by_plant_name(args.OldPlantName, db,
-    # raise_exception=True)
 
     if await plant_dal.exists(args.new_plant_name):
         raise PlantAlreadyExists(args.new_plant_name)

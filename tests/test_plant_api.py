@@ -1,7 +1,10 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from plants.exceptions import PlantNotFound
 from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.history_dal import HistoryDAL
 
 
@@ -132,3 +135,95 @@ async def test_propose_subsequent_plant_name(ac: AsyncClient):
         response.json().get("subsequent_plant_name")
         == "× Aloe rauhii 'Demi' × Gasteria batesiana IX"
     )
+
+
+@pytest.mark.asyncio
+async def test_clone_plant(
+    ac: AsyncClient, plant_dal: PlantDAL, valid_plant_in_db_with_image: Plant
+):
+    response = await ac.post(
+        f"/api/plants/{valid_plant_in_db_with_image.id}/clone?"
+        f"plant_name_clone=Aloe vera clone"
+    )
+    assert response.status_code == 201
+    resp = response.json()
+
+    assert resp["plant"]["plant_name"] == "Aloe vera clone"
+    assert resp["plant"]["id"] is not None
+
+    clone = await plant_dal.by_id(resp["plant"]["id"])
+    assert clone.active is True
+    assert clone.botanical_name == valid_plant_in_db_with_image.botanical_name
+    assert clone.field_number == valid_plant_in_db_with_image.field_number
+    assert clone.florescences == []
+    assert clone.full_botanical_html_name == (
+        valid_plant_in_db_with_image.full_botanical_html_name
+    )
+    assert clone.propagation_type == valid_plant_in_db_with_image.propagation_type
+    assert clone.taxon is valid_plant_in_db_with_image.taxon
+    assert set(t.text for t in clone.tags) == set(
+        t.text for t in valid_plant_in_db_with_image.tags
+    )
+
+
+@pytest.mark.asyncio
+async def test_delete_plant(
+    ac: AsyncClient,
+    test_db: AsyncSession,
+    plant_dal: PlantDAL,
+    valid_plant_in_db_with_image: Plant,
+):
+    plant_id = valid_plant_in_db_with_image.id
+
+    response = await ac.delete(f"/api/plants/{valid_plant_in_db_with_image.id}")
+    assert response.status_code == 200
+
+    # check that the plant is deleted
+    with pytest.raises(PlantNotFound):
+        await plant_dal.by_id(plant_id)
+
+    await test_db.refresh(valid_plant_in_db_with_image)
+    assert valid_plant_in_db_with_image.deleted is True
+
+
+@pytest.mark.asyncio
+async def test_rename_plant(
+    ac: AsyncClient, test_db: AsyncSession, valid_plant_in_db_with_image: Plant
+):
+    """Test renaming a plant."""
+    payload = {  # BPlantsRenameRequest
+        "plant_id": valid_plant_in_db_with_image.id,
+        "old_plant_name": valid_plant_in_db_with_image.plant_name,
+        "new_plant_name": "Aloe barbadensis",
+    }
+    response = await ac.put("/api/plants/", json=payload)
+    assert response.status_code == 200
+
+    # check that the plant is renamed
+    await test_db.refresh(valid_plant_in_db_with_image)
+    assert valid_plant_in_db_with_image.plant_name == "Aloe barbadensis"
+
+
+@pytest.mark.asyncio
+async def test_rename_plant_invalid(
+    ac: AsyncClient,
+    test_db: AsyncSession,
+    plant_dal: PlantDAL,
+    valid_plant_in_db_with_image: Plant,
+    another_valid_plant_in_db: Plant,
+):
+    """Test renaming a plant to a name that already exists."""
+    old_name = valid_plant_in_db_with_image.plant_name
+    new_name = another_valid_plant_in_db.plant_name
+    payload = {  # BPlantsRenameRequest
+        "plant_id": valid_plant_in_db_with_image.id,
+        "old_plant_name": old_name,
+        "new_plant_name": new_name,
+    }
+    response = await ac.put("/api/plants/", json=payload)
+    assert response.status_code == 400
+    assert "already exists" in response.json()["detail"]
+
+    # check that the plant is not renamed
+    await test_db.refresh(valid_plant_in_db_with_image)
+    assert valid_plant_in_db_with_image.plant_name == old_name

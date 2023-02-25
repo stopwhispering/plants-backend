@@ -251,16 +251,18 @@ def valid_simple_plant_dict() -> dict:
     return new_plant
 
 
-@pytest.fixture(scope="function")
-def valid_another_simple_plant_dict() -> dict:
-    new_plant = {
+@pytest_asyncio.fixture(scope="function")
+async def another_valid_plant_in_db(test_db) -> Plant:
+    """create a valid plant in the database and return it."""
+    new_plant_data = {
         "plant_name": "Gasteria bicolor var. fallax",
         "active": True,
-        "descendant_plants_all": [],
-        "sibling_plants": [],
-        "same_taxon_plants": [],
+        "deleted": False,
         "tags": [],
     }
+    new_plant = Plant(**new_plant_data)
+    test_db.add(new_plant)
+    await test_db.commit()
     return new_plant
 
 
