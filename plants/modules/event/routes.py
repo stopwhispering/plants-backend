@@ -24,7 +24,7 @@ from plants.modules.event.services import (
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.shared.enums import MessageType, MajorResource
+from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
 

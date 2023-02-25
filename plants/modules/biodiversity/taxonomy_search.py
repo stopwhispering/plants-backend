@@ -9,8 +9,8 @@ from pykew.ipni_terms import Name
 from plants import settings
 from plants.exceptions import TooManyResultsError
 from plants.modules.biodiversity.taxonomy_shared_functions import (
-    get_concatenated_distribution,
     get_accepted_synonym_label,
+    get_concatenated_distribution,
 )
 from plants.modules.taxon.enums import FBRank
 from plants.modules.taxon.models import Taxon
@@ -41,7 +41,8 @@ class _ParsedIpniSearchResult(_BaseSearchResult):
 
 @dataclass(kw_only=True)
 class _ParsedApiSearchResult(_BaseSearchResult):
-    """ParsedIpniSearchResult + additional fields from POWO API"""
+    """ParsedIpniSearchResult + additional fields from POWO API."""
+
     basionym: str
     taxonomic_status: str
     authors: str
@@ -77,10 +78,10 @@ class SearchResult(_DBSearchResult):
 
 class TaxonomySearch:
     def __init__(
-            self,
-            include_external_apis: bool,
-            search_for_genus_not_species: bool,
-            taxon_dal: TaxonDAL,
+        self,
+        include_external_apis: bool,
+        search_for_genus_not_species: bool,
+        taxon_dal: TaxonDAL,
     ):
         self.include_external_apis = include_external_apis
         self.search_for_genus_not_species = search_for_genus_not_species
@@ -94,9 +95,10 @@ class TaxonomySearch:
             taxon_name_pattern=f"%{taxon_name_pattern}%",
             search_for_genus_not_species=self.search_for_genus_not_species,
         )
-        results: list[SearchResult] = [SearchResult(**local_result.__dict__,
-                                                    in_db=True)
-                                       for local_result in local_results]
+        results: list[SearchResult] = [
+            SearchResult(**local_result.__dict__, in_db=True)
+            for local_result in local_results
+        ]
 
         # optionally, search in external biodiversity databases "ipni" and "powo"
         if self.include_external_apis:
@@ -110,12 +112,14 @@ class TaxonomySearch:
                 local_results=local_results,
             )
 
-            results.extend([SearchResult(**kew_result.__dict__,
-                                         in_db=False,
-                                         count=0,
-                                         count_inactive=0
-                                         )
-                            for kew_result in kew_results])
+            results.extend(
+                [
+                    SearchResult(
+                        **kew_result.__dict__, in_db=False, count=0, count_inactive=0
+                    )
+                    for kew_result in kew_results
+                ]
+            )
         return results
 
     @staticmethod
@@ -146,12 +150,12 @@ class TaxonomySearch:
             basionym=taxon.basionym,
             # 'phylum': taxon.phylum,
             synonyms_concat=taxon.synonyms_concat,
-            distribution_concat='',  # todo
+            distribution_concat="",  # todo
         )
         return search_result_entry
 
     async def _query_taxa_in_local_database(
-            self, taxon_name_pattern: str, search_for_genus_not_species: bool
+        self, taxon_name_pattern: str, search_for_genus_not_species: bool
     ) -> list[_DBSearchResult]:
         """Searches term in local botany database and returns results in web- format."""
         if search_for_genus_not_species:
@@ -162,8 +166,11 @@ class TaxonomySearch:
             taxa = await self.taxon_dal.get_taxa_by_name_pattern(taxon_name_pattern)
 
         results = [self._get_search_result_from_db_taxon(taxon) for taxon in taxa]
-        logger.info("Found query term in plants taxon database." if results
-                    else "Query term not found in plants taxon database.")
+        logger.info(
+            "Found query term in plants taxon database."
+            if results
+            else "Query term not found in plants taxon database."
+        )
         return results
 
 
@@ -172,9 +179,9 @@ class ApiSearcher:
         self.search_for_genus_not_species = search_for_genus_not_species
 
     def search_taxa_in_external_apis(
-            self,
-            plant_name_pattern: str,
-            local_results: list[_DBSearchResult],
+        self,
+        plant_name_pattern: str,
+        local_results: list[_DBSearchResult],
     ) -> list[_ParsedApiSearchResult]:
         """Searches term in kew's International Plant Name Index ("IPNI") and Plants of
         the World ("POWO"); ignores entries included in the local_results list."""
@@ -198,9 +205,7 @@ class ApiSearcher:
         return api_results
 
     def _search_taxa_in_ipni_api(
-            self,
-            plant_name_pattern: str,
-            ignore_local_db_results: list[_DBSearchResult]
+        self, plant_name_pattern: str, ignore_local_db_results: list[_DBSearchResult]
     ) -> list[_ParsedIpniSearchResult]:
         """Search for species / genus pattern in Kew's IPNI database skip if already in
         local database might raise TooManyResultsError."""
@@ -225,8 +230,11 @@ class ApiSearcher:
                 continue
 
             # check if that item is already included in the local results; if so, skip
-            if any(r for r in ignore_local_db_results
-                   if not r.is_custom and r.lsid == ipni_result["fqId"]):
+            if any(
+                r
+                for r in ignore_local_db_results
+                if not r.is_custom and r.lsid == ipni_result["fqId"]
+            ):
                 continue
 
             # treat infraspecific taxa
@@ -241,9 +249,9 @@ class ApiSearcher:
                 species = ipni_result.get("species")
                 infraspecies = None
             elif rank in (
-                    FBRank.SUBSPECIES.value,
-                    FBRank.VARIETY.value,
-                    FBRank.FORMA.value,
+                FBRank.SUBSPECIES.value,
+                FBRank.VARIETY.value,
+                FBRank.FORMA.value,
             ):
                 species = ipni_result.get("species")
                 infraspecies = ipni_result.get("infraspecies")
@@ -269,16 +277,18 @@ class ApiSearcher:
 
     @staticmethod
     def _update_taxon_from_powo_api(
-            result: _ParsedIpniSearchResult) -> _ParsedApiSearchResult:
+        result: _ParsedIpniSearchResult,
+    ) -> _ParsedApiSearchResult:
         """For the supplied search result entry, fetch additional information from
         "Plants of the World" API."""
         # POWO uses LSID as ID just like IPNI
         powo_lookup = powo.lookup(result.lsid, include=["distribution"])
         if "error" in powo_lookup:
-            throw_exception(f'No Plants of the World result for LSID {result.lsid}')
+            throw_exception(f"No Plants of the World result for LSID {result.lsid}")
 
-        basionym = (powo_lookup["basionym"].get("name")
-                    if "basionym" in powo_lookup else None)
+        basionym = (
+            powo_lookup["basionym"].get("name") if "basionym" in powo_lookup else None
+        )
 
         ext_result = _ParsedApiSearchResult(
             **result.__dict__,
@@ -287,7 +297,7 @@ class ApiSearcher:
             authors=powo_lookup.get("authors"),
             synonym=powo_lookup.get("synonym"),
             synonyms_concat=get_accepted_synonym_label(powo_lookup),
-            distribution_concat=get_concatenated_distribution(powo_lookup)
+            distribution_concat=get_concatenated_distribution(powo_lookup),
         )
 
         if "name_published_in_year" in powo_lookup:

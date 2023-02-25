@@ -140,7 +140,7 @@ async def test_update_image(
     ac: AsyncClient,
     valid_plant_in_db_with_image: Plant,
 ):
-    """the actual update has been done in the fixture, we just assert that it worked"""
+    """The actual update has been done in the fixture, we just assert that it worked."""
     response = await ac.get(f"/api/plants/{valid_plant_in_db_with_image.id}/images/")
     assert response.status_code == 200
     images = response.json()

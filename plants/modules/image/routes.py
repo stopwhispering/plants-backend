@@ -36,7 +36,7 @@ from plants.modules.image.services import (
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.enums import MessageType, MajorResource
+from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
 from plants.shared.message_services import get_message, throw_exception
 

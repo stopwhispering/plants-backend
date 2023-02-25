@@ -4,10 +4,13 @@ from starlette import status
 
 class TooManyResultsError(HTTPException):
     """Raised when database query returned too many results."""
+
     def __init__(self, search_pattern: str, count: int):
-        super().__init__(status_code=400,
-                         detail='Too many search results for pattern '
-                                '"{search_pattern}" ({count} results)')
+        super().__init__(
+            status_code=400,
+            detail="Too many search results for pattern "
+            '"{search_pattern}" ({count} results)',
+        )
 
 
 class BaseError(HTTPException):

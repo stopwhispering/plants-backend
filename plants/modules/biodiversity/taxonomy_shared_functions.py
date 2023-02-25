@@ -8,7 +8,8 @@ def get_accepted_synonym_label(powo_lookup: dict) -> str | None:
     """Parses synonyms from powo lookup dictionary into a string."""
     if powo_lookup.get("synonym"):
         if "accepted" in powo_lookup and (
-                accepted_name := powo_lookup["accepted"].get("name")):
+            accepted_name := powo_lookup["accepted"].get("name")
+        ):
             return "Accepted: " + accepted_name
         else:
             return "Accepted: unknown"

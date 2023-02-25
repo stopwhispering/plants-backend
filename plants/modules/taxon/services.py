@@ -78,7 +78,7 @@ async def _retrieve_locations(lsid: str):
 async def save_new_taxon(
     new_taxon: TaxonCreate, taxon_dal: TaxonDAL, background_tasks: BackgroundTasks
 ) -> Taxon:
-    """save supplied taxon from frontend in the database"""
+    """Save supplied taxon from frontend in the database."""
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
