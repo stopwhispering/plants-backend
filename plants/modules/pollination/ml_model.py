@@ -1,8 +1,10 @@
+import logging
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 import sqlalchemy
 from sklearn import neighbors
-from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import SimpleImputer
@@ -11,7 +13,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._testing import ignore_warnings  # noqa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import Session
+
+if TYPE_CHECKING:
+    from sklearn.base import BaseEstimator
+    from sqlalchemy.orm import Session
 
 from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
 from plants import local_config
@@ -19,6 +24,8 @@ from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
+
+logger = logging.getLogger(__name__)
 
 
 def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
@@ -56,14 +63,12 @@ def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
         ],
     )
 
-    pipeline = Pipeline(
+    return Pipeline(
         steps=[
             ("preprocessor", preprocessor),
             ("estimator", model),
         ]
     )
-
-    return pipeline
 
 
 async def _read_db_and_join() -> pd.DataFrame:
@@ -185,8 +190,7 @@ def _create_features() -> FeatureContainer:
         # Feature(column='avg_ripening_time', scale=Scale.METRIC),
     ]
     # todo: pollination_timestamp (morning, evening, etc.) once enough data is available
-    feature_container = FeatureContainer(features=features)
-    return feature_container
+    return FeatureContainer(features=features)
 
 
 async def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
@@ -212,8 +216,8 @@ def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
         scores = cross_val_score(
             pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1"
         )
-    print(f"Scores: {scores}")
-    print(f"Mean score: {np.mean(scores)}")
+    logger.info(f"Scores: {scores}")
+    logger.info(f"Mean score: {np.mean(scores)}")
     return {"mean_f1_score": np.mean(scores)}
 
 
@@ -222,12 +226,13 @@ async def train_model_for_probability_of_seed_production() -> dict:
     feature_container = _create_features()
     df = await _create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)
-    assert not set(df.pollination_status.unique()) - {
+    if set(df.pollination_status.unique()) - {
         "seed_capsule",
         "germinated",
         "seed",
         "attempt",
-    }
+    }:
+        raise ValueError("Unexpected pollination status in dataset.")
     y = df["pollination_status"].apply(
         lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
     )

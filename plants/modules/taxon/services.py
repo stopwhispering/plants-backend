@@ -1,21 +1,26 @@
 import logging
+from typing import TYPE_CHECKING
 
-from fastapi import BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 from pykew import powo
 
-from plants.exceptions import TaxonAlreadyExists
+if TYPE_CHECKING:
+    from fastapi import BackgroundTasks
+
+from plants.exceptions import TaxonAlreadyExistsError
 from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
 from plants.modules.biodiversity.taxonomy_name_formatter import (
     BotanicalNameInput,
     create_formatted_botanical_name,
 )
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.taxon.models import Distribution, Taxon
-from plants.modules.taxon.schemas import TaxonCreate, TaxonImageUpdate, TaxonUpdate
-from plants.modules.taxon.taxon_dal import TaxonDAL
+
+if TYPE_CHECKING:
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.taxon.schemas import TaxonCreate, TaxonImageUpdate, TaxonUpdate
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
@@ -82,20 +87,26 @@ async def save_new_taxon(
     name, full_html_name = _create_names(new_taxon)
 
     if new_taxon.is_custom:
-        assert (
+        if not (
             (new_taxon.custom_rank and new_taxon.custom_infraspecies)
             or new_taxon.custom_suffix
             or new_taxon.cultivar
             or new_taxon.affinis
-        )
+        ):
+            raise ValueError("Custom fields not set for custom taxon.")
         locations = []
         gbif_id = None
     else:
-        assert not new_taxon.custom_rank
-        assert not new_taxon.custom_infraspecies
-        assert not new_taxon.custom_suffix
-        assert not new_taxon.cultivar
-        assert not new_taxon.affinis
+        if any(
+            [
+                new_taxon.custom_rank,
+                new_taxon.custom_infraspecies,
+                new_taxon.custom_suffix,
+                new_taxon.cultivar,
+                new_taxon.affinis,
+            ]
+        ):
+            raise ValueError("Custom fields unexpectedly set for non-custom taxon.")
         locations = await _retrieve_locations(new_taxon.lsid)
 
         gbif_identifier_lookup = GBIFIdentifierLookup()
@@ -104,7 +115,7 @@ async def save_new_taxon(
         )
 
     if await taxon_dal.exists(taxon_name=name):
-        raise TaxonAlreadyExists(name)
+        raise TaxonAlreadyExistsError(name)
 
     taxon = Taxon(
         name=name,

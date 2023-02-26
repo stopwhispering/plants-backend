@@ -1,5 +1,8 @@
-from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
 
 
 def with_suffix(path: Path, suffix: str) -> Path:
@@ -19,8 +22,7 @@ def get_generated_filename(filename_original: str, size: tuple[int, int] = None)
     suffix = f"{size[0]}_{size[1]}"
     filename_list = filename_original.split(".")
     filename_list.insert(-1, suffix)
-    filename_generated = ".".join(filename_list)
-    return filename_generated
+    return ".".join(filename_list)
 
 
 def find_jpg_files(folder: Path) -> set[Path]:
@@ -30,7 +32,7 @@ def find_jpg_files(folder: Path) -> set[Path]:
     return set(paths)
 
 
-def create_if_not_exists(folders: Sequence[Path], parents: bool):
+def create_if_not_exists(folders: Sequence[Path], *, parents: bool):
     """create folders if not exist; optionally recursively incl.
 
     parents

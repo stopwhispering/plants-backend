@@ -1,5 +1,9 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.shared.base_dal import BaseDAL
 from plants.shared.history_models import History
@@ -15,5 +19,4 @@ class HistoryDAL(BaseDAL):
 
     async def get_all(self):
         query = select(History)
-        history = (await self.session.scalars(query)).all()
-        return history
+        return (await self.session.scalars(query)).all()

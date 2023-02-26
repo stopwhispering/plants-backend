@@ -1,19 +1,16 @@
 """Services for florescence and pollination-related operations; mostly for pollination
 frontend."""
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
 
 from plants.exceptions import BaseError
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import (
     Context,
     FlorescenceStatus,
     FlowerColorDifferentiation,
 )
-from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Florescence
-from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.schemas import (
     BPlantForNewFlorescence,
     FlorescenceCreate,
@@ -21,6 +18,12 @@ from plants.modules.pollination.schemas import (
     FlorescenceUpdate,
 )
 from plants.shared.api_utils import format_api_date, parse_api_date
+
+if TYPE_CHECKING:
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
+    from plants.modules.pollination.pollination_dal import PollinationDAL
 
 
 async def read_plants_for_new_florescence(
@@ -88,8 +91,11 @@ async def update_active_florescence(
 ):
     """Update db record of a currently active florescence."""
     # technical validation
-    assert florescence is not None
-    assert florescence.plant_id == edited_florescence_data.plant_id
+    if florescence.plant_id != edited_florescence_data.plant_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Different plant_id in florescence and edited_florescence_data",
+        )
 
     if (
         edited_florescence_data.flower_colors_differentiation
@@ -146,7 +152,12 @@ async def create_new_florescence(
     plant_dal: PlantDAL,
 ):
     """Create a new active florescence."""
-    assert FlorescenceStatus.has_value(new_florescence_data.florescence_status)
+    if not FlorescenceStatus.has_value(new_florescence_data.florescence_status):
+        raise HTTPException(
+            status_code=400,
+            detail=f"bad florescence_status value: "
+            f"{new_florescence_data.florescence_status}",
+        )
 
     plant = await plant_dal.by_id(new_florescence_data.plant_id)
     florescence = Florescence(

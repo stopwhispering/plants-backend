@@ -147,30 +147,29 @@ class Plant(Base):
             except TypeError:  # no image with a record date
                 return None
             return latest_image
+        return None
 
     @property
-    def current_soil(self) -> dict:
+    def current_soil(self) -> dict | None:
         if soil_events := [e for e in self.events if e.soil]:
             soil_events.sort(key=lambda e: e.date, reverse=True)
             return {
                 "soil_name": soil_events[0].soil.soil_name,
                 "date": soil_events[0].date,
             }
+        return None
 
     @property
     def botanical_name(self) -> str:
-        if self.taxon:
-            return self.taxon.name
+        return self.taxon.name if self.taxon else None
 
     @property
-    def full_botanical_html_name(self) -> str:
-        if self.taxon:
-            return self.taxon.full_html_name
+    def full_botanical_html_name(self) -> str | None:
+        return self.taxon.full_html_name if self.taxon else None
 
     @property
     def taxon_authors(self) -> str:
-        if self.taxon:
-            return self.taxon.authors
+        return self.taxon.authors if self.taxon and self.taxon.authors else None
 
 
 class Tag(Base):

@@ -36,7 +36,7 @@ class SessionFactory:
     @classmethod
     def get_session_factory(cls):
         if cls.session_factory is None:
-            raise Exception("Session factory not set")
+            raise ValueError("Session factory not set")
         return cls.session_factory
 
 

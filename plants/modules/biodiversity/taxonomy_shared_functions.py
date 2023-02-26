@@ -11,8 +11,8 @@ def get_accepted_synonym_label(powo_lookup: dict) -> str | None:
             accepted_name := powo_lookup["accepted"].get("name")
         ):
             return "Accepted: " + accepted_name
-        else:
-            return "Accepted: unknown"
+        return "Accepted: unknown"
+    return None
 
 
 def get_concatenated_distribution(powo_lookup: dict) -> str | None:
@@ -44,5 +44,4 @@ def create_synonyms_concat(powo_lookup: dict) -> Optional[str]:
     """Parses synonyms from powo lookup dictionary into a string."""
     if "synonyms" in powo_lookup and powo_lookup["synonyms"]:
         return ", ".join([s["name"] for s in powo_lookup["synonyms"]])
-    else:
-        return None
+    return None

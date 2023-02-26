@@ -1,5 +1,9 @@
-from sqlalchemy.engine import URL
+from typing import TYPE_CHECKING
+
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import URL
 
 
 def create_db_engine(connection_string: URL) -> AsyncEngine:
@@ -13,5 +17,4 @@ def create_db_engine(connection_string: URL) -> AsyncEngine:
         return create_async_engine(
             connection_string, connect_args={"check_same_thread": False}
         )
-    else:
-        return create_async_engine(connection_string)
+    return create_async_engine(connection_string)

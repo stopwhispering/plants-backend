@@ -1,22 +1,21 @@
 import datetime
 import logging
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import piexif
-from piexif import InvalidImageDataError
 
 from plants import local_config
 from plants.modules.image.exif_utils import (
-    auto_rotate_jpeg,
-    decode_keywords_tag,
-    decode_record_date_time,
     encode_keywords_tag,
     encode_record_date_time,
     exif_dict_has_all_relevant_tags,
     modified_date,
     set_modified_date,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +30,6 @@ class MetadataDTO:
 
 class PhotoMetadataAccessExifTags:
     """Access to Photo Metadata via jpeg exif tags."""
-
-    def read_photo_metadata(self, absolute_path: Path) -> MetadataDTO:
-        """Retrieve metadata on photo_file from jpeg file exif tags."""
-        return self._parse_exif_tags(absolute_path=absolute_path)
 
     async def save_photo_metadata(
         self,
@@ -64,71 +59,6 @@ class PhotoMetadataAccessExifTags:
         )
 
     @staticmethod
-    def _parse_exif_tags(absolute_path: Path) -> MetadataDTO:
-        """Reads exif info from file in attribute absolute_path and parses information
-        from it (plants list, keywords, description, etc."""
-        if not absolute_path:
-            raise ValueError("File path not set.")
-
-        try:
-            exif_dict = piexif.load(absolute_path.as_posix())
-        except InvalidImageDataError:
-            logger.warning(
-                f"Invalid Image Type Error occured when reading EXIF Tags "
-                f"for {absolute_path}."
-            )
-            description = ""
-            keywords = []
-            plants = []
-            record_date_time = None
-            return MetadataDTO(
-                plant_names=plants,
-                keywords=keywords,
-                description=description,
-                record_date_time=record_date_time,
-            )
-
-        auto_rotate_jpeg(absolute_path, exif_dict)  # todo move elsewhere
-
-        try:  # description
-            description = exif_dict["0th"][270].decode(
-                "utf-8"
-            )  # windows description/title tag
-        except KeyError:
-            description = ""
-
-        try:  # keywords
-            keywords = decode_keywords_tag(
-                exif_dict["0th"][40094]
-            )  # Windows Keywords Tag
-            if not keywords[0]:  # ''
-                keywords = []
-        except KeyError:
-            keywords = []
-
-        try:  # plants (list); read from authors exif tag
-            # if 315 in exif_dict['0th']:
-            plants = (
-                exif_dict["0th"][315].decode("utf-8").split(";")
-            )  # Windows Authors Tag
-            if not plants[0]:  # ''
-                plants = []
-        except KeyError:
-            plants = []
-
-        try:  # record date+time
-            record_date_time = decode_record_date_time(exif_dict["Exif"][36867])
-        except KeyError:
-            record_date_time = None
-
-        return MetadataDTO(
-            plant_names=plants,
-            keywords=keywords,
-            description=description,
-            record_date_time=record_date_time,
-        )
-
-    @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
         """Adjust exif tags in file described in photo_file object; optionally append to
         photo_file directory (used for newly uploaded photo_file files)."""
@@ -147,8 +77,7 @@ class PhotoMetadataAccessExifTags:
                     "t write EXIF Tags. Ignoring."
                 )
                 return
-            else:
-                raise FileNotFoundError(f"File {absolute_path} not found.")
+            raise FileNotFoundError(f"File {absolute_path} not found.")
 
         exif_dict = piexif.load(absolute_path.as_posix())
 

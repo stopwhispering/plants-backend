@@ -1,18 +1,20 @@
 import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import Extra, HttpUrl, constr, validator
 
-from plants.modules.image.models import Image
 from plants.modules.taxon.enums import FBRank
-from plants.modules.taxon.models import Distribution
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
+if TYPE_CHECKING:
+    from plants.modules.image.models import Image
+    from plants.modules.taxon.models import Distribution
+
 
 class DistributionBase(BaseSchema):
-    native: List[constr(min_length=1, max_length=40)]
-    introduced: List[constr(min_length=1, max_length=40)]
+    native: list[constr(min_length=1, max_length=40)]
+    introduced: list[constr(min_length=1, max_length=40)]
 
 
 class DistributionRead(DistributionBase):
@@ -98,9 +100,9 @@ class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
 
 class FRetrieveTaxonDetailsRequest(RequestContainer):
     lsid: Optional[constr(min_length=1, max_length=50)]
-    hasCustomName: bool
+    hasCustomName: bool  # noqa N815  # todo rename
     taxon_id: Optional[int]  # taxon id
-    nameInclAddition: str
+    nameInclAddition: str  # noqa N815  # todo rename
     plant_id: int
     source: str  # "Local DB" or ...  # todo enum
 
@@ -173,7 +175,7 @@ class TaxonUpdate(BaseSchema):
     # gbif_id: Optional[int]
     custom_notes: Optional[str]
     # distribution: Optional[DistributionUpdate]  # not filled for each request
-    images: Optional[List[TaxonImageUpdate]]  # not filled for each request
+    images: Optional[list[TaxonImageUpdate]]  # not filled for each request
 
     class Config:
         extra = Extra.ignore
@@ -250,7 +252,7 @@ class BResultsRetrieveTaxonDetailsRequest(ResponseContainer):
 
 
 class BResultsFetchTaxonImages(ResponseContainer):
-    occurrence_images: List[TaxonOccurrenceImageRead]
+    occurrence_images: list[TaxonOccurrenceImageRead]
 
 
 class BResultsGetTaxon(ResponseContainer):
@@ -267,4 +269,4 @@ class BCreatedTaxonResponse(ResponseContainer):
 
 
 class FModifiedTaxa(RequestContainer):
-    ModifiedTaxaCollection: List[TaxonUpdate]
+    ModifiedTaxaCollection: list[TaxonUpdate]

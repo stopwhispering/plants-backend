@@ -1,7 +1,6 @@
 import tomllib
 from enum import Enum
 from pathlib import Path, PurePath
-from typing import Tuple
 
 from pydantic import BaseModel, BaseSettings, constr
 
@@ -10,9 +9,9 @@ from plants.shared.path_utils import create_if_not_exists
 
 
 class ImageSettings(BaseModel):
-    size_thumbnail_image_taxon: Tuple[int, int]  # e.g.[220, 220]
-    sizes: Tuple[Tuple[int, int], ...]  # required lower-resolution sizes for images
-    resizing_size: Tuple[int, int]  # e.g.[3440, 1440]
+    size_thumbnail_image_taxon: tuple[int, int]  # e.g.[220, 220]
+    sizes: tuple[tuple[int, int], ...]  # required lower-resolution sizes for images
+    resizing_size: tuple[int, int]  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
 
 

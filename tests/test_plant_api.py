@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from plants.exceptions import PlantNotFound
+from plants.exceptions import PlantNotFoundError
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.history_dal import HistoryDAL
@@ -179,7 +179,7 @@ async def test_delete_plant(
     assert response.status_code == 200
 
     # check that the plant is deleted
-    with pytest.raises(PlantNotFound):
+    with pytest.raises(PlantNotFoundError):
         await plant_dal.by_id(plant_id)
 
     await test_db.refresh(valid_plant_in_db_with_image)

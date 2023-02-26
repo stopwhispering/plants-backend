@@ -1,7 +1,5 @@
 from fastapi import HTTPException
-from starlette.requests import Request
 
-from plants.shared.api_utils import parse_resource_from_request
 from plants.shared.enums import MessageType
 from plants.shared.message_schemas import BMessage
 
@@ -12,15 +10,11 @@ def throw_exception(
     additional_text: str = None,
     status_code: int = 520,
     description: str = None,
-    request: Request = None,
 ):
     """Hands over supplied message details for ui5 frontend to be displayed as toast and
     added to message collection; adds header info from starlette request if
     available."""
     description_text = ""
-    if request:
-        # todo remove? !
-        description_text = f"Resource: {parse_resource_from_request(request)}"
     if description:
         description_text = description + "\n" + description_text
     raise HTTPException(

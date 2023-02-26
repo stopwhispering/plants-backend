@@ -1,13 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from plants import settings
-from plants.exceptions import PlantAlreadyExists
-from plants.extensions.orm import Base
-from plants.modules.event.event_dal import EventDAL
+from plants.exceptions import PlantAlreadyExistsError
 from plants.modules.plant.models import Plant, Tag
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
 from plants.modules.plant.util import (
     has_roman_plant_index,
     int_to_roman,
@@ -15,17 +11,20 @@ from plants.modules.plant.util import (
     roman_to_int,
 )
 
-# from plants.modules.property.property_dal import PropertyDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
+if TYPE_CHECKING:
+    from plants.extensions.orm import Base
+    from plants.modules.event.event_dal import EventDAL
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
 
 async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
     if await plant_dal.exists(plant_name):
-        raise PlantAlreadyExists(plant_name)
-    new_plant = await plant_dal.create_empty_plant(plant_name=plant_name)
-    return new_plant
+        raise PlantAlreadyExistsError(plant_name)
+    return await plant_dal.create_empty_plant(plant_name=plant_name)
 
 
 # todo this is still required (otherwise save error) - why? replcae
@@ -42,13 +41,12 @@ def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str
         return plant.filename_previewimage.relative_to(
             settings.paths.subdirectory_photos
         ).as_posix()
-    else:
-        return plant.filename_previewimage.as_posix()
+    return plant.filename_previewimage.as_posix()
 
 
 async def update_plants_from_list_of_dicts(
-    plants: List[PlantCreateUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
-) -> List[Plant]:
+    plants: list[PlantCreateUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
+) -> list[Plant]:
     plants_saved = []
     logger.info(f"Updating/Creating {len(plants)} plants")
     for plant in plants:
@@ -87,7 +85,7 @@ def _clone_instance(model_instance: Base, clone_attrs: Optional[dict] = None):
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
     table = model_instance.__table__
-    non_pk_columns = [k for k in table.columns.keys() if k not in table.primary_key]
+    non_pk_columns = [k for k in table.columns if k not in table.primary_key]
     data = {c: getattr(model_instance, c) for c in non_pk_columns}
     if clone_attrs:
         data.update(clone_attrs)
@@ -137,7 +135,7 @@ async def deep_clone_plant(
     await plant_dal.create_plant(plant_clone)
 
 
-async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL):
+async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL):
     """Update modified tags; returns list of new tags (not yet added or committed);
     removes deleted tags."""
     new_tags = []
@@ -158,16 +156,15 @@ async def _treat_tags(plant: Plant, tags: List[FBPlantTag], plant_dal: PlantDAL)
         await plant_dal.update_tag(tag_object, updated_tag.dict())
 
     # delete tags not supplied anymore
-    updated_plant_ids = set((t.id for t in tags if t.id is not None))
+    updated_plant_ids = {t.id for t in tags if t.id is not None}
     for deleted_tag in [t for t in plant.tags if t.id not in updated_plant_ids]:
         await plant_dal.remove_tag_from_plant(plant, deleted_tag)
 
 
 async def fetch_plants(plant_dal: PlantDAL) -> list[Plant]:
-    plants = await plant_dal.get_all_plants_with_relationships_loaded(
+    return await plant_dal.get_all_plants_with_relationships_loaded(
         include_deleted=not settings.plants.filter_hidden
     )
-    return plants
 
 
 def generate_subsequent_plant_name(original_plant_name: str) -> str:

@@ -1,11 +1,9 @@
 from datetime import datetime
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from fastapi import HTTPException
 
-from plants.exceptions import ColorAlreadyTaken, UnknownColor
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
+from plants.exceptions import ColorAlreadyTakenError, UnknownColorError
 from plants.modules.pollination.enums import (
     COLORS_MAP,
     COLORS_MAP_TO_RGB,
@@ -15,15 +13,13 @@ from plants.modules.pollination.enums import (
     PollenType,
     PollinationStatus,
 )
-from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.ml_prediction import (
     predict_probability_of_seed_production,
 )
 from plants.modules.pollination.models import Florescence, Pollination
-from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.schemas import PollenContainerCreateUpdate  # noqa
 from plants.modules.pollination.schemas import (
-    BPlantWithoutPollenContainer,
+    BPlantWoPollenContainer,
     BPollinationAttempt,
     BPollinationResultingPlant,
     BPotentialPollenDonor,
@@ -43,6 +39,12 @@ from plants.shared.api_utils import (
     parse_api_date,
     parse_api_datetime,
 )
+
+if TYPE_CHECKING:
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
+    from plants.modules.pollination.pollination_dal import PollinationDAL
 
 LOCATION_TEXTS: Final[dict] = {
     "indoor": "indoor",
@@ -65,9 +67,7 @@ async def _read_pollination_attempts(
     for pollination in attempts_orm + attempts_orm_reverse:
         pollination: Pollination
         attempt_dict = {
-            "reverse": True
-            if pollination.seed_capsule_plant_id == pollen_donor.id
-            else False,
+            "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
             "pollination_status": pollination.pollination_status,
             "pollination_at": pollination.pollination_timestamp.strftime(
                 FORMAT_FULL_DATETIME
@@ -95,7 +95,7 @@ async def _read_resulting_plants(
     for plant in resulting_plants_orm + resulting_plants_orm_reverse:
         plant: Plant
         resulting_plant_dict = {
-            "reverse": True if plant.parent_plant_id == pollen_donor.id else False,
+            "reverse": plant.parent_plant_id == pollen_donor.id,
             "plant_id": plant.id,
             "plant_name": plant.plant_name,
         }
@@ -109,10 +109,9 @@ def get_probability_pollination_to_seed(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
     """Get the ml prediction for the probability of successful pollination to seed."""
-    probability = predict_probability_of_seed_production(
+    return predict_probability_of_seed_production(
         florescence=florescence, pollen_donor=pollen_donor, pollen_type=pollen_type
     )
-    return probability
 
 
 async def _plants_have_ongoing_pollination(
@@ -239,11 +238,14 @@ async def save_new_pollination(
     pollen_donor_plant = await plant_dal.by_id(
         new_pollination_data.pollen_donor_plant_id
     )
-    assert seed_capsule_plant is florescence.plant
-    assert PollenType.has_value(new_pollination_data.pollen_type)
-    assert Location.has_value(new_pollination_data.location)
+    if not (
+        seed_capsule_plant is florescence.plant
+        and PollenType.has_value(new_pollination_data.pollen_type)
+        and Location.has_value(new_pollination_data.location)
+    ):
+        raise ValueError("Invalid pollination data")
     if new_pollination_data.label_color_rgb not in COLORS_MAP:
-        raise UnknownColor(new_pollination_data.label_color_rgb)
+        raise UnknownColorError(new_pollination_data.label_color_rgb)
 
     # apply transformations
     pollination_timestamp = datetime.strptime(
@@ -259,7 +261,7 @@ async def save_new_pollination(
         }
     )
     if same_color_pollination:
-        raise ColorAlreadyTaken(seed_capsule_plant.plant_name, label_color)
+        raise ColorAlreadyTakenError(seed_capsule_plant.plant_name, label_color)
 
     # create new pollination orm object and write it to db
     pollination = Pollination(
@@ -297,16 +299,28 @@ async def update_pollination(
     pollination_dal: PollinationDAL,
 ):
     """Update a pollination attempt."""
-
     # technical validation (some values are not allowed to be changed)
-    assert pollination is not None
-    assert pollination.seed_capsule_plant_id == pollination_data.seed_capsule_plant_id
-    assert pollination.pollen_donor_plant_id == pollination_data.pollen_donor_plant_id
+    if (
+        pollination.seed_capsule_plant_id != pollination_data.seed_capsule_plant_id
+        or pollination.pollen_donor_plant_id != pollination_data.pollen_donor_plant_id
+    ):
+        raise HTTPException(
+            400,
+            detail={
+                "message": "Seed capsule plant and pollen donor plant cannot be changed."
+            },
+        )
 
     # semantic validation
-    assert PollenType.has_value(pollination_data.pollen_type)
-    assert Location.has_value(pollination_data.location)
-    assert PollinationStatus.has_value(pollination_data.pollination_status)
+    if not (
+        PollenType.has_value(pollination_data.pollen_type)
+        and Location.has_value(pollination_data.location)
+        and PollinationStatus.has_value(pollination_data.pollination_status)
+    ):
+        raise HTTPException(
+            400,
+            detail={"message": "Invalid value for pollination data."},
+        )
     if pollination_data.label_color_rgb not in COLORS_MAP:
         raise HTTPException(
             500,
@@ -421,7 +435,7 @@ async def read_pollen_containers(plant_dal: PlantDAL) -> list[PollenContainerRea
 
 async def read_plants_without_pollen_containers(
     plant_dal: PlantDAL,
-) -> list[BPlantWithoutPollenContainer]:
+) -> list[BPlantWoPollenContainer]:
     # query = (db.query(Plant).filter((Plant.count_stored_pollen_containers == 0) |
     #                                 Plant.count_stored_pollen_containers.is_(None))
     #          # .filter((Plant.hide.is_(False)) | (Plant.hide.is_(None))))
@@ -432,7 +446,7 @@ async def read_plants_without_pollen_containers(
     plants_without_pollen_containers = []
     for p in plants:
         plants_without_pollen_containers.append(
-            BPlantWithoutPollenContainer(
+            BPlantWoPollenContainer(
                 plant_id=p.id,
                 plant_name=p.plant_name,
                 genus=p.taxon.genus if p.taxon else None,

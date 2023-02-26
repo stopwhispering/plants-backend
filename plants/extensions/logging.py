@@ -23,7 +23,7 @@ def configure_root_logger(
     logger.setLevel(logging.DEBUG)  # global min. level
     # logging.basicConfig(level=logging.DEBUG)
 
-    if not log_severity_file == LogLevel.NONE:
+    if log_severity_file != LogLevel.NONE:
         # create file handler
         file_handler = logging.FileHandler(log_file_path)
         format_fh = (
@@ -37,7 +37,7 @@ def configure_root_logger(
         logger.handlers = []
         logger.addHandler(file_handler)
 
-    if not log_severity_console == LogLevel.NONE:
+    if log_severity_console != LogLevel.NONE:
         # create console handler
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")

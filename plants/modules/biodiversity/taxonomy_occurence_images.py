@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 import dateutil
 import requests
@@ -15,8 +15,10 @@ from plants.modules.taxon.models import (
     TaxonToOccurrenceAssociation,
 )
 from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
+
+if TYPE_CHECKING:
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +27,11 @@ class TaxonOccurencesLoader:
     def __init__(self, taxon_dal: TaxonDAL):
         self.taxon_dal = taxon_dal
 
-    @staticmethod
-    def _get_image_metadata(occ: dict, m: dict, gbif_id: int) -> Optional[dict]:
+    def _get_image_metadata(self, occ: dict, m: dict, gbif_id: int) -> Optional[dict]:
+        # todo refactor this function
         if "created" not in m and "eventDate" not in occ:
             # happens very rarely, so wen can skip entries with unknown date
-            return
+            return None
 
         try:
             d = {
@@ -39,7 +41,7 @@ class TaxonOccurencesLoader:
                     "scientificName"
                 ],  # redundant, but show as additional info
                 "basis_of_record": occ["basisOfRecord"],
-                "verbatim_locality": occ.get("verbatimLocality") or occ.get("locality"),
+                "verbatim_locality": self._parse_verbatim_locality(occ),
                 "date": dateutil.parser.isoparse(  # noqa
                     m.get("created") or occ.get("eventDate")
                 ),  # noqa
@@ -54,18 +56,6 @@ class TaxonOccurencesLoader:
                 or occ.get("collectionCode"),
             }
 
-            # combine some infos
-            if occ.get("countryCode") and occ.get("stateProvince"):
-                geo = f" ({occ['stateProvince']}, {occ['countryCode']})"
-            elif occ.get("countryCode"):
-                geo = f" ({occ['countryCode']})"
-            elif occ.get("stateProvince"):
-                geo = f" ({occ['stateProvince']})"
-            else:
-                geo = ""
-            if d["verbatim_locality"]:
-                d["verbatim_locality"] += geo
-
             # some fields requiring validation
             if (references := occ.get("references")) and references[
                 :4
@@ -79,24 +69,35 @@ class TaxonOccurencesLoader:
                 "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
             ):
                 d["href"] = m["references"]
-            elif m.get("identifier") and (
-                "jpg" in m["identifier"].lower() or "jpeg" in m["identifier"].lower()
-            ):
-                d["href"] = m["identifier"]
             elif m.get("identifier"):
                 d["href"] = m["identifier"]
             else:
-                return
+                return None
 
         # in rare cases, essential properties are missing
         except KeyError as err:
             logger.warning(str(err))
-            return
+            return None
 
         return d
 
     @staticmethod
-    def _download_and_generate_thumbnail(info: Dict) -> Optional[str]:
+    def _parse_verbatim_locality(occ: dict) -> str | None:
+        verbatim_locality = occ.get("verbatimLocality") or occ.get("locality")
+        if verbatim_locality:
+            if occ.get("countryCode") and occ.get("stateProvince"):
+                geo = f" ({occ['stateProvince']}, {occ['countryCode']})"
+            elif occ.get("countryCode"):
+                geo = f" ({occ['countryCode']})"
+            elif occ.get("stateProvince"):
+                geo = f" ({occ['stateProvince']})"
+            else:
+                geo = ""
+            verbatim_locality += geo
+        return verbatim_locality
+
+    @staticmethod
+    def _download_and_generate_thumbnail(info: dict) -> Optional[str]:
         filename = (
             f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}."
             f"{settings.images.size_thumbnail_image_taxon[0]}_"
@@ -108,10 +109,10 @@ class TaxonOccurencesLoader:
             return filename
 
         logger.info(f'Downloading... {info["href"]}')
-        result = requests.get(info["href"])
-        if not (200 <= result.status_code < 300):
+        result = requests.get(info["href"], timeout=10)  # todo async http client
+        if result.status_code >= 300:  # noqa PLR2004
             logger.warning(f'Download failed: {info["href"]}')
-            return
+            return None
 
         image_bytes_io = BytesIO(result.content)
         try:
@@ -126,14 +127,14 @@ class TaxonOccurencesLoader:
             )
         except OSError as err:
             logger.warning(f"Could not load as image: {info['href']} ({str(err)}")
-            return
+            return None
 
         info["filename_thumbnail"] = filename
         logger.debug(f"Saved {path_thumbnail}")
 
         return filename
 
-    def _treat_occurences(self, occs: List, gbif_id: int) -> List[Dict]:
+    def _treat_occurences(self, occs: list, gbif_id: int) -> list[dict]:
         image_dicts = []
         for occ in occs:
             if len(image_dicts) >= local_config.max_images_per_taxon:
@@ -168,7 +169,7 @@ class TaxonOccurencesLoader:
 
         return image_dicts
 
-    async def _save_to_db(self, image_dicts: List[Dict], gbif_id: int):
+    async def _save_to_db(self, image_dicts: list[dict], gbif_id: int):
         # cleanup existing entries for taxon
         await self.taxon_dal.delete_taxon_to_occurrence_associations_by_gbif_id(gbif_id)
         await self.taxon_dal.delete_taxon_occurrence_image_by_gbif_id(gbif_id)
@@ -204,9 +205,8 @@ class TaxonOccurencesLoader:
                 await self.taxon_dal.create_taxon_to_occurrence_associations(
                     new_taxon_occ_links
                 )
-        except IntegrityError as err:
-            logger.error(str(err))
-            print(err)
+        except IntegrityError:
+            logger.exception("IntegrityError while saving occurrence images.")
 
     async def scrape_occurrences_for_taxon(
         self, gbif_id: int

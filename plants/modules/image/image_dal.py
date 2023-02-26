@@ -1,7 +1,7 @@
 from sqlalchemy import Select, select
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import ImageNotFound
+from plants.exceptions import ImageNotFoundError
 from plants.modules.image.models import (
     Image,
     ImageKeyword,
@@ -20,7 +20,7 @@ class ImageDAL(BaseDAL):
     def _add_eager_load_options(query: Select) -> Select:
         """Apply eager loading the query supplied; use only for single- or limited-
         number select queries to avoid performance issues."""
-        query = query.options(
+        return query.options(
             selectinload(Image.keywords),
             selectinload(Image.plants),
             selectinload(Image.image_to_plant_associations),
@@ -31,14 +31,13 @@ class ImageDAL(BaseDAL):
             selectinload(Image.taxa),
             selectinload(Image.keywords),
         )
-        return query
 
     async def by_id(self, image_id: int) -> Image:
         query = select(Image).where(Image.id == image_id).limit(1)
         query = self._add_eager_load_options(query)
         image: Image = (await self.session.scalars(query)).first()  # noqa
         if not image:
-            raise ImageNotFound(image_id)
+            raise ImageNotFoundError(image_id)
         return image
 
     async def by_ids(self, image_ids: list[int]) -> list[Image]:
@@ -52,7 +51,7 @@ class ImageDAL(BaseDAL):
         query = self._add_eager_load_options(query)
         image: Image = (await self.session.scalars(query)).first()
         if not image:
-            raise ImageNotFound(filename)
+            raise ImageNotFoundError(filename)
         return image
 
     async def get_all_images(self) -> list[Image]:
@@ -96,7 +95,7 @@ class ImageDAL(BaseDAL):
         query = select(Image).where(Image.filename == filename).limit(1)
         image: Image = (await self.session.scalars(query)).first()
         if not image:
-            raise ImageNotFound(filename)
+            raise ImageNotFoundError(filename)
         await self.session.delete(image)
         await self.session.flush()
 

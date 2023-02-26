@@ -1413,6 +1413,24 @@ dotenv = ["python-dotenv (>=0.10.4)"]
 email = ["email-validator (>=1.0.3)"]
 
 [[package]]
+name = "pydantic-to-typescript"
+version = "1.0.10"
+description = "Convert pydantic models to typescript interfaces"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pydantic-to-typescript-1.0.10.tar.gz", hash = "sha256:c0d030f213b9b225381fc59a5ad7544a0e20bfb6856323f324fd3cf73e4fd447"},
+    {file = "pydantic_to_typescript-1.0.10-py3-none-any.whl", hash = "sha256:b2b3954fd4aa55f367aa0513ee3c21cd327221936c0cfbeb8d46b51542eceea7"},
+]
+
+[package.dependencies]
+pydantic = "*"
+
+[package.extras]
+dev = ["coverage", "pytest", "pytest-cov"]
+
+[[package]]
 name = "pygbif"
 version = "0.6.2"
 description = "Python client for GBIF"
@@ -2205,4 +2223,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "da1fd98f65e61ecde3b2c7278f390f59e092b585a991863e15539fe792fe2852"
+content-hash = "5335f33f9f66b789e74d911113e66ec9e968b5ad66492dc0d10f2815912bb7d2"

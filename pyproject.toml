@@ -40,7 +40,118 @@ isort = "^5.12.0"
 docformatter = "^1.5.1"
 pytest-cov = "^4.0.0"
 uvicorn = "^0.20.0"
+pydantic-to-typescript = "^1.0.10"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+# https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file
+[tool.black]
+line-length = 88  # default
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+addopts = "--cov=plants --cov-report term --cov-report=html"
+testpaths = [
+    "tests"
+]
+
+[tool.coverage.run]
+# Coverage.py lib is used by pytest-cov to generate coverage reports
+# the following is required to make it work after await statements with sqlalchemy
+concurrency = ["greenlet"]
+omit = []
+
+[tool.coverage.report]
+exclude_lines = [
+  "def __repr__",
+  "def __str__",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+# rule sources; default: pycodestyle (`E`) and Pyflakes (`F`) codes
+select = [
+    "E",  # pycodestyle
+    "F",  # Pyflakes
+    "W",  # Warning
+    "C90",  # mccabe
+    "N",  # pep8-naming
+#    "D",  # pydocstyle
+    "UP",  # pyupgrade
+#    "ANN", # flake8-annotations
+    "S",  # flake8-bandit
+    "FBT",  # flake8-boolean-trap
+    "B",  # flake8-bugbear
+    "A",  # flake8-builtins
+    "COM",  # flake8-commas
+    "C4",  # flake8-comprehensions
+#    "DTZ",  # flake8-datetimez
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+    "G",  # flake8-logging-format
+    "INP",  # flake8-no-pep420
+    "PIE",  # flake8-pie
+    "T20",  # flake8-print
+    "PT",  # flake8-pytest-style
+    "Q",  # flake8-quotes
+    "RSE", # flake8-raise
+    "RET",  # flake8-return
+    "SLF",  # flake8-self
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "TCH",  # flake8-type-checking
+    "ARG",  # flake8-unused-arguments
+#    "PTH",  # flake8-use-pathlib
+    "ERA",  # eradicate       (fix removes commented-out code)
+#    "PD",  # pandas-vet
+#    "PGH",  # pygrep-hooks
+    "PL",  # Pylint
+    "TRY",  # tryceratops
+#    "NPY",  # NumPy-specific rules
+#    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "COM812",  # trailing comma missing
+    "D205",  # 1 blank line required between summary line and description
+    "B008",  #  Do not perform function call `Depends` in argument defaults
+    "D100",  # Missing docstring in public module
+    "A003",  # Class attribute `id` is shadowing a python builtin
+    "G004",  # Logging statement uses f-string
+    "PLW2901",  # Outer for loop variable overwritten by inner assignment target
+    "TRY003",  # Avoid specifying long messages outside the exception class
+
+    # to be checked every once and then
+    "ERA001",  # commented-out code
+    "UP007",  #  X | None instead of Optional[x] --> wait for Pydantic 2
+]
+#fixable = ["E", "F"]
+unfixable = [
+    "ERA001",  # commented-out code
+]
+exclude = [
+    "./tests",  # todo remove
+    "./.pytest_cache",
+    "./alembic",
+    "./.git",
+    "./plants/scripts",
+    "./ml_helpers"  # todo will be refactored anyway
+#    "./venv*",
+]
+line-length = 100
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+target-version = "py311"
+
+
+[tool.ruff.per-file-ignores]
+# assert, missing type annotations + docstrings, constant numbers,
+"test_*.py" = [
+    "S101", "ANN001", "ANN201",
+    "D100", "D103",  # type annotations + docstrings
+    "PLR2004"]

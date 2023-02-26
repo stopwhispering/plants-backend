@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import constr
 
@@ -24,8 +24,8 @@ class FBKeyword(BaseSchema):
 class ImageBase(BaseSchema):
     id: int
     filename: constr(min_length=1, max_length=150)
-    keywords: List[FBKeyword]
-    plants: List[FBImagePlantTag]
+    keywords: list[FBKeyword]
+    plants: list[FBImagePlantTag]
     description: constr(max_length=500) | None
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 

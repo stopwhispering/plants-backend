@@ -1,12 +1,14 @@
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
-from starlette.requests import Request
 
 from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal
-from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
+
+if TYPE_CHECKING:
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.enums import ProposalEntity
 from plants.shared.message_services import get_message, throw_exception
@@ -22,14 +24,12 @@ router = APIRouter(
 
 
 @router.get("/proposals/{entity_id}", response_model=BResultsProposals)
-async def get_proposals(
-    request: Request,
+async def get_proposals(  # noqa: ANN201
     entity_id: ProposalEntity,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
-    """Returns proposals for selection tables."""
-
+    """Return proposals for selection tables."""
     results = {}
 
     if entity_id == ProposalEntity.NURSERY:
@@ -52,7 +52,7 @@ async def get_proposals(
         results = {"KeywordsCollection": keywords_collection}
 
     else:
-        throw_exception(f"Proposal entity {entity_id} not expected.", request=request)
+        throw_exception(f"Proposal entity {entity_id} not expected.")
 
     results.update(
         {
@@ -67,7 +67,7 @@ async def get_proposals(
 
 
 @router.get("/selection_data/", response_model=BResultsSelection)
-async def get_selection_data(
+async def get_selection_data(  # noqa: ANN201
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ):
@@ -75,10 +75,8 @@ async def get_selection_data(
     taxon_tree = await build_taxon_tree(taxon_dal=taxon_dal, plant_dal=plant_dal)
     make_list_items_json_serializable(taxon_tree)
 
-    results = {
+    return {
         "action": "Get taxon tree",
         "message": get_message("Loaded selection data."),
         "Selection": {"TaxonTree": taxon_tree},
     }
-
-    return results

@@ -1,3 +1,5 @@
+"""Run the app on local dev system."""
+
 import uvicorn
 
 if __name__ == "__main__":

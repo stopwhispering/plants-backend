@@ -1,11 +1,10 @@
 import logging
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
 from plants.dependencies import get_event_dal, get_image_dal, get_plant_dal, valid_plant
-from plants.modules.event.event_dal import EventDAL
-from plants.modules.event.models import Soil
 from plants.modules.event.schemas import (
     BPResultsUpdateCreateSoil,
     BResultsEventResource,
@@ -15,18 +14,22 @@ from plants.modules.event.schemas import (
     SoilUpdate,
 )
 from plants.modules.event.services import (
-    create_or_update_event,
+    EventWriter,
     create_soil,
     fetch_soils,
     read_events_for_plant,
     update_soil,
 )
-from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
+
+if TYPE_CHECKING:
+    from plants.modules.event.event_dal import EventDAL
+    from plants.modules.event.models import Soil
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
 
 logger = logging.getLogger(__name__)
 
@@ -98,23 +101,19 @@ async def create_or_update_events(
     # loop at the plants and their events, identify additions, deletions, and updates
     # and save them
     counts = defaultdict(int)
+    event_writer = EventWriter(
+        event_dal=event_dal, image_dal=image_dal, plant_dal=plant_dal
+    )
     for plant_id, events in events_request.plants_to_events.items():
-        await create_or_update_event(
+        await event_writer.create_or_update_event(
             plant_id=plant_id,
             events=events,
             counts=counts,
-            event_dal=event_dal,
-            image_dal=image_dal,
-            plant_dal=plant_dal,
         )
 
-    logger.info(
-        " Saving Events: "
-        + (description := ", ".join([f"{key}: {counts[key]}" for key in counts.keys()]))
-    )
-    results = {
+    description = ", ".join([f"{key}: {counts[key]}" for key in counts])
+    logger.info(f"Saving Events: {description}")
+    return {
         "resource": MajorResource.EVENT,
         "message": get_message("Updated events in database.", description=description),
     }
-
-    return results

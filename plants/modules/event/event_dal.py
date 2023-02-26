@@ -1,11 +1,19 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import EventNotFound, SoilNotFound, UpdateNotImplemented
+from plants.exceptions import (
+    EventNotFoundError,
+    SoilNotFoundError,
+    UpdateNotImplementedError,
+)
 from plants.modules.event.models import Event, Observation, Pot, Soil
-from plants.modules.image.models import Image, ImageToEventAssociation
-from plants.modules.plant.models import Plant
 from plants.shared.base_dal import BaseDAL
+
+if TYPE_CHECKING:
+    from plants.modules.image.models import Image, ImageToEventAssociation
+    from plants.modules.plant.models import Plant
 
 
 class EventDAL(BaseDAL):
@@ -64,7 +72,7 @@ class EventDAL(BaseDAL):
         query = select(Soil).where(Soil.id == soil_id).limit(1)  # noqa
         soil: Soil = (await self.session.scalars(query)).first()
         if not soil:
-            raise SoilNotFound(soil_id)
+            raise SoilNotFoundError(soil_id)
         return soil
 
     async def update_soil(self, soil: Soil, updates: dict):
@@ -79,7 +87,7 @@ class EventDAL(BaseDAL):
                 value: str
                 soil.mix = value
             else:
-                raise UpdateNotImplemented(key)
+                raise UpdateNotImplementedError(key)
 
         await self.session.flush()
 
@@ -112,7 +120,7 @@ class EventDAL(BaseDAL):
         )
         event: Event = (await self.session.scalars(query)).first()
         if not event:
-            raise EventNotFound(event_id)
+            raise EventNotFoundError(event_id)
         return event
 
     async def delete_image_to_event_associations(

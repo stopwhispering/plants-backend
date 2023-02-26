@@ -1,6 +1,7 @@
 import logging
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from plants.dependencies import (
     get_florescence_dal,
@@ -9,9 +10,7 @@ from plants.dependencies import (
     valid_florescence,
     valid_pollination,
 )
-from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import COLORS_MAP
-from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.florescence_services import (
     create_new_florescence,
     read_active_florescences,
@@ -23,8 +22,6 @@ from plants.modules.pollination.flower_history_services import generate_flower_h
 from plants.modules.pollination.ml_model import (
     train_model_for_probability_of_seed_production,
 )
-from plants.modules.pollination.models import Florescence, Pollination
-from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
     read_ongoing_pollinations,
     read_plants_without_pollen_containers,
@@ -51,6 +48,12 @@ from plants.modules.pollination.schemas import (
     SettingsRead,
 )
 from plants.shared.message_services import get_message
+
+if TYPE_CHECKING:
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
+    from plants.modules.pollination.models import Florescence, Pollination
+    from plants.modules.pollination.pollination_dal import PollinationDAL
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +85,12 @@ async def put_pollination(
     pollination: Pollination = Depends(valid_pollination),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ):
-    assert pollination.id == edited_pollination_data.id
+    if pollination.id != edited_pollination_data.id:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Pollination ID in path ({pollination.id}) does not match "
+            f"pollination ID in body ({edited_pollination_data.id}).",
+        )
     await update_pollination(
         pollination,
         pollination_data=edited_pollination_data,
@@ -151,8 +159,7 @@ async def delete_pollination(
 )
 async def retrain_probability_pollination_to_seed_model():
     """Retrain the probability_pollination_to_seed ml model."""
-    results = await train_model_for_probability_of_seed_production()
-    return results
+    return await train_model_for_probability_of_seed_production()
 
 
 @router.get("/active_florescences", response_model=BResultsActiveFlorescences)
@@ -188,7 +195,12 @@ async def put_active_florescence(
     florescence: Florescence = Depends(valid_florescence),
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
 ):
-    assert florescence.id == edited_florescence_data.id
+    if not florescence.id == edited_florescence_data.id:
+        raise HTTPException(
+            status_code=400,
+            detail=f"florescence_id {florescence.id} does not match "
+            f"florescence_id {edited_florescence_data.id} in request body.",
+        )
     await update_active_florescence(
         florescence,
         edited_florescence_data=edited_florescence_data,

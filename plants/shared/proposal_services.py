@@ -1,10 +1,13 @@
-from typing import List
+from typing import TYPE_CHECKING
 
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
+if TYPE_CHECKING:
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 
-async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
+async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list:
+    """Build up taxon tree from distinct families, genus, and species that are assigned
+    at least one plant."""
     # todo optimize sql performance
     # get distinct families, genus, and species (as list of four-element-tuples); sort
     dist_tuples = await taxon_dal.get_distinct_species_as_tuples()
@@ -52,9 +55,7 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> List:
         plant_ids_tuple = await plant_dal.get_plant_ids_by_taxon_id(
             taxon_id=current_taxon_id, eager_load=False
         )  # load no relationships
-        species_leaf["plant_ids"].extend(
-            [t for t in plant_ids_tuple]
-        )  # todo inner comprehension redundant?
+        species_leaf["plant_ids"].extend(list(plant_ids_tuple))
 
         genus_node["count"] += (plants_current_taxon := len(plant_ids_tuple))
         family_node["count"] += plants_current_taxon

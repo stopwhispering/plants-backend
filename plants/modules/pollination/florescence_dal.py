@@ -1,14 +1,19 @@
-from typing import Collection
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import FlorescenceNotFound
+from plants.exceptions import FlorescenceNotFoundError
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.enums import FlorescenceStatus
 from plants.modules.pollination.models import Florescence
 from plants.shared.base_dal import BaseDAL
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from plants.modules.pollination.enums import FlorescenceStatus
 
 
 class FlorescenceDAL(BaseDAL):
@@ -42,10 +47,12 @@ class FlorescenceDAL(BaseDAL):
         )
         florescence: Florescence = (await self.session.scalars(query)).first()
         if not florescence:
-            raise FlorescenceNotFound(florescence_id)
+            raise FlorescenceNotFoundError(florescence_id)
         return florescence
 
-    async def update_florescence(self, florescence: Florescence, updates: dict):
+    async def update_florescence(  # noqa PLR0912
+        self, florescence: Florescence, updates: dict  # noqa C901
+    ):
         if "florescence_status" in updates:
             florescence.florescence_status = updates["florescence_status"]
         if "comment" in updates:

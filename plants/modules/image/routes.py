@@ -1,18 +1,15 @@
 import asyncio
 import json
 import logging
-from pathlib import Path
-from typing import List, Sequence
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
 from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
-from plants.modules.event.schemas import FImagesToDelete
-from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_services_simple import remove_files_already_existing
-from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
+from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import (
     BImageUpdated,
@@ -33,12 +30,18 @@ from plants.modules.image.services import (
     save_image_to_db,
     trigger_generation_of_missing_thumbnails,
 )
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
 from plants.shared.message_services import get_message, throw_exception
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from plants.modules.event.schemas import FImagesToDelete
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +79,7 @@ async def upload_images_plant(
     """
     form = await request.form()
     # noinspection PyTypeChecker
-    files: List[UploadFile] = form.getlist("files[]")
+    files: list[UploadFile] = form.getlist("files[]")
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(
@@ -170,13 +173,12 @@ async def update_images(
             description=image_ext.description or "",
         )
         image = await image_dal.get_image_by_filename(filename=image_ext.filename)
-        await _update_image_if_altered(
+        image_writer = ImageWriter(plant_dal=plant_dal, image_dal=image_dal)
+        await image_writer.update_image_if_altered(
             image=image,
             description=image_ext.description,
             plant_ids=[plant.plant_id for plant in image_ext.plants],
             keywords=[k.keyword for k in image_ext.keywords],
-            plant_dal=plant_dal,
-            image_dal=image_dal,
         )
 
     return {
@@ -201,13 +203,13 @@ async def upload_images(
     form = await request.form()
     additional_data = json.loads(form.get("files-data"))
     # noinspection PyTypeChecker
-    files: List[UploadFile] = form.getlist("files[]")
+    files: list[UploadFile] = form.getlist("files[]")
 
     # validate arguments manually as pydantic doesn't trigger here
     try:
         FImageUploadedMetadata(**additional_data)
     except ValidationError as err:
-        throw_exception(str(err), request=request)
+        throw_exception(str(err))
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(
@@ -347,56 +349,3 @@ async def trigger_generate_missing_thumbnails(
         "action": "Triggering generation of missing thumbnails",
         "message": get_message(msg),
     }
-
-
-async def _update_image_if_altered(
-    image: Image,
-    description: str,
-    plant_ids: Sequence[int],
-    keywords: Sequence[str],
-    plant_dal: PlantDAL,
-    image_dal: ImageDAL,
-):
-    """compare current database record for image with supplied field values; update db
-    entry if different;
-    Note: record_date_time is only set at upload, so we're not comparing or updating it.
-    """
-    # description
-    if description != image.description and not (
-        not description and not image.description
-    ):
-        image.description = description
-
-    # plants
-    new_plants = set([await plant_dal.by_id(plant_id) for plant_id in plant_ids])
-    removed_image_to_plant_associations = [
-        a for a in image.image_to_plant_associations if a.plant not in new_plants
-    ]
-    added_image_to_plant_associations = [
-        ImageToPlantAssociation(
-            image=image,
-            plant=p,
-        )
-        for p in new_plants
-        if p not in image.plants
-    ]
-    for removed_image_to_plant_association in removed_image_to_plant_associations:
-        await plant_dal.delete_image_to_plant_association(
-            removed_image_to_plant_association
-        )
-    if added_image_to_plant_associations:
-        image.image_to_plant_associations.extend(added_image_to_plant_associations)
-
-    # keywords
-    current_keywords = set(k.keyword for k in image.keywords)
-    removed_keywords = [k for k in image.keywords if k.keyword not in keywords]
-    added_keywords = [
-        ImageKeyword(image_id=image.id, keyword=k)
-        for k in set(keywords)
-        if k not in current_keywords
-    ]
-
-    if removed_keywords:
-        await image_dal.delete_keywords_from_image(image, removed_keywords)
-    if added_keywords:
-        await image_dal.create_new_keywords_for_image(image, added_keywords)

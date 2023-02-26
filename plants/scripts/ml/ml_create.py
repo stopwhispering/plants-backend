@@ -36,12 +36,13 @@ def train_model_for_probability_of_seed_production():
     feature_container = create_features(model_type=ModelType.POLLINATION_TO_SEED)
     df = create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)
-    assert not set(df.pollination_status.unique()) - {
+    if set(df.pollination_status.unique()) - {
         "seed_capsule",
         "germinated",
         "seed",
         "attempt",
-    }
+    }:
+        raise ValueError("Unexpected pollination_status values")
     y = df["pollination_status"].apply(
         lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
     )

@@ -15,29 +15,28 @@ WIKIDATA_GBIF_PROPERTY_ID: Final[str] = "P846"
 WIKIDATA_POWO_PROPERTY_ID: Final[str] = "P5037"
 
 IPNI_DATASET_KEY: Final[str] = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
-GBIF_REST_API_RELATED_NAME_USAGES: Final[str] = (
-    "https://api.gbif.org/v1/species/{nubKey}/related?datasetKey={" "datasetKey}"
-)
+GBIF_REST_API_RELATED_NAME_USAGES: Final[
+    str
+] = "https://api.gbif.org/v1/species/{nubKey}/related?datasetKey={datasetKey}"
 
 logger = logging.getLogger(__name__)
 
 
 class GBIFIdentifierLookup:
     def lookup(self, taxon_name: str, lsid: str) -> str | None:
-        gbif_id = self._gbif_id_from_gbif_api(
+        return self._gbif_id_from_gbif_api(
             taxon_name=taxon_name, lsid=lsid
         ) or self._get_gbif_id_from_wikidata(lsid=lsid)
-        return gbif_id
 
     @staticmethod
     def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> Optional[int]:
         url = GBIF_REST_API_RELATED_NAME_USAGES.format(
             nubKey=nub_key, datasetKey=IPNI_DATASET_KEY
         )
-        resp = requests.get(url)
-        if resp.status_code != 200:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:  # noqa PLR2004
             logger.error(f"Error at GET request for GBIF REST API: {resp.status_code}")
-            return
+            return None
         if resp.json().get("results"):
             # find our plant's record in ipni dataset at gbif
             ipni_record = next(
@@ -47,6 +46,7 @@ class GBIFIdentifierLookup:
             # have the correct gbif id (=nubKey)
             if ipni_record.get("taxonID") == lsid:
                 return nub_key
+        return None
 
     def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> Optional[int]:
         """the GBIF API does not allow searching by other database's taxonId; therefore,
@@ -82,7 +82,7 @@ class GBIFIdentifierLookup:
         return None
 
     @staticmethod
-    def _get_gbif_id_from_wikidata(lsid: str) -> Optional[int]:
+    def _get_gbif_id_from_wikidata(lsid: str) -> int | None:  # noqa C901
         """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
         wikidata api is defect, thus we parse using beautifulsoup4."""
         # fulltext-search wikidata for ipni id
@@ -91,19 +91,19 @@ class GBIFIdentifierLookup:
         logger.debug(f"Beginning search for {lsid_number_exact}")
         lsid_encoded = urllib.parse.quote(lsid_number_exact)
         search_url = URL_PATTERN_WIKIDATA_SEARCH.format(lsid_encoded)
-        page = requests.get(search_url)
+        page = requests.get(search_url, timeout=10)  # todo async http client
         soup = BeautifulSoup(page.content, "html.parser")
 
         # get search results
         tag_search_results_list = soup.find("ul", class_="mw-search-results")
         if not tag_search_results_list:
             logger.warning("No wikidata search results. Aborting.")
-            return
+            return None
 
         tag_search_results = tag_search_results_list.find_all("li")
         if not tag_search_results:
             logger.warning("No wikidata search results. Aborting.")
-            return
+            return None
         logger.debug(f"Search results on wikidata: {len(tag_search_results)}")
 
         # use first (use that with a correct subheader/description; there are often
@@ -150,18 +150,18 @@ class GBIFIdentifierLookup:
 
         if not powo_claim and not ipni_claim:
             logger.warning("Could not determine correctness of site. Aborting.")
-            return
+            return None
 
         if not correct_found:
             logger.warning("Wikidata site is not the correct one. Aborting.")
-            return
+            return None
 
         # finally, get the gbif id
         # noinspection PyUnresolvedReferences
         gbif_claim = wikidata_object.data["claims"].get(WIKIDATA_GBIF_PROPERTY_ID)
         if not gbif_claim:
             logger.warning("Wikidata site found, but contains no gbif id.")
-            return
+            return None
 
         gbif_id = gbif_claim[0]["mainsnak"]["datavalue"]["value"]
         logger.info(f"GBIF Identifier found on Wikidata: {gbif_id}")

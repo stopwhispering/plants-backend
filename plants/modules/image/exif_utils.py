@@ -1,12 +1,14 @@
 import datetime
 import logging
 import os
-from pathlib import Path
-from typing import List, Tuple
+from typing import TYPE_CHECKING
 
 import piexif
 from piexif import InvalidImageDataError
 from PIL import Image
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,43 @@ def encode_record_date_time(dt: datetime.datetime):
     return s_dt.encode("utf-8")
 
 
+def _auto_rotate_by_exif_flag(img: Image, orientation_flag: int) -> Image:
+    if orientation_flag == 2:  # noqa PLR2004
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        logger.info(
+            f"Rotating with orientation exif tag {orientation_flag}: flip left "
+            f"or right."
+        )
+    elif orientation_flag == 3:  # noqa PLR2004
+        img = img.rotate(180)
+        logger.info(f"Rotating with orientation exif tag {orientation_flag}: 180.")
+    elif orientation_flag == 4:  # noqa PLR2004
+        img = img.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
+        logger.info(
+            f"Rotating with orientation exif tag {orientation_flag}: 180 & flip "
+            f"left to right."
+        )
+    elif orientation_flag == 5:  # noqa PLR2004
+        img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        logger.info(
+            f"Rotating with orientation exif tag {orientation_flag}: -90 & flip "
+            f"left to right."
+        )
+    elif orientation_flag == 6:  # noqa PLR2004
+        img = img.rotate(-90, expand=True)
+        logger.info(f"Rotating with orientation exif tag {orientation_flag}: -90.")
+    elif orientation_flag == 7:  # noqa PLR2004
+        img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        logger.info(
+            f"Rotating with orientation exif tag {orientation_flag}: 90 & flip "
+            f"left to right."
+        )
+    elif orientation_flag == 8:  # noqa PLR2004
+        img = img.rotate(90, expand=True)
+        logger.info(f"Rotating with orientation exif tag {orientation_flag}: 90.")
+    return img
+
+
 def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     """Auto-rotates images according to exif tag; required as chrome does not display
     them correctly otherwise; applies a recompression with high quality; re-attaches the
@@ -73,50 +112,11 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
         del exif_dict["thumbnail"]
         exif_bytes = piexif.dump(exif_dict)
 
-    filename = path_image.name
-
-    if orientation == 2:
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: flip left "
-            f"or right."
-        )
-    elif orientation == 3:
-        img = img.rotate(180)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: 180."
-        )
-    elif orientation == 4:
-        img = img.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: 180 & flip "
-            f"left to right."
-        )
-    elif orientation == 5:
-        img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: -90 & flip "
-            f"left to right."
-        )
-    elif orientation == 6:
-        img = img.rotate(-90, expand=True)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: -90."
-        )
-    elif orientation == 7:
-        img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-        logger.info(
-            f"Rotating {filename} with orientation exif tag {orientation}: 90 & flip "
-            f"left to right."
-        )
-    elif orientation == 8:
-        img = img.rotate(90, expand=True)
-        logger.info(f"Rotating {filename} with orientation exif tag {orientation}: 90.")
-
+    img = _auto_rotate_by_exif_flag(img=img, orientation_flag=orientation)
     img.save(path_image, exif=exif_bytes, quality=90)
 
 
-def decode_keywords_tag(t: tuple) -> List[str]:
+def decode_keywords_tag(t: tuple) -> list[str]:
     """Decode a tuple of unicode byte integers (0..255) to a list of strings; required
     to get keywords into a regular format coming from exif tags."""
     chars_iter = map(chr, t)
@@ -125,15 +125,12 @@ def decode_keywords_tag(t: tuple) -> List[str]:
     return chars.split(";")
 
 
-def encode_keywords_tag(keywords: list[str]) -> Tuple:
+def encode_keywords_tag(keywords: list[str]) -> tuple:
     """Reverse decode_keywords_tag function."""
     ord_list = []
     for keyword in keywords:
         ord_list_new = [ord(t) for t in keyword]
-        if ord_list:
-            ord_list = ord_list + [59] + ord_list_new  # add ; as separator
-        else:
-            ord_list = ord_list_new
+        ord_list = ord_list + [59] + ord_list_new if ord_list else ord_list_new
 
     # add \x00 (0) after each element
     ord_list_final = []
@@ -173,16 +170,16 @@ def read_record_datetime_from_exif_tags(
             f"{absolute_path}."
         )
         return None
-    except ValueError as e:
-        raise e
+    except ValueError:
+        raise
 
     if (
-        36867 in exif_dict["Exif"]
+        36867 in exif_dict["Exif"]  # noqa PLR2004
     ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
-    else:
-        # get creation date from file system (todo linux has only modifed date, does
-        #  this still work or abort?)
-        ts = absolute_path.stat().st_ctime
-        # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
-        return datetime.datetime.fromtimestamp(ts)
+
+    # get creation date from file system (todo linux has only modifed date, does
+    #  this still work or abort?)
+    ts = absolute_path.stat().st_ctime
+    # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
+    return datetime.datetime.fromtimestamp(ts)

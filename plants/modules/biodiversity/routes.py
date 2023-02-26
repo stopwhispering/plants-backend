@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
@@ -11,8 +12,11 @@ from plants.modules.taxon.schemas import (
     FFetchTaxonOccurrenceImagesRequest,
     FTaxonInfoRequest,
 )
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message, throw_exception
+
+if TYPE_CHECKING:
+    from plants.modules.taxon.taxon_dal import TaxonDAL
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +48,7 @@ async def search_taxa_by_name(
             f'"{taxon_info_request.taxon_name_pattern}".',
         )
 
-    results = {
+    return {
         "action": "Search Taxa",
         "ResultsCollection": search_results,
         "message": get_message(
@@ -53,8 +57,6 @@ async def search_taxa_by_name(
             description=f"Count: {len(search_results)}",
         ),
     }
-
-    return results
 
 
 @router.post("/fetch_taxon_occurrence_images", response_model=BResultsFetchTaxonImages)
@@ -76,10 +78,8 @@ async def fetch_taxon_occurrence_images(
     )
     logger.info(message)
 
-    results = {
+    return {
         "action": "Save Taxon",
         "message": get_message(message),
         "occurrence_images": occurrence_images,
     }
-
-    return results

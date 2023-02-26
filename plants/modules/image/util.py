@@ -1,22 +1,28 @@
 import logging
-from io import BytesIO
 from pathlib import Path, PurePath
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import piexif
 from PIL import Image
-from PIL.JpegImagePlugin import JpegImageFile
+
+if TYPE_CHECKING:
+    from io import BytesIO
+
+    from PIL.JpegImagePlugin import JpegImageFile
 
 logger = logging.getLogger(__name__)
 
+_ORIENT_180 = 3
+_ORIENT_270 = 6
+_ORIENT_90 = 8
 
-def get_thumbnail_name(filename: str, size: Tuple[int, int]) -> str:
+
+def get_thumbnail_name(filename: str, size: tuple[int, int]) -> str:
     suffix = f"{size[0]}_{size[1]}"
     filename_thumb_list = filename.split(".")
     # noinspection PyTypeChecker
     filename_thumb_list.insert(-1, suffix)
-    filename_thumb = ".".join(filename_thumb_list)
-    return filename_thumb
+    return ".".join(filename_thumb_list)
 
 
 def generate_thumbnail(
@@ -24,6 +30,7 @@ def generate_thumbnail(
     path_thumbnail: Path,
     size: tuple[int, int] = (100, 100),
     filename_thumb: Union[PurePath, str] = None,
+    *,
     ignore_missing_image_files=False,
 ) -> Optional[Path]:
     """Generates a resized variant of an photo_file; returns the full local path supply
@@ -39,7 +46,7 @@ def generate_thumbnail(
                 f"Original Image of default photo_file does not exist. Can't generate "
                 f"thumbnail. {image}"
             )
-        return
+        return None
     im = Image.open(image)
 
     # there's a bug in chrome: it's not respecting the orientation exif (unless directly
@@ -72,17 +79,17 @@ def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
         # noinspection PyProtectedMember
         exif = dict(exif_obj.items())
         if piexif.ImageIFD.Orientation in exif:
-            if exif[piexif.ImageIFD.Orientation] == 3:
-                image = image.rotate(180, expand=True)
-            elif exif[piexif.ImageIFD.Orientation] == 6:
-                image = image.rotate(270, expand=True)
-            elif exif[piexif.ImageIFD.Orientation] == 8:
-                image = image.rotate(90, expand=True)
+            if exif[piexif.ImageIFD.Orientation] == _ORIENT_180:
+                return image.rotate(180, expand=True)
+            if exif[piexif.ImageIFD.Orientation] == _ORIENT_270:
+                return image.rotate(270, expand=True)
+            if exif[piexif.ImageIFD.Orientation] == _ORIENT_90:
+                return image.rotate(90, expand=True)
     return image
 
 
 def resize_image(
-    path: Path, save_to_path: Path, size: Tuple[int, int], quality: int
+    path: Path, save_to_path: Path, size: tuple[int, int], quality: int
 ) -> None:
     """load photo_file at supplied path, save resized photo_file to other path; observes
     size and quality params; original file is finally <<deleted>>"""

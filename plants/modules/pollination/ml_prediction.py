@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
-from ml_helpers.preprocessing.features import FeatureContainer
 from plants.extensions.ml_models import get_probability_of_seed_production_model
-from plants.modules.plant.models import Plant
-from plants.modules.pollination.enums import PollenType
-from plants.modules.pollination.models import Florescence
+
+if TYPE_CHECKING:
+    from ml_helpers.preprocessing.features import FeatureContainer
+    from plants.modules.plant.models import Plant
+    from plants.modules.pollination.enums import PollenType
+    from plants.modules.pollination.models import Florescence
 
 
 def get_data(

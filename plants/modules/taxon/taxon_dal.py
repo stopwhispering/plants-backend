@@ -1,22 +1,28 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
 from plants.exceptions import (
-    CriterionNotImplemented,
-    ImageNotAssignedToTaxon,
-    TaxonNotFound,
+    CriterionNotImplementedError,
+    ImageNotAssignedToTaxonError,
+    TaxonNotFoundError,
 )
 from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.plant.models import Plant
-from plants.modules.taxon.enums import FBRank
 from plants.modules.taxon.models import (
     Taxon,
     TaxonOccurrenceImage,
     TaxonToOccurrenceAssociation,
 )
 from plants.shared.base_dal import BaseDAL
+
+if TYPE_CHECKING:
+    from plants.modules.taxon.enums import FBRank
 
 
 class TaxonDAL(BaseDAL):
@@ -38,7 +44,7 @@ class TaxonDAL(BaseDAL):
         )
         taxon: Taxon = (await self.session.scalars(query)).first()  # noqa
         if not taxon:
-            raise TaxonNotFound(taxon_id)
+            raise TaxonNotFoundError(taxon_id)
         return taxon
 
     async def by_gbif_id(self, gbif_id: int) -> list[Taxon]:
@@ -76,7 +82,7 @@ class TaxonDAL(BaseDAL):
                 value: int
                 query = query.where(TaxonOccurrenceImage.img_no == value)
             else:
-                raise CriterionNotImplemented(key)
+                raise CriterionNotImplementedError(key)
 
         images: list[TaxonOccurrenceImage] = (
             await self.session.scalars(query)
@@ -85,7 +91,9 @@ class TaxonDAL(BaseDAL):
 
     async def get_distinct_species_as_tuples(self) -> tuple[str, str, str, int]:
         # todo performance optimize
-        plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)
+        plant_exists_filter = and_(
+            Plant.deleted.is_(False), Plant.active  # noqa FBT003
+        )  # noqa FBT003
         has_any_plant_filter = Taxon.plants.any(plant_exists_filter)
 
         query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id).where(
@@ -130,7 +138,7 @@ class TaxonDAL(BaseDAL):
         self, taxon: Taxon, link: ImageToTaxonAssociation
     ):
         if link not in taxon.image_to_taxon_associations:
-            raise ImageNotAssignedToTaxon(taxon.id, link.image_id)
+            raise ImageNotAssignedToTaxonError(taxon.id, link.image_id)
         taxon.image_to_taxon_associations.remove(link)
 
         await self.session.delete(link)

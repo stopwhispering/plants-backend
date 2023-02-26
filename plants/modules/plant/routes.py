@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
@@ -12,12 +13,8 @@ from plants.dependencies import (
     get_taxon_dal,
     valid_plant,
 )
-from plants.exceptions import PlantAlreadyExists
-from plants.modules.event.event_dal import EventDAL
-from plants.modules.image.image_dal import ImageDAL
+from plants.exceptions import PlantAlreadyExistsError
 from plants.modules.image.services import rename_plant_in_image_files
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import (
     BPlantsRenameRequest,
     BResultsPlantCloned,
@@ -32,12 +29,18 @@ from plants.modules.plant.services import (
     generate_subsequent_plant_name,
     update_plants_from_list_of_dicts,
 )
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource
-from plants.shared.history_dal import HistoryDAL
 from plants.shared.history_services import create_history_entry
 from plants.shared.message_schemas import BConfirmation
 from plants.shared.message_services import get_message
+
+if TYPE_CHECKING:
+    from plants.modules.event.event_dal import EventDAL
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.taxon.taxon_dal import TaxonDAL
+    from plants.shared.history_dal import HistoryDAL
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +68,7 @@ async def clone_plant(
     """clone plant with supplied plant_id; include duplication of events; excludes
     regular image assignments (only to events)"""
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
-        raise PlantAlreadyExists(plant_name_clone)
+        raise PlantAlreadyExistsError(plant_name_clone)
 
     await deep_clone_plant(
         plant_original,
@@ -89,13 +92,11 @@ async def clone_plant(
         f"into {plant_clone.plant_name} ({plant_clone.id})"
     )
 
-    results = {
-        "action": "Renamed plant",
+    return {
+        "action": "Cloned plant",
         "message": get_message(msg, description=msg),
         "plant": plant_clone,
     }
-
-    return results
 
 
 # @router.post("/", response_model=PResultsPlantsUpdate)
@@ -116,14 +117,12 @@ async def create_or_update_plants(
     )
 
     logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
-    results = {
+    return {
         "action": "Saved Plants",
         "resource": MajorResource.PLANT,
         "message": get_message(message),
         "plants": plants_saved,
     }  # return the updated/created plants
-
-    return results
 
 
 @router.delete("/{plant_id}", response_model=BConfirmation)
@@ -134,14 +133,12 @@ async def delete_plant(
     await plant_dal.delete(plant)
 
     logger.info(message := f"Deleted plant {plant.plant_name}")
-    results = {
+    return {
         "action": "Deleted plant",
         "message": get_message(
             message, description=f"Plant name: {plant.plant_name}\nDeleted: True"
         ),
     }
-
-    return results
 
 
 @router.put("/", response_model=BConfirmation)
@@ -153,10 +150,9 @@ async def rename_plant(
 ):
     """We use the put method to rename a plant."""
     plant = await plant_dal.by_id(args.plant_id)
-    assert plant.plant_name == args.old_plant_name
 
     if await plant_dal.exists(args.new_plant_name):
-        raise PlantAlreadyExists(args.new_plant_name)
+        raise PlantAlreadyExistsError(args.new_plant_name)
 
     # rename plant name
     plant.plant_name = args.new_plant_name
@@ -176,7 +172,7 @@ async def rename_plant(
     )
 
     logger.info(f"Modified {count_modified_images} images.")
-    results = {
+    return {
         "action": "Renamed plant",
         "message": get_message(
             f"Renamed {args.old_plant_name} to {args.new_plant_name}",
@@ -184,20 +180,16 @@ async def rename_plant(
         ),
     }
 
-    return results
-
 
 @router.get("/", response_model=BResultsPlants)
 async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
     """Read (almost unfiltered) plants information from db."""
     plants = await fetch_plants(plant_dal=plant_dal)
-    results = {
+    return {
         "action": "Get plants",
         "message": get_message(f"Loaded {len(plants)} plants from database."),
         "PlantsCollection": plants,
     }
-
-    return results
 
 
 @router.post(

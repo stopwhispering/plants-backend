@@ -1,9 +1,9 @@
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
-from pykew import ipni as ipni
-from pykew import powo as powo
+from pykew import ipni, powo
 from pykew.ipni_terms import Name
 
 from plants import settings
@@ -13,9 +13,11 @@ from plants.modules.biodiversity.taxonomy_shared_functions import (
     get_concatenated_distribution,
 )
 from plants.modules.taxon.enums import FBRank
-from plants.modules.taxon.models import Taxon
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
+
+if TYPE_CHECKING:
+    from plants.modules.taxon.models import Taxon
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,7 @@ class SearchResult(_DBSearchResult):
 class TaxonomySearch:
     def __init__(
         self,
+        *,
         include_external_apis: bool,
         search_for_genus_not_species: bool,
         taxon_dal: TaxonDAL,
@@ -124,7 +127,7 @@ class TaxonomySearch:
 
     @staticmethod
     def _get_search_result_from_db_taxon(taxon: Taxon) -> _DBSearchResult:
-        search_result_entry = _DBSearchResult(
+        return _DBSearchResult(
             id=taxon.id,
             count=len([p for p in taxon.plants if p.active]),
             count_inactive=len([p for p in taxon.plants if not p.active]),
@@ -152,10 +155,9 @@ class TaxonomySearch:
             synonyms_concat=taxon.synonyms_concat,
             distribution_concat="",  # todo
         )
-        return search_result_entry
 
     async def _query_taxa_in_local_database(
-        self, taxon_name_pattern: str, search_for_genus_not_species: bool
+        self, taxon_name_pattern: str, *, search_for_genus_not_species: bool
     ) -> list[_DBSearchResult]:
         """Searches term in local botany database and returns results in web- format."""
         if search_for_genus_not_species:
@@ -175,7 +177,7 @@ class TaxonomySearch:
 
 
 class ApiSearcher:
-    def __init__(self, search_for_genus_not_species: bool):
+    def __init__(self, *, search_for_genus_not_species: bool):
         self.search_for_genus_not_species = search_for_genus_not_species
 
     def search_taxa_in_external_apis(
@@ -219,7 +221,7 @@ class ApiSearcher:
         if ipni_search.size() > settings.plants.taxon_search_max_results:
             raise TooManyResultsError(plant_name_pattern, ipni_search.size())
 
-        elif ipni_search.size() == 0:
+        if ipni_search.size() == 0:
             return results
 
         for ipni_result in ipni_search:
@@ -237,26 +239,7 @@ class ApiSearcher:
             ):
                 continue
 
-            # treat infraspecific taxa
-            # a taxon may have 0 or 1 infra-specific name, never multiple
-            rank = ipni_result.get("rank")
-            if rank == "f.":  # in some cases, forma comes as "f."
-                rank = FBRank.FORMA.value
-            if rank == FBRank.GENUS.value:
-                species = None
-                infraspecies = None
-            elif rank == FBRank.SPECIES.value:
-                species = ipni_result.get("species")
-                infraspecies = None
-            elif rank in (
-                FBRank.SUBSPECIES.value,
-                FBRank.VARIETY.value,
-                FBRank.FORMA.value,
-            ):
-                species = ipni_result.get("species")
-                infraspecies = ipni_result.get("infraspecies")
-            else:
-                raise ValueError(f"Unexpected rank {rank} for {ipni_result['fqId']}.")
+            rank, species, infraspecies = self._parse_infraspecific_rank(ipni_result)
 
             # build additional results from IPNI data
             result = _ParsedIpniSearchResult(
@@ -274,6 +257,30 @@ class ApiSearcher:
             )
             results.append(result)
         return results
+
+    @staticmethod
+    def _parse_infraspecific_rank(ipni_result: dict) -> tuple[str, str, str]:
+        # treat infraspecific taxa
+        # a taxon may have 0 or 1 infra-specific name, never multiple
+        rank = ipni_result.get("rank")
+        if rank == "f.":  # in some cases, forma comes as "f."
+            rank = FBRank.FORMA.value
+        if rank == FBRank.GENUS.value:
+            species = None
+            infraspecies = None
+        elif rank == FBRank.SPECIES.value:
+            species = ipni_result.get("species")
+            infraspecies = None
+        elif rank in (
+            FBRank.SUBSPECIES.value,
+            FBRank.VARIETY.value,
+            FBRank.FORMA.value,
+        ):
+            species = ipni_result.get("species")
+            infraspecies = ipni_result.get("infraspecies")
+        else:
+            raise ValueError(f"Unexpected rank {rank} for {ipni_result['fqId']}.")
+        return rank, species, infraspecies
 
     @staticmethod
     def _update_taxon_from_powo_api(

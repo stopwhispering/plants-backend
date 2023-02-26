@@ -1,15 +1,18 @@
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from dateutil import rrule
 
-from plants.modules.plant.models import Plant
 from plants.modules.pollination.enums import BFloweringState, FlorescenceStatus
-from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.schemas import BPlantFlowerHistory
 from plants.shared.api_constants import FORMAT_YYYY_MM
+
+if TYPE_CHECKING:
+    from plants.modules.plant.models import Plant
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
+    from plants.modules.pollination.models import Florescence
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +35,7 @@ class FloweringPeriod:
     def get_state_at_date(self, date: date) -> BFloweringState:
         if self.start <= date <= self.end:
             return self.flowering_state
-        else:
-            return BFloweringState.NOT_FLOWERING
+        return BFloweringState.NOT_FLOWERING
 
 
 class FloweringPlant:
@@ -60,12 +62,11 @@ class FloweringPlant:
         states = [period.get_state_at_date(date) for period in self.periods]
         if BFloweringState.FLOWERING in states:
             return BFloweringState.FLOWERING
-        elif BFloweringState.SEEDS_RIPENING in states:
+        if BFloweringState.SEEDS_RIPENING in states:
             return BFloweringState.SEEDS_RIPENING
-        elif BFloweringState.INFLORESCENCE_GROWING in states:
+        if BFloweringState.INFLORESCENCE_GROWING in states:
             return BFloweringState.INFLORESCENCE_GROWING
-        else:
-            return BFloweringState.NOT_FLOWERING
+        return BFloweringState.NOT_FLOWERING
 
     def _get_inflorescence_period(
         self, florescence: Florescence
@@ -84,7 +85,7 @@ class FloweringPlant:
             )
 
         # start is known, end is not
-        elif (
+        if (
             florescence.inflorescence_appearance_date
             and not florescence.first_flower_opening_date
         ):
@@ -119,7 +120,7 @@ class FloweringPlant:
             )
 
         # end date is known, start is not
-        elif florescence.first_flower_opening_date:
+        if florescence.first_flower_opening_date:
             return FloweringPeriod(
                 start=(
                     florescence.first_flower_opening_date
@@ -131,12 +132,11 @@ class FloweringPlant:
                 flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
 
-        else:
-            logger.warning(
-                f"Can't determine inflorescence period - Unknown dates for "
-                f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
-            )
-            return None
+        logger.warning(
+            f"Can't determine inflorescence period - Unknown dates for "
+            f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
+        )
+        return None
 
     def _get_flowering_period(self, florescence: Florescence) -> FloweringPeriod | None:
         # simple case - start and end dates are known
@@ -153,7 +153,7 @@ class FloweringPlant:
             )
 
         # start is known, end is not
-        elif (
+        if (
             florescence.first_flower_opening_date
             and not florescence.last_flower_closing_date
         ):
@@ -183,7 +183,7 @@ class FloweringPlant:
             )
 
         # end date is known, start is not
-        elif florescence.last_flower_closing_date:
+        if florescence.last_flower_closing_date:
             return FloweringPeriod(
                 start=(
                     florescence.last_flower_closing_date
@@ -194,12 +194,11 @@ class FloweringPlant:
                 end_verified=True,
                 flowering_state=BFloweringState.FLOWERING,
             )
-        else:
-            logger.warning(
-                f"Can't determine flowering period - Unknown dates for "
-                f"{florescence.plant.plant_name}. "
-                f"Comment: {florescence.comment}"
-            )
+        raise ValueError(
+            f"Can't determine flowering period - Unknown dates for "
+            f"{florescence.plant.plant_name}. "
+            f"Comment: {florescence.comment}"
+        )
 
     def _get_seed_ripening_period(
         self, florescence: Florescence
@@ -232,7 +231,7 @@ class FloweringPlant:
             )
 
         # start is known, end is not
-        elif calculated_start:
+        if calculated_start:
             if florescence.first_seed_ripening_date:
                 estimated_last_seed_date = (
                     florescence.first_seed_ripening_date
@@ -253,7 +252,7 @@ class FloweringPlant:
             )
 
         # end is known, start is not
-        elif florescence.last_seed_ripening_date:
+        if florescence.last_seed_ripening_date:
             return FloweringPeriod(
                 start=(
                     florescence.last_seed_ripening_date
@@ -265,13 +264,12 @@ class FloweringPlant:
                 flowering_state=BFloweringState.SEEDS_RIPENING,
             )
 
-        else:
-            logger.warning(
-                f"Can't determine seed ripening period - Unknown dates for "
-                f"{florescence.plant.plant_name}. "
-                f"Comment: {florescence.comment}"
-            )
-            return None
+        logger.warning(
+            f"Can't determine seed ripening period - Unknown dates for "
+            f"{florescence.plant.plant_name}. "
+            f"Comment: {florescence.comment}"
+        )
+        return None
 
 
 def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPlant]:
@@ -285,7 +283,7 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
 
 async def generate_flower_history(florescence_dal: FlorescenceDAL):
     florescences = await florescence_dal.by_status([FlorescenceStatus.FINISHED])
-    distinct_plants = set([f.plant for f in florescences])
+    distinct_plants = {f.plant for f in florescences}
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
 
     # sort by first period start ascending

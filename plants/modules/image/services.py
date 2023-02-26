@@ -1,21 +1,19 @@
 import logging
 import os
-from datetime import datetime
-from pathlib import Path, PurePath
-from typing import Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import aiofiles
-from fastapi import BackgroundTasks, UploadFile
+from fastapi import BackgroundTasks, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
-from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_services_simple import (
     get_relative_path,
     resizing_required,
 )
-from plants.modules.image.models import Image, ImageKeyword
+from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
 from plants.modules.image.util import (
@@ -23,12 +21,16 @@ from plants.modules.image.util import (
     get_thumbnail_name,
     resize_image,
 )
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.taxon.models import TaxonOccurrenceImage
-from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import throw_exception
 from plants.shared.path_utils import get_generated_filename, with_suffix
+
+if TYPE_CHECKING:
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.image.models import Image
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.taxon.models import TaxonOccurrenceImage
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +75,8 @@ async def save_image_to_db(
     # add to db
     record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
     plants = [await plant_dal.by_id(p) for p in plant_ids]
-    image: Image = await _create_image_in_db(
-        image_dal=image_dal,
+    image_writer = ImageWriter(plant_dal=plant_dal, image_dal=image_dal)
+    image: Image = await image_writer.create_image_in_db(
         relative_path=get_relative_path(path),
         record_date_time=record_datetime,
         keywords=keywords,
@@ -174,11 +176,8 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
         if local_config.log_settings.ignore_missing_image_files:
             logger.warning(f"Image file {old_path} to be deleted not found.")
             return
-        else:
-            logger.error(
-                err_msg := f"File selected to be deleted not found: {old_path}"
-            )
-            throw_exception(err_msg)
+        logger.error(err_msg := f"File selected to be deleted not found: {old_path}")
+        throw_exception(err_msg)
 
     new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
@@ -186,7 +185,7 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
             src=old_path, dst=new_path
         )  # silently overwrites if privileges are sufficient
     except OSError as e:
-        logger.error(
+        logger.exception(
             err_msg := f"OSError when moving file {old_path} to {new_path}", exc_info=e
         )
         throw_exception(err_msg, description=f"Filename: {old_path.name}")
@@ -210,11 +209,10 @@ async def get_image_path_by_size(
         image: Image = await image_dal.get_image_by_filename(filename=filename)
         return Path(image.absolute_path)
 
-    else:
-        # the pixel size is part of the resized images' filenames rem size must be
-        # converted to px
-        filename_sized = get_generated_filename(filename, (width, height))
-        return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
+    # the pixel size is part of the resized images' filenames rem size must be
+    # converted to px
+    filename_sized = get_generated_filename(filename, (width, height))
+    return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 
 def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
@@ -246,7 +244,12 @@ async def get_occurrence_thumbnail_path(
         )
         throw_exception(err_msg)
 
-    assert len(taxon_occurrence_images) == 1
+    if len(taxon_occurrence_images) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Multiple  occurrence images found for {gbif_id}/"
+            f"{occurrence_id}/{img_no}",
+        )
     taxon_occurrence_image = taxon_occurrence_images[0]
 
     if not taxon_occurrence_image:
@@ -256,17 +259,16 @@ async def get_occurrence_thumbnail_path(
         )
         throw_exception(err_msg)
 
-    path = settings.paths.path_generated_thumbnails_taxon.joinpath(
+    return settings.paths.path_generated_thumbnails_taxon.joinpath(
         taxon_occurrence_image.filename_thumbnail
     )
-    return path
 
 
 def _generate_missing_thumbnails(images: list[Image]):
     count_already_existed = 0
     count_generated = 0
     count_files_not_found = 0
-    for i, image in enumerate(images):
+    for _i, image in enumerate(images):
         if not image.absolute_path.is_file():
             count_files_not_found += 1
             logger.error(f"File not found: {image.absolute_path}")
@@ -319,8 +321,7 @@ async def fetch_images_for_plant(
     # for async, we need to reload the image relationships
     images = await image_dal.by_ids([i.id for i in plant.images])
     # todo switch to orm mode
-    image_results = [_to_response_image(image) for image in images]
-    return image_results
+    return [_to_response_image(image) for image in images]
 
 
 def _to_response_image(image: Image) -> ImageCreateUpdate:
@@ -365,34 +366,3 @@ def _shorten_plant_name(plant_name: str) -> str:
         > settings.frontend.restrictions.length_shortened_plant_name_for_tag
         else plant_name
     )
-
-
-async def _create_image_in_db(
-    image_dal: ImageDAL,
-    relative_path: PurePath,
-    record_date_time: datetime,
-    description: str = None,
-    plants: list[Plant] = None,
-    keywords: Sequence[str] = (),
-    # events and taxa are saved elsewhere
-) -> Image:
-    if await image_dal.get_image_by_relative_path(relative_path.as_posix()):
-        raise ValueError(f"Image already exists in db: {relative_path.as_posix()}")
-
-    image = Image(
-        relative_path=relative_path.as_posix(),
-        filename=relative_path.name,
-        record_date_time=record_date_time,
-        description=description,
-        plants=plants if plants else [],
-    )
-    # get the image id
-    await image_dal.create_image(image)
-    image = await image_dal.by_id(image.id)
-
-    if keywords:
-        keywords_orm = [
-            ImageKeyword(image_id=image.id, image=image, keyword=k) for k in keywords
-        ]
-        await image_dal.create_new_keywords_for_image(image, keywords_orm)
-    return image

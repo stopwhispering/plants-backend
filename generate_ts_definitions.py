@@ -1,19 +1,22 @@
+import logging
 from dataclasses import dataclass
-from typing import Tuple
 
 from pydantic2ts import generate_typescript_defs
 
 REMOVE_COMMENTS_BEGIN_WITH = ["/*", "*/", "* ", " *"]
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class PydanticModel:
     path_pydantic: str
     path_ts: str
-    exclude: Tuple[str, ...]
+    exclude: tuple[str, ...]
 
 
-shared_message: Tuple[str, ...] = ("BMessage", "BConfirmation")
+shared_message: tuple[str, ...] = ("BMessage", "BConfirmation")
 exclude = shared_message
 
 models = [
@@ -69,8 +72,7 @@ def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
             break
     if not line_end_index:
         raise ValueError(f"Could not find end of {model_name}")
-    lines_new = lines[:line_start_index] + lines[line_end_index + 1 :]
-    return lines_new
+    return lines[:line_start_index] + lines[line_end_index + 1 :]
 
 
 def remove_shared_models(pydantic_model: PydanticModel):
@@ -80,7 +82,7 @@ def remove_shared_models(pydantic_model: PydanticModel):
     for exclude_model in pydantic_model.exclude:
         new_lines = _remove_shared_model(lines, exclude_model)
         if new_lines != lines:
-            print(f"Removed {exclude_model} from {pydantic_model.path_ts}")
+            logger.info(f"Removed {exclude_model} from {pydantic_model.path_ts}")
             lines = new_lines
             write = True
     if write:
@@ -109,7 +111,7 @@ def _get_models_in_pydantic_file(pydantic_model: PydanticModel) -> set[str]:
     ]
     models_with_basemodel = [line.split(" ")[1] for line in lines_with_models]
     models_ = [m[: (m.find("(") or m.find(":"))] for m in models_with_basemodel]
-    return set([m for m in models_ if m != "Config"])
+    return {m for m in models_ if m != "Config"}
 
 
 def _get_created_definitions_in_ts_file(pydantic_model: PydanticModel) -> set[str]:

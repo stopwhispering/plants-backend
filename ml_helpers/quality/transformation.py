@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
@@ -9,9 +7,12 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 
-def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]:
+def _get_feature_names_from_transformer(
+    name, transformer, columns
+) -> list[str]:  # noqa: C901
     """from a supplied transformer (usually step in a ColumnTransformer), try to return
     meaningful output column name(s)"""
+    # todo refactor this
     if name == "drop" or transformer == "drop" or not columns:
         return []
 
@@ -69,7 +70,7 @@ def _get_feature_names_from_transformer(name, transformer, columns) -> List[str]
 
 def get_transformed_df_from_column_transformer(
     column_transformer: ColumnTransformer, x: pd.DataFrame
-) -> Tuple[List[str], pd.DataFrame]:
+) -> tuple[list[str], pd.DataFrame]:
     """from a fitted column transformer, extract the new column names, i.e. including
     one-hot-encoded columns etc.
 

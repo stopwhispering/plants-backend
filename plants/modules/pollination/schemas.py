@@ -97,7 +97,7 @@ class PollinationUpdate(PollinationBase):
 
 
 class PollinationCreate(PollinationBase):
-    florescenceId: int
+    florescenceId: int  # noqa N815  # todo rename
     pollen_quality: PollenQuality
 
     class Config:
@@ -206,7 +206,7 @@ class BPotentialPollenDonor(BaseSchema):
 
 
 class BResultsOngoingPollinations(ResponseContainer):
-    ongoingPollinationCollection: List[PollinationRead]
+    ongoingPollinationCollection: List[PollinationRead]  # noqa N815  # todo rename
 
 
 class BPollinationStatus(BaseSchema):
@@ -215,7 +215,8 @@ class BPollinationStatus(BaseSchema):
 
 
 class FRequestPollenContainers(RequestContainer):
-    pollenContainerCollection: list[PollenContainerCreateUpdate]
+    # todo rename
+    pollenContainerCollection: list[PollenContainerCreateUpdate]  # noqa N815
 
 
 class SettingsRead(BaseSchema):
@@ -225,14 +226,15 @@ class SettingsRead(BaseSchema):
 
 
 class BResultsActiveFlorescences(ResponseContainer):
-    activeFlorescenceCollection: List[FlorescenceRead]
+    activeFlorescenceCollection: List[FlorescenceRead]  # noqa N815  # todo rename
 
 
 class BResultsPotentialPollenDonors(ResponseContainer):
-    potentialPollenDonorCollection: List[BPotentialPollenDonor]
+    # todo rename
+    potentialPollenDonorCollection: list[BPotentialPollenDonor]  # noqa N815
 
 
-class BPlantWithoutPollenContainer(BaseSchema):
+class BPlantWoPollenContainer(BaseSchema):
     plant_id: int
     plant_name: str
     genus: str | None
@@ -245,12 +247,14 @@ class BPlantForNewFlorescence(BaseSchema):
 
 
 class BResultsPlantsForNewFlorescence(BaseSchema):
-    plantsForNewFlorescenceCollection: List[BPlantForNewFlorescence]
+    # todo rename
+    plantsForNewFlorescenceCollection: list[BPlantForNewFlorescence]  # noqa N815
 
 
 class BResultsPollenContainers(BaseSchema):
-    pollenContainerCollection: list[PollenContainerRead]
-    plantsWithoutPollenContainerCollection: list[BPlantWithoutPollenContainer]
+    pollenContainerCollection: list[PollenContainerRead]  # noqa N815  # todo rename
+    # todo rename
+    plantsWithoutPollenContainerCollection: list[BPlantWoPollenContainer]  # noqa N815
 
 
 class BResultsRetrainingPollinationToSeedsModel(BaseSchema):

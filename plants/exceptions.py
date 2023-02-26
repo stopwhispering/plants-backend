@@ -8,8 +8,8 @@ class TooManyResultsError(HTTPException):
     def __init__(self, search_pattern: str, count: int):
         super().__init__(
             status_code=400,
-            detail="Too many search results for pattern "
-            '"{search_pattern}" ({count} results)',
+            detail=f"Too many search results for pattern "
+            f"'{search_pattern}' ({count} results)",
         )
 
 
@@ -20,12 +20,12 @@ class BaseError(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
-class UnknownColor(BaseError):
+class UnknownColorError(BaseError):
     def __init__(self, color: str):
         super().__init__(detail=f"Unknown Color: {color}")
 
 
-class CriterionNotImplemented(BaseError):
+class CriterionNotImplementedError(BaseError):
     def __init__(self, criterion: str):
         super().__init__(
             detail=f"Criterion {criterion} not implemented",
@@ -33,7 +33,7 @@ class CriterionNotImplemented(BaseError):
         )
 
 
-class UpdateNotImplemented(BaseError):
+class UpdateNotImplementedError(BaseError):
     def __init__(self, attribute: str):
         super().__init__(
             detail=f"Update of attribute {attribute} not implemted",
@@ -41,35 +41,35 @@ class UpdateNotImplemented(BaseError):
         )
 
 
-class ColorAlreadyTaken(BaseError):
+class ColorAlreadyTakenError(BaseError):
     def __init__(self, plant_name: str, color: str):
         super().__init__(
             detail=f"Color {color} already used for current florescence at {plant_name}"
         )
 
 
-class TaxonAlreadyExists(BaseError):
+class TaxonAlreadyExistsError(BaseError):
     """"""
 
     def __init__(self, taxon_name: str):
         super().__init__(detail=f"Taxon already exists: {taxon_name}")
 
 
-class PlantAlreadyExists(BaseError):
+class PlantAlreadyExistsError(BaseError):
     """"""
 
     def __init__(self, plant_name: str):
         super().__init__(detail=f"Plant already exists: {plant_name}")
 
 
-class DuplicatePlantName(BaseError):
+class DuplicatePlantNameError(BaseError):
     """Base class for exceptions raised by this application."""
 
     def __init__(self, plant_name: str):
         super().__init__(detail=f"Duplicate Plant Name: {plant_name}")
 
 
-class PlantNotFound(BaseError):
+class PlantNotFoundError(BaseError):
     """Raised when plant not found in database."""
 
     def __init__(self, plant_identifier: int | str):
@@ -81,7 +81,7 @@ class PlantNotFound(BaseError):
         super().__init__(detail=msg, status_code=status.HTTP_404_NOT_FOUND)
 
 
-class TagNotAssignedToPlant(BaseError):
+class TagNotAssignedToPlantError(BaseError):
     """Raised when tag is unexpectedly not found in tags assigned to a plant."""
 
     def __init__(self, plant_id: int, tag_id: int):
@@ -91,7 +91,7 @@ class TagNotAssignedToPlant(BaseError):
         )
 
 
-class ImageNotAssignedToTaxon(BaseError):
+class ImageNotAssignedToTaxonError(BaseError):
     """Raised when Image is unexpectedly not found in images assigned to a taxon."""
 
     def __init__(self, taxon_id: int, image_id: int):
@@ -101,7 +101,7 @@ class ImageNotAssignedToTaxon(BaseError):
         )
 
 
-class PollinationNotFound(BaseError):
+class PollinationNotFoundError(BaseError):
     """Raised when pollination not found in database."""
 
     def __init__(self, pollination_id: int):
@@ -111,7 +111,7 @@ class PollinationNotFound(BaseError):
         )
 
 
-class TagNotFound(BaseError):
+class TagNotFoundError(BaseError):
     """Raised when tag not found in database."""
 
     def __init__(self, tag_id: int):
@@ -121,7 +121,7 @@ class TagNotFound(BaseError):
         )
 
 
-class FlorescenceNotFound(BaseError):
+class FlorescenceNotFoundError(BaseError):
     """Raised when florescence not found in database."""
 
     def __init__(self, florescence_id: int):
@@ -131,7 +131,7 @@ class FlorescenceNotFound(BaseError):
         )
 
 
-class TaxonNotFound(BaseError):
+class TaxonNotFoundError(BaseError):
     """Raised when taxon not found in database."""
 
     def __init__(self, taxon_identifier: int | str):
@@ -143,7 +143,7 @@ class TaxonNotFound(BaseError):
         super().__init__(detail=msg, status_code=status.HTTP_404_NOT_FOUND)
 
 
-class EventNotFound(BaseError):
+class EventNotFoundError(BaseError):
     """Raised when event, looked for by ID, not found in database."""
 
     def __init__(self, image_id: int | str):
@@ -153,7 +153,7 @@ class EventNotFound(BaseError):
         )
 
 
-class SoilNotFound(BaseError):
+class SoilNotFoundError(BaseError):
     """Raised when soil, looked for by ID, not found in database."""
 
     def __init__(self, soil_id: int):
@@ -163,14 +163,14 @@ class SoilNotFound(BaseError):
         )
 
 
-class SoilNotUnique(BaseError):
+class SoilNotUniqueError(BaseError):
     """Raised when soil to be created with existing name."""
 
     def __init__(self, soil_name: str):
         super().__init__(detail=f"Soil {soil_name} not unique.")
 
 
-class ImageNotFound(BaseError):
+class ImageNotFoundError(BaseError):
     """Raised when image, looked for by ID, not found in database."""
 
     def __init__(self, image_id: int | str):

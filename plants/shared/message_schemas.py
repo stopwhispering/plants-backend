@@ -9,7 +9,7 @@ from plants.shared.enums import MajorResource, MessageType
 class BMessage(BaseModel):
     type: MessageType
     message: str
-    additionalText: Optional[str]
+    additionalText: Optional[str]  # noqa N815  # todo rename
     description: Optional[str]
 
     class Config:

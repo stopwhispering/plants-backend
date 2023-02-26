@@ -28,11 +28,9 @@ class BotanicalNameInput:
     custom_suffix: str | None
 
 
-def _disassemble_taxon_name(
+def _disassemble_taxon_name(  # noqa: C901 PLR0912
     botanical_name_input: BotanicalNameInput,
 ) -> list[PartOfBotanicalName]:
-    assert botanical_name_input.genus
-
     genus_name = (
         botanical_name_input.genus
         if not botanical_name_input.hybridgenus
@@ -103,7 +101,6 @@ def _disassemble_taxon_name(
             )
 
     if botanical_name_input.cultivar:
-        assert botanical_name_input.is_custom
         parts.append(PartOfBotanicalName(name="cv.", italics=False))
         parts.append(
             PartOfBotanicalName(
@@ -112,14 +109,12 @@ def _disassemble_taxon_name(
         )
 
     if botanical_name_input.affinis:
-        assert botanical_name_input.is_custom
         parts.append(PartOfBotanicalName(name="aff.", italics=False))
         parts.append(
             PartOfBotanicalName(name=botanical_name_input.affinis, italics=False)
         )
 
     if botanical_name_input.custom_suffix:
-        assert botanical_name_input.is_custom
         parts.append(
             PartOfBotanicalName(name=botanical_name_input.custom_suffix, italics=False)
         )
@@ -127,7 +122,7 @@ def _disassemble_taxon_name(
     return parts
 
 
-def _create_formatted_name(parts: list[PartOfBotanicalName], html: bool) -> str:
+def _create_formatted_name(parts: list[PartOfBotanicalName], *, html: bool) -> str:
     parts_str: list[str] = []
     italics_active = False
     for p in parts:
@@ -165,6 +160,7 @@ def _create_publication_parts(
 
 def create_formatted_botanical_name(
     botanical_attributes: Taxon | BotanicalNameInput,
+    *,
     include_publication: bool,
     html: bool,
 ) -> str:
@@ -189,7 +185,7 @@ def create_formatted_botanical_name(
     elif isinstance(botanical_attributes, BotanicalNameInput):
         botanical_name_input = botanical_attributes
     else:
-        raise ValueError("Either Taxon or Botanical Name Input must be provided")
+        raise TypeError("Either Taxon or Botanical Name Input must be provided")
 
     name_parts: list[PartOfBotanicalName] = _disassemble_taxon_name(
         botanical_name_input
@@ -200,5 +196,4 @@ def create_formatted_botanical_name(
 
     if include_publication:
         return _create_formatted_name(parts=name_parts + publication_parts, html=html)
-    else:
-        return _create_formatted_name(parts=name_parts, html=html)
+    return _create_formatted_name(parts=name_parts, html=html)

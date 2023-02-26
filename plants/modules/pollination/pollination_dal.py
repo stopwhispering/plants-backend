@@ -1,12 +1,18 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from plants.exceptions import CriterionNotImplemented, PollinationNotFound
-from plants.modules.plant.models import Plant
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
 from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
 from plants.modules.pollination.models import Pollination
 from plants.shared.base_dal import BaseDAL
+
+if TYPE_CHECKING:
+    from plants.modules.plant.models import Plant
 
 
 class PollinationDAL(BaseDAL):
@@ -17,7 +23,7 @@ class PollinationDAL(BaseDAL):
         query = select(Pollination).where(Pollination.id == pollination_id)  # noqa
         pollination: Pollination = (await self.session.scalars(query)).first()
         if not pollination:
-            raise PollinationNotFound(pollination_id)
+            raise PollinationNotFoundError(pollination_id)
         return pollination
 
     async def create(self, pollination: Pollination):
@@ -28,7 +34,7 @@ class PollinationDAL(BaseDAL):
         await self.session.delete(pollination)
         await self.session.flush()
 
-    async def update(self, pollination: Pollination, updates: dict):
+    async def update(self, pollination: Pollination, updates: dict):  # noqa C901
         if "pollen_type" in updates:
             pollination.pollen_type = updates["pollen_type"]
         if "location" in updates:
@@ -93,11 +99,8 @@ class PollinationDAL(BaseDAL):
             Pollination.seed_capsule_plant_id == plant.id, Pollination.ongoing
         )
         used_colors = (await self.session.scalars(used_colors_query)).all()
-        available_color_names = [
-            c for c in COLORS_MAP_TO_RGB.keys() if c not in used_colors
-        ]
-        available_colors_rgb = [COLORS_MAP_TO_RGB[c] for c in available_color_names]
-        return available_colors_rgb
+        available_color_names = [c for c in COLORS_MAP_TO_RGB if c not in used_colors]
+        return [COLORS_MAP_TO_RGB[c] for c in available_color_names]
 
     async def get_pollinations_with_filter(self, criteria: dict) -> list[Pollination]:
         query = select(Pollination)
@@ -119,7 +122,7 @@ class PollinationDAL(BaseDAL):
                 value: str
                 query = query.where(Pollination.label_color == value)
             else:
-                raise CriterionNotImplemented(key)
+                raise CriterionNotImplementedError(key)
 
         pollinations: list[Pollination] = (
             await self.session.scalars(select(Pollination))
