@@ -1,14 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.exceptions import PlantNotFoundError
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.shared.history_dal import HistoryDAL
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.shared.history_dal import HistoryDAL
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plants_query_empty(ac: AsyncClient):
     response = await ac.get("/api/plants/")
     assert response.status_code == 200
@@ -17,7 +24,7 @@ async def test_plants_query_empty(ac: AsyncClient):
     assert len(plants) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant):
     response = await ac.get("/api/plants/")
     assert response.status_code == 200
@@ -28,7 +35,7 @@ async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant):
     assert plant["plant_name"] == plant_valid_in_db.plant_name
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict):
     payload = {"PlantsCollection": [valid_simple_plant_dict]}
     response = await ac.post("/api/plants/", json=payload)
@@ -43,7 +50,7 @@ async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict):
     assert plants[0].get("plant_name") == "Aloe ferox"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_rename_valid(
     test_db, ac: AsyncClient, plant_valid_in_db, plant_dal, history_dal
 ):
@@ -65,7 +72,7 @@ async def test_plant_rename_valid(
     assert history_entry.description.startswith("Renamed")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_rename_target_exists(
     ac: AsyncClient,
     plant_valid_in_db,
@@ -85,7 +92,7 @@ async def test_plant_rename_target_exists(
     assert len(history_entries) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_rename_source_not_exists(ac: AsyncClient):
     payload = {
         "plant_id": 11551,
@@ -94,10 +101,11 @@ async def test_plant_rename_source_not_exists(ac: AsyncClient):
     }
     response = await ac.put("/api/plants/", json=payload)
     assert 400 <= response.status_code < 500
-    assert "Plant" in str(response.json()) and "not found" in str(response.json())
+    assert "Plant" in str(response.json())
+    assert "not found" in str(response.json())
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_propose_subsequent_plant_name(ac: AsyncClient):
     original_plant_name = "Aloe ferox"
     response = await ac.post(
@@ -137,7 +145,7 @@ async def test_propose_subsequent_plant_name(ac: AsyncClient):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_clone_plant(
     ac: AsyncClient, plant_dal: PlantDAL, valid_plant_in_db_with_image: Plant
 ):
@@ -161,12 +169,12 @@ async def test_clone_plant(
     )
     assert clone.propagation_type == valid_plant_in_db_with_image.propagation_type
     assert clone.taxon is valid_plant_in_db_with_image.taxon
-    assert set(t.text for t in clone.tags) == set(
+    assert {t.text for t in clone.tags} == {
         t.text for t in valid_plant_in_db_with_image.tags
-    )
+    }
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_delete_plant(
     ac: AsyncClient,
     test_db: AsyncSession,
@@ -186,7 +194,7 @@ async def test_delete_plant(
     assert valid_plant_in_db_with_image.deleted is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_rename_plant(
     ac: AsyncClient, test_db: AsyncSession, valid_plant_in_db_with_image: Plant
 ):
@@ -204,11 +212,10 @@ async def test_rename_plant(
     assert valid_plant_in_db_with_image.plant_name == "Aloe barbadensis"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_rename_plant_invalid(
     ac: AsyncClient,
     test_db: AsyncSession,
-    plant_dal: PlantDAL,
     valid_plant_in_db_with_image: Plant,
     another_valid_plant_in_db: Plant,
 ):

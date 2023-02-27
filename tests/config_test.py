@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseSettings, constr
 from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from plants.extensions.orm import Base
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 
 class ConfigTest(BaseSettings):
@@ -30,7 +35,7 @@ def generate_db_url(database: str = "postgres") -> URL:
     database), it will automtically try to connect to a database with same name as user
     if no database is specified therefore, we connect to the default maintenance
     database <<postgres>> if no database is specified."""
-    url = URL.create(
+    return URL.create(
         drivername=test_config.test_db_drivername,
         username=test_config.test_db_username,
         password=test_config.test_db_password,
@@ -38,7 +43,6 @@ def generate_db_url(database: str = "postgres") -> URL:
         port=test_config.test_db_port,
         database=database,
     )
-    return url
 
 
 async def create_tables_if_required(engine: AsyncEngine):

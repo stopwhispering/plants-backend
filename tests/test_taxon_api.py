@@ -1,11 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from httpx import AsyncClient
 
 from plants.modules.taxon.enums import FBRank
-from plants.modules.taxon.models import Taxon
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+
+    from plants.modules.taxon.models import Taxon
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_search_taxon(
     ac: AsyncClient,
 ):
@@ -33,7 +40,7 @@ async def test_search_taxon(
     assert result["distribution_concat"] == "Northern Provinces (natives)"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_save_taxon(
     ac: AsyncClient,
 ):
@@ -71,7 +78,7 @@ async def test_save_taxon(
     assert resp["taxon"]["id"] is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_taxon(ac: AsyncClient, taxon_in_db: Taxon):
     """Update taxon attribute custom_notes."""
     payload = {  # FModifiedTaxa

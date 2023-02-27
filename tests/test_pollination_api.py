@@ -1,14 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.models import Pollination
-from plants.modules.pollination.pollination_dal import PollinationDAL
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.models import Pollination
+    from plants.modules.pollination.pollination_dal import PollinationDAL
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_pollination(
     ac: AsyncClient,
     plant_valid_with_active_florescence_in_db: Plant,
@@ -64,7 +70,7 @@ async def test_create_pollination(
     assert pollination.count == 3
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_pollination(
     ac: AsyncClient,
     test_db: AsyncSession,

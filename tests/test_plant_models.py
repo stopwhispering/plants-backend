@@ -1,20 +1,26 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from plants.modules.plant.plant_dal import PlantDAL
 
 
 @pytest_asyncio.fixture(scope="function")
 async def dummy() -> None:
     """For whatever reason, the unit tests fail with some database connection closed
     resource error if they don't use any function-scoped fixtures."""
-    pass
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):  # noqa
     plant = Plant(field_number="A100")  # plant_name, active, deleted are required
     test_db.add(plant)
@@ -26,7 +32,7 @@ async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):
     assert len(plants) == 0
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
     plant_name = "Aloe Vera"
     plant = Plant(plant_name=plant_name, active=True, deleted=False)
@@ -37,7 +43,7 @@ async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
     assert p.id is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_plant_duplicate_name(test_db, dummy):  # noqa
     test_db.add(Plant(plant_name="Aloe Vera", active=True, deleted=False))
     await test_db.flush()

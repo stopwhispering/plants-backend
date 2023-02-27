@@ -1,23 +1,28 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from httpx import AsyncClient
 
 import plants as plants_package
-from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+
+    from plants.modules.image.image_dal import ImageDAL
+    from plants.modules.plant.models import Plant
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_untagged_images_empty(ac: AsyncClient):
     response = await ac.get("/api/images/untagged/")
     assert response.status_code == 200
     assert response.json().get("message").get("message") == "Returned 0 images."
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_upload_images(
     ac: AsyncClient,
     plant_valid_in_db: Plant,
@@ -28,8 +33,8 @@ async def test_upload_images(
     path1 = Path(__file__).resolve().parent.joinpath("./static/demo_image1.jpg")
     path2 = Path(__file__).resolve().parent.joinpath("./static/demo_image2.jpg")
     files = [
-        ("files[]", ("demo_image1.jpg", open(path1, "rb"))),
-        ("files[]", ("demo_image2.jpg", open(path2, "rb"))),
+        ("files[]", ("demo_image1.jpg", open(path1, "rb"))),  # noqa SIM115
+        ("files[]", ("demo_image2.jpg", open(path2, "rb"))),  # noqa SIM115
     ]
 
     payload = {  # FImageUploadedMetadata
@@ -82,12 +87,11 @@ async def test_upload_images(
             assert path.is_file()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_upload_image_for_plant(
     ac: AsyncClient,
     plant_valid_in_db: Plant,
     image_dal: ImageDAL,
-    plant_dal: PlantDAL,
 ):
     # we need to wrap files and additional data in a way that matches the UI5 file
     # uploader (which is a kind of odd way)
@@ -95,7 +99,7 @@ async def test_upload_image_for_plant(
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(path, "rb")),
+            ("demo_image_plant.jpg", open(path, "rb")),  # noqa SIM115
         ),
     ]
 
@@ -135,7 +139,7 @@ async def test_upload_image_for_plant(
         assert path.is_file()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_update_image(
     ac: AsyncClient,
     valid_plant_in_db_with_image: Plant,

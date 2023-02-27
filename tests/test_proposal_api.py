@@ -1,13 +1,19 @@
-import pytest
-from httpx import AsyncClient
+from __future__ import annotations
 
-from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.models import Plant
-from plants.modules.taxon.models import Taxon
+from typing import TYPE_CHECKING
+
+import pytest
+
 from plants.shared.enums import ProposalEntity
 
+if TYPE_CHECKING:
+    from httpx import AsyncClient
 
-@pytest.mark.asyncio
+    from plants.modules.plant.models import Plant
+    from plants.modules.taxon.models import Taxon
+
+
+@pytest.mark.asyncio()
 async def test_get_nursery_proposals(ac: AsyncClient, plant_valid_in_db: Plant):
     response = await ac.get(f"/api/proposals/{ProposalEntity.NURSERY.value}")
     assert response.status_code == 200
@@ -19,11 +25,10 @@ async def test_get_nursery_proposals(ac: AsyncClient, plant_valid_in_db: Plant):
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_image_keyword_proposals(
     ac: AsyncClient,
-    valid_plant_in_db_with_image: Plant,  # noqa
-    image_dal: ImageDAL,
+    valid_plant_in_db_with_image: Plant,  # noqa ARG001
 ):
     response = await ac.get(f"/api/proposals/{ProposalEntity.KEYWORD.value}")
     assert response.status_code == 200
@@ -33,7 +38,7 @@ async def test_get_image_keyword_proposals(
     assert {"keyword": "flower"} in resp["KeywordsCollection"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_get_taxon_tree(
     ac: AsyncClient,
     taxon_in_db: Taxon,

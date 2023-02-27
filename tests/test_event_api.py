@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from httpx import AsyncClient
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_event(ac: AsyncClient, plant_valid_in_db):
     plant_id = plant_valid_in_db.id
     payload = {  # FRequestCreateOrUpdateEvent

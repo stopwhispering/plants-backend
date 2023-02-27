@@ -12,7 +12,7 @@ from plants.modules.pollination.enums import (
 from plants.modules.pollination.models import Florescence
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_florescence_flower_attrs(test_db, plant_valid):
     test_db.add(plant_valid)
     await test_db.commit()

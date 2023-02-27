@@ -1,12 +1,19 @@
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from __future__ import annotations
 
-from plants.modules.event.event_dal import EventDAL
-from plants.modules.plant.plant_dal import PlantDAL
+from typing import TYPE_CHECKING
+
+import pytest
+
 from plants.modules.plant.services import deep_clone_plant
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
-@pytest.mark.asyncio
+    from plants.modules.event.event_dal import EventDAL
+    from plants.modules.plant.plant_dal import PlantDAL
+
+
+@pytest.mark.asyncio()
 async def test_deep_clone_plant(
     test_db: AsyncSession,
     plant_valid,
@@ -29,7 +36,8 @@ async def test_deep_clone_plant(
     cloned_plant = await plant_dal.by_name("Aloe Vera Clone")
     assert cloned_plant is not None
     assert cloned_plant.plant_name == "Aloe Vera Clone"
-    assert cloned_plant.id >= 0 and cloned_plant.id != plant_valid.id
+    assert cloned_plant.id >= 0
+    assert cloned_plant.id != plant_valid.id
     assert cloned_plant.nursery_source == plant_valid.nursery_source
     assert cloned_plant.field_number == plant_valid.field_number
     assert cloned_plant.propagation_type == plant_valid.propagation_type

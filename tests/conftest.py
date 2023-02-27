@@ -152,11 +152,11 @@ async def valid_plant_in_db_with_image(ac, test_db, plant_valid_in_db) -> Plant:
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(path, "rb")),
+            ("demo_image_plant.jpg", open(path, "rb")),  # noqa SIM115
         )
     ]
     response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
-    assert response.status_code == 200
+    assert response.status_code == 200  # noqa PLR2004
     resp = response.json()
 
     # also set some keywords and set a description
@@ -243,9 +243,9 @@ async def ac(app) -> AsyncClient:
         yield ac
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def valid_simple_plant_dict() -> dict:
-    new_plant = {
+    return {
         "plant_name": "Aloe ferox",
         "active": True,
         # 'descendant_plants_all': [],
@@ -253,7 +253,6 @@ def valid_simple_plant_dict() -> dict:
         # 'same_taxon_plants': [],
         "tags": [],
     }
-    return new_plant
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -271,52 +270,51 @@ async def another_valid_plant_in_db(test_db) -> Plant:
     return new_plant
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def valid_florescence_dict() -> dict:
-    valid_florescence = {
+    return {
         "plant_id": 1,
         "florescence_status": "flowering",
         "inflorescence_appearance_date": "2022-11-16",
         "comment": " large & new",
     }
-    return valid_florescence
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def plant_dal(test_db: AsyncSession) -> PlantDAL:
     """"""
-    yield PlantDAL(test_db)
+    return PlantDAL(test_db)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
     """"""
-    yield PollinationDAL(test_db)
+    return PollinationDAL(test_db)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def history_dal(test_db: AsyncSession) -> HistoryDAL:
     """"""
-    yield HistoryDAL(test_db)
+    return HistoryDAL(test_db)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def event_dal(test_db: AsyncSession) -> EventDAL:
     """"""
-    yield EventDAL(test_db)
+    return EventDAL(test_db)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def image_dal(test_db: AsyncSession) -> ImageDAL:
     """"""
-    yield ImageDAL(test_db)
+    return ImageDAL(test_db)
 
 
 @pytest_asyncio.fixture(scope="function")
 async def taxon_in_db(request, test_db) -> Taxon:  # noqa
     """Create a valid taxon in the db and return it."""
     path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
-    with open(path, "r") as f:
+    with open(path) as f:
         taxon_dict = json.load(f)
 
     taxon = Taxon(**taxon_dict)
@@ -333,9 +331,8 @@ async def florescence_dict() -> dict:
     path_florescence = (
         Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
     )
-    with open(path_florescence, "r") as f:
-        florescence_dict = json.load(f, object_hook=date_hook)
-    return florescence_dict
+    with open(path_florescence) as f:
+        return json.load(f, object_hook=date_hook)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -345,7 +342,7 @@ async def pollination_dict() -> dict:
     path_pollination = (
         Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
     )
-    with open(path_pollination, "r") as f:
+    with open(path_pollination) as f:
         return json.load(f, object_hook=date_hook)
 
 
