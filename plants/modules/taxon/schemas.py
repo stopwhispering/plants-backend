@@ -1,14 +1,17 @@
-import datetime
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
 
 from pydantic import Extra, HttpUrl, constr, validator
 
-from plants.modules.taxon.enums import FBRank
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 if TYPE_CHECKING:
+    import datetime
+
     from plants.modules.image.models import Image
+    from plants.modules.taxon.enums import FBRank
     from plants.modules.taxon.models import Distribution
 
 

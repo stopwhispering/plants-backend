@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import datetime
 import logging
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
@@ -14,7 +15,13 @@ from plants.dependencies import (
     valid_plant,
 )
 from plants.exceptions import PlantAlreadyExistsError
+
+# if TYPE_CHECKING:
+from plants.modules.event.event_dal import EventDAL
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.services import rename_plant_in_image_files
+from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import (
     BPlantsRenameRequest,
     BResultsPlantCloned,
@@ -29,18 +36,12 @@ from plants.modules.plant.services import (
     generate_subsequent_plant_name,
     update_plants_from_list_of_dicts,
 )
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource
+from plants.shared.history_dal import HistoryDAL
 from plants.shared.history_services import create_history_entry
 from plants.shared.message_schemas import BConfirmation
 from plants.shared.message_services import get_message
-
-if TYPE_CHECKING:
-    from plants.modules.event.event_dal import EventDAL
-    from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.plant.models import Plant
-    from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.taxon.taxon_dal import TaxonDAL
-    from plants.shared.history_dal import HistoryDAL
 
 logger = logging.getLogger(__name__)
 

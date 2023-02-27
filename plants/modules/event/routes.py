@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
 from plants.dependencies import get_event_dal, get_image_dal, get_plant_dal, valid_plant
+from plants.modules.event.event_dal import EventDAL
+from plants.modules.event.models import Soil
 from plants.modules.event.schemas import (
     BPResultsUpdateCreateSoil,
     BResultsEventResource,
@@ -20,16 +23,12 @@ from plants.modules.event.services import (
     read_events_for_plant,
     update_soil,
 )
+from plants.modules.image.image_dal import ImageDAL
+from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
-
-if TYPE_CHECKING:
-    from plants.modules.event.event_dal import EventDAL
-    from plants.modules.event.models import Soil
-    from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.plant.models import Plant
-    from plants.modules.plant.plant_dal import PlantDAL
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +37,10 @@ router = APIRouter(
     tags=["events"],
     responses={404: {"description": "Not found"}},
 )
+
+
+def todo_delme() -> EventDAL:
+    return EventDAL()
 
 
 @router.get("/events/soils", response_model=BResultsSoilsResource)

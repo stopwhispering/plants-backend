@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import shutil
 from datetime import date
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
@@ -28,6 +30,9 @@ from plants.modules.taxon.models import Taxon
 from plants.shared.api_utils import date_hook
 from plants.shared.history_dal import HistoryDAL
 from tests.config_test import create_tables_if_required, generate_db_url
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 TEST_DB_NAME = "test_plants"
 
@@ -116,7 +121,7 @@ async def test_db(request) -> AsyncSession:  # noqa
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid(request) -> Plant:  # noqa
-    plant = Plant(
+    return Plant(
         plant_name="Aloe Vera",
         field_number="A100",
         active=True,
@@ -129,7 +134,6 @@ async def plant_valid(request) -> Plant:  # noqa
             Tag(text="wow", state="Information"),
         ],
     )
-    return plant
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -342,8 +346,7 @@ async def pollination_dict() -> dict:
         Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
     )
     with open(path_pollination, "r") as f:
-        pollination_dict = json.load(f, object_hook=date_hook)
-    return pollination_dict
+        return json.load(f, object_hook=date_hook)
 
 
 @pytest_asyncio.fixture(scope="function")

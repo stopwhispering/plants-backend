@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
@@ -181,6 +183,7 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
 
     new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
+        # old_path.replace(new_path)
         os.replace(
             src=old_path, dst=new_path
         )  # silently overwrites if privileges are sufficient

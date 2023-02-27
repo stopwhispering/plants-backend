@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
 from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal
 
-if TYPE_CHECKING:
-    from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.taxon.taxon_dal import TaxonDAL
+# if TYPE_CHECKING:
+from plants.modules.image.image_dal import ImageDAL
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.enums import ProposalEntity
 from plants.shared.message_services import get_message, throw_exception

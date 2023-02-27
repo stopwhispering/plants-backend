@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.shared.history_dal import HistoryDAL
+
 from plants.shared.history_models import History
 
 

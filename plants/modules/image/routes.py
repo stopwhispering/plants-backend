@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-from typing import TYPE_CHECKING
+
+# if TYPE_CHECKING:
+from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
 from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
+from plants.modules.event.schemas import FImagesToDelete
+from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_services_simple import remove_files_already_existing
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -30,18 +36,12 @@ from plants.modules.image.services import (
     save_image_to_db,
     trigger_generation_of_missing_thumbnails,
 )
+from plants.modules.plant.models import Plant
+from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
 from plants.shared.message_services import get_message, throw_exception
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from plants.modules.event.schemas import FImagesToDelete
-    from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.plant.models import Plant
-    from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 

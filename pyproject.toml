@@ -154,4 +154,18 @@ target-version = "py311"
 "test_*.py" = [
     "S101", "ANN001", "ANN201",
     "D100", "D103",  # type annotations + docstrings
-    "PLR2004"]
+    "PLR2004",  # magic numbers
+    "S101"  # assert
+]
+'routes.py' = [
+    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
+
+]
+
+'dependencies.py' = [
+    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
+]

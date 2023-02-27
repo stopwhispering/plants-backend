@@ -1,5 +1,7 @@
 """Services for florescence and pollination-related operations; mostly for pollination
 frontend."""
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException

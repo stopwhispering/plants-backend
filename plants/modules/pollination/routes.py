@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -10,7 +11,11 @@ from plants.dependencies import (
     valid_florescence,
     valid_pollination,
 )
+
+# if TYPE_CHECKING:
+from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import COLORS_MAP
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.florescence_services import (
     create_new_florescence,
     read_active_florescences,
@@ -22,6 +27,8 @@ from plants.modules.pollination.flower_history_services import generate_flower_h
 from plants.modules.pollination.ml_model import (
     train_model_for_probability_of_seed_production,
 )
+from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
     read_ongoing_pollinations,
     read_plants_without_pollen_containers,
@@ -48,12 +55,6 @@ from plants.modules.pollination.schemas import (
     SettingsRead,
 )
 from plants.shared.message_services import get_message
-
-if TYPE_CHECKING:
-    from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.pollination.florescence_dal import FlorescenceDAL
-    from plants.modules.pollination.models import Florescence, Pollination
-    from plants.modules.pollination.pollination_dal import PollinationDAL
 
 logger = logging.getLogger(__name__)
 

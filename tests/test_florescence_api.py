@@ -1,13 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from httpx import AsyncClient
 
-from plants.modules.plant.models import Plant
-from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import FlorescenceStatus
-from plants.modules.pollination.models import Florescence
+
+if TYPE_CHECKING:
+    from httpx import AsyncClient
+
+    from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.models import Florescence
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_florescence_create_valid(
     ac: AsyncClient, valid_simple_plant_dict, valid_florescence_dict
 ):
@@ -91,7 +98,7 @@ async def test_florescence_create_valid(
     assert active_florescence.get("flower_color_second") == "#dddd00"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_and_abort_florescence(
     test_db, ac: AsyncClient, plant_valid_in_db: Plant, plant_dal: PlantDAL
 ):

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
@@ -12,11 +13,10 @@ from plants.modules.taxon.schemas import (
     FFetchTaxonOccurrenceImagesRequest,
     FTaxonInfoRequest,
 )
+
+# if TYPE_CHECKING:
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message, throw_exception
-
-if TYPE_CHECKING:
-    from plants.modules.taxon.taxon_dal import TaxonDAL
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,22 +1,21 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
 from fastapi import Depends
+
+# if TYPE_CHECKING:
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from plants.extensions import orm
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
+from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
+from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.history_dal import HistoryDAL
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from plants.modules.plant.models import Plant
-    from plants.modules.pollination.models import Florescence, Pollination
-    from plants.modules.taxon.models import Taxon
 
 
 async def get_db():
@@ -52,7 +51,7 @@ def get_plant_dal(db: AsyncSession = Depends(get_db)):
     return PlantDAL(db)
 
 
-def get_taxon_dal(db: AsyncSession = Depends(get_db)):
+def get_taxon_dal(db: AsyncSession = Depends(get_db)) -> TaxonDAL:
     return TaxonDAL(db)
 
 
