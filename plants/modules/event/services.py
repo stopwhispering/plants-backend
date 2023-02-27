@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[dict]:
+async def read_events_for_plant(plant: Plant, event_dal: EventDAL) -> list[Event]:
     """Read events from event database table."""
     # plant has .events loaded, but not all sub-relationships; therefore, we load them
     # here
@@ -77,7 +77,7 @@ class EventWriter:
         events: list[EventCreateUpdate],
         counts: defaultdict,
     ) -> None:
-        plant_obj = await self.plant_dal.by_id(plant_id)
+        plant_obj: Plant = await self.plant_dal.by_id(plant_id)
         logger.info(
             f"Plant {plant_obj.plant_name} has {len(plant_obj.events)} events in db:"
             f" {[e.id for e in plant_obj.events]}"
@@ -246,8 +246,8 @@ class EventWriter:
         filenames_saved = (
             [image.filename for image in event.images] if event.images else []
         )
+        image_obj: Image
         for image_obj in event_obj.images:
-            image_obj: Image
             if image_obj.filename not in filenames_saved:
                 # don't delete photo_file object, but only the association
                 # (photo_file might be assigned to other events)
@@ -272,15 +272,16 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
     soils = []
 
     # add the number of plants that currently have a specific soil
-    soil_counter = defaultdict(int)
+    soil_counter: defaultdict = defaultdict(int)
 
     plants = await plant_dal.get_all_plants_with_events_loaded()
     for plant in plants:
         # if events := [e for e in plant.events if e.soil_id]:
-        if events := [e for e in plant.events if e.soil and e.soil.id]:
+        if events := [
+            e for e in plant.events if e.soil is not None and e.soil.id is not None
+        ]:
             latest_event = max(events, key=attrgetter("date"))
-            # soil_counter[latest_event.soil_id] += 1
-            soil_counter[latest_event.soil.id] += 1
+            soil_counter[latest_event.soil.id] += 1  # type: ignore
 
     all_soils = event_dal.get_all_soils()
     for soil in await all_soils:

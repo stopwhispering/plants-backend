@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
@@ -30,7 +31,7 @@ router = APIRouter(
 async def search_taxa_by_name(
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
-):
+) -> Any:
     """Searches taxon pattern in (1) local database and (2) in kew databases (powo and
     ipni) if requested."""
     taxonomy_search = TaxonomySearch(
@@ -63,7 +64,7 @@ async def search_taxa_by_name(
 async def fetch_taxon_occurrence_images(
     fetch_taxon_occurrence_images_request: FFetchTaxonOccurrenceImagesRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
-):
+) -> Any:
     """(re)fetch taxon images from gbif and create thumbnails."""
 
     # lookup ocurrences & images at gbif and generate thumbnails

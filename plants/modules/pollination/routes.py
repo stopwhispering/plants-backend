@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -71,7 +72,7 @@ async def post_pollination(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     await save_new_pollination(
         new_pollination_data=new_pollination_data,
         pollination_dal=pollination_dal,
@@ -85,7 +86,7 @@ async def put_pollination(
     edited_pollination_data: PollinationUpdate,
     pollination: Pollination = Depends(valid_pollination),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
-):
+) -> Any:
     if pollination.id != edited_pollination_data.id:
         raise HTTPException(
             status_code=400,
@@ -100,7 +101,9 @@ async def put_pollination(
 
 
 @router.get("/ongoing_pollinations", response_model=BResultsOngoingPollinations)
-async def get_ongoing_pollinations(pollination_dal=Depends(get_pollination_dal)):
+async def get_ongoing_pollinations(
+    pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+) -> Any:
     ongoing_pollinations = await read_ongoing_pollinations(
         pollination_dal=pollination_dal
     )
@@ -114,7 +117,7 @@ async def get_ongoing_pollinations(pollination_dal=Depends(get_pollination_dal))
 
 
 @router.get("/pollinations/settings", response_model=SettingsRead)
-async def get_pollination_settings():
+async def get_pollination_settings() -> Any:
     colors = list(COLORS_MAP.keys())
     return {
         "colors": colors,
@@ -122,7 +125,7 @@ async def get_pollination_settings():
 
 
 @router.get("/pollen_containers", response_model=BResultsPollenContainers)
-async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)):
+async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
     """Get pollen containers plus plants without pollen containers."""
     pollen_containers = await read_pollen_containers(plant_dal=plant_dal)
     plants_without_pollen_containers = await read_plants_without_pollen_containers(
@@ -138,7 +141,7 @@ async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)):
 async def post_pollen_containers(
     pollen_containers_data: FRequestPollenContainers,
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Update pollen containers and add new ones."""
     await update_pollen_containers(
         pollen_containers_data=pollen_containers_data.pollenContainerCollection,
@@ -149,8 +152,8 @@ async def post_pollen_containers(
 @router.delete("/pollinations/{pollination_id}")
 async def delete_pollination(
     pollination: Pollination = Depends(valid_pollination),
-    pollination_dal=Depends(get_pollination_dal),
-):
+    pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+) -> Any:
     await remove_pollination(pollination, pollination_dal=pollination_dal)
 
 
@@ -158,7 +161,7 @@ async def delete_pollination(
     "/retrain_probability_pollination_to_seed_model",
     response_model=BResultsRetrainingPollinationToSeedsModel,
 )
-async def retrain_probability_pollination_to_seed_model():
+async def retrain_probability_pollination_to_seed_model() -> dict[str, str]:
     """Retrain the probability_pollination_to_seed ml model."""
     return await train_model_for_probability_of_seed_production()
 
@@ -167,7 +170,7 @@ async def retrain_probability_pollination_to_seed_model():
 async def get_active_florescences(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
-):
+) -> Any:
     """Read active florescences, either after inflorescence appeared or flowering."""
     florescences = await read_active_florescences(
         florescence_dal=florescence_dal, pollination_dal=pollination_dal
@@ -182,7 +185,9 @@ async def get_active_florescences(
 @router.get(
     "/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence
 )
-async def get_plants_for_new_florescence(plant_dal: PlantDAL = Depends(get_plant_dal)):
+async def get_plants_for_new_florescence(
+    plant_dal: PlantDAL = Depends(get_plant_dal),
+) -> Any:
     """Read all plants available for new florescence."""
     plants = await read_plants_for_new_florescence(plant_dal=plant_dal)
     return {"plantsForNewFlorescenceCollection": plants}
@@ -195,7 +200,7 @@ async def put_active_florescence(
     edited_florescence_data: FlorescenceUpdate,
     florescence: Florescence = Depends(valid_florescence),
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
-):
+) -> Any:
     if not florescence.id == edited_florescence_data.id:
         raise HTTPException(
             status_code=400,
@@ -214,7 +219,7 @@ async def post_active_florescence(
     new_florescence_data: FlorescenceCreate,
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Create new florescence for a plant."""
     await create_new_florescence(
         new_florescence_data=new_florescence_data,
@@ -227,7 +232,7 @@ async def post_active_florescence(
 async def delete_florescence(
     florescence: Florescence = Depends(valid_florescence),
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
-):
+) -> Any:
     await remove_florescence(florescence, florescence_dal=florescence_dal)
 
 
@@ -240,7 +245,7 @@ async def get_potential_pollen_donors(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     potential_pollen_donors = await read_potential_pollen_donors(
         florescence=florescence,
         florescence_dal=florescence_dal,
@@ -259,7 +264,7 @@ async def get_potential_pollen_donors(
 @router.get("/flower_history", response_model=BResultsFlowerHistory)
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
-):
+) -> Any:
     months, flower_history = await generate_flower_history(
         florescence_dal=florescence_dal
     )

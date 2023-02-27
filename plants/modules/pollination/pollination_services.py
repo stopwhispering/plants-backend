@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from plants.modules.pollination.florescence_dal import FlorescenceDAL
     from plants.modules.pollination.pollination_dal import PollinationDAL
 
-LOCATION_TEXTS: Final[dict] = {
+LOCATION_TEXTS: Final[dict[str, str]] = {
     "indoor": "indoor",
     "outdoor": "outdoor",
     "indoor_led": "indoor LED",
@@ -66,8 +66,8 @@ async def _read_pollination_attempts(
         pollen_donor, plant
     )
     attempts = []
+    pollination: Pollination
     for pollination in attempts_orm + attempts_orm_reverse:
-        pollination: Pollination
         attempt_dict = {
             "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
             "pollination_status": pollination.pollination_status,
@@ -95,7 +95,6 @@ async def _read_resulting_plants(
     resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
     resulting_plants = []
     for plant in resulting_plants_orm + resulting_plants_orm_reverse:
-        plant: Plant
         resulting_plant_dict = {
             "reverse": plant.parent_plant_id == pollen_donor.id,
             "plant_id": plant.id,
@@ -185,9 +184,8 @@ async def read_potential_pollen_donors(
         plant for plant in frozen_pollen_plants_ if plant.id != florescence.plant_id
     ]
 
+    frozen_pollen_plant: Plant
     for frozen_pollen_plant in frozen_pollen_plants:
-        frozen_pollen_plant: Plant
-
         if frozen_pollen_plant.id == florescence.plant_id:
             continue
 
@@ -230,7 +228,7 @@ async def save_new_pollination(
     pollination_dal: PollinationDAL,
     florescence_dal: FlorescenceDAL,
     plant_dal: PlantDAL,
-):
+) -> None:
     """Save a new pollination attempt."""
     # validate data quality
     florescence = await florescence_dal.by_id(new_pollination_data.florescenceId)
@@ -290,7 +288,9 @@ async def save_new_pollination(
     await pollination_dal.create(pollination)
 
 
-async def remove_pollination(pollination: Pollination, pollination_dal: PollinationDAL):
+async def remove_pollination(
+    pollination: Pollination, pollination_dal: PollinationDAL
+) -> None:
     """Delete a pollination attempt."""
     await pollination_dal.delete(pollination)
 
@@ -299,7 +299,7 @@ async def update_pollination(
     pollination: Pollination,
     pollination_data: PollinationUpdate,
     pollination_dal: PollinationDAL,
-):
+) -> None:
     """Update a pollination attempt."""
     # technical validation (some values are not allowed to be changed)
     if (
@@ -378,9 +378,13 @@ async def read_ongoing_pollinations(
     ] = await pollination_dal.get_ongoing_pollinations()
     # todo pydantic orm mode
     ongoing_pollinations = []
+    p: Pollination
     for p in ongoing_pollinations_orm:
-        p: Pollination
-        label_color_rgb = COLORS_MAP_TO_RGB.get(p.label_color, "transparent")
+        label_color_rgb = (
+            COLORS_MAP_TO_RGB.get(p.label_color, "transparent")
+            if p.label_color
+            else None
+        )
         ongoing_pollination_dict = {
             "seed_capsule_plant_id": p.seed_capsule_plant_id,
             "seed_capsule_plant_name": p.seed_capsule_plant.plant_name,
@@ -459,7 +463,7 @@ async def read_plants_without_pollen_containers(
 
 async def update_pollen_containers(
     pollen_containers_data: list[PollenContainerCreateUpdate], plant_dal: PlantDAL
-):
+) -> None:
     for pollen_container_data in pollen_containers_data:
         plant = await plant_dal.by_id(pollen_container_data.plant_id)
         await plant_dal.set_count_stored_pollen_containers(

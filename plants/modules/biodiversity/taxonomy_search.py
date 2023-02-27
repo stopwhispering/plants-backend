@@ -226,9 +226,8 @@ class ApiSearcher:
         if ipni_search.size() == 0:
             return results
 
+        ipni_result: dict
         for ipni_result in ipni_search:
-            ipni_result: dict
-
             # discard results that are not in POWO
             if not ipni_result.get("inPowo"):
                 continue

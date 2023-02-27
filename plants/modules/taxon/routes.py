@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
@@ -40,7 +41,7 @@ router = APIRouter(
 
 
 @router.post("/botanical_name", response_model=BResultsGetBotanicalName)
-async def create_botanical_name(botanical_attributes: FBotanicalAttributes):
+async def create_botanical_name(botanical_attributes: FBotanicalAttributes) -> Any:
     """create a botanical name incl.
 
     formatting (italics) for supplied taxon attributes
@@ -74,7 +75,7 @@ async def create_botanical_name(botanical_attributes: FBotanicalAttributes):
 
 
 @router.get("/{taxon_id}", response_model=BResultsGetTaxon)
-async def get_taxon(taxon: Taxon = Depends(valid_taxon)):
+async def get_taxon(taxon: Taxon = Depends(valid_taxon)) -> Any:
     """Returns taxon for requested taxon_id."""
     return {
         "action": "Get taxa",
@@ -88,7 +89,7 @@ async def save_taxon(
     new_taxon_data: TaxonCreate,
     background_tasks: BackgroundTasks,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
-):
+) -> Any:
     """Save a custom or non-custom taxon from search results list; if taxon already is
     in db, just return it."""
     logger.info(
@@ -99,11 +100,11 @@ async def save_taxon(
         taxon: Taxon = await taxon_dal.by_id(new_taxon_data.id)
         msg = get_message(f"Loaded {taxon.name} from database.")
     else:
-        taxon: Taxon = await save_new_taxon(
+        taxon = await save_new_taxon(
             new_taxon_data, taxon_dal=taxon_dal, background_tasks=background_tasks
         )
         msg = get_message(f"Saved taxon {taxon.name} to database.")
-        taxon: Taxon = await taxon_dal.by_id(taxon.id)
+        taxon = await taxon_dal.by_id(taxon.id)
 
     return {"action": "Save taxon", "message": msg, "new_taxon": taxon}
 
@@ -113,10 +114,9 @@ async def update_taxa(
     modified_taxa: FModifiedTaxa,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
-):
+) -> Any:
     """Update 1..n taxa in database."""
-    modified_taxa = modified_taxa.ModifiedTaxaCollection
-    for taxon_modified in modified_taxa:
+    for taxon_modified in modified_taxa.ModifiedTaxaCollection:
         await modify_taxon(
             taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal
         )
@@ -124,7 +124,8 @@ async def update_taxa(
     results = {
         "resource": MajorResource.TAXON,
         "message": get_message(
-            msg := f"Updated {len(modified_taxa)} taxa in database."
+            msg := f"Updated {len(modified_taxa.ModifiedTaxaCollection)} taxa in "
+            f"database."
         ),
     }
     logger.info(msg)

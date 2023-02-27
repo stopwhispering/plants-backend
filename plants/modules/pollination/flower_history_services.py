@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from dateutil import rrule
 
@@ -283,7 +283,20 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
     return flowering_plants
 
 
-async def generate_flower_history(florescence_dal: FlorescenceDAL):
+class PlantFlowerHistoryPeriod(TypedDict):
+    month: str
+    flowering_state: BFloweringState
+
+
+class PlantFlowerHistory(TypedDict):
+    plant_id: int
+    plant_name: str
+    periods: list[PlantFlowerHistoryPeriod]
+
+
+async def generate_flower_history(
+    florescence_dal: FlorescenceDAL,
+) -> tuple[list[str], list[PlantFlowerHistory]]:
     florescences = await florescence_dal.by_status([FlorescenceStatus.FINISHED])
     distinct_plants = {f.plant for f in florescences}
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
@@ -298,9 +311,9 @@ async def generate_flower_history(florescence_dal: FlorescenceDAL):
     months = [d.strftime(FORMAT_YYYY_MM) for d in datetimes]
 
     flower_history = []
+    fp: FloweringPlant
     for fp in flowering_plants:
-        fp: FloweringPlant
-        plant_flower_history = {
+        plant_flower_history: PlantFlowerHistory = {
             "plant_id": fp.plant.id,
             "plant_name": fp.plant.plant_name,
             "periods": [],

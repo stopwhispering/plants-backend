@@ -15,5 +15,5 @@ class FBRank(str, Enum):
     FORMA = "forma"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_

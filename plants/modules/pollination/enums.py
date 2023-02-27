@@ -23,7 +23,7 @@ class PollinationStatus(str, enum.Enum):
     SELF_POLLINATED = "self_pollinated"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -33,7 +33,7 @@ class PollenType(str, enum.Enum):
     UNKNOWN = "unknown"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -50,7 +50,7 @@ class Location(str, enum.Enum):
     INDOOR_LED = "indoor_led"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
 
@@ -79,7 +79,7 @@ class FlorescenceStatus(str, enum.Enum):
     ABORTED = "aborted"  # not made it to flowering
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         return value in cls._value2member_map_
 
     @classmethod

@@ -79,7 +79,10 @@ async def clone_plant(
         # property_dal=property_dal,
     )
 
-    plant_clone = await plant_dal.by_name(plant_name_clone)
+    plant_clone: Plant = await plant_dal.by_name(
+        plant_name_clone,  # type:ignore
+        raise_not_found=True,
+    )
     await create_history_entry(
         description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
         history_dal=history_dal,

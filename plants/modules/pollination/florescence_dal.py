@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -22,11 +22,11 @@ class FlorescenceDAL(BaseDAL):
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    async def create_florescence(self, florescence: Florescence):
+    async def create_florescence(self, florescence: Florescence) -> None:
         self.session.add(florescence)
         await self.session.flush()
 
-    async def delete_florescence(self, florescence: Florescence):
+    async def delete_florescence(self, florescence: Florescence) -> None:
         await self.session.delete(florescence)
         await self.session.flush()
 
@@ -39,7 +39,7 @@ class FlorescenceDAL(BaseDAL):
             .options(selectinload(Florescence.plant).selectinload(Plant.florescences))
             .where(Florescence.florescence_status.in_(status))
         )
-        return (await self.session.scalars(query)).all()  # noqa
+        return list((await self.session.scalars(query)).all())  # noqa
 
     async def by_id(self, florescence_id: int) -> Florescence:
         query = (
@@ -47,14 +47,14 @@ class FlorescenceDAL(BaseDAL):
             .options(selectinload(Florescence.plant))
             .where(Florescence.id == florescence_id)  # noqa
         )
-        florescence: Florescence = (await self.session.scalars(query)).first()
+        florescence: Florescence | None = (await self.session.scalars(query)).first()
         if not florescence:
             raise FlorescenceNotFoundError(florescence_id)
         return florescence
 
     async def update_florescence(  # noqa PLR0912
-        self, florescence: Florescence, updates: dict  # noqa C901
-    ):
+        self, florescence: Florescence, updates: dict[str, Any]  # noqa C901
+    ) -> None:
         if "florescence_status" in updates:
             florescence.florescence_status = updates["florescence_status"]
         if "comment" in updates:

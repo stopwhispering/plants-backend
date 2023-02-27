@@ -18,11 +18,7 @@ from plants.modules.plant.models import Plant, Tag
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from sqlalchemy.ext.asyncio import AsyncSession
-
-    from plants.modules.taxon.models import Taxon
 
 
 class PlantDAL(BaseDAL):
@@ -61,14 +57,19 @@ class PlantDAL(BaseDAL):
         if eager_load:
             query = self._add_eager_load_options(query)
 
-        plant: Plant = (await self.session.scalars(query)).first()  # noqa
+        plant: Plant | None = (await self.session.scalars(query)).first()  # noqa
         if not plant:
             raise PlantNotFoundError(plant_id)
         return plant
 
     async def by_name(
-        self, plant_name: str, *, eager_load=True, only_active=True
-    ) -> Plant:
+        self,
+        plant_name: str,
+        *,
+        eager_load=True,
+        only_active=True,
+        raise_not_found=False,
+    ) -> Plant | None:
         query = (
             select(Plant)
             .where(Plant.plant_name == plant_name)  # noqa
@@ -82,7 +83,11 @@ class PlantDAL(BaseDAL):
         if eager_load:
             query = self._add_eager_load_options(query)
 
-        plant: Plant = (await self.session.scalars(query)).first()
+        plant: Plant | None = (await self.session.scalars(query)).first()
+
+        if plant is None and raise_not_found:
+            raise PlantNotFoundError(plant_name)
+
         return plant
 
     async def get_plant_ids_by_taxon_id(
@@ -95,24 +100,24 @@ class PlantDAL(BaseDAL):
         )
 
         if only_active:
-            query = query.where(Plant.active)
+            query = query.where(Plant.active)  # noqa
 
         if eager_load:
             query = self._add_eager_load_options(query)
 
-        plants: list[int] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[int] = list((await self.session.scalars(query)).all())  # noqa
         # todo does it reutrn tuple or list??
         return plants
 
     async def get_plant_by_criteria(self, criteria: dict) -> list[Plant]:
         query = select(Plant).where(Plant.deleted.is_(False))  # noqa FBT003
+        value: str
         for key, value in criteria.items():
             if "field_number" in key:
-                value: str
                 query = query.filter(Plant.field_number == value)
             else:
                 raise CriterionNotImplementedError(key)
-        plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return plants
 
     async def get_name_by_id(self, plant_id: int) -> str:
@@ -122,7 +127,7 @@ class PlantDAL(BaseDAL):
             .where(Plant.deleted.is_(False))  # noqa FBT003
             .limit(1)
         )
-        plant_name: str = (await self.session.scalars(query)).first()
+        plant_name: str | None = (await self.session.scalars(query)).first()
         if not plant_name:
             raise PlantNotFoundError(plant_id)
         return plant_name
@@ -134,7 +139,7 @@ class PlantDAL(BaseDAL):
             .where(Plant.deleted.is_(False))  # noqa FBT003
             .limit(1)
         )
-        plant_id: int = (await self.session.scalars(query)).first()
+        plant_id: int | None = (await self.session.scalars(query)).first()
         if not plant_id:
             raise PlantNotFoundError(plant_name)
         return plant_id
@@ -145,9 +150,9 @@ class PlantDAL(BaseDAL):
             .select_from(Plant)
             .where(Plant.taxon_id.is_(None))
             .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)
+            .where(Plant.active)  # noqa
         )
-        count: int = (await self.session.scalars(query)).first()  # noqa
+        count: int = (await self.session.scalars(query)).first()  # type:ignore  # noqa
         return count
 
     async def get_plants_ids_without_taxon(self) -> list[int]:
@@ -155,9 +160,9 @@ class PlantDAL(BaseDAL):
             select(Plant.id)
             .where(Plant.taxon_id.is_(None))
             .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)
+            .where(Plant.active)  # noqa
         )
-        plant_ids: list[int] = (await self.session.scalars(query)).all()  # noqa
+        plant_ids: list[int] = list((await self.session.scalars(query)).all())  # noqa
         return plant_ids
 
     async def create_plant(self, plant: Plant):
@@ -180,7 +185,7 @@ class PlantDAL(BaseDAL):
             .where(Plant.deleted.is_(False))  # noqa FBT003
             .options(selectinload(Plant.taxon))
         )
-        return (await self.session.scalars(query)).all()  # noqa
+        return list((await self.session.scalars(query)).all())  # noqa
 
     async def set_count_stored_pollen_containers(self, plant: Plant, count: int):
         plant.count_stored_pollen_containers = count
@@ -190,7 +195,7 @@ class PlantDAL(BaseDAL):
         query = (
             select(Plant)
             .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)
+            .where(Plant.active)  # noqa
             .where(
                 (Plant.count_stored_pollen_containers == 0)
                 | Plant.count_stored_pollen_containers.is_(None)
@@ -198,7 +203,7 @@ class PlantDAL(BaseDAL):
             .where(Plant.deleted.is_(False))  # noqa FBT003
             .options(selectinload(Plant.taxon))
         )
-        plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return plants
 
     async def get_plants_with_pollen_containers(self) -> list[Plant]:
@@ -208,7 +213,7 @@ class PlantDAL(BaseDAL):
             .where(Plant.count_stored_pollen_containers >= 1)
             .options(selectinload(Plant.taxon))
         )
-        plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return plants
 
     async def get_children(
@@ -223,7 +228,7 @@ class PlantDAL(BaseDAL):
             )
         )
 
-        children: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        children: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return children
 
     async def get_children_by_ids(
@@ -238,12 +243,12 @@ class PlantDAL(BaseDAL):
             )
         )
 
-        children: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        children: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return children
 
     async def exists(self, plant_name: str) -> bool:
         query = select(Plant).where(Plant.plant_name == plant_name).limit(1)  # noqa
-        plant: Plant = (await self.session.scalars(query)).first()
+        plant: Plant | None = (await self.session.scalars(query)).first()
         return plant is not None
 
     async def delete(self, plant: Plant):
@@ -253,61 +258,45 @@ class PlantDAL(BaseDAL):
     async def get_distinct_nurseries(self) -> list[str]:
         query = (
             select(Plant.nursery_source)
-            .where(Plant.nursery_source.isnot(None))
-            .distinct(Plant.nursery_source)
+            .where(Plant.nursery_source.isnot(None))  # noqa
+            .distinct(Plant.nursery_source)  # noqa
         )
-        nurseries: list[str] = (await self.session.scalars(query)).all()  # noqa
+        nurseries: list[str] = list((await self.session.scalars(query)).all())  # noqa
         return nurseries
 
     async def update(self, plant: Plant, updates: dict):  # noqa C901
         for key, value in updates.items():
             if key == "plant_name":
-                value: str
                 plant.plant_name = value
             elif key == "active":
-                value: bool
                 plant.active = updates["active"]
             elif key == "cancellation_reason":
-                value: str | None
                 plant.cancellation_reason = value
             elif key == "cancellation_date":
-                value: datetime | None
                 plant.cancellation_date = value
             elif key == "field_number":
-                value: str | None
                 plant.field_number = value
             elif key == "geographic_origin":
-                value: str | None
                 plant.geographic_origin = value
             elif key == "nursery_source":
-                value: str | None
                 plant.nursery_source = value
             elif key == "propagation_type":
-                value: str | None
                 plant.propagation_type = value
             elif key == "generation_notes":
-                value: str | None
                 plant.generation_notes = value
             elif key == "plant_notes":
-                value: str | None
                 plant.plant_notes = value
             elif key == "parent_plant_id":
-                value: int | None
                 plant.parent_plant_id = value
             elif key == "parent_plant_pollen_id":
-                value: int | None
                 plant.parent_plant_pollen_id = value
             elif key == "parent_plant_pollen":
-                value: Plant | None
                 plant.parent_plant_pollen = value
             elif key == "filename_previewimage":
-                value: str | None
                 plant.filename_previewimage = value
             elif key == "taxon_id":
-                value: int | None
                 plant.taxon_id = value
             elif key == "taxon":
-                value: Taxon | None
                 plant.taxon = value
             else:
                 raise UpdateNotImplementedError(key)
@@ -316,9 +305,9 @@ class PlantDAL(BaseDAL):
 
     async def get_tag_by_tag_id(self, tag_id: int) -> Tag:
         query = select(Tag).where(Tag.id == tag_id).limit(1)  # noqa
-        tag: Tag = (await self.session.scalars(query)).first()  # noqa
+        tag: Tag | None = (await self.session.scalars(query)).first()  # noqa
         if not tag:
-            raise TagNotFoundError
+            raise TagNotFoundError(tag_id)
         return tag
 
     async def update_tag(self, tag: Tag, updates: dict):
@@ -339,7 +328,7 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
 
     async def delete_image_to_plant_association(
-        self, link: ImageToPlantAssociation, plant: Plant = None
+        self, link: ImageToPlantAssociation, plant: Plant | None = None
     ):
         if plant:
             plant.image_to_plant_associations.remove(link)
@@ -378,7 +367,7 @@ class PlantDAL(BaseDAL):
             # selectinload(Plant.image_to_plant_associations),  # not required
             # selectinload(Plant.florescences),  # not required
         )
-        plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return plants
 
     async def get_all_plants_with_events_loaded(
@@ -392,5 +381,5 @@ class PlantDAL(BaseDAL):
         if not include_deleted:
             query = query.where(Plant.deleted.is_(False))  # noqa FBT003
 
-        plants: list[Plant] = (await self.session.scalars(query)).all()  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
         return plants

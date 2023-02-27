@@ -54,8 +54,8 @@ async def read_active_florescences(
         {FlorescenceStatus.FLOWERING, FlorescenceStatus.INFLORESCENCE_APPEARED}
     )
     florescences = []
+    flor: Florescence
     for flor in florescences_orm:
-        flor: Florescence
         f_dict = {
             "id": flor.id,
             "plant_id": flor.plant_id,
@@ -90,7 +90,7 @@ async def update_active_florescence(
     florescence: Florescence,
     edited_florescence_data: FlorescenceUpdate,
     florescence_dal: FlorescenceDAL,
-):
+) -> None:
     """Update db record of a currently active florescence."""
     # technical validation
     if florescence.plant_id != edited_florescence_data.plant_id:
@@ -152,7 +152,7 @@ async def create_new_florescence(
     new_florescence_data: FlorescenceCreate,
     florescence_dal: FlorescenceDAL,
     plant_dal: PlantDAL,
-):
+) -> None:
     """Create a new active florescence."""
     if not FlorescenceStatus.has_value(new_florescence_data.florescence_status):
         raise HTTPException(
@@ -175,7 +175,9 @@ async def create_new_florescence(
     await florescence_dal.create_florescence(florescence)
 
 
-async def remove_florescence(florescence: Florescence, florescence_dal: FlorescenceDAL):
+async def remove_florescence(
+    florescence: Florescence, florescence_dal: FlorescenceDAL
+) -> None:
     """Delete a florescence."""
     if florescence.pollinations:
         raise BaseError(detail={"message": "Florescence has pollinations"})

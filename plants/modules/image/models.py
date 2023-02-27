@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from pathlib import PurePath
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     INTEGER,
@@ -12,10 +15,14 @@ from sqlalchemy import (
     ForeignKey,
     Identity,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 
 from plants import settings
 from plants.extensions.orm import Base
+
+if TYPE_CHECKING:
+    from plants.modules.event.models import Event
+    from plants.modules.taxon.models import Taxon
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +76,7 @@ class Image(Base):
     # images themselves are stored in file system
     # this table is only used to link events to images
     __tablename__ = "image"
-    id = Column(
+    id: int = Column(
         INTEGER,
         Identity(start=1, cycle=True, always=False),
         primary_key=True,
@@ -122,17 +129,18 @@ class Image(Base):
         secondary="image_to_taxon_association",
         overlaps="image_to_taxon_associations,images",  # silence warnings
     )
-    image_to_taxon_associations = relationship(
+    image_to_taxon_associations: Mapped[list[ImageToTaxonAssociation]] = relationship(
         "ImageToTaxonAssociation",
         back_populates="image",
         overlaps="images,taxa",  # silence warnings
+        uselist=True,
     )
 
 
 class ImageToEventAssociation(Base):
     __tablename__ = "image_to_event_association"
-    image_id = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
-    event_id = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
+    image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
+    event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
 
     # silence warnings for deletions of associated entities (image has
     # image_to_event_association and events)
@@ -140,12 +148,12 @@ class ImageToEventAssociation(Base):
         "confirm_deleted_rows": False,
     }
 
-    image = relationship(
+    image: Mapped[Image] = relationship(
         "Image",
         back_populates="image_to_event_associations",
         overlaps="events",  # silence warnings
     )
-    event = relationship(
+    event: Mapped[Event] = relationship(
         "Event",
         back_populates="image_to_event_associations",
         overlaps="events",  # silence warnings
@@ -154,10 +162,10 @@ class ImageToEventAssociation(Base):
 
 class ImageToTaxonAssociation(Base):
     __tablename__ = "image_to_taxon_association"
-    image_id = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
-    taxon_id = Column(INTEGER, ForeignKey("taxon.id"), primary_key=True)
+    image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
+    taxon_id: int = Column(INTEGER, ForeignKey("taxon.id"), primary_key=True)
 
-    description = Column(TEXT)
+    description: str | None = Column(TEXT)
 
     # silence warnings for deletions of associated entities (image has
     # image_to_taxa_association and taxa)
@@ -165,12 +173,12 @@ class ImageToTaxonAssociation(Base):
         "confirm_deleted_rows": False,
     }
 
-    image = relationship(
+    image: Mapped[Image] = relationship(
         "Image",
         back_populates="image_to_taxon_associations",
         overlaps="images,taxa",  # silence warnings
     )
-    taxon = relationship(
+    taxon: Mapped[Taxon] = relationship(
         "Taxon",
         back_populates="image_to_taxon_associations",
         overlaps="images,taxa",  # silence warnings

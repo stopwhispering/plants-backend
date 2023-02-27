@@ -10,12 +10,12 @@ from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 class FBImageAssignedToEvent(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)
+    filename: constr(min_length=1, max_length=150)  # type:ignore
 
 
 class SoilBase(BaseSchema):
     id: int
-    soil_name: constr(min_length=1, max_length=100)
+    soil_name: constr(min_length=1, max_length=100)  # type:ignore
     mix: str | None
     description: str | None
 
@@ -40,7 +40,7 @@ class SoilWithCountRead(SoilBase):
 
 
 class PotBase(BaseSchema):
-    material: constr(min_length=1, max_length=50)  # todo enum?
+    material: constr(min_length=1, max_length=50)  # type: ignore  # todo enum?
     shape_top: FBShapeTop
     shape_side: FBShapeSide
     diameter_width: Decimal
@@ -77,7 +77,7 @@ class ObservationCreateUpdate(ObservationBase):
 
 class EventBase(BaseSchema):
     plant_id: int
-    date: constr(regex=REGEX_DATE)  # string yyyy-mm-dd
+    date: constr(regex=REGEX_DATE)  # type:ignore  # string yyyy-mm-dd  # type: ignore
     event_notes: str | None
     images: Optional[list[FBImageAssignedToEvent]]
 
@@ -98,7 +98,7 @@ class EventRead(EventBase):
 
 class FImageDelete(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)
+    filename: constr(min_length=1, max_length=150)  # type: ignore
 
 
 class FImagesToDelete(BaseSchema):

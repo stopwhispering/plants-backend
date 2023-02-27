@@ -30,7 +30,7 @@ async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
 
 
 # todo this is still required (otherwise save error) - why? replcae
-def _get_filename_previewimage(plant: Optional[PlantCreateUpdate] = None) -> str | None:
+def _get_filename_previewimage(plant: PlantCreateUpdate) -> str | None:
     """We actually set the path to preview photo_file (the original photo_file, not the
     thumbnail) excluding the photos-subdir part of the uri."""
     if not plant.filename_previewimage:
@@ -86,7 +86,7 @@ async def update_plants_from_list_of_dicts(
 def _clone_instance(model_instance: Base, clone_attrs: Optional[dict] = None):
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
-    table = model_instance.__table__
+    table = model_instance.__table__  # type:ignore
     non_pk_columns = [k for k in table.columns if k not in table.primary_key]
     data = {c: getattr(model_instance, c) for c in non_pk_columns}
     if clone_attrs:
@@ -153,9 +153,11 @@ async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL)
     await plant_dal.create_tags(new_tags)
 
     # update existing tags (not currently implemented in frontend)
-    for updated_tag in [t for t in tags if t.id is not None]:
-        tag_object = await plant_dal.get_tag_by_tag_id(updated_tag.id)
-        await plant_dal.update_tag(tag_object, updated_tag.dict())
+    for tag in tags:
+        if tag.id is None:
+            continue
+        tag_object = await plant_dal.get_tag_by_tag_id(tag.id)
+        await plant_dal.update_tag(tag_object, tag.dict())
 
     # delete tags not supplied anymore
     updated_plant_ids = {t.id for t in tags if t.id is not None}

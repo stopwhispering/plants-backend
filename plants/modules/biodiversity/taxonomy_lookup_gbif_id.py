@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class GBIFIdentifierLookup:
-    def lookup(self, taxon_name: str, lsid: str) -> str | None:
+    def lookup(self, taxon_name: str, lsid: str) -> int | None:
         return self._gbif_id_from_gbif_api(
             taxon_name=taxon_name, lsid=lsid
         ) or self._get_gbif_id_from_wikidata(lsid=lsid)
@@ -48,7 +48,7 @@ class GBIFIdentifierLookup:
                 return nub_key
         return None
 
-    def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> Optional[int]:
+    def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> int | None:
         """the GBIF API does not allow searching by other database's taxonId; therefore,
         we search by botanical name and IPNI dataset key, then we compare the (external)
         taxonId"; if we have a match, we can return the GBIF taxon ID unfortunately, the

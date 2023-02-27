@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Extra, HttpUrl, constr, validator
 
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 
 class DistributionBase(BaseSchema):
-    native: list[constr(min_length=1, max_length=40)]
-    introduced: list[constr(min_length=1, max_length=40)]
+    native: list[constr(min_length=1, max_length=40)]  # type:ignore
+    introduced: list[constr(min_length=1, max_length=40)]  # type:ignore
 
 
 class DistributionRead(DistributionBase):
@@ -32,16 +32,16 @@ class TaxonOccurrenceImageBase(BaseSchema):
     occurrence_id: int
     img_no: int
     gbif_id: int
-    scientific_name: constr(min_length=1, max_length=100)
-    basis_of_record: constr(min_length=1, max_length=25)
-    verbatim_locality: Optional[constr(min_length=1, max_length=125)]
+    scientific_name: constr(min_length=1, max_length=100)  # type:ignore
+    basis_of_record: constr(min_length=1, max_length=25)  # type:ignore
+    verbatim_locality: Optional[constr(min_length=1, max_length=125)]  # type:ignore
     date: datetime.datetime
-    creator_identifier: constr(min_length=1, max_length=100)
-    publisher_dataset: Optional[constr(min_length=1, max_length=100)]
+    creator_identifier: constr(min_length=1, max_length=100)  # type:ignore
+    publisher_dataset: Optional[constr(min_length=1, max_length=100)]  # type:ignore
     references: Optional[HttpUrl]
     href: HttpUrl  # link to iamge at inaturalist etc.
     # todo switch to other id
-    filename_thumbnail: constr(
+    filename_thumbnail: constr(  # type:ignore
         min_length=1, max_length=120
     )  # filename for generated thumbnails
 
@@ -51,7 +51,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
         extra = Extra.ignore
 
     @validator("date")
-    def datetime_to_string(cls, v):  # noqa
+    def datetime_to_string(cls, v: datetime.datetime) -> str:  # noqa
         """Validator decorator makes this a class method and enforces cls param."""
         return v.strftime(
             FORMAT_API_YYYY_MM_DD_HH_MM
@@ -60,7 +60,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
 class TaxonImageBase(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)
+    filename: constr(min_length=1, max_length=150)  # type:ignore
     description: Optional[str]
 
 
@@ -102,7 +102,7 @@ class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
 
 
 class FRetrieveTaxonDetailsRequest(RequestContainer):
-    lsid: Optional[constr(min_length=1, max_length=50)]
+    lsid: Optional[constr(min_length=1, max_length=50)]  # type:ignore
     hasCustomName: bool  # noqa N815  # todo rename
     taxon_id: Optional[int]  # taxon id
     nameInclAddition: str  # noqa N815  # todo rename
@@ -148,21 +148,22 @@ class BKewSearchResultEntry(BaseSchema):
 
 
 class TaxonBase(BaseSchema):
-    rank: constr(min_length=1, max_length=30)
-    family: constr(min_length=1, max_length=100)
-    genus: constr(min_length=1, max_length=100)
-    species: constr(min_length=1, max_length=100) | None
-    infraspecies: constr(min_length=1, max_length=40) | None
+    rank: constr(min_length=1, max_length=30)  # type:ignore
+    family: constr(min_length=1, max_length=100)  # type:ignore
+    genus: constr(min_length=1, max_length=100)  # type:ignore
+    species: constr(min_length=1, max_length=100) | None  # type:ignore
+    infraspecies: constr(min_length=1, max_length=40) | None  # type:ignore
 
-    lsid: constr(min_length=1, max_length=50)  # IPNI/POWO Life Sciences Identifier
-    taxonomic_status: constr(min_length=1, max_length=100)
+    # IPNI/POWO Life Sciences Identifier
+    lsid: constr(min_length=1, max_length=50)  # type:ignore
+    taxonomic_status: constr(min_length=1, max_length=100)  # type:ignore
     synonym: bool
-    authors: constr(min_length=1, max_length=100)
+    authors: constr(min_length=1, max_length=100)  # type:ignore
     name_published_in_year: int | None
-    basionym: constr(min_length=1, max_length=100) | None
+    basionym: constr(min_length=1, max_length=100) | None  # type:ignore
     hybrid: bool
     hybridgenus: bool
-    synonyms_concat: constr(min_length=1, max_length=500) | None
+    synonyms_concat: constr(min_length=1, max_length=500) | None  # type:ignore
     distribution_concat: str | None
 
     is_custom: bool
@@ -196,7 +197,7 @@ class TaxonRead(TaxonBase):
 
     @validator("images", pre=True)
     def _transform_images(
-        cls, images: list[Image], values, **kwargs  # noqa
+        cls, images: list[Image], values: dict[str, Any]  # noqa
     ) -> list[TaxonImageRead]:  # noqa
         """Extract major information from Image model; and read the description from
         taxon-to-image link table, not from image itself."""
@@ -222,7 +223,7 @@ class TaxonRead(TaxonBase):
         cls, distribution: list[Distribution]  # noqa
     ) -> DistributionRead:  # noqa
         # distribution codes according to WGSRPD (level 3)
-        results = {"native": [], "introduced": []}
+        results: dict[str, list[str]] = {"native": [], "introduced": []}
         for dist in distribution:
             if dist.establishment == "Native":
                 results["native"].append(dist.tdwg_code)

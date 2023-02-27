@@ -54,14 +54,13 @@ def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
     return name, full_html_name
 
 
-async def _retrieve_locations(lsid: str):
+async def _retrieve_locations(lsid: str) -> list[Distribution]:
     powo_lookup = await run_in_threadpool(powo.lookup, lsid, include=["distribution"])
     locations: list[Distribution] = []
 
     # collect native and introduced distribution into one list
     dist = []
     if distribution := powo_lookup.get("distribution"):
-        distribution: dict
         if natives := distribution.get("natives"):
             dist.extend(natives)
         if introduced := distribution.get("introduced"):
@@ -153,19 +152,23 @@ async def save_new_taxon(
 
     await taxon_dal.create(taxon)
 
-    # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image
-    # URLs
-    loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
+    if gbif_id is not None:
+        # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image
+        # URLs
+        loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
 
-    logger.info(f"Starting background task to load occurences for gbif_id {gbif_id}")
-    background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
+        logger.info(
+            f"Starting background task to load occurences for gbif_id "
+            f"{str(gbif_id)}"
+        )
+        background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
 
     return taxon
 
 
 async def modify_taxon(
     taxon_modified: TaxonUpdate, taxon_dal: TaxonDAL, image_dal: ImageDAL
-):
+) -> None:
     taxon: Taxon = await taxon_dal.by_id(taxon_modified.id)
 
     if taxon.custom_notes != taxon_modified.custom_notes:
@@ -178,8 +181,8 @@ async def modify_taxon(
         if taxon_modified.images
         else []
     )
+    image_obj: Image
     for image_obj in taxon.images:
-        image_obj: Image
         if image_obj.filename not in filenames_saved:
             # don't delete photo_file object, but only the association
             # (photo_file might be assigned to other events)

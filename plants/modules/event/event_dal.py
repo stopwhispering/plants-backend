@@ -33,7 +33,7 @@ class EventDAL(BaseDAL):
             .options(selectinload(Event.soil))
             .options(selectinload(Event.pot))
         )
-        events: list[Event] = (await self.session.scalars(query)).all()  # noqa
+        events: list[Event] = list((await self.session.scalars(query)).all())  # noqa
         return events
 
     async def create_pot(self, pot: Pot):
@@ -67,26 +67,23 @@ class EventDAL(BaseDAL):
 
     async def get_all_soils(self) -> list[Soil]:
         query = select(Soil)
-        soils: list[Soil] = (await self.session.scalars(query)).all()  # noqa
+        soils: list[Soil] = list((await self.session.scalars(query)).all())  # noqa
         return soils
 
     async def get_soil_by_id(self, soil_id: int) -> Soil:
         query = select(Soil).where(Soil.id == soil_id).limit(1)  # noqa
-        soil: Soil = (await self.session.scalars(query)).first()
-        if not soil:
+        soil: Soil | None = (await self.session.scalars(query)).first()
+        if soil is None:
             raise SoilNotFoundError(soil_id)
         return soil
 
     async def update_soil(self, soil: Soil, updates: dict):
         for key, value in updates.items():
             if key == "soil_name":
-                value: str
                 soil.soil_name = value
             elif key == "description":
-                value: str
                 soil.description = value
             elif key == "mix":
-                value: str
                 soil.mix = value
             else:
                 raise UpdateNotImplementedError(key)
@@ -97,17 +94,19 @@ class EventDAL(BaseDAL):
         # todo: once we have made soil names unique, we can change this with singular
         #  version
         query = select(Soil).where(Soil.soil_name == soil_name)  # noqa
-        soils: list[Soil] = (await self.session.scalars(query)).all()  # noqa
+        soils: list[Soil] = list((await self.session.scalars(query)).all())  # noqa
         return soils
 
-    async def get_event_by_plant_and_date(self, plant: Plant, event_date: str) -> Event:
+    async def get_event_by_plant_and_date(
+        self, plant: Plant, event_date: str
+    ) -> Event | None:
         query = (
             select(Event)
             .where(Event.plant_id == plant.id)
             .where(Event.date == event_date)  # yyyy-mm-dd
             .limit(1)
         )
-        event: Event = (await self.session.scalars(query)).first()
+        event: Event | None = (await self.session.scalars(query)).first()
         return event
 
     async def by_id(self, event_id) -> Event:
@@ -120,13 +119,13 @@ class EventDAL(BaseDAL):
             .options(selectinload(Event.soil))
             .limit(1)
         )
-        event: Event = (await self.session.scalars(query)).first()
+        event: Event | None = (await self.session.scalars(query)).first()
         if not event:
             raise EventNotFoundError(event_id)
         return event
 
     async def delete_image_to_event_associations(
-        self, links: list[ImageToEventAssociation], event: Event = None
+        self, links: list[ImageToEventAssociation], event: Event | None = None
     ):
         for link in links:
             if event:

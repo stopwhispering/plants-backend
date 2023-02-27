@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import sqlalchemy
 from sqlalchemy import (
@@ -17,7 +18,7 @@ from sqlalchemy import (
     Identity,
     Numeric,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
@@ -26,6 +27,9 @@ from plants.modules.pollination.enums import (
     FlowerColorDifferentiation,
     StigmaPosition,
 )
+
+if TYPE_CHECKING:
+    from plants.modules.plant.models import Plant
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +44,10 @@ class Florescence(Base):
         primary_key=True,
         nullable=False,
     )
-    plant_id = Column(
+    plant_id: int = Column(
         INTEGER, ForeignKey("plants.id"), nullable=False
     )  # table name is 'plants'
-    plant = relationship(
+    plant: Mapped[Plant] = relationship(
         "Plant", back_populates="florescences"
     )  # class name is 'Plant'
 
@@ -73,7 +77,7 @@ class Florescence(Base):
     # todo via relationship: first_seed_ripe_date, last_seed_ripe_date,
     #  average_ripening_time
 
-    comment = Column(
+    comment: str | None = Column(
         TEXT
     )  # limited to max 40 chars in frontend, longer only for imported data
 
@@ -85,10 +89,11 @@ class Florescence(Base):
     creation_context = Column(VARCHAR(30), nullable=False)
 
     # pollinations of this florescence (with plant as mother plant)
-    pollinations = relationship(
+    pollinations: Mapped[list[Pollination]] = relationship(
         "Pollination",
         back_populates="florescence",
         foreign_keys="Pollination.florescence_id",
+        uselist=True,
     )
 
 
@@ -99,46 +104,52 @@ class Pollination(Base):
     differing attempts to pollinate for the same inflorence and pollen donor"""
 
     __tablename__ = "pollination"
-    id = Column(
+    id: int = Column(
         INTEGER,
         Identity(start=1, cycle=True, always=False),
         primary_key=True,
         nullable=False,
     )
 
-    florescence_id = Column(INTEGER, ForeignKey("florescence.id"))
-    florescence = relationship(
+    florescence_id: int | None = Column(INTEGER, ForeignKey("florescence.id"))
+    florescence: Mapped[Florescence | None] = relationship(
         "Florescence", back_populates="pollinations", foreign_keys=[florescence_id]
     )
 
     # todo: make sure it is same as florescence.plant_id if available
-    seed_capsule_plant_id = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
-    seed_capsule_plant = relationship("Plant", foreign_keys=[seed_capsule_plant_id])
+    seed_capsule_plant_id: int = Column(
+        INTEGER, ForeignKey("plants.id"), nullable=False
+    )
+    seed_capsule_plant: Mapped[Plant] = relationship(
+        "Plant", foreign_keys=[seed_capsule_plant_id]
+    )
 
-    pollen_donor_plant_id = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
-    pollen_donor_plant = relationship(
+    pollen_donor_plant_id: int = Column(
+        INTEGER, ForeignKey("plants.id"), nullable=False
+    )
+    pollen_donor_plant: Mapped[Plant] = relationship(
         "Plant",  # back_populates="pollinations_as_donor_plant",
         foreign_keys=[pollen_donor_plant_id],
     )
 
-    pollen_type = Column(
+    pollen_type: str = Column(
         VARCHAR(20), nullable=False
     )  # PollenType (fresh | frozen | unknown)
-    pollen_quality = Column(
+    pollen_quality: str = Column(
         VARCHAR(10), nullable=False
     )  # PollenQuality (good | bad | unknown)
     # location at the very moment of pollination attempt (Location (indoor | outdoor
     # | indoor_led | unknown))
-    location = Column(VARCHAR(100), nullable=False)
+    location: str = Column(VARCHAR(100), nullable=False)
 
-    count = Column(INTEGER)
+    count: int | None = Column(INTEGER)
 
     pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
-    label_color = Column(VARCHAR(60))
+    label_color: str | None = Column(VARCHAR(60))
     # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown
     # | self_pollinated )
-    pollination_status = Column(VARCHAR(40), nullable=False)
-    ongoing = Column(BOOLEAN, nullable=False)
+    pollination_status: str = Column(VARCHAR(40), nullable=False)
+    ongoing: bool = Column(BOOLEAN, nullable=False)
 
     # first harvest in case of multiple harvests
     harvest_date = Column(DATE)

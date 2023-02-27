@@ -39,10 +39,6 @@ router = APIRouter(
 )
 
 
-def todo_delme() -> EventDAL:
-    return EventDAL()
-
-
 @router.get("/events/soils", response_model=BResultsSoilsResource)
 async def get_soils(
     event_dal: EventDAL = Depends(get_event_dal),
@@ -103,7 +99,7 @@ async def create_or_update_events(
 
     # loop at the plants and their events, identify additions, deletions, and updates
     # and save them
-    counts = defaultdict(int)
+    counts: defaultdict = defaultdict(int)
     event_writer = EventWriter(
         event_dal=event_dal, image_dal=image_dal, plant_dal=plant_dal
     )

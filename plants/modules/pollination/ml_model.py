@@ -30,7 +30,9 @@ from plants.modules.taxon.models import Taxon
 logger = logging.getLogger(__name__)
 
 
-def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
+def _create_pipeline(
+    feature_container: FeatureContainer, model: BaseEstimator
+) -> Pipeline:
     nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)  # noqa
     nominal_bivalue_features = feature_container.get_columns(
         scale=Scale.NOMINAL_BIVALUE
@@ -78,12 +80,14 @@ async def _read_db_and_join() -> pd.DataFrame:
     # i feel more comfortable with joining dataframes than with sqlalchemy...
     # todo rework data access completely!!!
 
-    def read_data(session: Session):
+    def read_data(
+        session: Session,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         conn = session.connection()
         df_pollination = pd.read_sql_query(
             sql=sqlalchemy.select(Pollination).filter(
-                ~Pollination.ongoing,
-                Pollination.pollination_status != "self_pollinated",
+                ~Pollination.ongoing,  # noqa
+                Pollination.pollination_status != "self_pollinated",  # noqa
             ),  # noqa
             con=conn,
         )
@@ -95,8 +99,8 @@ async def _read_db_and_join() -> pd.DataFrame:
     engine = create_async_engine(local_config.connection_string)
 
     # async with engine.begin() as conn:
+    session: AsyncSession
     async with AsyncSession(engine) as session:
-        session: AsyncSession
         df_pollination, df_florescence, df_plant, df_taxon = await session.run_sync(
             read_data
         )
@@ -153,7 +157,7 @@ async def _read_db_and_join() -> pd.DataFrame:
     )
 
     # merge with taxon for pollen donor
-    df = df_merged4.merge(
+    df: pd.DataFrame = df_merged4.merge(
         df_taxon[["id", "genus", "species", "hybrid", "hybridgenus"]],
         how="left",
         left_on=["taxon_id_pollen_donor"],
@@ -208,7 +212,9 @@ async def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
     return df
 
 
-def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
+def _cv_classifier(
+    x: pd.DataFrame, y: pd.Series, pipeline: Pipeline
+) -> tuple[str, float]:
     n_groups = 3  # test part will be 1/n
     n_splits = 3  # k-fold will score n times; must be <= n_groups
     np.random.seed(42)
@@ -220,10 +226,10 @@ def _cv_classifier(x, y, pipeline: Pipeline) -> dict:
         )
     logger.info(f"Scores: {scores}")
     logger.info(f"Mean score: {np.mean(scores)}")
-    return {"mean_f1_score": np.mean(scores)}
+    return "mean_f1_score", round(float(np.mean(scores)), 2)
 
 
-async def train_model_for_probability_of_seed_production() -> dict:
+async def train_model_for_probability_of_seed_production() -> dict[str, str]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
     df = await _create_data(feature_container=feature_container)
@@ -235,10 +241,10 @@ async def train_model_for_probability_of_seed_production() -> dict:
         "attempt",
     }:
         raise ValueError("Unexpected pollination status in dataset.")
-    y = df["pollination_status"].apply(
+    y: pd.Series = df["pollination_status"].apply(  # type:ignore
         lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
     )
-    x = df[feature_container.get_columns()]
+    x: pd.DataFrame = df[feature_container.get_columns()]  # type:ignore
 
     # train directly on full dataset with optimized hyperparams
     params_knn = {
@@ -252,11 +258,13 @@ async def train_model_for_probability_of_seed_production() -> dict:
     pipeline = _create_pipeline(feature_container=feature_container, model=model)
 
     # show f1 cv score
-    cv_scores = _cv_classifier(x, y, pipeline)
+    metric_name, metric_value = _cv_classifier(x, y, pipeline)
 
     # fit with full dataset
     pipeline.fit(x, y)
     pickle_pipeline(pipeline=pipeline, feature_container=feature_container)
-    results = cv_scores
-    results["model"] = str(model)
-    return results
+    return {
+        "model": str(model),
+        "metric_name": metric_name,
+        "metric_value": str(metric_value),
+    }

@@ -18,12 +18,10 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 
 class PollenContainerBase(BaseSchema):
     plant_id: int
-    plant_name: constr(
-        min_length=1, max_length=100
-    )  # todo remove/ignore for CreateUpdate
-    genus: constr(
-        min_length=1, max_length=100
-    ) | None  # todo remove/ignore for CreateUpdate
+    # todo remove/ignore for CreateUpdate
+    plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    # todo remove/ignore for CreateUpdate
+    genus: constr(min_length=1, max_length=100) | None  # type:ignore
     count_stored_pollen_containers: int  # mandatory in this case
 
 
@@ -41,8 +39,9 @@ class PollinationBase(BaseSchema):
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
     pollination_timestamp: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
-    location: constr(min_length=1, max_length=100)  # todo enum  # e.g. 'outside_led'
-    count: conint(ge=1)
+    # todo enum  # e.g. 'outside_led'
+    location: constr(min_length=1, max_length=100)  # type:ignore
+    count: conint(ge=1)  # type:ignore
 
 
 class PollinationRead(PollinationBase):
@@ -52,7 +51,7 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
-    count: conint(ge=1) | None  # allow None for old data
+    count: conint(ge=1) | None  # type:ignore  # allow None for old data
 
     pollination_status: str
     ongoing: bool
@@ -79,7 +78,7 @@ class PollinationUpdate(PollinationBase):
     pollination_status: PollinationStatus
     ongoing: bool
 
-    harvest_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    harvest_date: constr(regex=REGEX_DATE) | None  # type:ignore  # e.g. '2022-11-16'
     seed_capsule_length: float | None
     seed_capsule_width: float | None
     seed_length: float | None
@@ -109,7 +108,7 @@ class FlorescenceBase(BaseSchema):
     plant_id: int
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status: FlorescenceStatus
-    inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # type:ignore
     comment: str | None  # e.g. location if multiple plants in one container
 
 
@@ -123,24 +122,22 @@ class FlorescenceUpdate(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(
-        ge=Decimal(0.1), le=Decimal(99.9)
-    ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(
+    perianth_length: condecimal(ge=Decimal(0.1), le=Decimal(99.9)) | None  # type:ignore
+    perianth_diameter: condecimal(  # type:ignore
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(
+    flower_color: constr(  # type:ignore
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(
+    flower_color_second: constr(  # type:ignore
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
-    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # type:ignore
+    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # type:ignore
 
     class Config:
         extra = Extra.ignore
@@ -154,24 +151,24 @@ class FlorescenceRead(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(
+    perianth_length: condecimal(  # type:ignore
         ge=Decimal(0.1), le=Decimal(99.9)
     ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(
+    perianth_diameter: condecimal(  # type:ignore
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(
+    flower_color: constr(  # type:ignore
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(
+    flower_color_second: constr(  # type:ignore
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
-    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # e.g. '2022-11-16'
+    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # type:ignore
+    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # type:ignore
 
     class Config:
         use_enum_values = True  # todo remove

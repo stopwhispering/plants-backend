@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import dateutil
 import requests
@@ -25,63 +26,122 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class ImageMetadata:
+    occurrence_id: int
+    gbif_id: int
+    scientific_name: str
+    basis_of_record: str
+    verbatim_locality: str
+    date: str
+    creator_identifier: str
+    publisher_dataset: str
+    references: str | None = None
+    href: str | None = None
+    img_no: int | None = None
+    filename_thumbnail: str | None = None
+
+
 class TaxonOccurencesLoader:
     def __init__(self, taxon_dal: TaxonDAL):
         self.taxon_dal = taxon_dal
 
-    def _get_image_metadata(self, occ: dict, m: dict, gbif_id: int) -> Optional[dict]:
+    def _get_image_metadata(
+        self, occ: dict, m: dict, gbif_id: int
+    ) -> ImageMetadata | None:
         # todo refactor this function
         if "created" not in m and "eventDate" not in occ:
             # happens very rarely, so wen can skip entries with unknown date
             return None
 
         try:
-            d = {
-                "occurrence_id": occ["key"],
-                "gbif_id": gbif_id,  # occ['taxonKey'],
-                "scientific_name": occ[
+            image_metadata = ImageMetadata(
+                occurrence_id=occ["key"],
+                gbif_id=gbif_id,  # occ['taxonKey'],
+                scientific_name=occ[
                     "scientificName"
                 ],  # redundant, but show as additional info
-                "basis_of_record": occ["basisOfRecord"],
-                "verbatim_locality": self._parse_verbatim_locality(occ),
-                "date": dateutil.parser.isoparse(  # noqa
+                basis_of_record=occ["basisOfRecord"],
+                verbatim_locality=self._parse_verbatim_locality(occ),
+                date=dateutil.parser.isoparse(  # noqa
                     m.get("created") or occ.get("eventDate")
                 ),  # noqa
-                "creator_identifier": m.get("identifiedBy")
+                creator_identifier=m.get("identifiedBy")
                 or m.get("creator")
                 or occ.get("recordedBy"),
-                "publisher_dataset": occ.get("publisher")
+                publisher_dataset=occ.get("publisher")
                 or m.get("publisher")
                 or occ.get("institutionCode")
                 or occ.get("rightsHolder")
                 or occ.get("datasetName")
                 or occ.get("collectionCode"),
-            }
+            )
 
             # some fields requiring validation
             if (references := occ.get("references")) and references[
                 :4
             ].lower() == "http":
-                d["references"] = occ["references"]
+                image_metadata.references = occ["references"]
             else:
-                d["references"] = None
+                image_metadata.references = None
 
             # get the photo_file href
             if m.get("references") and (
                 "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
             ):
-                d["href"] = m["references"]
+                image_metadata.href = m["references"]
             elif m.get("identifier"):
-                d["href"] = m["identifier"]
+                image_metadata.href = m["identifier"]
             else:
                 return None
+
+            # d = {
+            #     "occurrence_id": occ["key"],
+            #     "gbif_id": gbif_id,  # occ['taxonKey'],
+            #     "scientific_name": occ[
+            #         "scientificName"
+            #     ],  # redundant, but show as additional info
+            #     "basis_of_record": occ["basisOfRecord"],
+            #     "verbatim_locality": self._parse_verbatim_locality(occ),
+            #     "date": dateutil.parser.isoparse(  # noqa
+            #         m.get("created") or occ.get("eventDate")
+            #     ),  # noqa
+            #     "creator_identifier": m.get("identifiedBy")
+            #                           or m.get("creator")
+            #                           or occ.get("recordedBy"),
+            #     "publisher_dataset": occ.get("publisher")
+            #                          or m.get("publisher")
+            #                          or occ.get("institutionCode")
+            #                          or occ.get("rightsHolder")
+            #                          or occ.get("datasetName")
+            #                          or occ.get("collectionCode"),
+            # }
+            #
+            # # some fields requiring validation
+            # if (references := occ.get("references")) and references[
+            #                                              :4
+            #                                              ].lower() == "http":
+            #     d["references"] = occ["references"]
+            # else:
+            #     d["references"] = None
+            #
+            # # get the photo_file href
+            # if m.get("references") and (
+            #         "jpg" in m["references"].lower() or "jpeg" in m[
+            #     "references"].lower()
+            # ):
+            #     d["href"] = m["references"]
+            # elif m.get("identifier"):
+            #     d["href"] = m["identifier"]
+            # else:
+            #     return None
 
         # in rare cases, essential properties are missing
         except KeyError as err:
             logger.warning(str(err))
             return None
 
-        return d
+        return image_metadata
 
     @staticmethod
     def _parse_verbatim_locality(occ: dict) -> str | None:
@@ -99,21 +159,21 @@ class TaxonOccurencesLoader:
         return verbatim_locality
 
     @staticmethod
-    def _download_and_generate_thumbnail(info: dict) -> Optional[str]:
+    def _download_and_generate_thumbnail(info: ImageMetadata) -> Optional[str]:
         filename = (
-            f"{info['gbif_id']}_{info['occurrence_id']}_{info['img_no']}."
+            f"{info.gbif_id}_{info.occurrence_id}_{info.img_no}."
             f"{settings.images.size_thumbnail_image_taxon[0]}_"
             f"{settings.images.size_thumbnail_image_taxon[1]}.jpg"
         )
 
         if settings.paths.path_generated_thumbnails_taxon.joinpath(filename).is_file():
-            logger.debug(f'File already downloaded. Skipping download - {info["href"]}')
+            logger.debug(f"File already downloaded. Skipping download - {info.href}")
             return filename
 
-        logger.info(f'Downloading... {info["href"]}')
-        result = requests.get(info["href"], timeout=10)  # todo async http client
+        logger.info(f"Downloading... {str(info.href)}")
+        result = requests.get(info.href, timeout=10)  # todo async http client
         if result.status_code >= 300:  # noqa PLR2004
-            logger.warning(f'Download failed: {info["href"]}')
+            logger.warning(f"Download failed: {info.href}")
             return None
 
         image_bytes_io = BytesIO(result.content)
@@ -128,16 +188,16 @@ class TaxonOccurencesLoader:
                 ),
             )
         except OSError as err:
-            logger.warning(f"Could not load as image: {info['href']} ({str(err)}")
+            logger.warning(f"Could not load as image: {info.href} ({str(err)}")
             return None
 
-        info["filename_thumbnail"] = filename
+        info.filename_thumbnail = filename
         logger.debug(f"Saved {path_thumbnail}")
 
         return filename
 
-    def _treat_occurences(self, occs: list, gbif_id: int) -> list[dict]:
-        image_dicts = []
+    def _treat_occurences(self, occs: list[dict], gbif_id: int) -> list[ImageMetadata]:
+        image_dicts: list[ImageMetadata] = []
         for occ in occs:
             if len(image_dicts) >= local_config.max_images_per_taxon:
                 break
@@ -149,29 +209,32 @@ class TaxonOccurencesLoader:
                 if len(image_dicts) >= local_config.max_images_per_taxon:
                     break
 
-                d = self._get_image_metadata(occ, m, gbif_id)
-                if d:
-                    d["img_no"] = j
+                image_metadata = self._get_image_metadata(occ, m, gbif_id)
+                if image_metadata:
+                    image_metadata.img_no = j
 
-                    if filename_thumbnail := self._download_and_generate_thumbnail(d):
-                        d["filename_thumbnail"] = filename_thumbnail
+                    if filename_thumbnail := self._download_and_generate_thumbnail(
+                        image_metadata
+                    ):
+                        image_metadata.filename_thumbnail = filename_thumbnail
                     else:
                         continue
 
                     # validate (don't convert as this would validate datetime to str
                     try:
-                        TaxonOccurrenceImageRead(**d).dict()
+                        # TaxonOccurrenceImageRead(**d).dict()
+                        TaxonOccurrenceImageRead.parse_obj(image_metadata).dict()
                     except ValidationError as err:
                         throw_exception(str(err))
                         # logger.warning(str(err))
                         continue
 
                     # saving will happen later
-                    image_dicts.append(d)
+                    image_dicts.append(image_metadata)
 
         return image_dicts
 
-    async def _save_to_db(self, image_dicts: list[dict], gbif_id: int):
+    async def _save_to_db(self, image_dicts: list[ImageMetadata], gbif_id: int) -> None:
         # cleanup existing entries for taxon
         await self.taxon_dal.delete_taxon_to_occurrence_associations_by_gbif_id(gbif_id)
         await self.taxon_dal.delete_taxon_occurrence_image_by_gbif_id(gbif_id)
@@ -180,7 +243,7 @@ class TaxonOccurencesLoader:
         new_occurrence_images: list[TaxonOccurrenceImage] = []
         new_taxon_occ_links: list[TaxonToOccurrenceAssociation] = []
         for img in image_dicts:
-            record = TaxonOccurrenceImage(**img)
+            record = TaxonOccurrenceImage(**img.__dict__)
             new_occurrence_images.append(record)
 
             # assign occurrence image to each taxon with that gbif id (usually only one)
@@ -190,8 +253,8 @@ class TaxonOccurencesLoader:
             record_associations = [
                 TaxonToOccurrenceAssociation(
                     taxon_id=taxon_id,
-                    occurrence_id=img["occurrence_id"],
-                    img_no=img["img_no"],
+                    occurrence_id=img.occurrence_id,
+                    img_no=img.img_no,
                     gbif_id=gbif_id,
                 )
                 for taxon_id in taxon_ids
@@ -214,7 +277,9 @@ class TaxonOccurencesLoader:
         self, gbif_id: int
     ) -> list[TaxonOccurrenceImage]:
         logger.info(f"Searching occurrence immages for  {gbif_id}.")
-        occ_search = occ_api.search(taxonKey=gbif_id, mediaType="StillImage")
+        occ_search: dict[str, Any] = occ_api.search(
+            taxonKey=gbif_id, mediaType="StillImage"
+        )
         if not occ_search["results"]:
             logger.info(f"nothing found for {gbif_id}")
             return []
@@ -229,7 +294,7 @@ class TaxonOccurencesLoader:
         ]
 
         # get photo_file information & save thumbnail
-        image_dicts = self._treat_occurences(occurrences, gbif_id)
+        image_dicts: list[ImageMetadata] = self._treat_occurences(occurrences, gbif_id)
 
         # save information to database
         logger.info(
