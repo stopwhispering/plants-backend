@@ -10,7 +10,7 @@ from plants.modules.plant.util import (
 )
 
 
-def test_parse_roman_plant_index():
+def test_parse_roman_plant_index() -> None:
     subsequent_name = parse_roman_plant_index("Aloe depressa VI")
     assert subsequent_name == ("Aloe depressa", "VI")
     subsequent_name = parse_roman_plant_index("Aloe depressa I")
@@ -23,13 +23,13 @@ def test_parse_roman_plant_index():
         parse_roman_plant_index("Aloe depressa")
 
 
-def test_has_roman_plant_index():
+def test_has_roman_plant_index() -> None:
     assert has_roman_plant_index("Aloe depressa VI") is True
     assert has_roman_plant_index("× Aloe rauhii 'Demi' × Gasteria batesiana IX") is True
     assert has_roman_plant_index("Aloe depressa") is False
 
 
-def test_roman_to_int():
+def test_roman_to_int() -> None:
     assert roman_to_int("II") == 2
     assert roman_to_int("III") == 3
     assert roman_to_int("IV") == 4
@@ -42,7 +42,7 @@ def test_roman_to_int():
     assert roman_to_int("XIV") == 14
 
 
-def test_int_to_roman():
+def test_int_to_roman() -> None:
     assert int_to_roman(2) == "II"
     assert int_to_roman(3) == "III"
     assert int_to_roman(4) == "IV"

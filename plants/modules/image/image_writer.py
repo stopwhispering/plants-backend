@@ -22,10 +22,10 @@ class ImageWriter:
     async def update_image_if_altered(
         self,
         image: Image,
-        description: str,
+        description: str | None,
         plant_ids: Sequence[int],
         keywords: Sequence[str],
-    ):
+    ) -> None:
         """compare current database record for image with supplied field values;
         update db entry if different;
         Note: record_date_time is only set at upload, so we're not comparing or
@@ -75,7 +75,7 @@ class ImageWriter:
         self,
         relative_path: PurePath,
         record_date_time: datetime,
-        keywords: Sequence[str],
+        keywords: Sequence[str] | None,
         plants: list[Plant],
         # events and taxa are saved elsewhere
     ) -> Image:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -14,12 +14,14 @@ from plants.modules.event.models import Event, Observation, Pot, Soil
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from plants.modules.image.models import Image, ImageToEventAssociation
     from plants.modules.plant.models import Plant
 
 
 class EventDAL(BaseDAL):
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(session)
 
     async def get_events_by_plant(self, plant: Plant) -> list[Event]:
@@ -36,31 +38,31 @@ class EventDAL(BaseDAL):
         events: list[Event] = list((await self.session.scalars(query)).all())  # noqa
         return events
 
-    async def create_pot(self, pot: Pot):
+    async def create_pot(self, pot: Pot) -> None:
         self.session.add(pot)
         await self.session.flush()
 
-    async def create_observation(self, observation: Observation):
+    async def create_observation(self, observation: Observation) -> None:
         self.session.add(observation)
         await self.session.flush()
 
-    async def delete_observation(self, observation: Observation):
+    async def delete_observation(self, observation: Observation) -> None:
         await self.session.delete(observation)
         await self.session.flush()
 
-    async def create_soil(self, soil: Soil):
+    async def create_soil(self, soil: Soil) -> None:
         self.session.add(soil)
         await self.session.flush()
 
-    async def create_event(self, event: Event):
+    async def create_event(self, event: Event) -> None:
         self.session.add(event)
         await self.session.flush()
 
-    async def create_events(self, events: list[Event]):
+    async def create_events(self, events: list[Event]) -> None:
         self.session.add_all(events)
         await self.session.flush()
 
-    async def add_images_to_event(self, event: Event, images: list[Image]):
+    async def add_images_to_event(self, event: Event, images: list[Image]) -> None:
         for image in images:
             event.images.append(image)
         await self.session.flush()
@@ -77,7 +79,7 @@ class EventDAL(BaseDAL):
             raise SoilNotFoundError(soil_id)
         return soil
 
-    async def update_soil(self, soil: Soil, updates: dict):
+    async def update_soil(self, soil: Soil, updates: dict[str, Any]) -> None:
         for key, value in updates.items():
             if key == "soil_name":
                 soil.soil_name = value
@@ -109,7 +111,7 @@ class EventDAL(BaseDAL):
         event: Event | None = (await self.session.scalars(query)).first()
         return event
 
-    async def by_id(self, event_id) -> Event:
+    async def by_id(self, event_id: int) -> Event:
         query = (
             select(Event)
             .where(Event.id == event_id)  # noqa
@@ -126,13 +128,13 @@ class EventDAL(BaseDAL):
 
     async def delete_image_to_event_associations(
         self, links: list[ImageToEventAssociation], event: Event | None = None
-    ):
+    ) -> None:
         for link in links:
             if event:
                 event.image_to_event_associations.remove(link)
             await self.session.delete(link)
         await self.session.flush()
 
-    async def delete_event(self, event: Event):
+    async def delete_event(self, event: Event) -> None:
         await self.session.delete(event)
         await self.session.flush()

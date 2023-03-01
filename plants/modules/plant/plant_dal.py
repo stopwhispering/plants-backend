@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import selectinload
@@ -26,7 +26,7 @@ class PlantDAL(BaseDAL):
         super().__init__(session)
 
     @staticmethod
-    def _add_eager_load_options(query: Select) -> Select:
+    def _add_eager_load_options(query: Select[Any]) -> Select[Any]:
         """Apply eager loading the query supplied; use only for single- or limited-
         number select queries to avoid performance issues."""
         return query.options(
@@ -46,7 +46,7 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.florescences),
         )
 
-    async def by_id(self, plant_id: int, *, eager_load=True) -> Plant:
+    async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
         query = (
             select(Plant)
             .where(Plant.id == plant_id)  # noqa
@@ -66,9 +66,9 @@ class PlantDAL(BaseDAL):
         self,
         plant_name: str,
         *,
-        eager_load=True,
-        only_active=True,
-        raise_not_found=False,
+        eager_load: bool = True,
+        only_active: bool = True,
+        raise_not_found: bool = False,
     ) -> Plant | None:
         query = (
             select(Plant)
@@ -91,7 +91,7 @@ class PlantDAL(BaseDAL):
         return plant
 
     async def get_plant_ids_by_taxon_id(
-        self, taxon_id: int, *, eager_load=True, only_active=True
+        self, taxon_id: int, *, eager_load: bool = True, only_active: bool = True
     ) -> list[int]:
         query = (
             select(Plant.id)
@@ -109,7 +109,7 @@ class PlantDAL(BaseDAL):
         # todo does it reutrn tuple or list??
         return plants
 
-    async def get_plant_by_criteria(self, criteria: dict) -> list[Plant]:
+    async def get_plant_by_criteria(self, criteria: dict[str, Any]) -> list[Plant]:
         query = select(Plant).where(Plant.deleted.is_(False))  # noqa FBT003
         value: str
         for key, value in criteria.items():
@@ -165,7 +165,7 @@ class PlantDAL(BaseDAL):
         plant_ids: list[int] = list((await self.session.scalars(query)).all())  # noqa
         return plant_ids
 
-    async def create_plant(self, plant: Plant):
+    async def create_plant(self, plant: Plant) -> None:
         self.session.add(plant)
         await self.session.flush()
 
@@ -175,7 +175,7 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
         return await self.by_id(new_plant.id)  # adds eager load options
 
-    async def create_tags(self, tags: list[Tag]):
+    async def create_tags(self, tags: list[Tag]) -> None:
         self.session.add_all(tags)
         await self.session.flush()
 
@@ -187,7 +187,9 @@ class PlantDAL(BaseDAL):
         )
         return list((await self.session.scalars(query)).all())  # noqa
 
-    async def set_count_stored_pollen_containers(self, plant: Plant, count: int):
+    async def set_count_stored_pollen_containers(
+        self, plant: Plant, count: int
+    ) -> None:
         plant.count_stored_pollen_containers = count
         await self.session.flush()
 
@@ -251,7 +253,7 @@ class PlantDAL(BaseDAL):
         plant: Plant | None = (await self.session.scalars(query)).first()
         return plant is not None
 
-    async def delete(self, plant: Plant):
+    async def delete(self, plant: Plant) -> None:
         plant.deleted = True
         await self.session.flush()
 
@@ -264,7 +266,7 @@ class PlantDAL(BaseDAL):
         nurseries: list[str] = list((await self.session.scalars(query)).all())  # noqa
         return nurseries
 
-    async def update(self, plant: Plant, updates: dict):  # noqa C901
+    async def update(self, plant: Plant, updates: dict[str, Any]) -> None:  # noqa C901
         for key, value in updates.items():
             if key == "plant_name":
                 plant.plant_name = value
@@ -310,7 +312,7 @@ class PlantDAL(BaseDAL):
             raise TagNotFoundError(tag_id)
         return tag
 
-    async def update_tag(self, tag: Tag, updates: dict):
+    async def update_tag(self, tag: Tag, updates: dict[str, Any]) -> None:
         if "text" in updates:
             tag.text = updates["text"]
         if "state" in updates:
@@ -320,7 +322,7 @@ class PlantDAL(BaseDAL):
 
         await self.session.flush()
 
-    async def remove_tag_from_plant(self, plant: Plant, tag: Tag):
+    async def remove_tag_from_plant(self, plant: Plant, tag: Tag) -> None:
         if tag not in plant.tags:
             raise TagNotAssignedToPlantError(plant.id, tag.id)
         plant.tags.remove(tag)
@@ -329,14 +331,14 @@ class PlantDAL(BaseDAL):
 
     async def delete_image_to_plant_association(
         self, link: ImageToPlantAssociation, plant: Plant | None = None
-    ):
+    ) -> None:
         if plant:
             plant.image_to_plant_associations.remove(link)
         await self.session.delete(link)
         await self.session.flush()
 
     async def get_all_plants_with_relationships_loaded(
-        self, *, include_deleted=False
+        self, *, include_deleted: bool = False
     ) -> list[Plant]:
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants
@@ -371,7 +373,7 @@ class PlantDAL(BaseDAL):
         return plants
 
     async def get_all_plants_with_events_loaded(
-        self, *, include_deleted=False
+        self, *, include_deleted: bool = False
     ) -> list[Plant]:
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants

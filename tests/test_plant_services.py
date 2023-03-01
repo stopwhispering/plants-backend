@@ -10,16 +10,17 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from plants.modules.event.event_dal import EventDAL
+    from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
 
 
 @pytest.mark.asyncio()
 async def test_deep_clone_plant(
     test_db: AsyncSession,
-    plant_valid,
+    plant_valid: Plant,
     plant_dal: PlantDAL,
     event_dal: EventDAL,
-):
+) -> None:
     test_db.add(plant_valid)
     await test_db.commit()
     plant_valid = await plant_dal.by_id(plant_valid.id)

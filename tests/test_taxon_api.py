@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 @pytest.mark.asyncio()
 async def test_search_taxon(
     ac: AsyncClient,
-):
+) -> None:
     payload = {  # FTaxonInfoRequest
         "include_external_apis": True,
         "taxon_name_pattern": "Haworthiopsis koelmaniorum",
@@ -43,7 +43,7 @@ async def test_search_taxon(
 @pytest.mark.asyncio()
 async def test_save_taxon(
     ac: AsyncClient,
-):
+) -> None:
     """Search taxon from earlier test case and save one of the results."""
     payload = {  # FTaxonInfoRequest
         "include_external_apis": True,
@@ -79,7 +79,7 @@ async def test_save_taxon(
 
 
 @pytest.mark.asyncio()
-async def test_update_taxon(ac: AsyncClient, taxon_in_db: Taxon):
+async def test_update_taxon(ac: AsyncClient, taxon_in_db: Taxon) -> None:
     """Update taxon attribute custom_notes."""
     payload = {  # FModifiedTaxa
         "ModifiedTaxaCollection": [

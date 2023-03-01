@@ -1,9 +1,9 @@
 import logging
 import urllib.parse
-from typing import Final, Optional
+from typing import Any, Final, Optional
 
 import requests  # todo replace with async http client
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from pygbif import species
 from wikidata.client import Client
 
@@ -39,7 +39,7 @@ class GBIFIdentifierLookup:
             return None
         if resp.json().get("results"):
             # find our plant's record in ipni dataset at gbif
-            ipni_record = next(
+            ipni_record: Any = next(
                 (r for r in resp.json().get("results") if r.get("taxonID") == lsid), {}
             )
             # ... and make sure it has the correct identifier; if it has, we know we
@@ -100,6 +100,8 @@ class GBIFIdentifierLookup:
             logger.warning("No wikidata search results. Aborting.")
             return None
 
+        if not isinstance(tag_search_results_list, Tag):
+            return None
         tag_search_results = tag_search_results_list.find_all("li")
         if not tag_search_results:
             logger.warning("No wikidata search results. Aborting.")
@@ -130,8 +132,14 @@ class GBIFIdentifierLookup:
 
         # verify we have the correct plant by comparing with our ipni id
         correct_found = False
+
+        # satisfy mypy
+        if not wikidata_object.data:
+            return None
+        wikidata_claims: dict[str, Any] = wikidata_object.data["claims"]  # type:ignore
+
         # noinspection PyUnresolvedReferences
-        ipni_claim = wikidata_object.data["claims"].get(WIKIDATA_IPNI_PROPERTY_ID)
+        ipni_claim = wikidata_claims.get(WIKIDATA_IPNI_PROPERTY_ID)
         if ipni_claim:
             lsid_found = ipni_claim[0]["mainsnak"]["datavalue"]["value"]
             if lsid_found == lsid_number:
@@ -141,7 +149,7 @@ class GBIFIdentifierLookup:
         # which is the same
         # (sometimes, ipni is a synonym and powo is the correct one)
         # noinspection PyUnresolvedReferences
-        powo_claim = wikidata_object.data["claims"].get(WIKIDATA_POWO_PROPERTY_ID)
+        powo_claim = wikidata_claims.get(WIKIDATA_POWO_PROPERTY_ID)
         if powo_claim:
             lsid_found_raw = powo_claim[0]["mainsnak"]["datavalue"]["value"]
             lsid_found = lsid_found_raw[lsid.rfind(":") + 1 :]
@@ -158,7 +166,7 @@ class GBIFIdentifierLookup:
 
         # finally, get the gbif id
         # noinspection PyUnresolvedReferences
-        gbif_claim = wikidata_object.data["claims"].get(WIKIDATA_GBIF_PROPERTY_ID)
+        gbif_claim = wikidata_claims.get(WIKIDATA_GBIF_PROPERTY_ID)
         if not gbif_claim:
             logger.warning("Wikidata site found, but contains no gbif id.")
             return None

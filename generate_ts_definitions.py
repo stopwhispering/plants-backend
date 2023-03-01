@@ -75,7 +75,7 @@ def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
     return lines[:line_start_index] + lines[line_end_index + 1 :]
 
 
-def remove_shared_models(pydantic_model: PydanticModel):
+def remove_shared_models(pydantic_model: PydanticModel) -> None:
     with open(pydantic_model.path_ts) as f:
         lines = f.readlines()
     write = False
@@ -90,7 +90,7 @@ def remove_shared_models(pydantic_model: PydanticModel):
             f.writelines(lines)
 
 
-def remove_comments(pydantic_model: PydanticModel):
+def remove_comments(pydantic_model: PydanticModel) -> None:
     with open(pydantic_model.path_ts) as f:
         lines = f.readlines()
     # write = False
@@ -132,7 +132,7 @@ def _get_created_definitions_in_ts_file(pydantic_model: PydanticModel) -> set[st
     return set(class_names)
 
 
-def get_surplus_models_to_remove(pydantic_model: PydanticModel) -> tuple[str]:
+def get_surplus_models_to_remove(pydantic_model: PydanticModel) -> tuple[str, ...]:
     actual_models = _get_models_in_pydantic_file(model)
     created_definitions = _get_created_definitions_in_ts_file(pydantic_model)
     return tuple(created_definitions - actual_models)

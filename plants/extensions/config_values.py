@@ -116,7 +116,7 @@ class LocalConfig(BaseSettings):
     variables (or .env file) they are case-insensitive by default."""
 
     environment: Environment
-    connection_string: constr(min_length=1, strip_whitespace=True)
+    connection_string: constr(min_length=1, strip_whitespace=True)  # type:ignore
     max_images_per_taxon: int = 20
     allow_cors: bool = False
     log_settings: LogSettings

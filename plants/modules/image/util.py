@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import datetime
 import logging
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import piexif
-from PIL import Image
+from PIL import Image as PilImage
+
+from plants.shared.api_constants import FORMAT_FILENAME_TIMESTAMP
 
 if TYPE_CHECKING:
     from io import BytesIO
-
-    from PIL.JpegImagePlugin import JpegImageFile
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,9 @@ def generate_thumbnail(
     image: Union[Path, BytesIO],
     path_thumbnail: Path,
     size: tuple[int, int] = (100, 100),
-    filename_thumb: Union[PurePath, str] = None,
+    filename_thumb: Union[PurePath, str] | None = None,
     *,
-    ignore_missing_image_files=False,
+    ignore_missing_image_files: bool = False,
 ) -> Optional[Path]:
     """Generates a resized variant of an photo_file; returns the full local path supply
     original photo_file either as filename or i/o stream if Image is supplied as
@@ -49,16 +50,17 @@ def generate_thumbnail(
                 f"thumbnail. {image}"
             )
         return None
-    im = Image.open(image)
+    im = PilImage.open(image)
 
     # there's a bug in chrome: it's not respecting the orientation exif (unless directly
     # opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
-    exif_obj = im._getexif()  # noqa
-    im = _rotate_if_required(im, exif_obj)  # noqa
+    exif_obj: dict[str, Any] = im._getexif()  # type:ignore  # noqa
+    if exif_obj:
+        im = _rotate_if_required(im, exif_obj)  # noqa
 
-    im.thumbnail(tuple(size))
+    im.thumbnail(size)
 
     if not filename_thumb:
         filename_thumb = get_thumbnail_name(image.name, size)
@@ -73,20 +75,21 @@ def generate_thumbnail(
     return path_save
 
 
-def _rotate_if_required(image: JpegImageFile, exif_obj: Optional[dict]):
+def _rotate_if_required(
+    image: PilImage.Image, exif_obj: dict[str, Any]
+) -> PilImage.Image:
     """Rotate photo_file if exif file has a rotate directive (solves chrome bug not
     respecting orientation exif tag) no exif tag manipulation required as this is not
     saved to thumbnails anyway."""
-    if exif_obj:  # the photo_file might have no exif-tags
-        # noinspection PyProtectedMember
-        exif = dict(exif_obj.items())
-        if piexif.ImageIFD.Orientation in exif:
-            if exif[piexif.ImageIFD.Orientation] == _ORIENT_180:
-                return image.rotate(180, expand=True)
-            if exif[piexif.ImageIFD.Orientation] == _ORIENT_270:
-                return image.rotate(270, expand=True)
-            if exif[piexif.ImageIFD.Orientation] == _ORIENT_90:
-                return image.rotate(90, expand=True)
+    # noinspection PyProtectedMember
+    exif = dict(exif_obj.items())
+    if piexif.ImageIFD.Orientation in exif:
+        if exif[piexif.ImageIFD.Orientation] == _ORIENT_180:
+            return image.rotate(180, expand=True)
+        if exif[piexif.ImageIFD.Orientation] == _ORIENT_270:
+            return image.rotate(270, expand=True)
+        if exif[piexif.ImageIFD.Orientation] == _ORIENT_90:
+            return image.rotate(90, expand=True)
     return image
 
 
@@ -95,7 +98,7 @@ def resize_image(
 ) -> None:
     """load photo_file at supplied path, save resized photo_file to other path; observes
     size and quality params; original file is finally <<deleted>>"""
-    with Image.open(path.as_posix()) as image:
+    with PilImage.open(path.as_posix()) as image:
         image.thumbnail(size)  # preserves aspect ratio
         if image.info.get("exif"):
             image.save(
@@ -110,3 +113,7 @@ def resize_image(
 
     if path != save_to_path:
         path.unlink()  # delete file
+
+
+def generate_timestamp_filename() -> str:
+    return f"{datetime.datetime.now().strftime(FORMAT_FILENAME_TIMESTAMP)}.jpg"

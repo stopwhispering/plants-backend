@@ -16,7 +16,7 @@ class TooManyResultsError(HTTPException):
 class BaseError(HTTPException):
     """Base class for exceptions raised by this application."""
 
-    def __init__(self, detail: str | dict, status_code: int = 400):
+    def __init__(self, detail: str | dict[str, str | None], status_code: int = 400):
         super().__init__(status_code=status_code, detail=detail)
 
 

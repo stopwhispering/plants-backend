@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import datetime
 import logging
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy
@@ -29,6 +29,8 @@ from plants.modules.pollination.enums import (
 )
 
 if TYPE_CHECKING:
+    from decimal import Decimal
+
     from plants.modules.plant.models import Plant
 
 logger = logging.getLogger(__name__)
@@ -50,41 +52,48 @@ class Florescence(Base):
     plant: Mapped[Plant] = relationship(
         "Plant", back_populates="florescences"
     )  # class name is 'Plant'
-
-    inflorescence_appearance_date = Column(
-        DATE
-    )  # todo rename to inflorescence_appeared_at
+    # todo rename to inflorescence_appeared_at
+    inflorescence_appearance_date: datetime.date | None = Column(DATE)
     branches_count = Column(INTEGER)
     flowers_count = Column(INTEGER)
 
-    perianth_length = Column(Numeric(3, 1))  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter = Column(Numeric(2, 1))  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color = Column(VARCHAR(7))  # hex color code, e.g. #f2f600
-    flower_color_second = Column(VARCHAR(7))  # hex color code, e.g. #f2f600
-    flower_colors_differentiation = Column(sqlalchemy.Enum(FlowerColorDifferentiation))
-    stigma_position = Column(sqlalchemy.Enum(StigmaPosition))
+    # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_length: Decimal | None = Column(Numeric(3, 1))  # type:ignore
+    # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    perianth_diameter: Decimal | None = Column(Numeric(2, 1))  # type:ignore
+    # hex color code, e.g. #f2f600
+    flower_color: str | None = Column(VARCHAR(7))
+    flower_color_second: str | None = Column(VARCHAR(7))
+    flower_colors_differentiation: FlowerColorDifferentiation | None = Column(
+        sqlalchemy.Enum(FlowerColorDifferentiation)
+    )
+    stigma_position: StigmaPosition | None = Column(sqlalchemy.Enum(StigmaPosition))
 
-    first_flower_opening_date = Column(DATE)  # todo renamed to first_flower_opened_at
-    last_flower_closing_date = Column(DATE)  # todo renamed to last_flower_closed_at
+    # todo renamed to first_flower_opened_at
+    first_flower_opening_date: datetime.date | None = Column(DATE)
+    # todo renamed to last_flower_closed_at
+    last_flower_closing_date: datetime.date | None = Column(DATE)
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status = Column(Enum(FlorescenceStatus), nullable=False)
+    florescence_status: FlorescenceStatus = Column(
+        Enum(FlorescenceStatus), nullable=False
+    )
 
     # some redundancy! might be re-calculated from pollinations
-    first_seed_ripening_date = Column(DATE)
-    last_seed_ripening_date = Column(DATE)
-    avg_ripening_time = Column(FLOAT)  # in days
+    first_seed_ripening_date: datetime.date | None = Column(DATE)
+    last_seed_ripening_date: datetime.date | None = Column(DATE)
+    # in days
+    avg_ripening_time: float | None = Column(FLOAT)  # type:ignore
     # todo via relationship: first_seed_ripe_date, last_seed_ripe_date,
     #  average_ripening_time
 
-    comment: str | None = Column(
-        TEXT
-    )  # limited to max 40 chars in frontend, longer only for imported data
+    # limited to max 40 chars in frontend, longer only for imported data
+    comment: str | None = Column(TEXT)
 
-    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
     creation_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
     creation_context = Column(VARCHAR(30), nullable=False)
 
@@ -170,11 +179,11 @@ class Pollination(Base):
 
     comment = Column(TEXT)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
 
     created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
     creation_at_context = Column(VARCHAR(30), nullable=False)
 

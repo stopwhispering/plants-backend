@@ -141,7 +141,7 @@ def _create_formatted_name(parts: list[PartOfBotanicalName], *, html: bool) -> s
 
 
 def _create_publication_parts(
-    botanical_name_input: BotanicalNameInput | None,
+    botanical_name_input: BotanicalNameInput,
 ) -> list[PartOfBotanicalName]:
     if not botanical_name_input.authors:
         return []

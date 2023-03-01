@@ -46,8 +46,21 @@ repos:
 #          "-rn", # Only display messages
 #          "-sn", # Don't display the score
 #        ]
+
 -   repo: https://github.com/PyCQA/docformatter
     rev: v1.5.1
     hooks:
       - id: docformatter
         args: [--in-place, --wrap-summaries=88, --wrap-descriptions=88]
+
+#-   repo: https://github.com/pre-commit/mirrors-mypy
+#    # configured in pyproject.toml
+#    rev: v0.902
+#    hooks:
+#      - id: mypy
+#        additional_dependencies:
+#        # list plugin packages from pyproject.toml mypy section
+#          - "sqlalchemy"
+#          - "pydantic"
+#          - "numpy"
+#          - "pandera"

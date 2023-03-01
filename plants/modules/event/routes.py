@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
@@ -43,7 +44,7 @@ router = APIRouter(
 async def get_soils(
     event_dal: EventDAL = Depends(get_event_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     soils = await fetch_soils(event_dal=event_dal, plant_dal=plant_dal)
     return {"SoilsCollection": soils}
 
@@ -51,7 +52,7 @@ async def get_soils(
 @router.post("/events/soils", response_model=BPResultsUpdateCreateSoil)
 async def create_new_soil(
     new_soil: SoilCreate, event_dal: EventDAL = Depends(get_event_dal)
-):
+) -> Any:
     """Create new soil and return it with (newly assigned) id."""
     soil = await create_soil(soil=new_soil, event_dal=event_dal)
 
@@ -62,7 +63,7 @@ async def create_new_soil(
 @router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
 async def update_existing_soil(
     updated_soil: SoilUpdate, event_dal: EventDAL = Depends(get_event_dal)
-):
+) -> Any:
     """Update soil attributes."""
     soil: Soil = await update_soil(soil=updated_soil, event_dal=event_dal)
 
@@ -73,7 +74,7 @@ async def update_existing_soil(
 @router.get("/events/{plant_id}", response_model=BResultsEventResource)
 async def get_events(
     plant: Plant = Depends(valid_plant), event_dal: EventDAL = Depends(get_event_dal)
-):
+) -> Any:
     """Returns events from event database table."""
     events = await read_events_for_plant(plant, event_dal=event_dal)
 
@@ -91,7 +92,7 @@ async def create_or_update_events(
     event_dal: EventDAL = Depends(get_event_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """save n events for n plants in database (add, modify, delete)"""
     # frontend submits a dict with events for those plants where at least one event has
     # been changed, added, or
@@ -99,7 +100,7 @@ async def create_or_update_events(
 
     # loop at the plants and their events, identify additions, deletions, and updates
     # and save them
-    counts: defaultdict = defaultdict(int)
+    counts: defaultdict[str, int] = defaultdict(int)
     event_writer = EventWriter(
         event_dal=event_dal, image_dal=image_dal, plant_dal=plant_dal
     )

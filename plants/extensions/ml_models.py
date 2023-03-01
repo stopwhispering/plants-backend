@@ -38,7 +38,7 @@ def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContain
     return pipeline, feature_container
 
 
-def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer):
+def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer) -> None:
     """Called from manually executed script, not used in
     application/frontend/automatically."""
     path = settings.paths.path_pickled_ml_models.joinpath(

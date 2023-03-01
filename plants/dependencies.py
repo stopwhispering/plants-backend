@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import Depends
 
 # if TYPE_CHECKING:
@@ -17,8 +19,11 @@ from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.history_dal import HistoryDAL
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
-async def get_db():
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Generator for db sessions."""
     # async with orm.SessionFactory.create_session() as db:
     db = orm.SessionFactory.create_session()
@@ -31,23 +36,23 @@ async def get_db():
         await db.close()
 
 
-def get_pollination_dal(db: AsyncSession = Depends(get_db)):
+def get_pollination_dal(db: AsyncSession = Depends(get_db)) -> PollinationDAL:
     return PollinationDAL(db)
 
 
-def get_florescence_dal(db: AsyncSession = Depends(get_db)):
+def get_florescence_dal(db: AsyncSession = Depends(get_db)) -> FlorescenceDAL:
     return FlorescenceDAL(db)
 
 
-def get_history_dal(db: AsyncSession = Depends(get_db)):
+def get_history_dal(db: AsyncSession = Depends(get_db)) -> HistoryDAL:
     return HistoryDAL(db)
 
 
-def get_image_dal(db: AsyncSession = Depends(get_db)):
+def get_image_dal(db: AsyncSession = Depends(get_db)) -> ImageDAL:
     return ImageDAL(db)
 
 
-def get_plant_dal(db: AsyncSession = Depends(get_db)):
+def get_plant_dal(db: AsyncSession = Depends(get_db)) -> PlantDAL:
     return PlantDAL(db)
 
 
@@ -55,7 +60,7 @@ def get_taxon_dal(db: AsyncSession = Depends(get_db)) -> TaxonDAL:
     return TaxonDAL(db)
 
 
-def get_event_dal(db: AsyncSession = Depends(get_db)):
+def get_event_dal(db: AsyncSession = Depends(get_db)) -> EventDAL:
     return EventDAL(db)
 
 

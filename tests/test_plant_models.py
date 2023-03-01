@@ -20,8 +20,9 @@ async def dummy() -> None:
     resource error if they don't use any function-scoped fixtures."""
 
 
+@pytest.mark.usefixtures("dummy")
 @pytest.mark.asyncio()
-async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):  # noqa
+async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL) -> None:
     plant = Plant(field_number="A100")  # plant_name, active, deleted are required
     test_db.add(plant)
     with pytest.raises(IntegrityError):
@@ -32,19 +33,22 @@ async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL, dummy):
     assert len(plants) == 0
 
 
+@pytest.mark.usefixtures("dummy")
 @pytest.mark.asyncio()
-async def test_plant_valid(plant_dal: PlantDAL, dummy):  # noqa
+async def test_plant_valid(plant_dal: PlantDAL) -> None:
     plant_name = "Aloe Vera"
     plant = Plant(plant_name=plant_name, active=True, deleted=False)
     await plant_dal.create_plant(plant)
 
     p = await plant_dal.by_name(plant_name)
+    assert p is not None
     assert p.plant_name == plant_name
     assert p.id is not None
 
 
+@pytest.mark.usefixtures("dummy")
 @pytest.mark.asyncio()
-async def test_plant_duplicate_name(test_db, dummy):  # noqa
+async def test_plant_duplicate_name(test_db: AsyncSession) -> None:
     test_db.add(Plant(plant_name="Aloe Vera", active=True, deleted=False))
     await test_db.flush()
 

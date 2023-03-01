@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -16,12 +18,12 @@ class SessionFactory:
     # transactions under the hood to run their automatically-generated SQL statements.
     # It keeps track of new,
     # removed and changed ORM model instances while they are in use.
-    session_factory: sessionmaker = None
+    session_factory: sessionmaker[Any] | None = None
 
     @classmethod
     def create_sessionmaker(cls, engine: AsyncEngine) -> None:
         """Create a sessionmaker for a given db engine."""
-        cls.session_factory = sessionmaker(  # noqa
+        cls.session_factory = sessionmaker(  # type:ignore  # noqa
             engine,
             autocommit=False,
             autoflush=False,
@@ -30,15 +32,15 @@ class SessionFactory:
         )
 
     @classmethod
-    def create_session(cls):
-        return cls.session_factory()
+    def create_session(cls) -> AsyncSession:
+        return cls.session_factory()  # type:ignore
 
     @classmethod
-    def get_session_factory(cls):
+    def get_session_factory(cls) -> sessionmaker[Any]:
         if cls.session_factory is None:
             raise ValueError("Session factory not set")
         return cls.session_factory
 
 
-async def init_orm(engine: AsyncEngine):
+async def init_orm(engine: AsyncEngine) -> None:
     SessionFactory.create_sessionmaker(engine=engine)

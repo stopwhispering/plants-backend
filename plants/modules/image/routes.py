@@ -6,6 +6,7 @@ import logging
 
 # if TYPE_CHECKING:
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
@@ -55,7 +56,7 @@ router = APIRouter(
 async def get_images_for_plant(
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
-):
+) -> Any:
     """Get photo_file information for requested plant_id including (other) plants and
     keywords."""
     images = await fetch_images_for_plant(plant, image_dal=image_dal)
@@ -69,7 +70,7 @@ async def upload_images_plant(
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Upload images and directly assign them to supplied plant; no keywords included.
 
     # the ui5 uploader control does somehow not work with the expected form/multipart
@@ -79,7 +80,7 @@ async def upload_images_plant(
     """
     form = await request.form()
     # noinspection PyTypeChecker
-    files: list[UploadFile] = form.getlist("files[]")
+    files: list[UploadFile] = form.getlist("files[]")  # type:ignore
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(
@@ -138,7 +139,7 @@ async def upload_images_plant(
 
 
 @router.get("/images/untagged/", response_model=BResultsImageResource)
-async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)):
+async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)) -> Any:
     """Get images with no plants assigned, yet."""
     untagged_images: list[ImageCreateUpdate] = await fetch_untagged_images(
         image_dal=image_dal
@@ -156,7 +157,7 @@ async def update_images(
     modified_ext: BImageUpdated,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Modify existing photo_file's metadata."""
     logger.info(
         f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and "
@@ -194,16 +195,16 @@ async def upload_images(
     request: Request,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """upload new photo_file(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart
     # format expected
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
     form = await request.form()
-    additional_data = json.loads(form.get("files-data"))
+    additional_data = json.loads(form.get("files-data"))  # type:ignore
     # noinspection PyTypeChecker
-    files: list[UploadFile] = form.getlist("files[]")
+    files: list[UploadFile] = form.getlist("files[]")  # type:ignore
 
     # validate arguments manually as pydantic doesn't trigger here
     try:
@@ -274,7 +275,7 @@ async def upload_images(
 @router.delete("/images/", response_model=BResultsImageDeleted)
 async def delete_image(
     image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)
-):
+) -> Any:
     """move the file that should be deleted to another folder (not actually deleted,
     currently)"""
     for image_to_delete in image_container.images:
@@ -311,7 +312,7 @@ async def get_occurrence_thumbnail(
     occurrence_id: int,
     img_no: int,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
-):
+) -> Any:
     path: Path = await get_occurrence_thumbnail_path(
         gbif_id=gbif_id, occurrence_id=occurrence_id, img_no=img_no, taxon_dal=taxon_dal
     )
@@ -323,10 +324,10 @@ async def get_occurrence_thumbnail(
 @router.get("/photo", response_class=FileResponse)
 async def get_photo(
     filename: str,
-    width: int = None,
-    height: int = None,
+    width: int | None = None,
+    height: int | None = None,
     image_dal: ImageDAL = Depends(get_image_dal),
-):
+) -> Any:
     image_path = await get_image_path_by_size(
         filename=filename, width=width, height=height, image_dal=image_dal
     )
@@ -340,7 +341,7 @@ async def get_photo(
 @router.post("/generate_missing_thumbnails", response_model=BConfirmation)
 async def trigger_generate_missing_thumbnails(
     background_tasks: BackgroundTasks, image_dal: ImageDAL = Depends(get_image_dal)
-):
+) -> Any:
     """Trigger the generation of missing thumbnails for occurrences."""
     msg = await trigger_generation_of_missing_thumbnails(
         image_dal=image_dal, background_tasks=background_tasks

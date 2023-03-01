@@ -126,7 +126,9 @@ class PhotoMetadataAccessExifTags:
             )  # set access and modifide date
 
     @staticmethod
-    def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]):
+    def _rewrite_plant_assignments_in_exif_tags(
+        absolute_path: Path, plants: list[str]
+    ) -> None:
         """rewrite the plants assigned to the photo_file at the supplied path; keep the
         last-modifide date (called in context of renaming)"""
         if (

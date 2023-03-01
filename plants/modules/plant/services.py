@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from plants import settings
 from plants.exceptions import PlantAlreadyExistsError
@@ -14,7 +14,6 @@ from plants.modules.plant.util import (
 )
 
 if TYPE_CHECKING:
-    from plants.extensions.orm import Base
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
@@ -83,10 +82,12 @@ async def update_plants_from_list_of_dicts(
     return plants_saved
 
 
-def _clone_instance(model_instance: Base, clone_attrs: Optional[dict] = None):
+def _clone_instance(
+    model_instance: Any, clone_attrs: Optional[dict[str, Any]] = None
+) -> Any:
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
-    table = model_instance.__table__  # type:ignore
+    table = model_instance.__table__
     non_pk_columns = [k for k in table.columns if k not in table.primary_key]
     data = {c: getattr(model_instance, c) for c in non_pk_columns}
     if clone_attrs:
@@ -99,8 +100,7 @@ async def deep_clone_plant(
     plant_name_clone: str,
     plant_dal: PlantDAL,
     event_dal: EventDAL,
-    # property_dal: PropertyDAL,
-):
+) -> None:
     """clone supplied plant includes duplication of events, photo_file-to-event
     assignments, tags excludes descendant plants assignments to same instances of parent
     plants, parent plants pollen (nothing to do here)"""
@@ -137,7 +137,9 @@ async def deep_clone_plant(
     await plant_dal.create_plant(plant_clone)
 
 
-async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL):
+async def _treat_tags(
+    plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL
+) -> None:
     """Update modified tags; returns list of new tags (not yet added or committed);
     removes deleted tags."""
     new_tags = []

@@ -16,7 +16,7 @@ class FBImageAssignedToEvent(BaseSchema):
 class SoilBase(BaseSchema):
     id: int
     soil_name: constr(min_length=1, max_length=100)  # type:ignore
-    mix: str | None
+    mix: str
     description: str | None
 
 

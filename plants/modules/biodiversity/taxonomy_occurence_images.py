@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
-import dateutil
 import requests
+from dateutil.parser import isoparse
 from pydantic.error_wrappers import ValidationError
 from pygbif import occurrences as occ_api
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +21,13 @@ from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
 from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
+    from plants.modules.biodiversity.api_typedefs import (
+        GbifMediaDict,
+        GbifOccurrenceResultDict,
+        GbifOccurrenceResultResponse,
+    )
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
@@ -32,12 +39,12 @@ class ImageMetadata:
     gbif_id: int
     scientific_name: str
     basis_of_record: str
-    verbatim_locality: str
-    date: str
+    verbatim_locality: str | None
+    date: datetime | None
     creator_identifier: str
     publisher_dataset: str
-    references: str | None = None
-    href: str | None = None
+    href: str
+    references: str | None
     img_no: int | None = None
     filename_thumbnail: str | None = None
 
@@ -47,7 +54,7 @@ class TaxonOccurencesLoader:
         self.taxon_dal = taxon_dal
 
     def _get_image_metadata(
-        self, occ: dict, m: dict, gbif_id: int
+        self, occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int
     ) -> ImageMetadata | None:
         # todo refactor this function
         if "created" not in m and "eventDate" not in occ:
@@ -55,6 +62,26 @@ class TaxonOccurencesLoader:
             return None
 
         try:
+            # some fields requiring validation
+            if (references := occ.get("references")) and references[
+                :4
+            ].lower() == "http":
+                references_ = occ["references"]
+            else:
+                references_ = None
+
+            # get the photo_file href
+            if m.get("references") and (
+                "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
+            ):
+                href_ = m["references"]
+            elif m.get("identifier"):
+                href_ = m["identifier"]
+            else:
+                return None
+
+            created_ = m.get("created") or occ.get("eventDate")
+            date_ = isoparse(created_) if created_ else None
             image_metadata = ImageMetadata(
                 occurrence_id=occ["key"],
                 gbif_id=gbif_id,  # occ['taxonKey'],
@@ -63,78 +90,21 @@ class TaxonOccurencesLoader:
                 ],  # redundant, but show as additional info
                 basis_of_record=occ["basisOfRecord"],
                 verbatim_locality=self._parse_verbatim_locality(occ),
-                date=dateutil.parser.isoparse(  # noqa
-                    m.get("created") or occ.get("eventDate")
-                ),  # noqa
+                date=date_,
                 creator_identifier=m.get("identifiedBy")
                 or m.get("creator")
-                or occ.get("recordedBy"),
+                or occ.get("recordedBy")
+                or "Unknown Creator",
                 publisher_dataset=occ.get("publisher")
                 or m.get("publisher")
                 or occ.get("institutionCode")
                 or occ.get("rightsHolder")
                 or occ.get("datasetName")
-                or occ.get("collectionCode"),
+                or occ.get("collectionCode")
+                or "Unknown Publisher",
+                references=references_,
+                href=href_,
             )
-
-            # some fields requiring validation
-            if (references := occ.get("references")) and references[
-                :4
-            ].lower() == "http":
-                image_metadata.references = occ["references"]
-            else:
-                image_metadata.references = None
-
-            # get the photo_file href
-            if m.get("references") and (
-                "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
-            ):
-                image_metadata.href = m["references"]
-            elif m.get("identifier"):
-                image_metadata.href = m["identifier"]
-            else:
-                return None
-
-            # d = {
-            #     "occurrence_id": occ["key"],
-            #     "gbif_id": gbif_id,  # occ['taxonKey'],
-            #     "scientific_name": occ[
-            #         "scientificName"
-            #     ],  # redundant, but show as additional info
-            #     "basis_of_record": occ["basisOfRecord"],
-            #     "verbatim_locality": self._parse_verbatim_locality(occ),
-            #     "date": dateutil.parser.isoparse(  # noqa
-            #         m.get("created") or occ.get("eventDate")
-            #     ),  # noqa
-            #     "creator_identifier": m.get("identifiedBy")
-            #                           or m.get("creator")
-            #                           or occ.get("recordedBy"),
-            #     "publisher_dataset": occ.get("publisher")
-            #                          or m.get("publisher")
-            #                          or occ.get("institutionCode")
-            #                          or occ.get("rightsHolder")
-            #                          or occ.get("datasetName")
-            #                          or occ.get("collectionCode"),
-            # }
-            #
-            # # some fields requiring validation
-            # if (references := occ.get("references")) and references[
-            #                                              :4
-            #                                              ].lower() == "http":
-            #     d["references"] = occ["references"]
-            # else:
-            #     d["references"] = None
-            #
-            # # get the photo_file href
-            # if m.get("references") and (
-            #         "jpg" in m["references"].lower() or "jpeg" in m[
-            #     "references"].lower()
-            # ):
-            #     d["href"] = m["references"]
-            # elif m.get("identifier"):
-            #     d["href"] = m["identifier"]
-            # else:
-            #     return None
 
         # in rare cases, essential properties are missing
         except KeyError as err:
@@ -144,7 +114,7 @@ class TaxonOccurencesLoader:
         return image_metadata
 
     @staticmethod
-    def _parse_verbatim_locality(occ: dict) -> str | None:
+    def _parse_verbatim_locality(occ: GbifOccurrenceResultDict) -> str | None:
         verbatim_locality = occ.get("verbatimLocality") or occ.get("locality")
         if verbatim_locality:
             if occ.get("countryCode") and occ.get("stateProvince"):
@@ -196,15 +166,17 @@ class TaxonOccurencesLoader:
 
         return filename
 
-    def _treat_occurences(self, occs: list[dict], gbif_id: int) -> list[ImageMetadata]:
+    def _treat_occurences(
+        self, occs: list[GbifOccurrenceResultDict], gbif_id: int
+    ) -> list[ImageMetadata]:
         image_dicts: list[ImageMetadata] = []
         for occ in occs:
             if len(image_dicts) >= local_config.max_images_per_taxon:
                 break
 
-            media = [
-                m for m in occ["media"] if "format" in m
-            ]  # some entries are not parseable
+            # some entries are not parseable
+            media = [m for m in occ["media"] if "format" in m]
+            m: GbifMediaDict
             for j, m in enumerate(media, 1):
                 if len(image_dicts) >= local_config.max_images_per_taxon:
                     break
@@ -277,9 +249,10 @@ class TaxonOccurencesLoader:
         self, gbif_id: int
     ) -> list[TaxonOccurrenceImage]:
         logger.info(f"Searching occurrence immages for  {gbif_id}.")
-        occ_search: dict[str, Any] = occ_api.search(
+        occ_search: GbifOccurrenceResultResponse = occ_api.search(
             taxonKey=gbif_id, mediaType="StillImage"
         )
+
         if not occ_search["results"]:
             logger.info(f"nothing found for {gbif_id}")
             return []

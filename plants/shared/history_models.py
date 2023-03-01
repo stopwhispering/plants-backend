@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import INTEGER, TEXT, VARCHAR, Column, Identity
 from sqlalchemy.types import DateTime
 
@@ -8,14 +10,14 @@ class History(Base):
     """History of certain events; used for error-finding et alia."""
 
     __tablename__ = "history"
-    id = Column(
+    id: int = Column(
         INTEGER,
         Identity(start=1, cycle=True, always=False),
         primary_key=True,
         nullable=False,
     )
-
-    timestamp = Column(DateTime(timezone=True))  # todo rename
-    plant_id = Column(INTEGER)
-    plant_name = Column(VARCHAR(100))
-    description = Column(TEXT)
+    # todo rename
+    timestamp: datetime.datetime = Column(DateTime(timezone=True), nullable=False)
+    plant_id: int = Column(INTEGER, nullable=False)
+    plant_name: str = Column(VARCHAR(100), nullable=False)
+    description: str = Column(TEXT, nullable=False)

@@ -1,21 +1,19 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
 
-def get_accepted_synonym_label(powo_lookup: dict) -> str | None:
+def get_accepted_synonym_label(powo_lookup: dict[str, Any]) -> str | None:
     """Parses synonyms from powo lookup dictionary into a string."""
     if powo_lookup.get("synonym"):
-        if "accepted" in powo_lookup and (
-            accepted_name := powo_lookup["accepted"].get("name")
-        ):
-            return "Accepted: " + accepted_name
+        if "accepted" in powo_lookup and "name" in powo_lookup["accepted"]:
+            return "Accepted: " + powo_lookup["accepted"]  # type:ignore
         return "Accepted: unknown"
     return None
 
 
-def get_concatenated_distribution(powo_lookup: dict) -> str | None:
+def get_concatenated_distribution(powo_lookup: dict[str, Any]) -> str | None:
     """Parses areas from powo lookup dictionary into a string."""
     if "distribution" in powo_lookup and "natives" in powo_lookup["distribution"]:
         result = (
@@ -40,7 +38,7 @@ def get_concatenated_distribution(powo_lookup: dict) -> str | None:
     return result
 
 
-def create_synonyms_concat(powo_lookup: dict) -> Optional[str]:
+def create_synonyms_concat(powo_lookup: dict[str, Any]) -> Optional[str]:
     """Parses synonyms from powo lookup dictionary into a string."""
     if "synonyms" in powo_lookup and powo_lookup["synonyms"]:
         return ", ".join([s["name"] for s in powo_lookup["synonyms"]])

@@ -1434,14 +1434,14 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pre-commit"
-version = "3.1.0"
+version = "3.1.1"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pre_commit-3.1.0-py2.py3-none-any.whl", hash = "sha256:7001dfcd174540658822b1fd3630ceadf4f41375a5d1844b5c3b3830f227348c"},
-    {file = "pre_commit-3.1.0.tar.gz", hash = "sha256:61bd9f1b96d3d1e763f2a9a0f8522aed341646800642ff6803c73fac5781f5b7"},
+    {file = "pre_commit-3.1.1-py2.py3-none-any.whl", hash = "sha256:b80254e60668e1dd1f5c03a1c9e0413941d61f568a57d745add265945f65bfe8"},
+    {file = "pre_commit-3.1.1.tar.gz", hash = "sha256:d63e6537f9252d99f65755ae5b79c989b462d511ebbc481b561db6a297e1e865"},
 ]
 
 [package.dependencies]
@@ -2169,6 +2169,18 @@ files = [
 ]
 
 [[package]]
+name = "types-pillow"
+version = "9.4.0.17"
+description = "Typing stubs for Pillow"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-Pillow-9.4.0.17.tar.gz", hash = "sha256:7f0e871d2d46fbb6bc7deca3e02dc552cf9c1e8b49deb9595509551be3954e49"},
+    {file = "types_Pillow-9.4.0.17-py3-none-any.whl", hash = "sha256:f8b848a05f17cb4d53d245c59bf560372b9778d4cfaf9705f6245009bf9f65f3"},
+]
+
+[[package]]
 name = "types-requests"
 version = "2.28.11.15"
 description = "Typing stubs for requests"
@@ -2410,4 +2422,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "15d5c8a0dfd89309501b250a87bca524dfb643c190ccc4f1dac4c0e87a84a6be"
+content-hash = "f546785c7e5d4e58b408443d9180dd56b3c66ffde631557bfea9ba67ca5f7468"

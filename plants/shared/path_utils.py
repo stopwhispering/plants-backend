@@ -13,7 +13,9 @@ def with_suffix(path: Path, suffix: str) -> Path:
     return path.with_name(filename_new)
 
 
-def get_generated_filename(filename_original: str, size: tuple[int, int] = None) -> str:
+def get_generated_filename(
+    filename_original: str, size: tuple[int, int] | None = None
+) -> str:
     """get the derivative filename of a resized photo_file file (when creating
     thumbnails, a common naming convention is applied that adds resolution as a suffix
     to the filename)"""
@@ -34,7 +36,7 @@ def find_jpg_files(folder: Path) -> set[Path]:
     return set(paths)
 
 
-def create_if_not_exists(folders: Sequence[Path], *, parents: bool):
+def create_if_not_exists(folders: Sequence[Path], *, parents: bool) -> None:
     """create folders if not exist; optionally recursively incl.
 
     parents

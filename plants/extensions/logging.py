@@ -15,8 +15,8 @@ def configure_root_logger(
     log_severity_console: LogLevel,
     log_severity_file: LogLevel,
     log_file_path: Path = Path("./plants.log"),
-    log_filter: logging.Filter = None,
-):
+    log_filter: logging.Filter | None = None,
+) -> None:
     """Configure the root logger; each module's default (__name__) logger will inherit
     these settings."""
     logger = logging.getLogger()  # no name returns the root logger

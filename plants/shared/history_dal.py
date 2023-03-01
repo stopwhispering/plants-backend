@@ -15,10 +15,10 @@ class HistoryDAL(BaseDAL):
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    async def create(self, history: History):
+    async def create(self, history: History) -> None:
         self.session.add(history)
         await self.session.flush()
 
-    async def get_all(self):
+    async def get_all(self) -> list[History]:
         query = select(History)
-        return (await self.session.scalars(query)).all()
+        return list((await self.session.scalars(query)).all())

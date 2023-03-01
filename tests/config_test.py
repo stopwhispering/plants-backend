@@ -16,10 +16,10 @@ class ConfigTest(BaseSettings):
     """Secrets and other environment-specific settings are specified in environment
     variables (or .env file) they are case-insensitive by default."""
 
-    test_db_drivername: constr(min_length=1, strip_whitespace=True)
-    test_db_username: constr(min_length=1, strip_whitespace=True)
-    test_db_password: constr(min_length=1, strip_whitespace=True)
-    test_db_host: constr(min_length=1, strip_whitespace=True)
+    test_db_drivername: constr(min_length=1, strip_whitespace=True)  # type:ignore
+    test_db_username: constr(min_length=1, strip_whitespace=True)  # type:ignore
+    test_db_password: constr(min_length=1, strip_whitespace=True)  # type:ignore
+    test_db_host: constr(min_length=1, strip_whitespace=True)  # type:ignore
     test_db_port: int
 
     class Config:
@@ -45,7 +45,7 @@ def generate_db_url(database: str = "postgres") -> URL:
     )
 
 
-async def create_tables_if_required(engine: AsyncEngine):
+async def create_tables_if_required(engine: AsyncEngine) -> None:
     """Uses metadata's connection if no engine supplied."""
     # import all orm tables. don't remove!
     # this populates Base.metadata's list of tables
@@ -57,8 +57,8 @@ async def create_tables_if_required(engine: AsyncEngine):
     import plants.shared.history_models  # noqa
 
     # create db tables if not existing
+    conn: AsyncConnection
     async with engine.begin() as conn:
-        conn: AsyncConnection
         await conn.run_sync(Base.metadata.create_all)
         # await conn.commit()
         # await conn.close()

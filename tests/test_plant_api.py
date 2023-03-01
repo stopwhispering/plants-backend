@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from plants.exceptions import PlantNotFoundError
+from plants.modules.plant.schemas import BPlantsRenameRequest
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio()
-async def test_plants_query_empty(ac: AsyncClient):
+async def test_plants_query_empty(ac: AsyncClient) -> None:
     response = await ac.get("/api/plants/")
     assert response.status_code == 200
     assert response.json().get("action") == "Get plants"
@@ -25,7 +26,7 @@ async def test_plants_query_empty(ac: AsyncClient):
 
 
 @pytest.mark.asyncio()
-async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant):
+async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant) -> None:
     response = await ac.get("/api/plants/")
     assert response.status_code == 200
     assert response.json().get("action") == "Get plants"
@@ -36,7 +37,9 @@ async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant):
 
 
 @pytest.mark.asyncio()
-async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict):
+async def test_plant_create_valid(
+    ac: AsyncClient, valid_simple_plant_dict: Plant
+) -> None:
     payload = {"PlantsCollection": [valid_simple_plant_dict]}
     response = await ac.post("/api/plants/", json=payload)
     assert response.status_code == 200
@@ -52,18 +55,22 @@ async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict):
 
 @pytest.mark.asyncio()
 async def test_plant_rename_valid(
-    test_db, ac: AsyncClient, plant_valid_in_db, plant_dal, history_dal
-):
-    payload = {
-        "plant_id": plant_valid_in_db.id,
-        "old_plant_name": plant_valid_in_db.plant_name,
-        "new_plant_name": "Aloe ferox var. ferox 'variegata'",
-    }
-    response = await ac.put("/api/plants/", json=payload)
+    test_db: AsyncSession,
+    ac: AsyncClient,
+    plant_valid_in_db: Plant,
+    plant_dal: PlantDAL,
+    history_dal: HistoryDAL,
+) -> None:
+    payload_ = BPlantsRenameRequest(
+        plant_id=plant_valid_in_db.id,
+        old_plant_name=plant_valid_in_db.plant_name,
+        new_plant_name="Aloe ferox var. ferox 'variegata'",
+    )
+    response = await ac.put("/api/plants/", json=payload_.dict())
     assert response.status_code == 200
 
     await test_db.refresh(plant_valid_in_db)
-    assert not await plant_dal.exists(payload["old_plant_name"])
+    assert not await plant_dal.exists(payload_.old_plant_name)
     assert plant_valid_in_db.plant_name == "Aloe ferox var. ferox 'variegata'"
 
     history_entries = await history_dal.get_all()
@@ -75,10 +82,10 @@ async def test_plant_rename_valid(
 @pytest.mark.asyncio()
 async def test_plant_rename_target_exists(
     ac: AsyncClient,
-    plant_valid_in_db,
-    plant_valid_with_active_florescence_in_db,
+    plant_valid_in_db: Plant,
+    plant_valid_with_active_florescence_in_db: Plant,
     history_dal: HistoryDAL,
-):
+) -> None:
     payload = {
         "plant_id": plant_valid_in_db.id,
         "old_plant_name": plant_valid_in_db.plant_name,
@@ -93,7 +100,7 @@ async def test_plant_rename_target_exists(
 
 
 @pytest.mark.asyncio()
-async def test_plant_rename_source_not_exists(ac: AsyncClient):
+async def test_plant_rename_source_not_exists(ac: AsyncClient) -> None:
     payload = {
         "plant_id": 11551,
         "old_plant_name": "Aloe nonexista",
@@ -106,7 +113,7 @@ async def test_plant_rename_source_not_exists(ac: AsyncClient):
 
 
 @pytest.mark.asyncio()
-async def test_propose_subsequent_plant_name(ac: AsyncClient):
+async def test_propose_subsequent_plant_name(ac: AsyncClient) -> None:
     original_plant_name = "Aloe ferox"
     response = await ac.post(
         f"/api/plants/propose_subsequent_plant_name/{original_plant_name}"
@@ -148,7 +155,7 @@ async def test_propose_subsequent_plant_name(ac: AsyncClient):
 @pytest.mark.asyncio()
 async def test_clone_plant(
     ac: AsyncClient, plant_dal: PlantDAL, valid_plant_in_db_with_image: Plant
-):
+) -> None:
     response = await ac.post(
         f"/api/plants/{valid_plant_in_db_with_image.id}/clone?"
         f"plant_name_clone=Aloe vera clone"
@@ -180,7 +187,7 @@ async def test_delete_plant(
     test_db: AsyncSession,
     plant_dal: PlantDAL,
     valid_plant_in_db_with_image: Plant,
-):
+) -> None:
     plant_id = valid_plant_in_db_with_image.id
 
     response = await ac.delete(f"/api/plants/{valid_plant_in_db_with_image.id}")
@@ -197,7 +204,7 @@ async def test_delete_plant(
 @pytest.mark.asyncio()
 async def test_rename_plant(
     ac: AsyncClient, test_db: AsyncSession, valid_plant_in_db_with_image: Plant
-):
+) -> None:
     """Test renaming a plant."""
     payload = {  # BPlantsRenameRequest
         "plant_id": valid_plant_in_db_with_image.id,
@@ -218,7 +225,7 @@ async def test_rename_plant_invalid(
     test_db: AsyncSession,
     valid_plant_in_db_with_image: Plant,
     another_valid_plant_in_db: Plant,
-):
+) -> None:
     """Test renaming a plant to a name that already exists."""
     old_name = valid_plant_in_db_with_image.plant_name
     new_name = another_valid_plant_in_db.plant_name

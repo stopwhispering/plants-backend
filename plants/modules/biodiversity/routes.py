@@ -7,7 +7,10 @@ from fastapi import APIRouter, Depends
 
 from plants.dependencies import get_taxon_dal
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
-from plants.modules.biodiversity.taxonomy_search import SearchResult, TaxonomySearch
+from plants.modules.biodiversity.taxonomy_search import (
+    FinalSearchResult,
+    TaxonomySearch,
+)
 from plants.modules.taxon.schemas import (
     BResultsFetchTaxonImages,
     BResultsTaxonInfoRequest,
@@ -39,7 +42,7 @@ async def search_taxa_by_name(
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
         taxon_dal=taxon_dal,
     )
-    search_results: list[SearchResult] = await taxonomy_search.search(
+    search_results: list[FinalSearchResult] = await taxonomy_search.search(
         taxon_info_request.taxon_name_pattern
     )
 

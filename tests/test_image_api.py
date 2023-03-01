@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio()
-async def test_untagged_images_empty(ac: AsyncClient):
+async def test_untagged_images_empty(ac: AsyncClient) -> None:
     response = await ac.get("/api/images/untagged/")
     assert response.status_code == 200
     assert response.json().get("message").get("message") == "Returned 0 images."
@@ -27,7 +27,7 @@ async def test_upload_images(
     ac: AsyncClient,
     plant_valid_in_db: Plant,
     image_dal: ImageDAL,
-):
+) -> None:
     # we need to wrap files and additional data in a way that matches the UI5 file
     # uploader (which is a kind of odd way)
     path1 = Path(__file__).resolve().parent.joinpath("./static/demo_image1.jpg")
@@ -76,8 +76,8 @@ async def test_upload_images(
     )
 
     # thumbnails generated
+    size: tuple[int, int]
     for size in plants_package.settings.images.sizes:
-        size: tuple[int, int]
         for full_filename in file_names:
             stub = full_filename.replace(".jpg", "").replace(".jpeg", "")
             filename = f"{stub}.{size[0]}_{size[1]}.jpg"
@@ -92,7 +92,7 @@ async def test_upload_image_for_plant(
     ac: AsyncClient,
     plant_valid_in_db: Plant,
     image_dal: ImageDAL,
-):
+) -> None:
     # we need to wrap files and additional data in a way that matches the UI5 file
     # uploader (which is a kind of odd way)
     path = Path(__file__).resolve().parent.joinpath("./static/demo_image_plant.jpg")
@@ -129,8 +129,8 @@ async def test_upload_image_for_plant(
         full_filename = "demo_image_plant.jpg"
 
     # thumbnails generated
+    size: tuple[int, int]
     for size in plants_package.settings.images.sizes:
-        size: tuple[int, int]
         stub = full_filename.replace(".jpg", "").replace(".jpeg", "")
         filename = f"{stub}.{size[0]}_{size[1]}.jpg"
         path = plants_package.settings.paths.path_generated_thumbnails.joinpath(
@@ -143,7 +143,7 @@ async def test_upload_image_for_plant(
 async def test_update_image(
     ac: AsyncClient,
     valid_plant_in_db_with_image: Plant,
-):
+) -> None:
     """The actual update has been done in the fixture, we just assert that it worked."""
     response = await ac.get(f"/api/plants/{valid_plant_in_db_with_image.id}/images/")
     assert response.status_code == 200

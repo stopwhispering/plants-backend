@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -11,9 +12,16 @@ from plants.modules.pollination.enums import (
 )
 from plants.modules.pollination.models import Florescence
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from plants.modules.plant.models import Plant
+
 
 @pytest.mark.asyncio()
-async def test_florescence_flower_attrs(test_db, plant_valid):
+async def test_florescence_flower_attrs(
+    test_db: AsyncSession, plant_valid: Plant
+) -> None:
     test_db.add(plant_valid)
     await test_db.commit()
 

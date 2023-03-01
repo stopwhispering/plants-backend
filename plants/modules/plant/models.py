@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from operator import attrgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
 from sqlalchemy.orm import Mapped, foreign, relationship, remote  # noqa
@@ -115,7 +115,7 @@ class Plant(Base):
 
     count_stored_pollen_containers = Column(INTEGER)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Plant [{self.id}] {self.plant_name}>"
 
     @property
@@ -152,7 +152,7 @@ class Plant(Base):
     )
 
     @property
-    def latest_image(self):
+    def latest_image(self) -> Image | None:
         if self.images:
             try:
                 latest_image = max(self.images, key=attrgetter("record_date_time"))
@@ -162,7 +162,7 @@ class Plant(Base):
         return None
 
     @property
-    def current_soil(self) -> dict | None:
+    def current_soil(self) -> dict[str, Any] | None:
         soil_events = [e for e in self.events if e.soil is not None]
         if soil_events:
             soil_events.sort(key=lambda e: e.date, reverse=True)

@@ -66,8 +66,8 @@ class Taxon(Base):
     name: str = Column(VARCHAR(100), nullable=False)
     full_html_name: str = Column(VARCHAR(120), nullable=False)
     species: str | None = Column(VARCHAR(100))
-    genus: str | None = Column(VARCHAR(100))
-    family: str | None = Column(VARCHAR(100))
+    genus: str = Column(VARCHAR(100), nullable=False)
+    family: str = Column(VARCHAR(100), nullable=False)
     # phylum = Column(VARCHAR(100))
 
     infraspecies: str | None = Column(VARCHAR(40))
@@ -80,16 +80,16 @@ class Taxon(Base):
     custom_suffix: str | None = Column(VARCHAR(30))
 
     rank: str = Column(VARCHAR(30), nullable=False)
-    taxonomic_status: str | None = Column(VARCHAR(100))
-    name_published_in_year: int | None = Column(INTEGER)
-    synonym: bool | None = Column(BOOLEAN)  # todo make not nullable
-    lsid: str | None = Column(VARCHAR(50), nullable=False)
-    authors: str | None = Column(VARCHAR(100))
+    taxonomic_status: str = Column(VARCHAR(100), nullable=False)
+    name_published_in_year: int = Column(INTEGER, nullable=False)
+    synonym: bool = Column(BOOLEAN, nullable=False)
+    lsid: str = Column(VARCHAR(50), nullable=False)
+    authors: str = Column(VARCHAR(100), nullable=False)
     basionym: str | None = Column(VARCHAR(100))
     synonyms_concat: str | None = Column(VARCHAR(500))
     distribution_concat: str | None = Column(VARCHAR(200))
     hybrid: bool = Column(BOOLEAN, nullable=False)
-    hybridgenus: bool | None = Column(BOOLEAN)  # todo make not nullable
+    hybridgenus: bool = Column(BOOLEAN, nullable=False)
     gbif_id: int | None = Column(INTEGER)  # Global Biodiversity Information Facility
     custom_notes: str | None = Column(TEXT)  # may be updated on web frontend
 
@@ -133,18 +133,20 @@ class TaxonOccurrenceImage(Base):
 
     __tablename__ = "taxon_ocurrence_image"
 
-    occurrence_id = Column(BIGINT, primary_key=True, nullable=False)
-    img_no = Column(INTEGER, primary_key=True, nullable=False)
-    gbif_id = Column(INTEGER, primary_key=True, nullable=False)
-    scientific_name = Column(VARCHAR(100))
-    basis_of_record = Column(VARCHAR(25))
-    verbatim_locality = Column(VARCHAR(120))
-    date = Column(DateTime(timezone=True))  # todo rename datetime or make it date type
-    creator_identifier = Column(VARCHAR(100))
-    publisher_dataset = Column(VARCHAR(100))
-    references = Column(VARCHAR(120))
-    href = Column(VARCHAR(150))
-    filename_thumbnail = Column(VARCHAR(120))  # todo switch to other id
+    occurrence_id: int = Column(BIGINT, primary_key=True, nullable=False)
+    img_no: int = Column(INTEGER, primary_key=True, nullable=False)
+    gbif_id: int = Column(INTEGER, primary_key=True, nullable=False)
+    scientific_name: str = Column(VARCHAR(100), nullable=False)
+    basis_of_record: str = Column(VARCHAR(25), nullable=False)
+    verbatim_locality: str | None = Column(VARCHAR(120))
+    # todo rename datetime or make it date type
+    date: datetime = Column(DateTime(timezone=True), nullable=False)
+    creator_identifier: str = Column(VARCHAR(100), nullable=False)
+    publisher_dataset: str | None = Column(VARCHAR(100))
+    references: str = Column(VARCHAR(120), nullable=False)
+    href: str = Column(VARCHAR(150), nullable=False)
+    # todo switch to other id
+    filename_thumbnail: str = Column(VARCHAR(120), nullable=False)
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(

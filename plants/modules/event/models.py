@@ -37,8 +37,8 @@ class Soil(Base):
         nullable=False,
     )
     soil_name: str = Column(VARCHAR(100), nullable=False)  # todo make unique
-    description: str = Column(TEXT)
-    mix: str = Column(TEXT)
+    description: str | None = Column(TEXT)
+    mix: str = Column(TEXT, nullable=False)
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
@@ -111,7 +111,7 @@ class Event(Base):
     """Events."""
 
     __tablename__ = "event"
-    id = Column(
+    id: int = Column(
         INTEGER,
         Identity(start=1, cycle=True, always=False),
         primary_key=True,

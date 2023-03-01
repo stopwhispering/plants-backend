@@ -12,7 +12,7 @@ def roman_to_int(s: str) -> int:
     return int_val
 
 
-def int_to_roman(num) -> str:
+def int_to_roman(num: int) -> str:
     val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
     syb = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
     roman_num = ""

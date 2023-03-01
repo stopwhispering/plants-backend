@@ -88,7 +88,7 @@ class TaxonDAL(BaseDAL):
         )  # noqa
         return images
 
-    async def get_distinct_species_as_tuples(self) -> tuple[str, str, str, int]:
+    async def get_distinct_species_as_tuples(self) -> list[tuple[str, str, str, int]]:
         # todo performance optimize
         plant_exists_filter = and_(
             Plant.deleted.is_(False), Plant.active  # noqa FBT003
@@ -98,9 +98,11 @@ class TaxonDAL(BaseDAL):
         query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id).where(
             has_any_plant_filter
         )
-        species_tuples: tuple[str, str, str, int] = (  # type:ignore  # noqa
-            await self.session.execute(query)
-        ).all()
+        species_tuples: list[tuple[str, str, str, int]] = list(
+            (  # type:ignore  # noqa
+                await self.session.execute(query)
+            ).all()
+        )
         return species_tuples
 
     async def create_taxon_to_occurrence_associations(

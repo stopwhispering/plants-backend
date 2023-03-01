@@ -9,6 +9,8 @@ from PIL import Image
 from plants import settings
 
 if TYPE_CHECKING:
+    from fastapi import UploadFile
+
     from plants.modules.image.image_dal import ImageDAL
 
 logger = logging.getLogger(__name__)
@@ -23,7 +25,7 @@ def _remove_image_from_filesystem(filename: str) -> None:
 
 
 async def remove_files_already_existing(
-    files: list, image_dal: ImageDAL
+    files: list[UploadFile], image_dal: ImageDAL
 ) -> tuple[list[str], list[str]]:
     """Iterates over file objects, checks whether a file with that name already exists
     in filesystem and/or in database.
@@ -39,6 +41,9 @@ async def remove_files_already_existing(
     for photo_upload in files[
         :
     ]:  # need to loop on copy if we want to delete within loop
+        if photo_upload.filename is None:
+            continue
+
         exists_in_filesystem = _original_image_file_exists(
             filename=photo_upload.filename
         )
@@ -69,7 +74,7 @@ async def remove_files_already_existing(
     return duplicate_filenames, warnings
 
 
-def resizing_required(path: str, size: tuple[int, int]) -> bool:
+def resizing_required(path: str | Path, size: tuple[int, int]) -> bool:
     """Checks size of photo_file at supplied path and compares to supplied maximum
     size."""
     with Image.open(path) as image:  # only works with path, not file object
@@ -81,10 +86,10 @@ def resizing_required(path: str, size: tuple[int, int]) -> bool:
         x = int(max(x * size[1] / y, 1))
         y = int(size[1])
     size = x, y
-    return size != image.size
+    return bool(size != image.size)
 
 
-def get_path_for_taxon_thumbnail(filename: Path):
+def get_path_for_taxon_thumbnail(filename: Path) -> PurePath:
     return settings.paths.rel_path_photos_generated_taxon.joinpath(filename)
 
 

@@ -3,11 +3,13 @@ from __future__ import annotations
 import datetime
 import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import piexif
 from piexif import InvalidImageDataError
-from PIL import Image
+from PIL import Image as PilImage
+
+from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -39,12 +41,12 @@ def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
         s_dt = date_time_bin.decode("utf-8")
         s_format = "%Y:%m:%d %H:%M:%S"
     except AttributeError:  # manually entered string
-        s_dt = date_time_bin
+        s_dt = date_time_bin.decode()
         s_format = "%Y-%m-%d"
     return datetime.datetime.strptime(s_dt, s_format)
 
 
-def encode_record_date_time(dt: datetime.datetime):
+def encode_record_date_time(dt: datetime.datetime) -> bytes:
     """Encode datetime into format required by exif tag from datetime object to
     b"YYYY:MM:DD HH:MM:SS"."""
     s_format = "%Y:%m:%d %H:%M:%S"
@@ -52,9 +54,11 @@ def encode_record_date_time(dt: datetime.datetime):
     return s_dt.encode("utf-8")
 
 
-def _auto_rotate_by_exif_flag(img: Image, orientation_flag: int) -> Image:
+def _auto_rotate_by_exif_flag(
+    img: PilImage.Image, orientation_flag: int
+) -> PilImage.Image:
     if orientation_flag == 2:  # noqa PLR2004
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: flip left "
             f"or right."
@@ -63,13 +67,13 @@ def _auto_rotate_by_exif_flag(img: Image, orientation_flag: int) -> Image:
         img = img.rotate(180)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: 180.")
     elif orientation_flag == 4:  # noqa PLR2004
-        img = img.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.rotate(180).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 180 & flip "
             f"left to right."
         )
     elif orientation_flag == 5:  # noqa PLR2004
-        img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.rotate(-90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: -90 & flip "
             f"left to right."
@@ -78,7 +82,7 @@ def _auto_rotate_by_exif_flag(img: Image, orientation_flag: int) -> Image:
         img = img.rotate(-90, expand=True)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: -90.")
     elif orientation_flag == 7:  # noqa PLR2004
-        img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.rotate(90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 90 & flip "
             f"left to right."
@@ -89,7 +93,7 @@ def _auto_rotate_by_exif_flag(img: Image, orientation_flag: int) -> Image:
     return img
 
 
-def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
+def auto_rotate_jpeg(path_image: Path, exif_dict: dict[str, Any]) -> None:
     """Auto-rotates images according to exif tag; required as chrome does not display
     them correctly otherwise; applies a recompression with high quality; re-attaches the
     original exif files to the new file but without the orientation tag."""
@@ -99,8 +103,7 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
         or exif_dict["0th"][piexif.ImageIFD.Orientation] == 1
     ):
         return
-
-    img = Image.open(path_image)
+    img = PilImage.open(path_image)
     orientation = exif_dict["0th"].pop(piexif.ImageIFD.Orientation)
 
     try:
@@ -118,18 +121,9 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict) -> None:
     img.save(path_image, exif=exif_bytes, quality=90)
 
 
-def decode_keywords_tag(t: tuple) -> list[str]:
-    """Decode a tuple of unicode byte integers (0..255) to a list of strings; required
-    to get keywords into a regular format coming from exif tags."""
-    chars_iter = map(chr, t)
-    chars = "".join(chars_iter)
-    chars = chars.replace("\x00", "")  # remove null bytes after each character
-    return chars.split(";")
-
-
-def encode_keywords_tag(keywords: list[str]) -> tuple:
+def encode_keywords_tag(keywords: list[str]) -> tuple[int, ...]:
     """Reverse decode_keywords_tag function."""
-    ord_list = []
+    ord_list: list[int] = []
     for keyword in keywords:
         ord_list_new = [ord(t) for t in keyword]
         ord_list = ord_list + [59] + ord_list_new if ord_list else ord_list_new
@@ -145,7 +139,7 @@ def encode_keywords_tag(keywords: list[str]) -> tuple:
     return tuple(ord_list_final)
 
 
-def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
+def exif_dict_has_all_relevant_tags(exif_dict: dict[str, Any]) -> bool:
     """The application uses most of all three exif tags to store information; returns
     whether all of them are extant in supplied exif dict."""
     try:
@@ -159,7 +153,7 @@ def exif_dict_has_all_relevant_tags(exif_dict: dict) -> bool:
 
 def read_record_datetime_from_exif_tags(
     absolute_path: Path,
-) -> datetime.datetime | None:
+) -> datetime.datetime:
     """Open jpeg file and read exif tags; decode and return original record datetime."""
     if not absolute_path:
         raise ValueError("File path not set.")
@@ -167,11 +161,10 @@ def read_record_datetime_from_exif_tags(
     try:
         exif_dict = piexif.load(absolute_path.as_posix())
     except InvalidImageDataError:
-        logger.warning(
+        throw_exception(
             f"Invalid Image Type Error occured when reading EXIF Tags for "
             f"{absolute_path}."
         )
-        return None
     except ValueError:
         raise
 

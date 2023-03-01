@@ -20,6 +20,7 @@ from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessE
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
 from plants.modules.image.util import (
     generate_thumbnail,
+    generate_timestamp_filename,
     get_thumbnail_name,
     resize_image,
 )
@@ -41,7 +42,7 @@ NOT_AVAILABLE_IMAGE_FILENAME = "not_available.png"
 
 def _rename_plant_in_image_files(
     images: list[Image], exif: PhotoMetadataAccessExifTags
-):
+) -> None:
     for image in images:
         plant_names = [p.plant_name for p in image.plants]
         exif.rewrite_plant_assignments(
@@ -71,12 +72,12 @@ async def save_image_to_db(
     path: Path,
     image_dal: ImageDAL,
     plant_dal: PlantDAL,
-    plant_ids: tuple[int] = (),
-    keywords: tuple[str] = (),
+    plant_ids: tuple[int] | None = None,
+    keywords: tuple[str] | None = None,
 ) -> ImageCreateUpdate:
     # add to db
     record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
-    plants = [await plant_dal.by_id(p) for p in plant_ids]
+    plants = [await plant_dal.by_id(p) for p in plant_ids] if plant_ids else []
     image_writer = ImageWriter(plant_dal=plant_dal, image_dal=image_dal)
     image: Image = await image_writer.create_image_in_db(
         relative_path=get_relative_path(path),
@@ -88,12 +89,13 @@ async def save_image_to_db(
 
 
 async def save_image_file(
-    file: UploadFile, plant_names: list[str], keywords: tuple[str] = ()
+    file: UploadFile, plant_names: list[str], keywords: tuple[str] | None = None
 ) -> Path:
     """Save the files supplied as starlette uploadfiles on os; assign plants and
     keywords."""
     # save to file system
-    path = settings.paths.path_original_photos_uploaded.joinpath(file.filename)
+    filename_ = file.filename if file.filename else generate_timestamp_filename()
+    path = settings.paths.path_original_photos_uploaded.joinpath(filename_)
     logger.info(f"Saving {path}.")
 
     async with aiofiles.open(path, "wb") as out_file:
@@ -131,14 +133,14 @@ async def save_image_file(
     await PhotoMetadataAccessExifTags().save_photo_metadata(
         image_absolute_path=path,
         plant_names=plant_names,  # [p.plant_name for p in plants],
-        keywords=list(keywords),
+        keywords=list(keywords) if keywords else [],
         description="",
     )
 
     return path
 
 
-async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL):
+async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) -> None:
     """Delete image file and entries in db."""
     if image.image_to_event_associations:
         logger.info(
@@ -214,13 +216,14 @@ async def get_image_path_by_size(
 
     # the pixel size is part of the resized images' filenames rem size must be
     # converted to px
-    filename_sized = get_generated_filename(filename, (width, height))
+    size = (width, height) if width and height else None
+    filename_sized = get_generated_filename(filename, size)
     return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 
 def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
     if width:
-        size = (width, height)
+        size = (width, height) if width and height else None
         filename = get_generated_filename(NOT_AVAILABLE_IMAGE_FILENAME, size)
     else:
         filename = NOT_AVAILABLE_IMAGE_FILENAME
@@ -267,17 +270,17 @@ async def get_occurrence_thumbnail_path(
     )
 
 
-def _generate_missing_thumbnails(images: list[Image]):
+def _generate_missing_thumbnails(images: list[Image]) -> None:
     count_already_existed = 0
     count_generated = 0
     count_files_not_found = 0
+    image: Image
     for _i, image in enumerate(images):
         if not image.absolute_path.is_file():
             count_files_not_found += 1
             logger.error(f"File not found: {image.absolute_path}")
             continue
 
-        image: Image
         for size in settings.images.sizes:
             path_thumbnail = settings.paths.path_generated_thumbnails.joinpath(
                 get_thumbnail_name(image.filename, size)

@@ -1,33 +1,64 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 
-async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list:
+class FamilyNodeDict(TypedDict):
+    key: str
+    nodes: list[GenusNodeDict]
+    level: int
+    count: int
+
+
+class GenusNodeDict(TypedDict):
+    key: str
+    nodes: list[SpeciesLeafDict]
+    level: int
+    count: int
+
+
+class SpeciesLeafDict(TypedDict):
+    key: str
+    level: int
+    plant_ids: list[int]
+    count: int
+
+
+async def build_taxon_tree(
+    taxon_dal: TaxonDAL, plant_dal: PlantDAL
+) -> list[FamilyNodeDict]:
     """Build up taxon tree from distinct families, genus, and species that are assigned
     at least one plant."""
     # todo optimize sql performance
     # get distinct families, genus, and species (as list of four-element-tuples); sort
-    dist_tuples = await taxon_dal.get_distinct_species_as_tuples()
+    dist_tuples: list[
+        tuple[str, str, str, int]
+    ] = await taxon_dal.get_distinct_species_as_tuples()
 
     # build up tree
     tree = []
     previous_family = None
     previous_genus = None
     previous_species = None
-    family_node = None
-    genus_node = None
-    species_leaf = None
+
+    family_node: FamilyNodeDict = {"key": "", "nodes": [], "level": 0, "count": 0}
+    genus_node: GenusNodeDict = {"key": "", "nodes": [], "level": 1, "count": 0}
+    species_leaf: SpeciesLeafDict = {"key": "", "plant_ids": [], "level": 2, "count": 0}
 
     for current_family, current_genus, current_species, current_taxon_id in dist_tuples:
         # get family node
         if current_family != previous_family:
             new_family = True
-            family_node = {"key": current_family, "nodes": [], "level": 0, "count": 0}
+            family_node = {
+                "key": current_family,
+                "nodes": [],
+                "level": 0,
+                "count": 0,
+            }
             tree.append(family_node)
         else:
             new_family = False
@@ -35,7 +66,12 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list:
         # get genus node
         if (current_genus != previous_genus) or new_family:
             new_genus = True
-            genus_node = {"key": current_genus, "nodes": [], "level": 1, "count": 0}
+            genus_node = {
+                "key": current_genus,
+                "nodes": [],
+                "level": 1,
+                "count": 0,
+            }
             family_node["nodes"].append(genus_node)
         else:
             new_genus = False
@@ -71,19 +107,19 @@ async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list:
     count_empty = await plant_dal.get_count_plants_without_taxon()
     if count_empty:
         plant_ids_empty = await plant_dal.get_plants_ids_without_taxon()
-        node_empty_species = {
+        node_empty_species: SpeciesLeafDict = {
             "key": "",
             "level": 2,
             "count": count_empty,
             "plant_ids": plant_ids_empty,
         }
-        node_empty_genus = {
+        node_empty_genus: GenusNodeDict = {
             "key": "",
             "level": 1,
             "count": count_empty,
             "nodes": [node_empty_species],
         }
-        node_empty_family = {
+        node_empty_family: FamilyNodeDict = {
             "key": "",
             "level": 0,
             "count": count_empty,

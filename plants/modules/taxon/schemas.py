@@ -159,7 +159,7 @@ class TaxonBase(BaseSchema):
     taxonomic_status: constr(min_length=1, max_length=100)  # type:ignore
     synonym: bool
     authors: constr(min_length=1, max_length=100)  # type:ignore
-    name_published_in_year: int | None
+    name_published_in_year: int
     basionym: constr(min_length=1, max_length=100) | None  # type:ignore
     hybrid: bool
     hybridgenus: bool

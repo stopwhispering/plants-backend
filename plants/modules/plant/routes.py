@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
@@ -65,7 +66,7 @@ async def clone_plant(
     plant_dal: PlantDAL = Depends(get_plant_dal),
     event_dal: EventDAL = Depends(get_event_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
-):
+) -> Any:
     """clone plant with supplied plant_id; include duplication of events; excludes
     regular image assignments (only to events)"""
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
@@ -109,7 +110,7 @@ async def create_or_update_plants(
     data: FPlantsUpdateRequest,
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
-):
+) -> Any:
     """update existing or create new plants if no id is supplied, a new plant is created
     having the supplied attributes (only plant_name is mandatory, others may be
     provided)"""
@@ -132,7 +133,7 @@ async def create_or_update_plants(
 @router.delete("/{plant_id}", response_model=BConfirmation)
 async def delete_plant(
     plant: Plant = Depends(valid_plant), plant_dal: PlantDAL = Depends(get_plant_dal)
-):
+) -> Any:
     """Tag deleted plant as 'deleted' in database."""
     await plant_dal.delete(plant)
 
@@ -151,7 +152,7 @@ async def rename_plant(
     plant_dal: PlantDAL = Depends(get_plant_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
-):
+) -> Any:
     """We use the put method to rename a plant."""
     plant = await plant_dal.by_id(args.plant_id)
 
@@ -186,7 +187,7 @@ async def rename_plant(
 
 
 @router.get("/", response_model=BResultsPlants)
-async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
+async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
     """Read (almost unfiltered) plants information from db."""
     plants = await fetch_plants(plant_dal=plant_dal)
     return {
@@ -200,7 +201,7 @@ async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)):
     "/propose_subsequent_plant_name/{original_plant_name}",
     response_model=BResultsProposeSubsequentPlantName,
 )
-async def propose_subsequent_plant_name(original_plant_name: str):
+async def propose_subsequent_plant_name(original_plant_name: str) -> Any:
     """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe
     depressa V"."""
     subsequent_plant_name = generate_subsequent_plant_name(original_plant_name)

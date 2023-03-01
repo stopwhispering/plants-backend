@@ -10,23 +10,23 @@ from plants.shared.message_schemas import BMessage
 
 class FBImagePlantTag(BaseSchema):
     plant_id: int
-    plant_name: constr(min_length=1, max_length=100)
-    plant_name_short: constr(
+    plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    plant_name_short: constr(  # type:ignore
         min_length=1,
         max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag,
     )
 
 
 class FBKeyword(BaseSchema):
-    keyword: constr(min_length=1, max_length=100)
+    keyword: constr(min_length=1, max_length=100)  # type:ignore
 
 
 class ImageBase(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)
+    filename: constr(min_length=1, max_length=150)  # type:ignore
     keywords: list[FBKeyword]
     plants: list[FBImagePlantTag]
-    description: constr(max_length=500) | None
+    description: constr(max_length=500) | None  # type:ignore
     record_date_time: Optional[datetime]  # 2019-11-21T11:51:13
 
 
@@ -57,4 +57,4 @@ class BResultsImageDeleted(ResponseContainer):
 
 class FImageUploadedMetadata(BaseSchema):
     plants: list[int]
-    keywords: list[constr(min_length=1, max_length=100)]
+    keywords: list[constr(min_length=1, max_length=100)]  # type:ignore

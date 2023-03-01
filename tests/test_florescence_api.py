@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -8,6 +8,7 @@ from plants.modules.pollination.enums import FlorescenceStatus
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
@@ -16,10 +17,12 @@ if TYPE_CHECKING:
 
 @pytest.mark.asyncio()
 async def test_florescence_create_valid(
-    ac: AsyncClient, valid_simple_plant_dict, valid_florescence_dict
-):
+    ac: AsyncClient,
+    valid_simple_plant_dict: dict[str, Any],
+    valid_florescence_dict: dict[str, Any],
+) -> None:
     # create plant
-    payload = {"PlantsCollection": [valid_simple_plant_dict]}
+    payload: dict[str, Any] = {"PlantsCollection": [valid_simple_plant_dict]}
     response = await ac.post("/api/plants/", json=payload)
     assert response.status_code == 200
     assert response.json().get("plants")[0] is not None
@@ -100,8 +103,11 @@ async def test_florescence_create_valid(
 
 @pytest.mark.asyncio()
 async def test_create_and_abort_florescence(
-    test_db, ac: AsyncClient, plant_valid_in_db: Plant, plant_dal: PlantDAL
-):
+    test_db: AsyncSession,
+    ac: AsyncClient,
+    plant_valid_in_db: Plant,
+    plant_dal: PlantDAL,
+) -> None:
     # FRequestNewFlorescence
     payload = {
         "plant_id": plant_valid_in_db.id,

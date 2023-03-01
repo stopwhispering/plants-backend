@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends
 
@@ -29,9 +30,9 @@ async def get_proposals(  # noqa: ANN201
     entity_id: ProposalEntity,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Return proposals for selection tables."""
-    results = {}
+    results: dict[str, Any] = {}
 
     if entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
@@ -71,7 +72,7 @@ async def get_proposals(  # noqa: ANN201
 async def get_selection_data(  # noqa: ANN201
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
-):
+) -> Any:
     """Build & return taxon tree for advanced filtering."""
     taxon_tree = await build_taxon_tree(taxon_dal=taxon_dal, plant_dal=plant_dal)
     make_list_items_json_serializable(taxon_tree)

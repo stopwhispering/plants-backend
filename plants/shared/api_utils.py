@@ -2,11 +2,12 @@ import json
 from contextlib import suppress
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM, FORMAT_YYYY_MM_DD
 
 
-def treat_non_serializable(x):
+def treat_non_serializable(x: Any) -> Any:
     """Tries to convert a supplied item into something that is json serializable."""
     if isinstance(x, (datetime, date)):
         return x.isoformat()
@@ -27,7 +28,7 @@ def treat_non_serializable(x):
     return str(x)
 
 
-def make_list_items_json_serializable(items: list):
+def make_list_items_json_serializable(items: list[Any]) -> None:
     """Tries to convert items in a supplied list into something that is json
     serializable."""
     for count, value in enumerate(items):
@@ -40,7 +41,7 @@ def make_list_items_json_serializable(items: list):
                 items[count] = treat_non_serializable(value)
 
 
-def make_dict_values_json_serializable(d: dict):
+def make_dict_values_json_serializable(d: dict[Any, Any]) -> None:
     """Tries to convert the values of a dict into something that is json serializable if
     it is not; works recursively for nested dicts, i.e. if value is also a dict."""
     for (
@@ -78,7 +79,7 @@ def format_api_datetime(dt: datetime | None) -> str | None:
     return dt.strftime(FORMAT_API_YYYY_MM_DD_HH_MM) if dt else None
 
 
-def date_hook(json_dict):
+def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
     """very simple hook to convert json date strings to datetime objects
     usage: json.loads(dumped_dict, object_hook=date_hook)"""
     for key, value in json_dict.items():

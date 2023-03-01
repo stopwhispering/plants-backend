@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from operator import attrgetter
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from plants.exceptions import SoilNotUniqueError
 from plants.modules.event.models import Event, Observation, Pot, Soil
@@ -75,7 +75,7 @@ class EventWriter:
         self,
         plant_id: int,
         events: list[EventCreateUpdate],
-        counts: defaultdict,
+        counts: defaultdict[str, int],
     ) -> None:
         plant_obj: Plant = await self.plant_dal.by_id(plant_id)
         logger.info(
@@ -169,8 +169,8 @@ class EventWriter:
         self,
         event: EventCreateUpdate,
         event_obj: Event,
-        counts: defaultdict,
-    ):
+        counts: defaultdict[str, int],
+    ) -> None:
         # remove soil from event
         #  (event to soil is n:1 so we don't delete the soil object but only the
         #  assignment)
@@ -190,8 +190,8 @@ class EventWriter:
                 counts["Added Soils"] += 1
 
     async def _create_or_update_pot(
-        self, event_obj: Event, event: EventCreateUpdate, counts: defaultdict
-    ):
+        self, event_obj: Event, event: EventCreateUpdate, counts: defaultdict[str, int]
+    ) -> None:
         if not event.pot:
             event_obj.pot = None
 
@@ -215,8 +215,8 @@ class EventWriter:
         self,
         event: EventCreateUpdate,
         event_obj: Event,
-        counts: defaultdict,
-    ):
+        counts: defaultdict[str, int],
+    ) -> None:
         if event.observation and not event_obj.observation:
             observation_obj = Observation()
             await self.event_dal.create_observation(observation_obj)
@@ -240,7 +240,7 @@ class EventWriter:
         self,
         event: EventCreateUpdate,
         event_obj: Event,
-    ):
+    ) -> None:
         """Change images attached to the event."""
         # deleted images
         filenames_saved = (
@@ -268,11 +268,11 @@ class EventWriter:
                     event_obj.images.append(image_obj)
 
 
-async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
+async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[dict[str, Any]]:
     soils = []
 
     # add the number of plants that currently have a specific soil
-    soil_counter: defaultdict = defaultdict(int)
+    soil_counter: defaultdict[int, int] = defaultdict(int)
 
     plants = await plant_dal.get_all_plants_with_events_loaded()
     for plant in plants:
@@ -285,7 +285,9 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[Soil]:
 
     all_soils = event_dal.get_all_soils()
     for soil in await all_soils:
-        soil.plants_count = soil_counter.get(soil.id, 0)
-        soils.append(soil)
+        # soil.plants_count = soil_counter.get(soil.id, 0)
+        soil_dict = soil.__dict__.copy()
+        soil_dict["plants_count"] = soil_counter.get(soil.id, 0)
+        soils.append(soil_dict)
 
     return soils
