@@ -143,7 +143,7 @@ class TaxonOccurrenceImage(Base):
     date: datetime = Column(DateTime(timezone=True), nullable=False)
     creator_identifier: str = Column(VARCHAR(100), nullable=False)
     publisher_dataset: str | None = Column(VARCHAR(100))
-    references: str = Column(VARCHAR(120), nullable=False)
+    references: str | None = Column(VARCHAR(120))
     href: str = Column(VARCHAR(150), nullable=False)
     # todo switch to other id
     filename_thumbnail: str = Column(VARCHAR(120), nullable=False)

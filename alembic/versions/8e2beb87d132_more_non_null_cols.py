@@ -59,12 +59,6 @@ def upgrade() -> None:
     )
     op.alter_column(
         "taxon_ocurrence_image",
-        "references",
-        existing_type=sa.VARCHAR(length=120),
-        nullable=False,
-    )
-    op.alter_column(
-        "taxon_ocurrence_image",
         "href",
         existing_type=sa.VARCHAR(length=150),
         nullable=False,
