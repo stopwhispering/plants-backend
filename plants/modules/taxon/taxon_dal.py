@@ -139,6 +139,7 @@ class TaxonDAL(BaseDAL):
         await self.session.flush()
 
     async def delete_taxon_occurrence_image_by_gbif_id(self, gbif_id: int) -> None:
+        # noinspection PyTypeChecker
         query = delete(TaxonOccurrenceImage).where(
             TaxonOccurrenceImage.gbif_id == gbif_id
         )

@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import logging
 import urllib.parse
-from typing import Any, Final, Optional
+from typing import TYPE_CHECKING, Any, Final, Optional
 
 import requests  # todo replace with async http client
 from bs4 import BeautifulSoup, Tag
 from pygbif import species
 from wikidata.client import Client
+
+if TYPE_CHECKING:
+    from wikidata.entity import EntityId
 
 URL_PATTERN_WIKIDATA_SEARCH: Final[
     str
@@ -26,7 +31,7 @@ class GBIFIdentifierLookup:
     def lookup(self, taxon_name: str, lsid: str) -> int | None:
         return self._gbif_id_from_gbif_api(
             taxon_name=taxon_name, lsid=lsid
-        ) or self._get_gbif_id_from_wikidata(lsid=lsid)
+        ) or WikidataGbifLookup().lookup(lsid=lsid)
 
     @staticmethod
     def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> Optional[int]:
@@ -51,11 +56,13 @@ class GBIFIdentifierLookup:
     def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> int | None:
         """the GBIF API does not allow searching by other database's taxonId; therefore,
         we search by botanical name and IPNI dataset key, then we compare the (external)
-        taxonId"; if we have a match, we can return the GBIF taxon ID unfortunately, the
-        attribute taxon ID (= Kew identifier LSID) is not included in the results
-        sometimes (e.g. Aloiampelos ciliaris, nubKey 9527904, although the website and
-        the REST API has it; therefore we use the latter if not found to verify the GBIF
-        record."""
+        taxonId"; if we have a match, we can return the GBIF taxon ID.
+
+        Unfortunately, the attribute taxon ID (= Kew identifier LSID) is not included in
+        the results sometimes (e.g. Aloiampelos ciliaris, nubKey 9527904, although the
+        website and the REST API has it; therefore we use the latter if not found to
+        verify the GBIF record.
+        """
         logger.info(f"Searching IPNI Dataset at GBIF for {taxon_name} to get GBIF ID.")
         lookup = species.name_lookup(q=taxon_name, datasetKey=IPNI_DATASET_KEY)
         if not lookup.get("results"):
@@ -81,28 +88,24 @@ class GBIFIdentifierLookup:
 
         return None
 
-    @staticmethod
-    def _get_gbif_id_from_wikidata(  # noqa: C901 PLR0911 PLR0915 PLR0912
-        lsid: str,
-    ) -> int | None:
-        # todo refactor
-        """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
-        wikidata api is defect, thus we parse using beautifulsoup4."""
-        # fulltext-search wikidata for ipni id
-        lsid_number = lsid[lsid.rfind(":") + 1 :]
-        lsid_number_exact = f'"{lsid_number}"'
-        logger.debug(f"Beginning search for {lsid_number_exact}")
-        lsid_encoded = urllib.parse.quote(lsid_number_exact)
-        search_url = URL_PATTERN_WIKIDATA_SEARCH.format(lsid_encoded)
-        page = requests.get(search_url, timeout=10)  # todo async http client
-        soup = BeautifulSoup(page.content, "html.parser")
 
+class WikidataGbifLookup:
+    @staticmethod
+    def _scrape_from_wikidata(lsid_number: str) -> BeautifulSoup:
+        lsid_number_quoted = f'"{lsid_number}"'
+        logger.debug(f"Beginning search for {lsid_number_quoted}")
+        lsid_number_encoded = urllib.parse.quote(lsid_number_quoted)
+        search_url = URL_PATTERN_WIKIDATA_SEARCH.format(lsid_number_encoded)
+        page = requests.get(search_url, timeout=10)  # todo async http client
+        return BeautifulSoup(page.content, "html.parser")
+
+    @staticmethod
+    def _parse_wikidata_entity(tag: Tag) -> EntityId | None:
         # get search results
-        tag_search_results_list = soup.find("ul", class_="mw-search-results")
+        tag_search_results_list = tag.find("ul", class_="mw-search-results")
         if not tag_search_results_list:
             logger.warning("No wikidata search results. Aborting.")
             return None
-
         if not isinstance(tag_search_results_list, Tag):
             return None
         tag_search_results = tag_search_results_list.find_all("li")
@@ -128,21 +131,17 @@ class GBIFIdentifierLookup:
         wikidata_entity_raw = tag_search_result.find(
             "span", class_="wb-itemlink-id"
         ).getText()  # e.g. (Q15482666)
-        wikidata_entity = wikidata_entity_raw.replace("(", "").replace(")", "")
+        wikidata_entity: EntityId = wikidata_entity_raw.replace("(", "").replace(
+            ")", ""
+        )
+        return wikidata_entity
 
-        # once we have the wikidata entity, we can use the python api
-        wikidata_object = Client().get(wikidata_entity, load=True)
-
+    @staticmethod
+    def _is_correct_plant(
+        wikidata_claims: dict[str, Any], lsid: str, lsid_number: str
+    ) -> bool:
         # verify we have the correct plant by comparing with our ipni id
         correct_found = False
-
-        # satisfy mypy
-        if not wikidata_object.data:
-            return None
-        # noinspection PyTypeChecker
-        wikidata_claims: dict[str, Any] = wikidata_object.data[
-            "claims"
-        ]  # type: ignore[assignment]
 
         # noinspection PyUnresolvedReferences
         ipni_claim = wikidata_claims.get(WIKIDATA_IPNI_PROPERTY_ID)
@@ -164,12 +163,16 @@ class GBIFIdentifierLookup:
 
         if not powo_claim and not ipni_claim:
             logger.warning("Could not determine correctness of site. Aborting.")
-            return None
+            return False
 
         if not correct_found:
             logger.warning("Wikidata site is not the correct one. Aborting.")
-            return None
+            return False
 
+        return True
+
+    @staticmethod
+    def _get_gbif_id(wikidata_claims: dict[str, Any]) -> int | None:
         # finally, get the gbif id
         # noinspection PyUnresolvedReferences
         gbif_claim = wikidata_claims.get(WIKIDATA_GBIF_PROPERTY_ID)
@@ -181,3 +184,32 @@ class GBIFIdentifierLookup:
         logger.info(f"GBIF Identifier found on Wikidata: {gbif_id}")
 
         return int(gbif_id)
+
+    def lookup(self, lsid: str) -> int | None:
+        """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
+        wikidata api is defect, thus we parse using beautifulsoup4."""
+
+        # remove urn part
+        lsid_number = lsid[lsid.rfind(":") + 1 :].strip()
+
+        # fulltext-search wikidata for ipni id
+        soup = self._scrape_from_wikidata(lsid_number=lsid_number)
+
+        # extract wikidata entity
+        wikidata_entity = self._parse_wikidata_entity(tag=soup)
+        if not wikidata_entity:
+            return None
+
+        # once we have the wikidata entity, we can use the python api
+        wikidata_object = Client().get(wikidata_entity, load=True)
+        # noinspection PyTypeChecker
+        wikidata_claims: dict[str, Any] = wikidata_object.data[
+            "claims"
+        ]  # type: ignore[index, assignment]
+
+        if not self._is_correct_plant(
+            wikidata_claims=wikidata_claims, lsid=lsid, lsid_number=lsid_number
+        ):
+            return None
+
+        return self._get_gbif_id(wikidata_claims=wikidata_claims)
