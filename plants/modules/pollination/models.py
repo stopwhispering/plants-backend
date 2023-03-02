@@ -58,9 +58,9 @@ class Florescence(Base):
     flowers_count = Column(INTEGER)
 
     # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_length: Decimal | None = Column(Numeric(3, 1))  # type:ignore
+    perianth_length: Decimal | None = Column(Numeric(3, 1))  # type: ignore[misc]
     # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    perianth_diameter: Decimal | None = Column(Numeric(2, 1))  # type:ignore
+    perianth_diameter: Decimal | None = Column(Numeric(2, 1))  # type: ignore[misc]
     # hex color code, e.g. #f2f600
     flower_color: str | None = Column(VARCHAR(7))
     flower_color_second: str | None = Column(VARCHAR(7))
@@ -83,7 +83,7 @@ class Florescence(Base):
     first_seed_ripening_date: datetime.date | None = Column(DATE)
     last_seed_ripening_date: datetime.date | None = Column(DATE)
     # in days
-    avg_ripening_time: float | None = Column(FLOAT)  # type:ignore
+    avg_ripening_time: float | None = Column(FLOAT)  # type:ignore[misc]
     # todo via relationship: first_seed_ripe_date, last_seed_ripe_date,
     #  average_ripening_time
 

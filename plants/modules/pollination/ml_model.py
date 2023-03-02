@@ -13,7 +13,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.utils._testing import ignore_warnings  # noqa
+
+# noinspection PyProtectedMember
+from sklearn.utils._testing import ignore_warnings
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 if TYPE_CHECKING:
@@ -33,7 +35,7 @@ logger = logging.getLogger(__name__)
 def _create_pipeline(
     feature_container: FeatureContainer, model: BaseEstimator
 ) -> Pipeline:
-    nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)  # noqa
+    nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)
     nominal_bivalue_features = feature_container.get_columns(
         scale=Scale.NOMINAL_BIVALUE
     )
@@ -76,7 +78,7 @@ def _create_pipeline(
 
 
 async def _read_db_and_join() -> pd.DataFrame:
-    # read from db into dataframe  # noqa
+    # read from db into dataframe
     # i feel more comfortable with joining dataframes than with sqlalchemy...
     # todo rework data access completely!!!
 
@@ -84,11 +86,12 @@ async def _read_db_and_join() -> pd.DataFrame:
         session: Session,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         conn = session.connection()
+        # noinspection PyTypeChecker
         df_pollination = pd.read_sql_query(
             sql=sqlalchemy.select(Pollination).filter(
-                ~Pollination.ongoing,  # noqa
-                Pollination.pollination_status != "self_pollinated",  # noqa
-            ),  # noqa
+                ~Pollination.ongoing,
+                Pollination.pollination_status != "self_pollinated",
+            ),
             con=conn,
         )
         df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=conn)
@@ -123,7 +126,7 @@ async def _read_db_and_join() -> pd.DataFrame:
         suffixes=(None, "_seed_capsule"),
         validate="many_to_one",
     )  # raise if not unique on right side
-    df_merged2.rename({"taxon_id": "taxon_id_seed_capsule"}, axis=1, inplace=True)
+    df_merged2 = df_merged2.rename({"taxon_id": "taxon_id_seed_capsule"}, axis=1)
 
     # merge with plants for pollen donor
     df_merged3 = df_merged2.merge(
@@ -134,7 +137,7 @@ async def _read_db_and_join() -> pd.DataFrame:
         suffixes=(None, "_pollen_donor"),
         validate="many_to_one",
     )  # raise if not unique on right side
-    df_merged3.rename({"taxon_id": "taxon_id_pollen_donor"}, axis=1, inplace=True)
+    df_merged3 = df_merged3.rename({"taxon_id": "taxon_id_pollen_donor"}, axis=1)
 
     # merge with taxon for seed capsule
     df_merged4 = df_merged3.merge(
@@ -145,7 +148,7 @@ async def _read_db_and_join() -> pd.DataFrame:
         suffixes=(None, "_seed_capsule"),
         validate="many_to_one",
     )  # raise if not unique on right side
-    df_merged4.rename(
+    df_merged4 = df_merged4.rename(
         {
             "genus": "genus_seed_capsule",
             "species": "species_seed_capsule",
@@ -153,11 +156,10 @@ async def _read_db_and_join() -> pd.DataFrame:
             "hybridgenus": "hybridgenus_seed_capsule",
         },
         axis=1,
-        inplace=True,
     )
 
     # merge with taxon for pollen donor
-    df: pd.DataFrame = df_merged4.merge(
+    df_final: pd.DataFrame = df_merged4.merge(
         df_taxon[["id", "genus", "species", "hybrid", "hybridgenus"]],
         how="left",
         left_on=["taxon_id_pollen_donor"],
@@ -165,7 +167,7 @@ async def _read_db_and_join() -> pd.DataFrame:
         suffixes=(None, "_pollen_donor"),
         validate="many_to_one",
     )  # raise if not unique on right side
-    df.rename(
+    return df_final.rename(
         {
             "genus": "genus_pollen_donor",
             "species": "species_pollen_donor",
@@ -173,10 +175,7 @@ async def _read_db_and_join() -> pd.DataFrame:
             "hybridgenus": "hybridgenus_pollen_donor",
         },
         axis=1,
-        inplace=True,
     )
-
-    return df
 
 
 def _create_features() -> FeatureContainer:
@@ -200,16 +199,20 @@ def _create_features() -> FeatureContainer:
 
 
 async def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
-    df = await _read_db_and_join()
+    df_all = await _read_db_and_join()
 
     # add some custom features
-    df["same_genus"] = df["genus_pollen_donor"] == df["genus_seed_capsule"]
-    df["same_species"] = df["species_pollen_donor"] == df["species_seed_capsule"]
+    df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
+    df_all["same_species"] = (
+        df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
+    )
 
-    if missing := [f for f in feature_container.get_columns() if f not in df.columns]:
+    if missing := [
+        f for f in feature_container.get_columns() if f not in df_all.columns
+    ]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
 
-    return df
+    return df_all
 
 
 def _cv_classifier(
@@ -217,8 +220,8 @@ def _cv_classifier(
 ) -> tuple[str, float]:
     n_groups = 3  # test part will be 1/n
     n_splits = 3  # k-fold will score n times; must be <= n_groups
-    np.random.seed(42)
-    kfold_groups = np.random.randint(n_groups, size=len(x))
+    rng = np.random.default_rng(42)
+    kfold_groups = rng.integers(n_groups, size=len(x))
     group_kfold = GroupKFold(n_splits=n_splits)
     with ignore_warnings(category=(ConvergenceWarning, UserWarning)):
         scores = cross_val_score(
@@ -232,19 +235,21 @@ def _cv_classifier(
 async def train_model_for_probability_of_seed_production() -> dict[str, str]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
-    df = await _create_data(feature_container=feature_container)
+    df_all = await _create_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)
-    if set(df.pollination_status.unique()) - {
+    if set(df_all.pollination_status.unique()) - {
         "seed_capsule",
         "germinated",
         "seed",
         "attempt",
     }:
         raise ValueError("Unexpected pollination status in dataset.")
-    y: pd.Series = df["pollination_status"].apply(  # type:ignore
+    y: pd.Series = df_all["pollination_status"].apply(  # type: ignore[assignment]
         lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
     )
-    x: pd.DataFrame = df[feature_container.get_columns()]  # type:ignore
+    x: pd.DataFrame = df_all[  # type: ignore[assignment]
+        feature_container.get_columns()
+    ]
 
     # train directly on full dataset with optimized hyperparams
     params_knn = {

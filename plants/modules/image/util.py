@@ -56,18 +56,14 @@ def generate_thumbnail(
     # opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
-    exif_obj: dict[str, Any] = im._getexif()  # type:ignore  # noqa
+    exif_obj: dict[str, Any] = im._getexif()  # type: ignore[attr-defined]  # noqa: SLF001
     if exif_obj:
-        im = _rotate_if_required(im, exif_obj)  # noqa
+        im = _rotate_if_required(im, exif_obj)
 
     im.thumbnail(size)
 
     if not filename_thumb:
         filename_thumb = get_thumbnail_name(image.name, size)
-        # filename_thumb_list = image.name.split('.')
-        # # noinspection PyTypeChecker
-        # filename_thumb_list.insert(-1, suffix)
-        # filename_thumb = ".".join(filename_thumb_list)
 
     path_save = path_thumbnail.joinpath(filename_thumb)
     im.save(path_save, "JPEG")

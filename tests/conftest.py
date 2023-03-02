@@ -71,7 +71,7 @@ async def setup_db() -> None:
         await setup_connection.execute(text("DROP SCHEMA public CASCADE;"))
         await setup_connection.execute(text("CREATE SCHEMA public;"))
 
-        Base.metadata.bind = setup_connection  # type:ignore
+        Base.metadata.bind = setup_connection  # type: ignore[attr-defined]
         await init_orm(engine=setup_connection.engine)
         await create_tables_if_required(engine=setup_connection.engine)
 
@@ -124,7 +124,7 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def plant_valid() -> Plant:  # noqa
+async def plant_valid() -> Plant:
     return Plant(
         plant_name="Aloe Vera",
         field_number="A100",
@@ -160,11 +160,11 @@ async def valid_plant_in_db_with_image(
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(path, "rb")),  # noqa SIM115
+            ("demo_image_plant.jpg", open(path, "rb")),  # noqa: SIM115
         )
     ]
     response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
-    assert response.status_code == 200  # noqa PLR2004
+    assert response.status_code == 200
     resp = response.json()
 
     # also set some keywords and set a description
@@ -175,9 +175,10 @@ async def valid_plant_in_db_with_image(
     await ac.put("/api/images/", json=payload)
 
     # reload to have image reations available
+    # noinspection PyTypeChecker
     q = (
         select(Plant)
-        .where(Plant.id == plant_valid_in_db.id)  # noqa
+        .where(Plant.id == plant_valid_in_db.id)
         .options(
             selectinload(Plant.images).selectinload(Image.keywords),
             selectinload(Plant.image_to_plant_associations),
@@ -271,7 +272,7 @@ async def another_valid_plant_in_db(test_db: AsyncSession) -> Plant:
         "deleted": False,
         "tags": [],
     }
-    new_plant = Plant(**new_plant_data)  # type:ignore
+    new_plant = Plant(**new_plant_data)  # type:ignore[arg-type]
     test_db.add(new_plant)
     await test_db.commit()
     return new_plant
@@ -324,7 +325,7 @@ def image_dal(test_db: AsyncSession) -> ImageDAL:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def taxon_in_db(test_db: AsyncSession) -> Taxon:  # noqa
+async def taxon_in_db(test_db: AsyncSession) -> Taxon:
     """Create a valid taxon in the db and return it."""
     path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
     with open(path) as f:
@@ -345,7 +346,7 @@ async def florescence_dict() -> dict[str, Any]:
         Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
     )
     with open(path_florescence) as f:
-        return json.load(f, object_hook=date_hook)  # type:ignore
+        return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -356,7 +357,7 @@ async def pollination_dict() -> dict[str, Any]:
         Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
     )
     with open(path_pollination) as f:
-        return json.load(f, object_hook=date_hook)  # type:ignore
+        return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -366,7 +367,7 @@ async def pollination_in_db(
     pollination_dict: dict[str, Any],
     plant_valid_in_db: Plant,
     another_valid_plant_in_db: Plant,
-) -> Pollination:  # noqa
+) -> Pollination:
     """Create a valid pollination in the db and return it."""
     florescence = Florescence(**florescence_dict, plant=plant_valid_in_db)
     pollination = Pollination(

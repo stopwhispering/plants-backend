@@ -22,7 +22,8 @@ class PollinationDAL(BaseDAL):
         super().__init__(session)
 
     async def by_id(self, pollination_id: int) -> Pollination:
-        query = select(Pollination).where(Pollination.id == pollination_id)  # noqa
+        # noinspection PyTypeChecker
+        query = select(Pollination).where(Pollination.id == pollination_id)
         pollination: Pollination | None = (await self.session.scalars(query)).first()
         if not pollination:
             raise PollinationNotFoundError(pollination_id)
@@ -36,7 +37,7 @@ class PollinationDAL(BaseDAL):
         await self.session.delete(pollination)
         await self.session.flush()
 
-    async def update(  # noqa C901
+    async def update(  # noqa: C901 PLR0912
         self, pollination: Pollination, updates: dict[str, Any]
     ) -> None:
         if "pollen_type" in updates:
@@ -85,9 +86,10 @@ class PollinationDAL(BaseDAL):
         await self.session.flush()
 
     async def get_ongoing_pollinations(self) -> list[Pollination]:
+        # noinspection PyTypeChecker
         query = (
             select(Pollination)
-            .where(Pollination.ongoing)  # noqa
+            .where(Pollination.ongoing)
             .options(
                 selectinload(Pollination.seed_capsule_plant),
                 selectinload(Pollination.pollen_donor_plant),
@@ -95,13 +97,14 @@ class PollinationDAL(BaseDAL):
         )
         pollinations: list[Pollination] = list(
             (await self.session.scalars(query)).all()
-        )  # noqa
+        )
         return pollinations
 
     async def get_available_colors_for_plant(self, plant: Plant) -> list[str]:
+        # noinspection PyTypeChecker
         used_colors_query = select(Pollination.label_color).where(
-            Pollination.seed_capsule_plant_id == plant.id,  # noqa
-            Pollination.ongoing,  # noqa
+            Pollination.seed_capsule_plant_id == plant.id,
+            Pollination.ongoing,
         )
         used_colors = (await self.session.scalars(used_colors_query)).all()
         available_color_names = [c for c in COLORS_MAP_TO_RGB if c not in used_colors]
@@ -126,36 +129,35 @@ class PollinationDAL(BaseDAL):
             else:
                 raise CriterionNotImplementedError(key)
 
-        # pollinations: list[Pollination] = (
-        #     await self.session.scalars(select(Pollination))
-        # ).all()  # noqa
         pollinations: list[Pollination] = list(
             (await self.session.scalars(query)).all()
-        )  # noqa
+        )
         return pollinations
 
     async def get_pollinations_by_plants(
         self, seed_capsule_plant: Plant, pollen_donor_plant: Plant
     ) -> list[Pollination]:
+        # noinspection PyTypeChecker
         query = select(Pollination).where(
-            Pollination.seed_capsule_plant_id == seed_capsule_plant.id,  # noqa
-            Pollination.pollen_donor_plant_id == pollen_donor_plant.id,  # noqa
+            Pollination.seed_capsule_plant_id == seed_capsule_plant.id,
+            Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
         )
 
         pollinations: list[Pollination] = list(
             (await self.session.scalars(query)).all()
-        )  # noqa
+        )
         return pollinations
 
     async def get_pollinations_by_plant_ids(
         self, seed_capsule_plant_id: int, pollen_donor_plant_id: int
     ) -> list[Pollination]:
+        # noinspection PyTypeChecker
         query = select(Pollination).where(
-            Pollination.seed_capsule_plant_id == seed_capsule_plant_id,  # noqa
-            Pollination.pollen_donor_plant_id == pollen_donor_plant_id,  # noqa
+            Pollination.seed_capsule_plant_id == seed_capsule_plant_id,
+            Pollination.pollen_donor_plant_id == pollen_donor_plant_id,
         )
 
         pollinations: list[Pollination] = list(
             (await self.session.scalars(query)).all()
-        )  # noqa
+        )
         return pollinations

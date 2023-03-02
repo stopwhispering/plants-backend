@@ -142,7 +142,7 @@ class TaxonOccurencesLoader:
 
         logger.info(f"Downloading... {str(info.href)}")
         result = requests.get(info.href, timeout=10)  # todo async http client
-        if result.status_code >= 300:  # noqa PLR2004
+        if result.status_code >= 300:  # noqa: PLR2004
             logger.warning(f"Download failed: {info.href}")
             return None
 

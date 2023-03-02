@@ -85,7 +85,7 @@ def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
     for key, value in json_dict.items():
         try:
             json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-        except Exception:  # noqa
+        except Exception:
             with suppress(Exception):
                 json_dict[key] = date.fromisoformat(value)
     return json_dict

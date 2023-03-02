@@ -39,21 +39,22 @@ class FlorescenceDAL(BaseDAL):
             .options(selectinload(Florescence.plant).selectinload(Plant.florescences))
             .where(Florescence.florescence_status.in_(status))
         )
-        return list((await self.session.scalars(query)).all())  # noqa
+        return list((await self.session.scalars(query)).all())
 
     async def by_id(self, florescence_id: int) -> Florescence:
+        # noinspection PyTypeChecker
         query = (
             select(Florescence)
             .options(selectinload(Florescence.plant))
-            .where(Florescence.id == florescence_id)  # noqa
+            .where(Florescence.id == florescence_id)
         )
         florescence: Florescence | None = (await self.session.scalars(query)).first()
         if not florescence:
             raise FlorescenceNotFoundError(florescence_id)
         return florescence
 
-    async def update_florescence(  # noqa PLR0912
-        self, florescence: Florescence, updates: dict[str, Any]  # noqa C901
+    async def update_florescence(  # noqa: PLR0912 C901
+        self, florescence: Florescence, updates: dict[str, Any]
     ) -> None:
         if "florescence_status" in updates:
             florescence.florescence_status = updates["florescence_status"]

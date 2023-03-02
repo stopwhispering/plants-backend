@@ -9,3 +9,12 @@ mypy .
 ```
 ruff check --select "ERA001" .
 ```
+
+- Regularly update dependencies:
+- ```
+# update third-party dependencies
+poetry update
+
+# update pre-commit hooks
+pre-commit autoupdate
+```

@@ -46,7 +46,7 @@ async def test_deep_clone_plant(
     assert cloned_plant.tags != plant_valid.tags
     assert len(cloned_plant.tags) == len(plant_valid.tags)
     assert all(
-        [pt.text == ct.text for pt, ct in zip(plant_valid.tags, cloned_plant.tags)]
+        pt.text == ct.text for pt, ct in zip(plant_valid.tags, cloned_plant.tags)
     )
     assert all(pt.plant_id == cloned_plant.id for pt in cloned_plant.tags)
 

@@ -170,7 +170,7 @@ async def create_new_florescence(
             new_florescence_data.inflorescence_appearance_date
         ),
         comment=new_florescence_data.comment,
-        creation_context=Context.API.value,  # noqa
+        creation_context=Context.API.value,
     )
     await florescence_dal.create_florescence(florescence)
 

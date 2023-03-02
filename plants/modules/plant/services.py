@@ -105,17 +105,16 @@ async def deep_clone_plant(
     assignments, tags excludes descendant plants assignments to same instances of parent
     plants, parent plants pollen (nothing to do here)"""
     plant_clone: Plant = _clone_instance(
-        plant_original,  # noqa
+        plant_original,
         {
-            "plant_name": plant_name_clone,  # noqa
+            "plant_name": plant_name_clone,
             "filename_previewimage": None,
         },
     )
 
     cloned_tags = []
     for tag in plant_original.tags:
-        # tag_clone = _clone_instance(tag, {'last_update': datetime.now()})  # noqa
-        tag_clone = _clone_instance(tag, {})  # noqa
+        tag_clone = _clone_instance(tag, {})
         tag_clone.plant = plant_clone
         cloned_tags.append(tag_clone)
     if cloned_tags:
@@ -123,7 +122,7 @@ async def deep_clone_plant(
 
     cloned_events = []
     for event in plant_original.events:
-        event_clone = _clone_instance(event)  # noqa
+        event_clone = _clone_instance(event)
         event_clone.plant = plant_clone
         cloned_events.append(event_clone)
 

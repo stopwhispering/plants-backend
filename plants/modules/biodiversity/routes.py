@@ -46,7 +46,7 @@ async def search_taxa_by_name(
         taxon_info_request.taxon_name_pattern
     )
 
-    if not search_results:  # noqa
+    if not search_results:
         throw_exception(
             f"No search result for search term "
             f'"{taxon_info_request.taxon_name_pattern}".',

@@ -19,12 +19,12 @@ from plants.modules.pollination.ml_prediction import (
     predict_probability_of_seed_production,
 )
 from plants.modules.pollination.models import Florescence, Pollination
-from plants.modules.pollination.schemas import PollenContainerCreateUpdate  # noqa
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
     BPollinationAttempt,
     BPollinationResultingPlant,
     BPotentialPollenDonor,
+    PollenContainerCreateUpdate,
     PollenContainerRead,
     PollinationCreate,
     PollinationRead,
@@ -280,9 +280,8 @@ async def save_new_pollination(
         label_color=COLORS_MAP[
             new_pollination_data.label_color_rgb
         ],  # save the name of color, not the hex value
-        pollination_status=PollinationStatus.ATTEMPT.value,  # noqa
-        # creation_at=datetime.now(),
-        creation_at_context=Context.API.value,  # noqa
+        pollination_status=PollinationStatus.ATTEMPT.value,
+        creation_at_context=Context.API.value,
     )
 
     await pollination_dal.create(pollination)

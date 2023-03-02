@@ -36,7 +36,7 @@ async def build_taxon_tree(
     # todo optimize sql performance
     # get distinct families, genus, and species (as list of four-element-tuples); sort
     dist_tuples: list[
-        tuple[str, str, str, int]
+        tuple[str, str, str | None, int]
     ] = await taxon_dal.get_distinct_species_as_tuples()
 
     # build up tree

@@ -32,26 +32,30 @@ def get_data(
         "hybridgenus_seed_capsule": florescence.plant.taxon.hybridgenus,
         "hybridgenus_pollen_donor": pollen_donor.taxon.hybridgenus,
     }
-    df = pd.Series(data).to_frame().T
+    df_all = pd.Series(data).to_frame().T
 
-    df["same_genus"] = df["genus_pollen_donor"] == df["genus_seed_capsule"]
-    df["same_species"] = df["species_pollen_donor"] == df["species_seed_capsule"]
+    df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
+    df_all["same_species"] = (
+        df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
+    )
 
-    if missing := [f for f in feature_container.get_columns() if f not in df.columns]:
+    if missing := [
+        f for f in feature_container.get_columns() if f not in df_all.columns
+    ]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
-    return df
+    return df_all
 
 
 def predict_probability_of_seed_production(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
     pipeline, feature_container = get_probability_of_seed_production_model()
-    df = get_data(
+    df_all = get_data(
         florescence=florescence,
         pollen_donor=pollen_donor,
         pollen_type=pollen_type,
         feature_container=feature_container,
     )
-    pred_proba = pipeline.predict_proba(df)  # e.g. [[0.09839491 0.90160509]]
+    pred_proba = pipeline.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
     probability = pred_proba[0][1]
     return int(probability * 100)

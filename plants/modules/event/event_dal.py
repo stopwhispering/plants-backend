@@ -35,7 +35,7 @@ class EventDAL(BaseDAL):
             .options(selectinload(Event.soil))
             .options(selectinload(Event.pot))
         )
-        events: list[Event] = list((await self.session.scalars(query)).all())  # noqa
+        events: list[Event] = list((await self.session.scalars(query)).all())
         return events
 
     async def create_pot(self, pot: Pot) -> None:
@@ -69,11 +69,12 @@ class EventDAL(BaseDAL):
 
     async def get_all_soils(self) -> list[Soil]:
         query = select(Soil)
-        soils: list[Soil] = list((await self.session.scalars(query)).all())  # noqa
+        soils: list[Soil] = list((await self.session.scalars(query)).all())
         return soils
 
     async def get_soil_by_id(self, soil_id: int) -> Soil:
-        query = select(Soil).where(Soil.id == soil_id).limit(1)  # noqa
+        # noinspection PyTypeChecker
+        query = select(Soil).where(Soil.id == soil_id).limit(1)
         soil: Soil | None = (await self.session.scalars(query)).first()
         if soil is None:
             raise SoilNotFoundError(soil_id)
@@ -95,13 +96,15 @@ class EventDAL(BaseDAL):
     async def get_soils_by_name(self, soil_name: str) -> list[Soil]:
         # todo: once we have made soil names unique, we can change this with singular
         #  version
-        query = select(Soil).where(Soil.soil_name == soil_name)  # noqa
-        soils: list[Soil] = list((await self.session.scalars(query)).all())  # noqa
+        # noinspection PyTypeChecker
+        query = select(Soil).where(Soil.soil_name == soil_name)
+        soils: list[Soil] = list((await self.session.scalars(query)).all())
         return soils
 
     async def get_event_by_plant_and_date(
         self, plant: Plant, event_date: str
     ) -> Event | None:
+        # noinspection PyTypeChecker
         query = (
             select(Event)
             .where(Event.plant_id == plant.id)
@@ -112,9 +115,10 @@ class EventDAL(BaseDAL):
         return event
 
     async def by_id(self, event_id: int) -> Event:
+        # noinspection PyTypeChecker
         query = (
             select(Event)
-            .where(Event.id == event_id)  # noqa
+            .where(Event.id == event_id)
             .options(selectinload(Event.images))
             .options(selectinload(Event.observation))
             .options(selectinload(Event.pot))

@@ -26,7 +26,7 @@ router = APIRouter(
 
 
 @router.get("/proposals/{entity_id}", response_model=BResultsProposals)
-async def get_proposals(  # noqa: ANN201
+async def get_proposals(
     entity_id: ProposalEntity,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
@@ -69,7 +69,7 @@ async def get_proposals(  # noqa: ANN201
 
 
 @router.get("/selection_data/", response_model=BResultsSelection)
-async def get_selection_data(  # noqa: ANN201
+async def get_selection_data(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:

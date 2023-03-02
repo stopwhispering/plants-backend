@@ -32,9 +32,10 @@ class TaxonDAL(BaseDAL):
         super().__init__(session)
 
     async def by_id(self, taxon_id: int) -> Taxon:
+        # noinspection PyTypeChecker
         query = (
             select(Taxon)
-            .where(Taxon.id == taxon_id)  # noqa
+            .where(Taxon.id == taxon_id)
             .options(selectinload(Taxon.occurrence_images))
             .options(
                 selectinload(Taxon.images).selectinload(
@@ -44,14 +45,16 @@ class TaxonDAL(BaseDAL):
             .options(selectinload(Taxon.distribution))
             .limit(1)
         )
-        taxon: Taxon | None = (await self.session.scalars(query)).first()  # noqa
+        # noinspection PyTypeChecker
+        taxon: Taxon | None = (await self.session.scalars(query)).first()
         if not taxon:
             raise TaxonNotFoundError(taxon_id)
         return taxon
 
     async def by_gbif_id(self, gbif_id: int) -> list[Taxon]:
-        query = select(Taxon).where(Taxon.gbif_id == gbif_id)  # noqa
-        taxa: list[Taxon] = list((await self.session.scalars(query)).all())  # noqa
+        # noinspection PyTypeChecker
+        query = select(Taxon).where(Taxon.gbif_id == gbif_id)
+        taxa: list[Taxon] = list((await self.session.scalars(query)).all())
         return taxa
 
     async def get_taxa_by_name_pattern(
@@ -65,8 +68,8 @@ class TaxonDAL(BaseDAL):
             .options(selectinload(Taxon.plants))
         )
         if rank:
-            query = query.where(Taxon.rank == rank.value)  # noqa
-        taxa: list[Taxon] = list((await self.session.scalars(query)).all())  # noqa
+            query = query.where(Taxon.rank == rank.value)
+        taxa: list[Taxon] = list((await self.session.scalars(query)).all())
         return taxa
 
     async def get_taxon_occurrence_image_by_filter(
@@ -85,23 +88,26 @@ class TaxonDAL(BaseDAL):
 
         images: list[TaxonOccurrenceImage] = list(
             (await self.session.scalars(query)).all()
-        )  # noqa
+        )
         return images
 
-    async def get_distinct_species_as_tuples(self) -> list[tuple[str, str, str, int]]:
+    async def get_distinct_species_as_tuples(
+        self,
+    ) -> list[tuple[str, str, str | None, int]]:
         # todo performance optimize
         plant_exists_filter = and_(
-            Plant.deleted.is_(False), Plant.active  # noqa FBT003
-        )  # noqa FBT003
-        has_any_plant_filter = Taxon.plants.any(plant_exists_filter)  # type:ignore
+            Plant.deleted.is_(False), Plant.active  # noqa: FBT003
+        )
+        has_any_plant_filter = Taxon.plants.any(
+            plant_exists_filter  # type:ignore[arg-type]
+        )
 
         query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id).where(
             has_any_plant_filter
         )
-        species_tuples: list[tuple[str, str, str, int]] = list(
-            (  # type:ignore  # noqa
-                await self.session.execute(query)
-            ).all()
+        # noinspection PyTypeChecker
+        species_tuples: list[tuple[str, str, str | None, int]] = list(
+            (await self.session.execute(query)).all()  # type:ignore[arg-type]
         )
         return species_tuples
 
@@ -150,8 +156,9 @@ class TaxonDAL(BaseDAL):
         await self.session.flush()
 
     async def exists(self, taxon_name: str) -> bool:
-        query = select(Taxon).where(Taxon.name == taxon_name).limit(1)  # noqa
-        taxon: Taxon | None = (await self.session.scalars(query)).first()  # noqa
+        # noinspection PyTypeChecker
+        query = select(Taxon).where(Taxon.name == taxon_name).limit(1)
+        taxon: Taxon | None = (await self.session.scalars(query)).first()
         return taxon is not None
 
     async def create(self, taxon: Taxon) -> None:

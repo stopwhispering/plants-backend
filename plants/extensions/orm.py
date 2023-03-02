@@ -23,7 +23,7 @@ class SessionFactory:
     @classmethod
     def create_sessionmaker(cls, engine: AsyncEngine) -> None:
         """Create a sessionmaker for a given db engine."""
-        cls.session_factory = sessionmaker(  # type:ignore  # noqa
+        cls.session_factory = sessionmaker(  # type: ignore[call-overload]
             engine,
             autocommit=False,
             autoflush=False,
@@ -33,13 +33,9 @@ class SessionFactory:
 
     @classmethod
     def create_session(cls) -> AsyncSession:
-        return cls.session_factory()  # type:ignore
-
-    @classmethod
-    def get_session_factory(cls) -> sessionmaker[Any]:
         if cls.session_factory is None:
-            raise ValueError("Session factory not set")
-        return cls.session_factory
+            raise RuntimeError("SessionFactory not initialized")
+        return cls.session_factory()  # type: ignore[no-any-return]
 
 
 async def init_orm(engine: AsyncEngine) -> None:

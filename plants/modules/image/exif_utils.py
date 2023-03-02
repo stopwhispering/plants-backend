@@ -57,37 +57,37 @@ def encode_record_date_time(dt: datetime.datetime) -> bytes:
 def _auto_rotate_by_exif_flag(
     img: PilImage.Image, orientation_flag: int
 ) -> PilImage.Image:
-    if orientation_flag == 2:  # noqa PLR2004
+    if orientation_flag == 2:  # noqa: PLR2004
         img = img.transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: flip left "
             f"or right."
         )
-    elif orientation_flag == 3:  # noqa PLR2004
+    elif orientation_flag == 3:  # noqa: PLR2004
         img = img.rotate(180)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: 180.")
-    elif orientation_flag == 4:  # noqa PLR2004
+    elif orientation_flag == 4:  # noqa: PLR2004
         img = img.rotate(180).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 180 & flip "
             f"left to right."
         )
-    elif orientation_flag == 5:  # noqa PLR2004
+    elif orientation_flag == 5:  # noqa: PLR2004
         img = img.rotate(-90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: -90 & flip "
             f"left to right."
         )
-    elif orientation_flag == 6:  # noqa PLR2004
+    elif orientation_flag == 6:  # noqa: PLR2004
         img = img.rotate(-90, expand=True)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: -90.")
-    elif orientation_flag == 7:  # noqa PLR2004
+    elif orientation_flag == 7:  # noqa: PLR2004
         img = img.rotate(90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 90 & flip "
             f"left to right."
         )
-    elif orientation_flag == 8:  # noqa PLR2004
+    elif orientation_flag == 8:  # noqa: PLR2004
         img = img.rotate(90, expand=True)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: 90.")
     return img
@@ -126,7 +126,7 @@ def encode_keywords_tag(keywords: list[str]) -> tuple[int, ...]:
     ord_list: list[int] = []
     for keyword in keywords:
         ord_list_new = [ord(t) for t in keyword]
-        ord_list = ord_list + [59] + ord_list_new if ord_list else ord_list_new
+        ord_list = [*ord_list, 59, *ord_list_new] if ord_list else ord_list_new
 
     # add \x00 (0) after each element
     ord_list_final = []
@@ -169,7 +169,7 @@ def read_record_datetime_from_exif_tags(
         raise
 
     if (
-        36867 in exif_dict["Exif"]  # noqa PLR2004
+        36867 in exif_dict["Exif"]  # noqa: PLR2004
     ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
 

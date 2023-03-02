@@ -47,17 +47,18 @@ class PlantDAL(BaseDAL):
         )
 
     async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
+        # noinspection PyTypeChecker
         query = (
             select(Plant)
-            .where(Plant.id == plant_id)  # noqa
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.id == plant_id)
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .limit(1)
         )
 
         if eager_load:
             query = self._add_eager_load_options(query)
 
-        plant: Plant | None = (await self.session.scalars(query)).first()  # noqa
+        plant: Plant | None = (await self.session.scalars(query)).first()
         if not plant:
             raise PlantNotFoundError(plant_id)
         return plant
@@ -70,10 +71,11 @@ class PlantDAL(BaseDAL):
         only_active: bool = True,
         raise_not_found: bool = False,
     ) -> Plant | None:
+        # noinspection PyTypeChecker
         query = (
             select(Plant)
-            .where(Plant.plant_name == plant_name)  # noqa
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.plant_name == plant_name)
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .limit(1)
         )
 
@@ -95,36 +97,38 @@ class PlantDAL(BaseDAL):
     ) -> list[int]:
         query = (
             select(Plant.id)
-            .where(Plant.taxon_id == taxon_id)  # noqa
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.taxon_id == taxon_id)
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
         )
 
         if only_active:
-            query = query.where(Plant.active)  # noqa
+            # noinspection PyTypeChecker
+            query = query.where(Plant.active)
 
         if eager_load:
             query = self._add_eager_load_options(query)
 
-        plants: list[int] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[int] = list((await self.session.scalars(query)).all())
         # todo does it reutrn tuple or list??
         return plants
 
     async def get_plant_by_criteria(self, criteria: dict[str, Any]) -> list[Plant]:
-        query = select(Plant).where(Plant.deleted.is_(False))  # noqa FBT003
+        query = select(Plant).where(Plant.deleted.is_(False))  # noqa: FBT003
         value: str
         for key, value in criteria.items():
             if "field_number" in key:
                 query = query.filter(Plant.field_number == value)
             else:
                 raise CriterionNotImplementedError(key)
-        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
     async def get_name_by_id(self, plant_id: int) -> str:
+        # noinspection PyTypeChecker
         query = (
             select(Plant.plant_name)
-            .where(Plant.id == plant_id)  # noqa
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.id == plant_id)
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .limit(1)
         )
         plant_name: str | None = (await self.session.scalars(query)).first()
@@ -133,10 +137,11 @@ class PlantDAL(BaseDAL):
         return plant_name
 
     async def get_id_by_name(self, plant_name: str) -> int:
+        # noinspection PyTypeChecker
         query = (
             select(Plant.id)
-            .where(Plant.plant_name == plant_name)  # noqa
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.plant_name == plant_name)
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .limit(1)
         )
         plant_id: int | None = (await self.session.scalars(query)).first()
@@ -145,24 +150,28 @@ class PlantDAL(BaseDAL):
         return plant_id
 
     async def get_count_plants_without_taxon(self) -> int:
+        # noinspection PyTypeChecker
         query = (
             select(func.count())
             .select_from(Plant)
             .where(Plant.taxon_id.is_(None))
-            .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)  # noqa
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.active)
         )
-        count: int = (await self.session.scalars(query)).first()  # type:ignore  # noqa
+        count: int = (
+            await self.session.scalars(query)  # type: ignore[assignment]
+        ).first()
         return count
 
     async def get_plants_ids_without_taxon(self) -> list[int]:
+        # noinspection PyTypeChecker
         query = (
             select(Plant.id)
             .where(Plant.taxon_id.is_(None))
-            .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)  # noqa
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.active)
         )
-        plant_ids: list[int] = list((await self.session.scalars(query)).all())  # noqa
+        plant_ids: list[int] = list((await self.session.scalars(query)).all())
         return plant_ids
 
     async def create_plant(self, plant: Plant) -> None:
@@ -182,10 +191,10 @@ class PlantDAL(BaseDAL):
     async def get_all_plants_with_taxon(self) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .options(selectinload(Plant.taxon))
         )
-        return list((await self.session.scalars(query)).all())  # noqa
+        return list((await self.session.scalars(query)).all())
 
     async def set_count_stored_pollen_containers(
         self, plant: Plant, count: int
@@ -194,28 +203,29 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
 
     async def get_plants_without_pollen_containers(self) -> list[Plant]:
+        # noinspection PyTypeChecker
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa FBT003
-            .where(Plant.active)  # noqa
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.active)
             .where(
                 (Plant.count_stored_pollen_containers == 0)
                 | Plant.count_stored_pollen_containers.is_(None)
             )
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .options(selectinload(Plant.taxon))
         )
-        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
     async def get_plants_with_pollen_containers(self) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .where(Plant.count_stored_pollen_containers >= 1)
             .options(selectinload(Plant.taxon))
         )
-        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
     async def get_children(
@@ -223,14 +233,14 @@ class PlantDAL(BaseDAL):
     ) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .where(
                 Plant.parent_plant_id == seed_capsule_plant.id,
                 Plant.parent_plant_pollen_id == pollen_donor_plant.id,
             )
         )
 
-        children: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        children: list[Plant] = list((await self.session.scalars(query)).all())
         return children
 
     async def get_children_by_ids(
@@ -238,18 +248,19 @@ class PlantDAL(BaseDAL):
     ) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa FBT003
+            .where(Plant.deleted.is_(False))  # noqa: FBT003
             .where(
                 Plant.parent_plant_id == seed_capsule_plant_id,
                 Plant.parent_plant_pollen_id == pollen_donor_plant_id,
             )
         )
 
-        children: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        children: list[Plant] = list((await self.session.scalars(query)).all())
         return children
 
     async def exists(self, plant_name: str) -> bool:
-        query = select(Plant).where(Plant.plant_name == plant_name).limit(1)  # noqa
+        # noinspection PyTypeChecker
+        query = select(Plant).where(Plant.plant_name == plant_name).limit(1)
         plant: Plant | None = (await self.session.scalars(query)).first()
         return plant is not None
 
@@ -258,15 +269,18 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
 
     async def get_distinct_nurseries(self) -> list[str]:
+        # noinspection PyTypeChecker
         query = (
             select(Plant.nursery_source)
-            .where(Plant.nursery_source.isnot(None))  # noqa
-            .distinct(Plant.nursery_source)  # noqa
+            .where(Plant.nursery_source.isnot(None))
+            .distinct(Plant.nursery_source)
         )
-        nurseries: list[str] = list((await self.session.scalars(query)).all())  # noqa
+        nurseries: list[str] = list((await self.session.scalars(query)).all())
         return nurseries
 
-    async def update(self, plant: Plant, updates: dict[str, Any]) -> None:  # noqa C901
+    async def update(  # noqa: C901 PLR0912
+        self, plant: Plant, updates: dict[str, Any]
+    ) -> None:
         for key, value in updates.items():
             if key == "plant_name":
                 plant.plant_name = value
@@ -306,8 +320,9 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
 
     async def get_tag_by_tag_id(self, tag_id: int) -> Tag:
-        query = select(Tag).where(Tag.id == tag_id).limit(1)  # noqa
-        tag: Tag | None = (await self.session.scalars(query)).first()  # noqa
+        # noinspection PyTypeChecker
+        query = select(Tag).where(Tag.id == tag_id).limit(1)
+        tag: Tag | None = (await self.session.scalars(query)).first()
         if not tag:
             raise TagNotFoundError(tag_id)
         return tag
@@ -346,7 +361,7 @@ class PlantDAL(BaseDAL):
 
         if not include_deleted:
             # sqlite does not like "is None" and pylint doesn't like "== None"
-            query = query.where(Plant.deleted.is_(False))  # noqa FBT003
+            query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
 
         # early-load all relationship tables for Plant model relevant for
         # PResultsPlants to save around 90% (postgres) of the time in comparison to
@@ -369,7 +384,7 @@ class PlantDAL(BaseDAL):
             # selectinload(Plant.image_to_plant_associations),  # not required
             # selectinload(Plant.florescences),  # not required
         )
-        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
     async def get_all_plants_with_events_loaded(
@@ -381,7 +396,7 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.events).selectinload(Event.soil)
         )
         if not include_deleted:
-            query = query.where(Plant.deleted.is_(False))  # noqa FBT003
+            query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
 
-        plants: list[Plant] = list((await self.session.scalars(query)).all())  # noqa
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants

@@ -16,7 +16,7 @@ from plants.shared.base_schema import (
 class FBPlantTag(BaseSchema):
     id: Optional[int]
     state: TagState
-    text: constr(min_length=1, max_length=20)  # type:ignore
+    text: constr(min_length=1, max_length=20)  # type: ignore[valid-type]
     last_update: datetime | None
     plant_id: int
 
@@ -26,12 +26,12 @@ class FBPlantTag(BaseSchema):
 
 class ShortPlant(BaseSchema):
     id: int
-    plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     active: bool
 
 
 class PlantCurrentSoil(BaseSchema):
-    soil_name: constr(min_length=1, max_length=100)  # type:ignore
+    soil_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     date: date
 
 
@@ -44,15 +44,19 @@ class PlantLatestImage(BaseSchema):
 
 
 class PlantBase(BaseSchema):
-    plant_name: constr(min_length=1, max_length=100)  # type:ignore
-    field_number: constr(min_length=1, max_length=20) | None  # type:ignore
-    geographic_origin: constr(min_length=1, max_length=100) | None  # type:ignore
-    nursery_source: constr(min_length=1, max_length=100) | None  # type:ignore
+    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    field_number: constr(min_length=1, max_length=20) | None  # type: ignore[valid-type]
+    geographic_origin: constr(  # type: ignore[valid-type]
+        min_length=1, max_length=100
+    ) | None
+    nursery_source: constr(  # type: ignore[valid-type]
+        min_length=1, max_length=100
+    ) | None
     propagation_type: FBPropagationType | None
     active: bool
     cancellation_reason: FBCancellationReason | None
     cancellation_date: date | None
-    generation_notes: constr(max_length=250) | None  # type:ignore
+    generation_notes: constr(max_length=250) | None  # type: ignore[valid-type]
     taxon_id: int | None
 
     parent_plant: ShortPlant | None
@@ -98,8 +102,8 @@ class FPlantsUpdateRequest(RequestContainer):
 
 class BPlantsRenameRequest(BaseSchema):
     plant_id: int
-    old_plant_name: constr(min_length=1, max_length=100)  # type:ignore
-    new_plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    old_plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    new_plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
 
 
 class BResultsPlants(ResponseContainer):
@@ -116,4 +120,6 @@ class BResultsPlantCloned(ResponseContainer):
 
 class BResultsProposeSubsequentPlantName(BaseSchema):
     original_plant_name: str
-    subsequent_plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    subsequent_plant_name: constr(  # type: ignore[valid-type]
+        min_length=1, max_length=100
+    )

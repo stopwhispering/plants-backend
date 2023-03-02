@@ -80,7 +80,7 @@ async def upload_images_plant(
     """
     form = await request.form()
     # noinspection PyTypeChecker
-    files: list[UploadFile] = form.getlist("files[]")  # type:ignore
+    files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
 
     # remove duplicates (filename already exists in file system)
     duplicate_filenames, warnings = await remove_files_already_existing(
@@ -202,9 +202,9 @@ async def upload_images(
     # via fastapi argument files = List[UploadFile] = File(...)
     # therefore, we directly go on the starlette request object
     form = await request.form()
-    additional_data = json.loads(form.get("files-data"))  # type:ignore
+    additional_data = json.loads(form.get("files-data"))  # type: ignore[arg-type]
     # noinspection PyTypeChecker
-    files: list[UploadFile] = form.getlist("files[]")  # type:ignore
+    files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
 
     # validate arguments manually as pydantic doesn't trigger here
     try:

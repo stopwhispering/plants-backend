@@ -182,7 +182,8 @@ class TaxonToOccurrenceAssociation(Base):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
-    __table_args__ = (  # type:ignore
+    # noinspection PyTypeChecker
+    __table_args__ = (  # type: ignore[var-annotated]
         ForeignKeyConstraint(
             (occurrence_id, img_no, gbif_id),
             (

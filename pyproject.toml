@@ -118,12 +118,12 @@ select = [
     "ARG",  # flake8-unused-arguments
 #    "PTH",  # flake8-use-pathlib
     "ERA",  # eradicate       (fix removes commented-out code)
-#    "PD",  # pandas-vet
-#    "PGH",  # pygrep-hooks
+    "PD",  # pandas-vet
+    "PGH",  # pygrep-hooks
     "PL",  # Pylint
     "TRY",  # tryceratops
-#    "NPY",  # NumPy-specific rules
-#    "RUF",  # Ruff-specific rules
+    "NPY",  # NumPy-specific rules
+    "RUF",  # Ruff-specific rules
 ]
 ignore = [
     "COM812",  # trailing comma missing
@@ -135,15 +135,17 @@ ignore = [
     "PLW2901",  # Outer for loop variable overwritten by inner assignment target
     "TRY003",  # Avoid specifying long messages outside the exception class
     "B905",  # `zip()` without an explicit `strict=` parameter
+    "ISC001",  # Implicitly concatenated string literals (conflicts with black)
+    "RUF001",  # String contains ambiguous unicode character
 
     # to be checked every once and then
     "ERA001",  # commented-out code
     "UP007",  #  X | None instead of Optional[x] --> wait for Pydantic 2
 ]
 #fixable = ["E", "F"]
-unfixable = [
-    "ERA001",  # commented-out code
-]
+#unfixable = [
+#    "ERA001",  # commented-out code
+#]
 exclude = [
     "./.pytest_cache",
     "./alembic",

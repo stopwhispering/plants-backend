@@ -81,7 +81,7 @@ async def clone_plant(
     )
 
     plant_clone: Plant = await plant_dal.by_name(
-        plant_name_clone,  # type:ignore
+        plant_name_clone,  # type: ignore[assignment]
         raise_not_found=True,
     )
     await create_history_entry(

@@ -34,7 +34,7 @@ class GBIFIdentifierLookup:
             nubKey=nub_key, datasetKey=IPNI_DATASET_KEY
         )
         resp = requests.get(url, timeout=10)
-        if resp.status_code != 200:  # noqa PLR2004
+        if resp.status_code != 200:  # noqa: PLR2004
             logger.error(f"Error at GET request for GBIF REST API: {resp.status_code}")
             return None
         if resp.json().get("results"):
@@ -82,7 +82,10 @@ class GBIFIdentifierLookup:
         return None
 
     @staticmethod
-    def _get_gbif_id_from_wikidata(lsid: str) -> int | None:  # noqa C901
+    def _get_gbif_id_from_wikidata(  # noqa: C901 PLR0911 PLR0915 PLR0912
+        lsid: str,
+    ) -> int | None:
+        # todo refactor
         """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
         wikidata api is defect, thus we parse using beautifulsoup4."""
         # fulltext-search wikidata for ipni id
@@ -136,7 +139,10 @@ class GBIFIdentifierLookup:
         # satisfy mypy
         if not wikidata_object.data:
             return None
-        wikidata_claims: dict[str, Any] = wikidata_object.data["claims"]  # type:ignore
+        # noinspection PyTypeChecker
+        wikidata_claims: dict[str, Any] = wikidata_object.data[
+            "claims"
+        ]  # type: ignore[assignment]
 
         # noinspection PyUnresolvedReferences
         ipni_claim = wikidata_claims.get(WIKIDATA_IPNI_PROPERTY_ID)

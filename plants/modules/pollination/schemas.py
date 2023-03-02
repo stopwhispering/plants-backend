@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import List
 
 from pydantic import Extra, condecimal, conint, constr
 
@@ -19,9 +18,9 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 class PollenContainerBase(BaseSchema):
     plant_id: int
     # todo remove/ignore for CreateUpdate
-    plant_name: constr(min_length=1, max_length=100)  # type:ignore
+    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     # todo remove/ignore for CreateUpdate
-    genus: constr(min_length=1, max_length=100) | None  # type:ignore
+    genus: constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
     count_stored_pollen_containers: int  # mandatory in this case
 
 
@@ -40,8 +39,8 @@ class PollinationBase(BaseSchema):
     pollination_timestamp: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     # todo enum  # e.g. 'outside_led'
-    location: constr(min_length=1, max_length=100)  # type:ignore
-    count: conint(ge=1)  # type:ignore
+    location: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    count: conint(ge=1)  # type: ignore[valid-type]
 
 
 class PollinationRead(PollinationBase):
@@ -51,7 +50,7 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
-    count: conint(ge=1) | None  # type:ignore  # allow None for old data
+    count: conint(ge=1) | None  # type: ignore[valid-type]  # allow None for old data
 
     pollination_status: str
     ongoing: bool
@@ -78,7 +77,7 @@ class PollinationUpdate(PollinationBase):
     pollination_status: PollinationStatus
     ongoing: bool
 
-    harvest_date: constr(regex=REGEX_DATE) | None  # type:ignore  # e.g. '2022-11-16'
+    harvest_date: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
     seed_capsule_length: float | None
     seed_capsule_width: float | None
     seed_length: float | None
@@ -96,7 +95,7 @@ class PollinationUpdate(PollinationBase):
 
 
 class PollinationCreate(PollinationBase):
-    florescenceId: int  # noqa N815  # todo rename
+    florescenceId: int  # noqa: N815  # todo rename
     pollen_quality: PollenQuality
 
     class Config:
@@ -108,7 +107,9 @@ class FlorescenceBase(BaseSchema):
     plant_id: int
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status: FlorescenceStatus
-    inflorescence_appearance_date: constr(regex=REGEX_DATE) | None  # type:ignore
+    inflorescence_appearance_date: constr(  # type: ignore[valid-type]
+        regex=REGEX_DATE
+    ) | None
     comment: str | None  # e.g. location if multiple plants in one container
 
 
@@ -122,22 +123,28 @@ class FlorescenceUpdate(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(ge=Decimal(0.1), le=Decimal(99.9)) | None  # type:ignore
-    perianth_diameter: condecimal(  # type:ignore
+    perianth_length: condecimal(  # type: ignore[valid-type]
+        ge=Decimal(0.1), le=Decimal(99.9)
+    ) | None
+    perianth_diameter: condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(  # type:ignore
+    flower_color: constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(  # type:ignore
+    flower_color_second: constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # type:ignore
-    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # type:ignore
+    first_flower_opening_date: constr(  # type: ignore[valid-type]
+        regex=REGEX_DATE
+    ) | None
+    last_flower_closing_date: constr(  # type: ignore[valid-type]
+        regex=REGEX_DATE
+    ) | None
 
     class Config:
         extra = Extra.ignore
@@ -151,24 +158,28 @@ class FlorescenceRead(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(  # type:ignore
+    perianth_length: condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(99.9)
     ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(  # type:ignore
+    perianth_diameter: condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(  # type:ignore
+    flower_color: constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(  # type:ignore
+    flower_color_second: constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(regex=REGEX_DATE) | None  # type:ignore
-    last_flower_closing_date: constr(regex=REGEX_DATE) | None  # type:ignore
+    first_flower_opening_date: constr(  # type: ignore[valid-type]
+        regex=REGEX_DATE
+    ) | None
+    last_flower_closing_date: constr(  # type: ignore[valid-type]
+        regex=REGEX_DATE
+    ) | None
 
     class Config:
         use_enum_values = True  # todo remove
@@ -203,7 +214,7 @@ class BPotentialPollenDonor(BaseSchema):
 
 
 class BResultsOngoingPollinations(ResponseContainer):
-    ongoingPollinationCollection: List[PollinationRead]  # noqa N815  # todo rename
+    ongoingPollinationCollection: list[PollinationRead]  # noqa: N815  # todo rename
 
 
 class BPollinationStatus(BaseSchema):
@@ -213,7 +224,7 @@ class BPollinationStatus(BaseSchema):
 
 class FRequestPollenContainers(RequestContainer):
     # todo rename
-    pollenContainerCollection: list[PollenContainerCreateUpdate]  # noqa N815
+    pollenContainerCollection: list[PollenContainerCreateUpdate]  # noqa: N815
 
 
 class SettingsRead(BaseSchema):
@@ -223,12 +234,12 @@ class SettingsRead(BaseSchema):
 
 
 class BResultsActiveFlorescences(ResponseContainer):
-    activeFlorescenceCollection: List[FlorescenceRead]  # noqa N815  # todo rename
+    activeFlorescenceCollection: list[FlorescenceRead]  # noqa: N815  # todo rename
 
 
 class BResultsPotentialPollenDonors(ResponseContainer):
     # todo rename
-    potentialPollenDonorCollection: list[BPotentialPollenDonor]  # noqa N815
+    potentialPollenDonorCollection: list[BPotentialPollenDonor]  # noqa: N815
 
 
 class BPlantWoPollenContainer(BaseSchema):
@@ -245,13 +256,13 @@ class BPlantForNewFlorescence(BaseSchema):
 
 class BResultsPlantsForNewFlorescence(BaseSchema):
     # todo rename
-    plantsForNewFlorescenceCollection: list[BPlantForNewFlorescence]  # noqa N815
+    plantsForNewFlorescenceCollection: list[BPlantForNewFlorescence]  # noqa: N815
 
 
 class BResultsPollenContainers(BaseSchema):
-    pollenContainerCollection: list[PollenContainerRead]  # noqa N815  # todo rename
+    pollenContainerCollection: list[PollenContainerRead]  # noqa: N815  # todo rename
     # todo rename
-    plantsWithoutPollenContainerCollection: list[BPlantWoPollenContainer]  # noqa N815
+    plantsWithoutPollenContainerCollection: list[BPlantWoPollenContainer]  # noqa: N815
 
 
 class BResultsRetrainingPollinationToSeedsModel(BaseSchema):

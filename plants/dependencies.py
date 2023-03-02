@@ -27,9 +27,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Generator for db sessions."""
     # async with orm.SessionFactory.create_session() as db:
     db = orm.SessionFactory.create_session()
+    # noinspection PyBroadException
     try:
         yield db
-    except:  # noqa
+    except Exception:
         await db.rollback()
     finally:
         await db.commit()

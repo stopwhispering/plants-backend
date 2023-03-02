@@ -64,7 +64,7 @@ class Pot(Base):
     # todo enum  # flat, very flat, high, very high
     shape_side: FBShapeSide | None = Column(VARCHAR(20))
     # 5 digits, 1 decimal --> max 9999.9
-    diameter_width: Decimal | None = Column(Numeric(5, 1))  # type: ignore
+    diameter_width: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     # pot_notes = Column(TEXT)
 
     last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
@@ -91,8 +91,10 @@ class Observation(Base):
     # plant_name = Column(VARCHAR(60), nullable=False)
     diseases: str | None = Column(TEXT)
     # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
-    stem_max_diameter: Decimal | None = Column(Numeric(5, 1))  # type: ignore
-    height: Decimal | None = Column(Numeric(5, 1))  # type: ignore
+    stem_max_diameter: Decimal | None = Column(  # type: ignore[valid-type]
+        Numeric(5, 1)
+    )
+    height: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     # location = Column(VARCHAR(30))
     observation_notes: str | None = Column(TEXT)
 

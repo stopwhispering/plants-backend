@@ -28,7 +28,7 @@ async def test_get_nursery_proposals(ac: AsyncClient, plant_valid_in_db: Plant) 
 @pytest.mark.asyncio()
 async def test_get_image_keyword_proposals(
     ac: AsyncClient,
-    valid_plant_in_db_with_image: Plant,  # noqa ARG001
+    valid_plant_in_db_with_image: Plant,  # noqa: ARG001
 ) -> None:
     response = await ac.get(f"/api/proposals/{ProposalEntity.KEYWORD.value}")
     assert response.status_code == 200

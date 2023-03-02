@@ -6,7 +6,7 @@ from operator import attrgetter
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
-from sqlalchemy.orm import Mapped, foreign, relationship, remote  # noqa
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
@@ -62,10 +62,11 @@ class Plant(Base):
     )
 
     parent_plant_id = Column(INTEGER, ForeignKey("plants.id"))
+    # noinspection PyTypeChecker
     parent_plant: Mapped[Plant] = relationship(
         "Plant",
         primaryjoin="Plant.parent_plant_id==Plant.id",
-        remote_side=[id],  # noqa
+        remote_side=[id],
         back_populates="descendant_plants",
     )
     descendant_plants: Mapped[list[Plant]] = relationship(
@@ -75,10 +76,11 @@ class Plant(Base):
     )
 
     parent_plant_pollen_id = Column(INTEGER, ForeignKey("plants.id"))
+    # noinspection PyTypeChecker
     parent_plant_pollen: Mapped[Plant] = relationship(
         "Plant",
         primaryjoin="Plant.parent_plant_pollen_id==Plant.id",
-        remote_side=[id],  # noqa
+        remote_side=[id],
         back_populates="descendant_plants_pollen",
     )
     descendant_plants_pollen: Mapped[list[Plant]] = relationship(
@@ -87,7 +89,6 @@ class Plant(Base):
         back_populates="parent_plant_pollen",
     )
 
-    # generation_origin = Column(VARCHAR(60))
     plant_notes = Column(TEXT)
     filename_previewimage = Column(
         VARCHAR(240)
@@ -167,7 +168,7 @@ class Plant(Base):
         if soil_events:
             soil_events.sort(key=lambda e: e.date, reverse=True)
             return {
-                "soil_name": soil_events[0].soil.soil_name,  # type:ignore
+                "soil_name": soil_events[0].soil.soil_name,  # type: ignore[union-attr]
                 "date": soil_events[0].date,
             }
         return None
