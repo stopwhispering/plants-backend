@@ -36,7 +36,7 @@ class TaxonOccurrenceImageBase(BaseSchema):
     verbatim_locality: Optional[  # type: ignore[valid-type]
         constr(min_length=1, max_length=125)
     ]
-    date: datetime.datetime
+    created_on: datetime.datetime
     creator_identifier: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     publisher_dataset: Optional[  # type: ignore[valid-type]
         constr(min_length=1, max_length=100)
@@ -54,7 +54,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
         extra = Extra.ignore
 
     # noinspection PyMethodParameters
-    @validator("date")
+    @validator("created_on")
     def datetime_to_string(cls, v: datetime.datetime) -> str:  # noqa: N805
         """Validator decorator makes this a class method and enforces cls param."""
         return v.strftime(

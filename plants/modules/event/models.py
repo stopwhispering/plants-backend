@@ -41,7 +41,7 @@ class Soil(Base):
     description: str | None = Column(TEXT)
     mix: str = Column(TEXT, nullable=False)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -67,7 +67,7 @@ class Pot(Base):
     diameter_width: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     # pot_notes = Column(TEXT)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -98,7 +98,7 @@ class Observation(Base):
     # location = Column(VARCHAR(30))
     observation_notes: str | None = Column(TEXT)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -141,7 +141,7 @@ class Event(Base):
     plant_id = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     plant: Mapped[Plant] = relationship("Plant", back_populates="events")
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )

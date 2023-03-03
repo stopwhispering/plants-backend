@@ -184,7 +184,7 @@ class Pollination(Base):
 
     comment = Column(TEXT)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     last_update_context = Column(VARCHAR(30))
 
     created_at = Column(

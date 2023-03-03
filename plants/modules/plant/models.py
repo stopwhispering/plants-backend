@@ -108,7 +108,7 @@ class Plant(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
 
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey("taxon.id"))
@@ -215,7 +215,7 @@ class Tag(Base):
     plant_id: int | None = Column(INTEGER, ForeignKey("plants.id"))
     plant: Mapped[Plant | None] = relationship("Plant", back_populates="tags")
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )

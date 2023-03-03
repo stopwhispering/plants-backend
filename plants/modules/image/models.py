@@ -91,7 +91,7 @@ class Image(Base):
     description: str | None = Column(VARCHAR(500))
     record_date_time: datetime = Column(TIMESTAMP, nullable=False)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )

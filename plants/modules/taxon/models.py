@@ -43,7 +43,7 @@ class Distribution(Base):
     tdwg_code: str = Column(VARCHAR(10))  # todo make not nullable
     tdwg_level = Column(INTEGER)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -94,7 +94,7 @@ class Taxon(Base):
     gbif_id: int | None = Column(INTEGER)  # Global Biodiversity Information Facility
     custom_notes: str | None = Column(TEXT)  # may be updated on web frontend
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -141,7 +141,8 @@ class TaxonOccurrenceImage(Base):
     basis_of_record: str = Column(VARCHAR(25), nullable=False)
     verbatim_locality: str | None = Column(VARCHAR(120))
     # todo rename datetime or make it date type
-    date: datetime = Column(DateTime(timezone=True), nullable=False)
+    created_on: datetime = Column(DateTime(timezone=True), nullable=False)
+    # date: datetime = Column(DateTime(timezone=True), nullable=False)
     creator_identifier: str = Column(VARCHAR(100), nullable=False)
     publisher_dataset: str | None = Column(VARCHAR(100))
     references: str | None = Column(VARCHAR(120))
@@ -149,7 +150,7 @@ class TaxonOccurrenceImage(Base):
     # todo switch to other id
     filename_thumbnail: str = Column(VARCHAR(120), nullable=False)
 
-    last_update = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
