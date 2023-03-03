@@ -36,7 +36,7 @@ async def test_florescence_create_valid(
     # get florescences
     response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
-    active_florescence = response.json().get("activeFlorescenceCollection")[0]
+    active_florescence = response.json().get("active_florescence_collection")[0]
     assert (
         active_florescence.get("comment") == "large & new"
     )  # first space has been trimmed
@@ -61,8 +61,8 @@ async def test_florescence_create_valid(
     # get florescences
     response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
-    assert len(response.json().get("activeFlorescenceCollection")) == 1
-    active_florescence = response.json().get("activeFlorescenceCollection")[0]
+    assert len(response.json().get("active_florescence_collection")) == 1
+    active_florescence = response.json().get("active_florescence_collection")[0]
     assert active_florescence.get("perianth_length") == 1.3
     assert active_florescence.get("perianth_diameter") == 0.8
     assert active_florescence.get("flower_color") == "#f2f600"  # lower-case
@@ -97,7 +97,7 @@ async def test_florescence_create_valid(
     # must be unchanged
     response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
-    active_florescence = response.json().get("activeFlorescenceCollection")[0]
+    active_florescence = response.json().get("active_florescence_collection")[0]
     assert active_florescence.get("flower_color_second") == "#dddd00"
 
 

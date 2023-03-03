@@ -13,6 +13,7 @@ from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
 from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
+from plants.exceptions import ImageFileNotFoundError
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_services_simple import remove_files_already_existing
@@ -332,6 +333,11 @@ async def get_photo(
     image_path = await get_image_path_by_size(
         filename=filename, size=size, image_dal=image_dal
     )
+
+    if not image_path.is_file():
+        # if local_config.log_settings.ignore_missing_image_files:
+        #     return None
+        raise ImageFileNotFoundError(filename=filename)
 
     # media_type here sets the media type of the actual response sent to the client.
     return FileResponse(

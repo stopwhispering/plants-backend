@@ -43,7 +43,7 @@ class TaxonOccurrenceImageBase(BaseSchema):
     ]
     references: Optional[HttpUrl]
     href: HttpUrl  # link to iamge at inaturalist etc.
-    # todo switch to other id
+
     filename_thumbnail: constr(  # type: ignore[valid-type]
         min_length=1, max_length=120
     )  # filename for generated thumbnails
@@ -103,15 +103,6 @@ class FBotanicalAttributes(BaseSchema):
 
 class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
     gbif_id: int
-
-
-class FRetrieveTaxonDetailsRequest(RequestContainer):
-    lsid: Optional[constr(min_length=1, max_length=50)]  # type: ignore[valid-type]
-    hasCustomName: bool  # noqa: N815  # todo rename
-    taxon_id: Optional[int]  # taxon id
-    nameInclAddition: str  # noqa: N815  # todo rename
-    plant_id: int
-    source: str  # "Local DB" or ...  # todo enum
 
 
 class BKewSearchResultEntry(BaseSchema):

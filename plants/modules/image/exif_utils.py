@@ -173,8 +173,7 @@ def read_record_datetime_from_exif_tags(
     ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
 
-    # get creation date from file system (todo linux has only modifed date, does
-    #  this still work or abort?)
+    # get creation date from file system
     ts = absolute_path.stat().st_ctime
     # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
     return datetime.datetime.fromtimestamp(ts)

@@ -37,19 +37,19 @@ class Distribution(Base):
         primary_key=True,
         nullable=False,
     )
-    name = Column(VARCHAR(40))
-    establishment = Column(VARCHAR(15))
-    feature_id = Column(VARCHAR(5))
-    tdwg_code: str = Column(VARCHAR(10))  # todo make not nullable
-    tdwg_level = Column(INTEGER)
+    name: str = Column(VARCHAR(40), nullable=False)
+    establishment: str = Column(VARCHAR(15), nullable=False)
+    feature_id: str = Column(VARCHAR(5), nullable=False)
+    tdwg_code: str = Column(VARCHAR(10), nullable=False)
+    tdwg_level: int = Column(INTEGER, nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
-    taxon_id = Column(INTEGER, ForeignKey("taxon.id"))
-    taxon: Mapped[Taxon | None] = relationship("Taxon", back_populates="distribution")
+    taxon_id: int = Column(INTEGER, ForeignKey("taxon.id"), nullable=False)
+    taxon: Mapped[Taxon] = relationship("Taxon", back_populates="distribution")
 
 
 class Taxon(Base):

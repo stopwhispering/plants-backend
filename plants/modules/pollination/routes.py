@@ -112,7 +112,7 @@ async def get_ongoing_pollinations(
         "message": get_message(
             f"Provided {len(ongoing_pollinations)} ongoing pollinations."
         ),
-        "ongoingPollinationCollection": ongoing_pollinations,
+        "ongoing_pollination_collection": ongoing_pollinations,
     }
 
 
@@ -132,8 +132,8 @@ async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)) ->
         plant_dal=plant_dal
     )
     return {
-        "pollenContainerCollection": pollen_containers,
-        "plantsWithoutPollenContainerCollection": plants_without_pollen_containers,
+        "pollen_container_collection": pollen_containers,
+        "plants_without_pollen_container_collection": plants_without_pollen_containers,
     }
 
 
@@ -144,7 +144,7 @@ async def post_pollen_containers(
 ) -> Any:
     """Update pollen containers and add new ones."""
     await update_pollen_containers(
-        pollen_containers_data=pollen_containers_data.pollenContainerCollection,
+        pollen_containers_data=pollen_containers_data.pollen_container_collection,
         plant_dal=plant_dal,
     )
 
@@ -178,7 +178,7 @@ async def get_active_florescences(
     return {
         "action": "Get active florescences",
         "message": get_message(f"Provided {len(florescences)} active florescences."),
-        "activeFlorescenceCollection": florescences,
+        "active_florescence_collection": florescences,
     }
 
 
@@ -190,7 +190,7 @@ async def get_plants_for_new_florescence(
 ) -> Any:
     """Read all plants available for new florescence."""
     plants = await read_plants_for_new_florescence(plant_dal=plant_dal)
-    return {"plantsForNewFlorescenceCollection": plants}
+    return {"plants_for_new_florescence_collection": plants}
 
 
 @router.put(
@@ -257,7 +257,7 @@ async def get_potential_pollen_donors(
         "message": get_message(
             f"Provided {len(potential_pollen_donors)} potential donors."
         ),
-        "potentialPollenDonorCollection": potential_pollen_donors,
+        "potential_pollen_donor_collection": potential_pollen_donors,
     }
 
 

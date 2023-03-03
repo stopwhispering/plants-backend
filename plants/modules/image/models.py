@@ -35,8 +35,8 @@ class ImageKeyword(Base):
     image_id: int = Column(
         INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False
     )
-    # todo max 30 for new keywords
-    keyword: str = Column(VARCHAR(100), primary_key=True, nullable=False)
+
+    keyword: str = Column(VARCHAR(60), primary_key=True, nullable=False)
     image: Mapped[Image] = relationship("Image", back_populates="keywords")
 
 
@@ -101,9 +101,7 @@ class Image(Base):
 
     @property
     def absolute_path(self) -> Path:
-        return settings.paths.path_photos.parent.joinpath(
-            PurePath(self.relative_path)
-        )  # todo what?
+        return settings.paths.path_photos.parent.joinpath(PurePath(self.relative_path))
 
     keywords: Mapped[list[ImageKeyword]] = relationship(
         "ImageKeyword", back_populates="image", uselist=True

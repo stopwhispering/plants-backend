@@ -28,23 +28,6 @@ async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
     return await plant_dal.create_empty_plant(plant_name=plant_name)
 
 
-# todo this is still required (otherwise save error) - why? replcae
-def _get_filename_previewimage(plant: PlantCreateUpdate) -> str | None:
-    """We actually set the path to preview photo_file (the original photo_file, not the
-    thumbnail) excluding the photos-subdir part of the uri."""
-    if not plant.filename_previewimage:
-        return None
-
-    # generate_previewimage_if_not_exists(original_image_rel_path=plant.filename_previewimage)
-
-    # rmeove photos-subdir from path if required (todo: still required somewhere?)
-    if plant.filename_previewimage.is_relative_to(settings.paths.subdirectory_photos):
-        return plant.filename_previewimage.relative_to(
-            settings.paths.subdirectory_photos
-        ).as_posix()
-    return plant.filename_previewimage.as_posix()
-
-
 async def update_plants_from_list_of_dicts(
     plants: list[PlantCreateUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
 ) -> list[Plant]:
@@ -68,7 +51,9 @@ async def update_plants_from_list_of_dicts(
         updates["parent_plant_pollen_id"] = (
             plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         )
-        updates["filename_previewimage"] = _get_filename_previewimage(plant)
+        updates["filename_previewimage"] = (
+            plant.filename_previewimage.name if plant.filename_previewimage else None
+        )
         updates["taxon"] = (
             await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
         )

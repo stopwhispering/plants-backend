@@ -160,7 +160,7 @@ class TaxonomySearch:
             basionym=taxon.basionym,
             # 'phylum': taxon.phylum,
             synonyms_concat=taxon.synonyms_concat,
-            distribution_concat="",  # todo
+            distribution_concat=taxon.distribution_concat,
         )
 
     async def _query_taxa_in_local_database(

@@ -199,7 +199,7 @@ class BPotentialPollenDonor(BaseSchema):
 
 
 class BResultsOngoingPollinations(ResponseContainer):
-    ongoingPollinationCollection: list[PollinationRead]  # noqa: N815  # todo rename
+    ongoing_pollination_collection: list[PollinationRead]
 
 
 class BPollinationStatus(BaseSchema):
@@ -208,8 +208,7 @@ class BPollinationStatus(BaseSchema):
 
 
 class FRequestPollenContainers(RequestContainer):
-    # todo rename
-    pollenContainerCollection: list[PollenContainerCreateUpdate]  # noqa: N815
+    pollen_container_collection: list[PollenContainerCreateUpdate]
 
 
 class SettingsRead(BaseSchema):
@@ -219,12 +218,11 @@ class SettingsRead(BaseSchema):
 
 
 class BResultsActiveFlorescences(ResponseContainer):
-    activeFlorescenceCollection: list[FlorescenceRead]  # noqa: N815  # todo rename
+    active_florescence_collection: list[FlorescenceRead]
 
 
 class BResultsPotentialPollenDonors(ResponseContainer):
-    # todo rename
-    potentialPollenDonorCollection: list[BPotentialPollenDonor]  # noqa: N815
+    potential_pollen_donor_collection: list[BPotentialPollenDonor]
 
 
 class BPlantWoPollenContainer(BaseSchema):
@@ -240,14 +238,12 @@ class BPlantForNewFlorescence(BaseSchema):
 
 
 class BResultsPlantsForNewFlorescence(BaseSchema):
-    # todo rename
-    plantsForNewFlorescenceCollection: list[BPlantForNewFlorescence]  # noqa: N815
+    plants_for_new_florescence_collection: list[BPlantForNewFlorescence]
 
 
 class BResultsPollenContainers(BaseSchema):
-    pollenContainerCollection: list[PollenContainerRead]  # noqa: N815  # todo rename
-    # todo rename
-    plantsWithoutPollenContainerCollection: list[BPlantWoPollenContainer]  # noqa: N815
+    pollen_container_collection: list[PollenContainerRead]
+    plants_without_pollen_container_collection: list[BPlantWoPollenContainer]
 
 
 class BResultsRetrainingPollinationToSeedsModel(BaseSchema):

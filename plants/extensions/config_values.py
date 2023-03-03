@@ -32,7 +32,6 @@ class PathSettings(BaseModel):
     path_photos: Path
     path_deleted_photos: Path
     path_pickled_ml_models: Path
-    # db_type: DBType  # 'postgres' or 'sqlite' or 'unknown'
 
     # todo cleanup properties: most are used only once or twice
 

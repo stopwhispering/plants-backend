@@ -36,7 +36,7 @@ async def test_create_pollination(
     assert response.status_code == 200
     assert (p := response.json().get("plants")[0]) is not None
     payload_pc = FRequestPollenContainers(
-        pollenContainerCollection=[
+        pollen_container_collection=[
             PollenContainerCreateUpdate(
                 plant_id=p["id"],
                 plant_name=p["plant_name"],
@@ -90,7 +90,7 @@ async def test_update_pollination(
     resp = response.json()
     pollination = next(
         p
-        for p in resp["ongoingPollinationCollection"]
+        for p in resp["ongoing_pollination_collection"]
         if p["id"] == pollination_in_db.id
     )
 
