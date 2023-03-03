@@ -33,7 +33,7 @@ class PlantCurrentSoil(BaseSchema):
 
 
 class PlantLatestImage(BaseSchema):
-    relative_path: Path
+    filename: str
     record_date_time: datetime
 
     class Config:

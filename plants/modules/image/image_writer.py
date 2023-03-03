@@ -7,7 +7,6 @@ from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssocia
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from datetime import datetime
-    from pathlib import PurePath
 
     from plants.modules.image.image_dal import ImageDAL
     from plants.modules.plant.models import Plant
@@ -73,18 +72,17 @@ class ImageWriter:
 
     async def create_image_in_db(
         self,
-        relative_path: PurePath,
+        filename: str,
         record_date_time: datetime,
         keywords: Sequence[str] | None,
         plants: list[Plant],
         # events and taxa are saved elsewhere
     ) -> Image:
-        if await self.image_dal.get_image_by_relative_path(relative_path.as_posix()):
-            raise ValueError(f"Image already exists in db: {relative_path.as_posix()}")
+        if await self.image_dal.image_exists(filename):
+            raise ValueError(f"Image already exists in db: {filename}")
 
         image = Image(
-            relative_path=relative_path.as_posix(),
-            filename=relative_path.name,
+            filename=filename,
             record_date_time=record_date_time,
             description=None,
             plants=plants if plants else [],

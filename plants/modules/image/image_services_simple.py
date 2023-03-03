@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 from PIL import Image
@@ -9,6 +8,8 @@ from PIL import Image
 from plants import settings
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from fastapi import UploadFile
 
     from plants.modules.image.image_dal import ImageDAL
@@ -53,7 +54,7 @@ async def remove_files_already_existing(
             logger.warning(
                 warning := "Found orphaned image {photo_upload.filename} in "
                 "filesystem, "
-                "but not in database. Deletied image file."
+                "but not in database. Deleted image file."
             )
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:
@@ -87,16 +88,3 @@ def resizing_required(path: str | Path, size: tuple[int, int]) -> bool:
         y = int(size[1])
     size = x, y
     return bool(size != image.size)
-
-
-def get_path_for_taxon_thumbnail(filename: Path) -> PurePath:
-    return settings.paths.rel_path_photos_generated_taxon.joinpath(filename)
-
-
-def get_relative_path(absolute_path: Path) -> PurePath:
-    # todo better with .parent?
-    rel_path_photos_original = settings.paths.rel_path_photos_original.as_posix()
-    absolute_path_str = absolute_path.as_posix()
-    return PurePath(
-        absolute_path_str[absolute_path_str.find(rel_path_photos_original) :]
-    )

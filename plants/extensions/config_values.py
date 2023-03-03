@@ -1,6 +1,6 @@
 import tomllib
 from enum import Enum
-from pathlib import Path, PurePath
+from pathlib import Path
 
 from pydantic import BaseModel, BaseSettings, constr
 
@@ -33,13 +33,6 @@ class PathSettings(BaseModel):
     path_deleted_photos: Path
     path_pickled_ml_models: Path
 
-    # todo cleanup properties: most are used only once or twice
-
-    @property
-    def subdirectory_photos(self) -> PurePath:
-        # todo remove
-        return PurePath(self.path_photos.name)
-
     @property
     def path_original_photos_uploaded(self) -> Path:
         return self.path_photos.joinpath("original/uploaded")
@@ -51,21 +44,6 @@ class PathSettings(BaseModel):
     @property
     def path_generated_thumbnails_taxon(self) -> Path:
         return self.path_photos.joinpath("generated_taxon")
-
-    @property
-    def rel_path_photos_generated_taxon(self) -> PurePath:
-        # todo remove?
-        return self.subdirectory_photos.joinpath("generated_taxon")
-
-    @property
-    def rel_path_photos_original(self) -> PurePath:
-        # todo remove?
-        return self.subdirectory_photos.joinpath("original")
-
-    @property
-    def rel_path_photos_generated(self) -> PurePath:
-        # todo remove?
-        return self.subdirectory_photos.joinpath("generated")
 
 
 class Settings(BaseModel):

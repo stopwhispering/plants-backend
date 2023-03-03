@@ -11,10 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
-from plants.modules.image.image_services_simple import (
-    get_relative_path,
-    resizing_required,
-)
+from plants.modules.image.image_services_simple import resizing_required
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
@@ -80,7 +77,7 @@ async def save_image_to_db(
     plants = [await plant_dal.by_id(p) for p in plant_ids] if plant_ids else []
     image_writer = ImageWriter(plant_dal=plant_dal, image_dal=image_dal)
     image: Image = await image_writer.create_image_in_db(
-        relative_path=get_relative_path(path),
+        filename=path.name,
         record_date_time=record_datetime,
         keywords=keywords,
         plants=plants,

@@ -91,12 +91,6 @@ class ImageDAL(BaseDAL):
         await self.session.delete(image)
         await self.session.flush()
 
-    async def get_image_by_relative_path(self, relative_path: str) -> Image | None:
-        # noinspection PyTypeChecker
-        query = select(Image).where(Image.relative_path == relative_path).limit(1)
-        image: Image | None = (await self.session.scalars(query)).first()
-        return image
-
     async def delete_image_by_filename(self, filename: str) -> None:
         # noinspection PyTypeChecker
         query = select(Image).where(Image.filename == filename).limit(1)

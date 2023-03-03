@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -21,6 +20,8 @@ from plants import settings
 from plants.extensions.orm import Base
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from plants.modules.event.models import Event
     from plants.modules.plant.models import Plant
     from plants.modules.taxon.models import Taxon
@@ -87,7 +88,7 @@ class Image(Base):
     )
     filename: str = Column(VARCHAR(150), unique=True, nullable=False)  # pseudo-key
     # relative path to the original image file incl. file name
-    relative_path: str = Column(VARCHAR(240), nullable=False)
+    # relative_path: str = Column(VARCHAR(240), nullable=False)
     description: str | None = Column(VARCHAR(500))
     record_date_time: datetime = Column(TIMESTAMP, nullable=False)
 
@@ -101,7 +102,9 @@ class Image(Base):
 
     @property
     def absolute_path(self) -> Path:
-        return settings.paths.path_photos.parent.joinpath(PurePath(self.relative_path))
+        return settings.paths.path_original_photos_uploaded.joinpath(self.filename)
+        # return settings.paths.path_photos.parent.joinpath(
+        # PurePath(self.relative_path))
 
     keywords: Mapped[list[ImageKeyword]] = relationship(
         "ImageKeyword", back_populates="image", uselist=True
