@@ -33,8 +33,8 @@ async def test_upload_images(
     path1 = Path(__file__).resolve().parent.joinpath("./static/demo_image1.jpg")
     path2 = Path(__file__).resolve().parent.joinpath("./static/demo_image2.jpg")
     files = [
-        ("files[]", ("demo_image1.jpg", open(path1, "rb"))),  # noqa: SIM115
-        ("files[]", ("demo_image2.jpg", open(path2, "rb"))),  # noqa: SIM115
+        ("files[]", ("demo_image1.jpg", path1.open("rb"))),
+        ("files[]", ("demo_image2.jpg", path2.open("rb"))),
     ]
 
     payload = {  # FImageUploadedMetadata
@@ -99,7 +99,7 @@ async def test_upload_image_for_plant(
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(path, "rb")),  # noqa: SIM115
+            ("demo_image_plant.jpg", path.open("rb")),
         ),
     ]
 

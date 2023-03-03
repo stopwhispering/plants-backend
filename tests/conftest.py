@@ -160,7 +160,7 @@ async def valid_plant_in_db_with_image(
     files = [
         (
             "files[]",
-            ("demo_image_plant.jpg", open(path, "rb")),  # noqa: SIM115
+            ("demo_image_plant.jpg", path.open("rb")),
         )
     ]
     response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
@@ -328,7 +328,7 @@ def image_dal(test_db: AsyncSession) -> ImageDAL:
 async def taxon_in_db(test_db: AsyncSession) -> Taxon:
     """Create a valid taxon in the db and return it."""
     path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
-    with open(path) as f:
+    with path.open() as f:
         taxon_dict = json.load(f)
 
     taxon = Taxon(**taxon_dict)
@@ -345,7 +345,7 @@ async def florescence_dict() -> dict[str, Any]:
     path_florescence = (
         Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
     )
-    with open(path_florescence) as f:
+    with path_florescence.open() as f:
         return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 
 
@@ -356,7 +356,7 @@ async def pollination_dict() -> dict[str, Any]:
     path_pollination = (
         Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
     )
-    with open(path_pollination) as f:
+    with path_pollination.open() as f:
         return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 
 

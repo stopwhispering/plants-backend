@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -182,10 +181,10 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
 
     new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
-        # old_path.replace(new_path)
-        os.replace(
-            src=old_path, dst=new_path
-        )  # silently overwrites if privileges are sufficient
+        old_path.replace(target=new_path)
+        # os.replace(
+        #     src=old_path, dst=new_path
+        # )  # silently overwrites if privileges are sufficient
     except OSError as e:
         logger.exception(
             err_msg := f"OSError when moving file {old_path} to {new_path}", exc_info=e

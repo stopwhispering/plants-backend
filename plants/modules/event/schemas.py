@@ -45,7 +45,7 @@ class PotBase(BaseSchema):
 
 
 class PotCreateUpdate(PotBase):
-    id: Optional[int]  # missing if new  # todo remove id
+    id: Optional[int]  # missing if new
 
 
 class PotRead(PotBase):

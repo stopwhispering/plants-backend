@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic2ts import generate_typescript_defs
 
@@ -76,7 +77,7 @@ def _remove_shared_model(lines: list[str], model_name: str) -> list[str]:
 
 
 def remove_shared_models(pydantic_model: PydanticModel) -> None:
-    with open(pydantic_model.path_ts) as f:
+    with Path(pydantic_model.path_ts).open() as f:
         lines = f.readlines()
     write = False
     for exclude_model in pydantic_model.exclude:
@@ -86,24 +87,24 @@ def remove_shared_models(pydantic_model: PydanticModel) -> None:
             lines = new_lines
             write = True
     if write:
-        with open(pydantic_model.path_ts, "w") as f:
+        with Path(pydantic_model.path_ts).open("w") as f:
             f.writelines(lines)
 
 
 def remove_comments(pydantic_model: PydanticModel) -> None:
-    with open(pydantic_model.path_ts) as f:
+    with Path(pydantic_model.path_ts).open() as f:
         lines = f.readlines()
     # write = False
     new_lines = [
         line for line in lines if not line.startswith(tuple(REMOVE_COMMENTS_BEGIN_WITH))
     ]
     if len(lines) != len(new_lines):
-        with open(pydantic_model.path_ts, "w") as f:
+        with Path(pydantic_model.path_ts).open("w") as f:
             f.writelines(new_lines)
 
 
 def _get_models_in_pydantic_file(pydantic_model: PydanticModel) -> set[str]:
-    with open(pydantic_model.path_pydantic) as f:
+    with Path(pydantic_model.path_pydantic).open() as f:
         lines = f.readlines()
     lines_without_spaces = [line.strip() for line in lines]
     lines_with_models = [
@@ -115,7 +116,7 @@ def _get_models_in_pydantic_file(pydantic_model: PydanticModel) -> set[str]:
 
 
 def _get_created_definitions_in_ts_file(pydantic_model: PydanticModel) -> set[str]:
-    with open(pydantic_model.path_ts) as f:
+    with Path(pydantic_model.path_ts).open() as f:
         lines = f.readlines()
     exports = [line for line in lines if line.strip().startswith("export")]
     if ex := [

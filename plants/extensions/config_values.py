@@ -57,7 +57,7 @@ def parse_settings() -> Settings:
     config_toml_path = (
         Path(__file__).resolve().parent.parent.parent.joinpath("config.toml")
     )
-    with open(config_toml_path, "rb") as f:
+    with config_toml_path.open("rb") as f:
         settings = Settings.parse_obj(tomllib.load(f))
 
     create_if_not_exists(

@@ -82,7 +82,6 @@ class EventWriter:
             f" {[e.id for e in plant_obj.events]}"
         )
 
-        # todo remove that comment if no need
         # event might have no id in browser but already in backend from earlier save
         # so try to get eventid  from plant name and date (pseudo-key) to avoid events
         # being deleted
@@ -98,7 +97,7 @@ class EventWriter:
                 event.id = existing_event.id
                 logger.info(
                     f"Identified event without id from browser as id {event.id}"
-                )  # todo remove??
+                )
         event_ids = [e.id for e in events]
         logger.info(f"Updating {len(events)} events ({event_ids})for plant {plant_id}")
 
@@ -108,6 +107,7 @@ class EventWriter:
             if event_obj.id not in event_ids:
                 logger.info(f"Deleting event {event_obj.id}")
                 if event_obj.image_to_event_associations:
+                    # noinspection PyTypeChecker
                     await self.event_dal.delete_image_to_event_associations(
                         event_obj.image_to_event_associations, event=event_obj
                     )

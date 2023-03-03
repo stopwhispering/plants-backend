@@ -116,7 +116,7 @@ select = [
     "TID",  # flake8-tidy-imports
     "TCH",  # flake8-type-checking
     "ARG",  # flake8-unused-arguments
-#    "PTH",  # flake8-use-pathlib
+    "PTH",  # flake8-use-pathlib
     "ERA",  # eradicate       (fix removes commented-out code)
     "PD",  # pandas-vet
     "PGH",  # pygrep-hooks
@@ -202,7 +202,8 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pandera.mypy"
 ]
-exclude = ["plants/scripts/*", "backup", "ml_helpers", "venv*", "alembic", "local*"]
+exclude = ["plants/scripts/*", "backup", "ml_helpers", "venv*", "alembic",
+    "local*", "scripts/*"]
 #mypy_path = "./stubs"
 
 [[tool.mypy.overrides]]

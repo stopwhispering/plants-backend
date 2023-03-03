@@ -25,7 +25,7 @@ def _unpickle_pipeline() -> tuple[Pipeline, FeatureContainer]:
     if not path.is_file():
         throw_exception(f"Pipeline not found at {path.as_posix()}")
     logger.info(f"Unpickling pipeline from {path.as_posix()}.")
-    with open(path, "rb") as f:
+    with path.open("rb") as f:
         dump = pickle.load(f)
     return dump["pipeline"], dump["feature_container"]
 
@@ -46,5 +46,5 @@ def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer) -> 
     )
     logger.info(f"Pickling pipeline to {path.as_posix()}.")
     dump = {"pipeline": pipeline, "feature_container": feature_container}
-    with open(path, "wb") as f:
+    with path.open("wb") as f:
         pickle.dump(dump, f)
