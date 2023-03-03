@@ -6,10 +6,8 @@ import os
 from typing import TYPE_CHECKING, Any
 
 import piexif
-from piexif import InvalidImageDataError
+import pytz
 from PIL import Image as PilImage
-
-from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -43,7 +41,9 @@ def decode_record_date_time(date_time_bin: bytes) -> datetime.datetime:
     except AttributeError:  # manually entered string
         s_dt = date_time_bin.decode()
         s_format = "%Y-%m-%d"
-    return datetime.datetime.strptime(s_dt, s_format)
+    return datetime.datetime.strptime(s_dt, s_format).astimezone(
+        pytz.timezone("Europe/Berlin")
+    )
 
 
 def encode_record_date_time(dt: datetime.datetime) -> bytes:
@@ -158,15 +158,13 @@ def read_record_datetime_from_exif_tags(
     if not absolute_path:
         raise ValueError("File path not set.")
 
-    try:
-        exif_dict = piexif.load(absolute_path.as_posix())
-    except InvalidImageDataError:
-        throw_exception(
-            f"Invalid Image Type Error occured when reading EXIF Tags for "
-            f"{absolute_path}."
-        )
-    except ValueError:
-        raise
+    # try:
+    exif_dict = piexif.load(absolute_path.as_posix())
+    # except InvalidImageDataError:
+    #     throw_exception(
+    #         f"Invalid Image Type Error occured when reading EXIF Tags for "
+    #         f"{absolute_path}."
+    #     )
 
     if (
         36867 in exif_dict["Exif"]  # noqa: PLR2004
@@ -176,4 +174,4 @@ def read_record_datetime_from_exif_tags(
     # get creation date from file system
     ts = absolute_path.stat().st_ctime
     # return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone('Europe/London'))
-    return datetime.datetime.fromtimestamp(ts)
+    return datetime.datetime.fromtimestamp(ts, tz=pytz.timezone("Europe/Berlin"))

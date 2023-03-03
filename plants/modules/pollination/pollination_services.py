@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Final
 
+import pytz
 from fastapi import HTTPException
 
 from plants.exceptions import ColorAlreadyTakenError, UnknownColorError
@@ -250,7 +251,7 @@ async def save_new_pollination(
     # apply transformations
     pollination_timestamp = datetime.strptime(
         new_pollination_data.pollination_timestamp, FORMAT_API_YYYY_MM_DD_HH_MM
-    )
+    ).astimezone(pytz.timezone("Europe/Berlin"))
 
     # make sure there's no ongoing pollination for that plant with the same thread color
     label_color = COLORS_MAP[new_pollination_data.label_color_rgb]
@@ -308,7 +309,8 @@ async def update_pollination(
         raise HTTPException(
             400,
             detail={
-                "message": "Seed capsule plant and pollen donor plant cannot be changed."
+                "message": "Seed capsule plant and pollen donor plant cannot be "
+                "changed."
             },
         )
 

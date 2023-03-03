@@ -6,6 +6,7 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 import piexif
+import pytz
 from PIL import Image as PilImage
 
 from plants.shared.api_constants import FORMAT_FILENAME_TIMESTAMP
@@ -112,4 +113,5 @@ def resize_image(
 
 
 def generate_timestamp_filename() -> str:
-    return f"{datetime.datetime.now().strftime(FORMAT_FILENAME_TIMESTAMP)}.jpg"
+    dt_cet = datetime.datetime.now(tz=pytz.timezone("Europe/Berlin"))
+    return f"{dt_cet.strftime(FORMAT_FILENAME_TIMESTAMP)}.jpg"

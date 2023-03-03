@@ -4,6 +4,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import pytz
+
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM, FORMAT_YYYY_MM_DD
 
 
@@ -61,7 +63,15 @@ def make_dict_values_json_serializable(d: dict[Any, Any]) -> None:
 
 def parse_api_date(date_str: str | None) -> date | None:
     """Parse date from API request (e.g. '2022-11-16') to date object."""
-    return datetime.strptime(date_str, FORMAT_YYYY_MM_DD).date() if date_str else None
+    return (
+        (
+            datetime.strptime(date_str, FORMAT_YYYY_MM_DD)
+            .astimezone(pytz.timezone("Europe/Berlin"))
+            .date()
+        )
+        if date_str
+        else None
+    )
 
 
 def format_api_date(d: date | None) -> str | None:
@@ -71,7 +81,9 @@ def format_api_date(d: date | None) -> str | None:
 
 def parse_api_datetime(dt_str: str) -> datetime:
     """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object."""
-    return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)
+    return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM).astimezone(
+        pytz.timezone("Europe/Berlin")
+    )
 
 
 def format_api_datetime(dt: datetime | None) -> str | None:
@@ -84,7 +96,9 @@ def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
     usage: json.loads(dumped_dict, object_hook=date_hook)"""
     for key, value in json_dict.items():
         try:
-            json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+            json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").astimezone(
+                pytz.timezone("Europe/Berlin")
+            )
         except Exception:
             with suppress(Exception):
                 json_dict[key] = date.fromisoformat(value)

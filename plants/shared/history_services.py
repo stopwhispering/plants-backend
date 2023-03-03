@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+import datetime
 from typing import TYPE_CHECKING
+
+import pytz
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
@@ -27,7 +29,7 @@ async def create_history_entry(
         plant_id = await plant_dal.get_id_by_name(plant_name)
 
     entry = History(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.datetime.now(tz=pytz.utc),
         plant_id=plant_id,
         plant_name=plant_name,
         description=description,

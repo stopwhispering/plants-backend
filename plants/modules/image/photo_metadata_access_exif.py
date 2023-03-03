@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import piexif
+import pytz
 
 from plants import local_config
 from plants.modules.image.exif_utils import (
@@ -100,7 +101,7 @@ class PhotoMetadataAccessExifTags:
             #    then we enter the last-changed-date there
             modified_time_seconds = modified_date(absolute_path)  # seconds
             if not exif_dict["Exif"].get(36867):
-                dt = datetime.datetime.fromtimestamp(modified_time_seconds)
+                dt = datetime.datetime.fromtimestamp(modified_time_seconds, tz=pytz.utc)
                 b_dt = encode_record_date_time(dt)
                 exif_dict["Exif"][36867] = b_dt
 

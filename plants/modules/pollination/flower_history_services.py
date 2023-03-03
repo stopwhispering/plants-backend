@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING, TypedDict
 
+import pytz
 from dateutil import rrule
 
 from plants.modules.pollination.enums import BFloweringState, FlorescenceStatus
@@ -294,7 +295,11 @@ async def generate_flower_history(
     earliest_date = flowering_plants[0].get_earliest_period_start()
 
     datetimes: list[datetime] = list(
-        rrule.rrule(rrule.MONTHLY, dtstart=earliest_date, until=date.today())
+        rrule.rrule(
+            rrule.MONTHLY,
+            dtstart=earliest_date,
+            until=datetime.now(tz=pytz.timezone("Europe/Berlin")).date(),
+        )
     )
     months = [d.strftime(FORMAT_YYYY_MM) for d in datetimes]
 
