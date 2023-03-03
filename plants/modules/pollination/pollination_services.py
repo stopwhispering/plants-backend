@@ -280,7 +280,7 @@ async def save_new_pollination(
         label_color=COLORS_MAP[
             new_pollination_data.label_color_rgb
         ],  # save the name of color, not the hex value
-        pollination_status=PollinationStatus.ATTEMPT.value,
+        pollination_status=PollinationStatus.ATTEMPT,
         creation_at_context=Context.API.value,
     )
 

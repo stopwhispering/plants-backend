@@ -13,3 +13,4 @@ class FBShapeSide(str, Enum):
     FLAT = "flat"
     HIGH = "high"
     VERY_HIGH = "very high"
+    UNKNOWN = "unknown"  # only for legacy data

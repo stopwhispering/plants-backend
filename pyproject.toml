@@ -171,7 +171,11 @@ target-version = "py311"
     "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
     "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
     "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
-
+]
+'*schemas.py' = [
+    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
+    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
 ]
 'dependencies.py' = [
     "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
@@ -182,6 +186,11 @@ target-version = "py311"
     "N815",  # mixedCase
     "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
     "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
+]
+'./scripts/*' = [
+    "T201",  # print statements
+    "F401",  # unused imports
+    "SLF001",  # private-member access
 ]
 
 [tool.mypy]

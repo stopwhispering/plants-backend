@@ -21,7 +21,7 @@ class BotanicalNameInput:
     is_custom: bool
     cultivar: str | None
     affinis: str | None
-    custom_rank: str | None
+    custom_rank: FBRank | None
     custom_infraspecies: str | None
     authors: str | None
     name_published_in_year: int | None

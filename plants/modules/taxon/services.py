@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from fastapi import BackgroundTasks
 
 from plants.exceptions import TaxonAlreadyExistsError
-from plants.modules.biodiversity.taxonomy_lookup_gbif_id import GBIFIdentifierLookup
+from plants.modules.biodiversity.lookup_gbif_id import lookup_gbif_id
 from plants.modules.biodiversity.taxonomy_name_formatter import (
     BotanicalNameInput,
     create_formatted_botanical_name,
@@ -110,9 +110,8 @@ async def save_new_taxon(
             raise ValueError("Custom fields unexpectedly set for non-custom taxon.")
         locations = await _retrieve_locations(new_taxon.lsid)
 
-        gbif_identifier_lookup = GBIFIdentifierLookup()
         gbif_id = await run_in_threadpool(
-            gbif_identifier_lookup.lookup, taxon_name=name, lsid=new_taxon.lsid
+            lookup_gbif_id, taxon_name=name, lsid=new_taxon.lsid
         )
 
     if await taxon_dal.exists(taxon_name=name):

@@ -91,7 +91,6 @@ class PollinationUpdate(PollinationBase):
 
     class Config:
         extra = Extra.ignore
-        use_enum_values = True
 
 
 class PollinationCreate(PollinationBase):
@@ -100,7 +99,6 @@ class PollinationCreate(PollinationBase):
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
-        use_enum_values = True
 
 
 class FlorescenceBase(BaseSchema):
@@ -114,8 +112,7 @@ class FlorescenceBase(BaseSchema):
 
 
 class FlorescenceCreate(FlorescenceBase):
-    class Config:
-        use_enum_values = True  # todo remove
+    pass
 
 
 class FlorescenceUpdate(FlorescenceBase):
@@ -148,7 +145,6 @@ class FlorescenceUpdate(FlorescenceBase):
 
     class Config:
         extra = Extra.ignore
-        use_enum_values = True  # todo remove
 
 
 class FlorescenceRead(FlorescenceBase):
@@ -180,9 +176,6 @@ class FlorescenceRead(FlorescenceBase):
     last_flower_closing_date: constr(  # type: ignore[valid-type]
         regex=REGEX_DATE
     ) | None
-
-    class Config:
-        use_enum_values = True  # todo remove
 
 
 class BPollinationAttempt(BaseSchema):
@@ -273,9 +266,6 @@ class BResultsRetrainingPollinationToSeedsModel(BaseSchema):
 class BFloweringPeriodState(BaseSchema):
     month: str  # e.g. '2021-01'
     flowering_state: BFloweringState
-
-    class Config:
-        use_enum_values = True
 
 
 class BPlantFlowerHistory(BaseSchema):

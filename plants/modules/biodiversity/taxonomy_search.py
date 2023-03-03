@@ -65,7 +65,7 @@ class _DBSearchResult(_ParsedApiSearchResult):
     count: int
     count_inactive: int
     custom_suffix: str | None
-    custom_rank: str | None
+    custom_rank: FBRank | None
     custom_infraspecies: str | None
     cultivar: str | None
     affinis: str | None
@@ -78,7 +78,7 @@ class FinalSearchResult(_ParsedApiSearchResult):
     count_inactive: int
     id: int | None = None
     custom_suffix: str | None = None
-    custom_rank: str | None = None
+    custom_rank: FBRank | None = None
     custom_infraspecies: str | None = None
     cultivar: str | None = None
     affinis: str | None = None

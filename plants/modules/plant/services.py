@@ -88,8 +88,9 @@ def _clone_instance(
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
     table = model_instance.__table__
-    non_pk_columns = [k for k in table.columns if k not in table.primary_key]
-    data = {c: getattr(model_instance, c) for c in non_pk_columns}
+    non_pk_columns = [k for k in table.columns if k not in set(table.primary_key)]
+    non_pk_column_names = [c.name for c in non_pk_columns]
+    data = {c: getattr(model_instance, c) for c in non_pk_column_names}
     if clone_attrs:
         data.update(clone_attrs)
     return model_instance.__class__(**data)

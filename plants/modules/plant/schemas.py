@@ -20,9 +20,6 @@ class FBPlantTag(BaseSchema):
     last_update: datetime | None
     plant_id: int
 
-    class Config:
-        use_enum_values = True
-
 
 class ShortPlant(BaseSchema):
     id: int
@@ -84,16 +81,12 @@ class PlantRead(PlantBase):
     current_soil: PlantCurrentSoil | None
     latest_image: PlantLatestImage | None
 
-    class Config:
-        use_enum_values = True  # todo remove
-
 
 class PlantCreateUpdate(PlantBase):
     id: int | None  # None for new plants
 
     class Config:
         extra = Extra.ignore
-        use_enum_values = True  # todo remove
 
 
 class FPlantsUpdateRequest(RequestContainer):

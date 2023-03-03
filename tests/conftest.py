@@ -25,7 +25,7 @@ from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.enums import FlorescenceStatus
+from plants.modules.pollination.enums import Context, FlorescenceStatus
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.taxon.models import Taxon
@@ -202,7 +202,7 @@ async def plant_valid_with_active_florescence() -> Plant:
                 branches_count=1,
                 flowers_count=12,
                 florescence_status=FlorescenceStatus.FLOWERING,
-                creation_context="manual",
+                creation_context=Context.MANUAL,
             )
         ],
     )

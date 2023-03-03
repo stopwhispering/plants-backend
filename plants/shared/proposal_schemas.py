@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from plants.shared.base_schema import BaseSchema, ResponseContainer
-
-if TYPE_CHECKING:
-    from plants.shared.message_schemas import BMessage
+from plants.shared.message_schemas import BMessage
 
 
 class BKeywordProposal(BaseSchema):

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+import sqlalchemy as sa
 from sqlalchemy import (
     BOOLEAN,
     INTEGER,
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
+from plants.modules.taxon.enums import FBRank
 
 if TYPE_CHECKING:
     from plants.modules.image.models import Image, ImageToTaxonAssociation
@@ -68,11 +70,10 @@ class Taxon(Base):
     species: str | None = Column(VARCHAR(100))
     genus: str = Column(VARCHAR(100), nullable=False)
     family: str = Column(VARCHAR(100), nullable=False)
-    # phylum = Column(VARCHAR(100))
 
     infraspecies: str | None = Column(VARCHAR(40))
     custom_infraspecies: str | None = Column(VARCHAR(40))
-    custom_rank: str | None = Column(VARCHAR(30))
+    custom_rank: FBRank | None = Column(sa.Enum(FBRank))
     cultivar: str | None = Column(VARCHAR(30))
     affinis: str | None = Column(VARCHAR(40))
 

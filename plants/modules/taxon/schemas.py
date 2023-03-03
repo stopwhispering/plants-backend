@@ -1,17 +1,16 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import Extra, HttpUrl, constr, validator
 
+from plants.modules.taxon.enums import FBRank
 from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 if TYPE_CHECKING:
-    import datetime
-
     from plants.modules.image.models import Image
-    from plants.modules.taxon.enums import FBRank
     from plants.modules.taxon.models import Distribution
 
 
@@ -54,8 +53,9 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
     class Config:
         extra = Extra.ignore
 
+    # noinspection PyMethodParameters
     @validator("date")
-    def datetime_to_string(self, v: datetime.datetime) -> str:
+    def datetime_to_string(cls, v: datetime.datetime) -> str:  # noqa: N805
         """Validator decorator makes this a class method and enforces cls param."""
         return v.strftime(
             FORMAT_API_YYYY_MM_DD_HH_MM
@@ -96,7 +96,7 @@ class FBotanicalAttributes(BaseSchema):
     is_custom: bool
     cultivar: str | None
     affinis: str | None
-    custom_rank: str | None
+    custom_rank: FBRank | None
     custom_infraspecies: str | None
     custom_suffix: str | None
 
@@ -146,9 +146,6 @@ class BKewSearchResultEntry(BaseSchema):
     # phylum: str
     synonyms_concat: str | None
     distribution_concat: str | None
-
-    class Config:
-        use_enum_values = True
 
 
 class TaxonBase(BaseSchema):
@@ -201,9 +198,10 @@ class TaxonRead(TaxonBase):
     images: list[TaxonImageRead]
     occurrence_images: list[TaxonOccurrenceImageRead]
 
+    # noinspection PyMethodParameters
     @validator("images", pre=True)
     def _transform_images(
-        self, images: list[Image], values: dict[str, Any]
+        cls, images: list[Image], values: dict[str, Any]  # noqa: N805
     ) -> list[TaxonImageRead]:
         """Extract major information from Image model; and read the description from
         taxon-to-image link table, not from image itself."""
@@ -224,9 +222,10 @@ class TaxonRead(TaxonBase):
             )
         return results
 
+    # noinspection PyMethodParameters
     @validator("distribution", pre=True)
     def _transform_distribution(
-        self, distribution: list[Distribution]
+        cls, distribution: list[Distribution]  # noqa: N805
     ) -> DistributionRead:
         # distribution codes according to WGSRPD (level 3)
         results: dict[str, list[str]] = {"native": [], "introduced": []}
@@ -247,9 +246,6 @@ class TaxonCreate(TaxonBase):
     custom_rank: FBRank | None
     custom_infraspecies: str | None
     custom_suffix: str | None
-
-    class Config:
-        use_enum_values = True
 
 
 class BResultsTaxonInfoRequest(ResponseContainer):

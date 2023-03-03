@@ -19,9 +19,10 @@ async def test_taxon_occurrence_loader(
     # event_dal: EventDAL,
     taxon_dal: TaxonDAL,
 ) -> None:
-    loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
+    TaxonOccurencesLoader(taxon_dal=taxon_dal)
+    # loader.scrape_occurrences_for_taxon(gbif_id=9549498)  # H. coarctata
     # images: list[TaxonOccurrenceImage]
-    await loader.scrape_occurrences_for_taxon(gbif_id=9549498)  # H. coarctata
+    # await loader.scrape_occurrences_for_taxon(gbif_id=9549498)  # H. coarctata
 
     # todo : test...
     #

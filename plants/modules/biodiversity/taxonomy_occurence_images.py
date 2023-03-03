@@ -195,7 +195,7 @@ class TaxonOccurencesLoader:
                     # validate (don't convert as this would validate datetime to str
                     try:
                         # TaxonOccurrenceImageRead(**d).dict()
-                        TaxonOccurrenceImageRead.parse_obj(image_metadata).dict()
+                        TaxonOccurrenceImageRead.parse_obj(image_metadata.__dict__)
                     except ValidationError as err:
                         throw_exception(str(err))
                         # logger.warning(str(err))
@@ -276,8 +276,7 @@ class TaxonOccurencesLoader:
         await self._save_to_db(image_dicts, gbif_id)
 
         taxa = await self.taxon_dal.by_gbif_id(gbif_id)
-        taxon = taxa[
-            0
-        ]  # we assigned to each taxon with that gbif id, here we just use the first
+        # we assigned to each taxon with that gbif id, here we just use the first
+        taxon = taxa[0]
         # taxon: Taxon = self.db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
         return taxon.occurrence_images

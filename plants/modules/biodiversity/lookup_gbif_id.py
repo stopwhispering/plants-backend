@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 class GBIFIdentifierLookup:
     def lookup(self, taxon_name: str, lsid: str) -> int | None:
-        return self._gbif_id_from_gbif_api(
-            taxon_name=taxon_name, lsid=lsid
-        ) or WikidataGbifLookup().lookup(lsid=lsid)
+        return self._gbif_id_from_gbif_api(taxon_name=taxon_name, lsid=lsid)
 
     @staticmethod
     def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> Optional[int]:
@@ -213,3 +211,9 @@ class WikidataGbifLookup:
             return None
 
         return self._get_gbif_id(wikidata_claims=wikidata_claims)
+
+
+def lookup_gbif_id(taxon_name: str, lsid: str) -> int | None:
+    return GBIFIdentifierLookup().lookup(
+        taxon_name=taxon_name, lsid=lsid
+    ) or WikidataGbifLookup().lookup(lsid=lsid)

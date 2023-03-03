@@ -14,7 +14,6 @@ class BMessage(BaseModel):
 
     class Config:
         extra = Extra.forbid
-        use_enum_values = True
 
 
 class BConfirmation(BaseModel):
@@ -34,5 +33,4 @@ class BSaveConfirmation(BaseModel):
     message: BMessage
 
     class Config:
-        use_enum_values = True
         extra = Extra.forbid

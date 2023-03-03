@@ -5,6 +5,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import sqlalchemy
+import sqlalchemy as sa
 from sqlalchemy import (
     BOOLEAN,
     DATE,
@@ -23,8 +24,13 @@ from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
 from plants.modules.pollination.enums import (
+    Context,
     FlorescenceStatus,
     FlowerColorDifferentiation,
+    Location,
+    PollenQuality,
+    PollenType,
+    PollinationStatus,
     StigmaPosition,
 )
 
@@ -95,7 +101,7 @@ class Florescence(Base):
     creation_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
-    creation_context = Column(VARCHAR(30), nullable=False)
+    creation_context = Column(Enum(Context), nullable=False)
 
     # pollinations of this florescence (with plant as mother plant)
     pollinations: Mapped[list[Pollination]] = relationship(
@@ -141,23 +147,22 @@ class Pollination(Base):
         foreign_keys=[pollen_donor_plant_id],
     )
 
-    pollen_type: str = Column(
-        VARCHAR(20), nullable=False
-    )  # PollenType (fresh | frozen | unknown)
-    pollen_quality: str = Column(
-        VARCHAR(10), nullable=False
-    )  # PollenQuality (good | bad | unknown)
-    # location at the very moment of pollination attempt (Location (indoor | outdoor
-    # | indoor_led | unknown))
-    location: str = Column(VARCHAR(100), nullable=False)
+    # (fresh | frozen | unknown)
+    pollen_type: PollenType = Column(sa.Enum(PollenType), nullable=False)
+    # (good | bad | unknown)
+    pollen_quality: PollenQuality = Column(sa.Enum(PollenQuality), nullable=False)
+    # location at the very moment of pollination attempt
+    # (indoor | outdoor | indoor_led | unknown)
+    location: Location = Column(sa.Enum(Location), nullable=False)
 
     count: int | None = Column(INTEGER)
 
     pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
     label_color: str | None = Column(VARCHAR(60))
-    # PollinationStatus ( attempt | seed_capsule | seed | germinated | unknown
-    # | self_pollinated )
-    pollination_status: str = Column(VARCHAR(40), nullable=False)
+    # ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
+    pollination_status: PollinationStatus = Column(
+        sa.Enum(PollinationStatus), nullable=False
+    )
     ongoing: bool = Column(BOOLEAN, nullable=False)
 
     # first harvest in case of multiple harvests

@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+import sqlalchemy
 from sqlalchemy import (
     INTEGER,
     TEXT,
@@ -17,11 +18,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, relationship
 
 from plants.extensions.orm import Base
+from plants.modules.event.enums import FBShapeSide, FBShapeTop
 
 if TYPE_CHECKING:
     from decimal import Decimal
 
-    from plants.modules.event.enums import FBShapeSide
     from plants.modules.image.models import Image, ImageToEventAssociation
     from plants.modules.plant.models import Plant
 
@@ -60,9 +61,8 @@ class Pot(Base):
         nullable=False,
     )
     material = Column(VARCHAR(50))  # todo enum
-    shape_top: str | None = Column(VARCHAR(20))  # todo enum   # oval, square, circle
-    # todo enum  # flat, very flat, high, very high
-    shape_side: FBShapeSide | None = Column(VARCHAR(20))
+    shape_top: FBShapeTop = Column(sqlalchemy.Enum(FBShapeTop), nullable=False)
+    shape_side: FBShapeSide = Column(sqlalchemy.Enum(FBShapeSide), nullable=False)
     # 5 digits, 1 decimal --> max 9999.9
     diameter_width: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     # pot_notes = Column(TEXT)

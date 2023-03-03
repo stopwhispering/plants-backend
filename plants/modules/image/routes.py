@@ -328,8 +328,9 @@ async def get_photo(
     height: int | None = None,
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
+    size = (width, height) if width and height else None
     image_path = await get_image_path_by_size(
-        filename=filename, width=width, height=height, image_dal=image_dal
+        filename=filename, size=size, image_dal=image_dal
     )
 
     # media_type here sets the media type of the actual response sent to the client.

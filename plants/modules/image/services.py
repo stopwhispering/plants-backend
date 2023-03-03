@@ -203,35 +203,17 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
 
 
 async def get_image_path_by_size(
-    filename: str, width: int | None, height: int | None, image_dal: ImageDAL
+    filename: str, size: tuple[int, int] | None, image_dal: ImageDAL
 ) -> Path:
-    if (width is None or height is None) and not (width is None and height is None):
-        logger.error(err_msg := "Either supply width and height or neither of them.")
-        throw_exception(err_msg)
-
-    if width is None:
+    if size is None:
         # get image db entry for the directory it is stored at in local filesystem
         image: Image = await image_dal.get_image_by_filename(filename=filename)
         return Path(image.absolute_path)
 
     # the pixel size is part of the resized images' filenames rem size must be
     # converted to px
-    size = (width, height) if width and height else None
     filename_sized = get_generated_filename(filename, size)
     return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
-
-
-def get_dummy_image_path_by_size(width: int | None, height: int | None) -> Path:
-    if width:
-        size = (width, height) if width and height else None
-        filename = get_generated_filename(NOT_AVAILABLE_IMAGE_FILENAME, size)
-    else:
-        filename = NOT_AVAILABLE_IMAGE_FILENAME
-    path = Path("./static/").joinpath(filename)
-    if not path.is_file():
-        logger.error(err_msg := f"Dummy image file not found: {path}")
-        throw_exception(err_msg)
-    return path
 
 
 async def get_occurrence_thumbnail_path(

@@ -5,11 +5,13 @@ import logging
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any
 
+import sqlalchemy as sa
 from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
+from plants.modules.plant.enums import FBCancellationReason, FBPropagationType
 
 if TYPE_CHECKING:
     from plants.modules.event.models import Event
@@ -35,13 +37,15 @@ class Plant(Base):
     field_number: str = Column(VARCHAR(20))
     geographic_origin: str = Column(VARCHAR(100))
     nursery_source: str = Column(VARCHAR(100))
-    propagation_type: str = Column(VARCHAR(30))  # todo enum
+    propagation_type: FBPropagationType | None = Column(sa.Enum(FBPropagationType))
 
     deleted: bool = Column(BOOLEAN, nullable=False)
 
     active: bool = Column(BOOLEAN, nullable=False)
-    # todo enum,  only set if active == False
-    cancellation_reason: str = Column(VARCHAR(60))
+    # only set if active == False
+    cancellation_reason: FBCancellationReason | None = Column(
+        sa.Enum(FBCancellationReason)
+    )
     cancellation_date = Column(
         DateTime(timezone=True)
     )  # todo rename to datetime or make it date type
