@@ -112,7 +112,7 @@ async def test_create_and_abort_florescence(
     payload = {
         "plant_id": plant_valid_in_db.id,
         "florescence_status": "inflorescence_appeared",
-        "inflorescence_appearance_date": "2022-11-16",
+        "inflorescence_appeared_at": "2022-11-16",
         "comment": "    large & new ",
     }
     response = await ac.post("/api/active_florescences", json=payload)

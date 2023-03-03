@@ -6,7 +6,16 @@ from operator import attrgetter
 from typing import TYPE_CHECKING, Any
 
 import sqlalchemy as sa
-from sqlalchemy import BOOLEAN, INTEGER, TEXT, VARCHAR, Column, ForeignKey, Identity
+from sqlalchemy import (
+    BOOLEAN,
+    INTEGER,
+    TEXT,
+    VARCHAR,
+    Column,
+    Date,
+    ForeignKey,
+    Identity,
+)
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
@@ -46,9 +55,7 @@ class Plant(Base):
     cancellation_reason: FBCancellationReason | None = Column(
         sa.Enum(FBCancellationReason)
     )
-    cancellation_date = Column(
-        DateTime(timezone=True)
-    )  # todo rename to datetime or make it date type
+    cancellation_date: datetime.date | None = Column(Date())
 
     generation_notes: str = Column(VARCHAR(250))
 

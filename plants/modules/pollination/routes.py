@@ -161,7 +161,7 @@ async def delete_pollination(
     "/retrain_probability_pollination_to_seed_model",
     response_model=BResultsRetrainingPollinationToSeedsModel,
 )
-async def retrain_probability_pollination_to_seed_model() -> dict[str, str]:
+async def retrain_probability_pollination_to_seed_model() -> dict[str, str | float]:
     """Retrain the probability_pollination_to_seed ml model."""
     return await train_model_for_probability_of_seed_production()
 

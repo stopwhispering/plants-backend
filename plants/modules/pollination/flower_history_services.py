@@ -74,26 +74,23 @@ class FloweringPlant:
         self, florescence: Florescence
     ) -> FloweringPeriod | None:
         # simple case - inflorescence period is known
-        if (
-            florescence.inflorescence_appearance_date
-            and florescence.first_flower_opening_date
-        ):
+        if florescence.inflorescence_appeared_at and florescence.first_flower_opened_at:
             return FloweringPeriod(
-                start=florescence.inflorescence_appearance_date,
+                start=florescence.inflorescence_appeared_at,
                 start_verified=True,
-                end=florescence.first_flower_opening_date - timedelta(days=1),
+                end=florescence.first_flower_opened_at - timedelta(days=1),
                 end_verified=True,
                 flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
 
         # start is known, end is not
         if (
-            florescence.inflorescence_appearance_date
-            and not florescence.first_flower_opening_date
+            florescence.inflorescence_appeared_at
+            and not florescence.first_flower_opened_at
         ):
-            if florescence.last_flower_closing_date:
+            if florescence.last_flower_closed_at:
                 estimated_first_flower_date = (
-                    florescence.last_flower_closing_date
+                    florescence.last_flower_closed_at
                     - timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER)
                 )
             elif florescence.first_seed_ripening_date:
@@ -114,7 +111,7 @@ class FloweringPlant:
                 return None
 
             return FloweringPeriod(
-                start=florescence.inflorescence_appearance_date,
+                start=florescence.inflorescence_appeared_at,
                 start_verified=True,
                 end=estimated_first_flower_date - timedelta(days=1),
                 end_verified=False,
@@ -122,14 +119,14 @@ class FloweringPlant:
             )
 
         # end date is known, start is not
-        if florescence.first_flower_opening_date:
+        if florescence.first_flower_opened_at:
             return FloweringPeriod(
                 start=(
-                    florescence.first_flower_opening_date
+                    florescence.first_flower_opened_at
                     - timedelta(days=AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER)
                 ),
                 start_verified=False,
-                end=florescence.first_flower_opening_date - timedelta(days=1),
+                end=florescence.first_flower_opened_at - timedelta(days=1),
                 end_verified=True,
                 flowering_state=BFloweringState.INFLORESCENCE_GROWING,
             )
@@ -142,23 +139,17 @@ class FloweringPlant:
 
     def _get_flowering_period(self, florescence: Florescence) -> FloweringPeriod | None:
         # simple case - start and end dates are known
-        if (
-            florescence.first_flower_opening_date
-            and florescence.last_flower_closing_date
-        ):
+        if florescence.first_flower_opened_at and florescence.last_flower_closed_at:
             return FloweringPeriod(
-                start=florescence.first_flower_opening_date,
+                start=florescence.first_flower_opened_at,
                 start_verified=True,
-                end=florescence.last_flower_closing_date - timedelta(days=1),
+                end=florescence.last_flower_closed_at - timedelta(days=1),
                 end_verified=True,
                 flowering_state=BFloweringState.FLOWERING,
             )
 
         # start is known, end is not
-        if (
-            florescence.first_flower_opening_date
-            and not florescence.last_flower_closing_date
-        ):
+        if florescence.first_flower_opened_at and not florescence.last_flower_closed_at:
             if florescence.first_seed_ripening_date:
                 estimated_last_flower_date = (
                     florescence.first_seed_ripening_date
@@ -177,7 +168,7 @@ class FloweringPlant:
                 return None
 
             return FloweringPeriod(
-                start=florescence.first_flower_opening_date,
+                start=florescence.first_flower_opened_at,
                 start_verified=True,
                 end=estimated_last_flower_date - timedelta(days=1),
                 end_verified=False,
@@ -185,14 +176,14 @@ class FloweringPlant:
             )
 
         # end date is known, start is not
-        if florescence.last_flower_closing_date:
+        if florescence.last_flower_closed_at:
             return FloweringPeriod(
                 start=(
-                    florescence.last_flower_closing_date
+                    florescence.last_flower_closed_at
                     - timedelta(days=AVG_DURATION_FIRST_TO_LAST_FLOWER)
                 ),
                 start_verified=False,
-                end=florescence.last_flower_closing_date - timedelta(days=1),
+                end=florescence.last_flower_closed_at - timedelta(days=1),
                 end_verified=True,
                 flowering_state=BFloweringState.FLOWERING,
             )
@@ -207,15 +198,12 @@ class FloweringPlant:
     ) -> FloweringPeriod | None:
         # beginning is estimated to be inbetween first and last flower
         calculated_start: date | None
-        if (
-            florescence.first_flower_opening_date
-            and florescence.last_flower_closing_date
-        ):
+        if florescence.first_flower_opened_at and florescence.last_flower_closed_at:
             calculated_start = (
-                florescence.first_flower_opening_date
+                florescence.first_flower_opened_at
                 + (
-                    florescence.last_flower_closing_date
-                    - florescence.first_flower_opening_date
+                    florescence.last_flower_closed_at
+                    - florescence.first_flower_opened_at
                 )
                 / 2
             )

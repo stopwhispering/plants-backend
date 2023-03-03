@@ -105,7 +105,7 @@ class FlorescenceBase(BaseSchema):
     plant_id: int
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status: FlorescenceStatus
-    inflorescence_appearance_date: constr(  # type: ignore[valid-type]
+    inflorescence_appeared_at: constr(  # type: ignore[valid-type]
         regex=REGEX_DATE
     ) | None
     comment: str | None  # e.g. location if multiple plants in one container
@@ -136,12 +136,8 @@ class FlorescenceUpdate(FlorescenceBase):
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(  # type: ignore[valid-type]
-        regex=REGEX_DATE
-    ) | None
-    last_flower_closing_date: constr(  # type: ignore[valid-type]
-        regex=REGEX_DATE
-    ) | None
+    first_flower_opened_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    last_flower_closed_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
 
     class Config:
         extra = Extra.ignore
@@ -170,12 +166,8 @@ class FlorescenceRead(FlorescenceBase):
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opening_date: constr(  # type: ignore[valid-type]
-        regex=REGEX_DATE
-    ) | None
-    last_flower_closing_date: constr(  # type: ignore[valid-type]
-        regex=REGEX_DATE
-    ) | None
+    first_flower_opened_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    last_flower_closed_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
 
 
 class BPollinationAttempt(BaseSchema):
@@ -259,7 +251,8 @@ class BResultsPollenContainers(BaseSchema):
 
 
 class BResultsRetrainingPollinationToSeedsModel(BaseSchema):
-    mean_f1_score: float
+    metric_name: str
+    metric_value: float
     model: str
 
 

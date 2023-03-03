@@ -79,14 +79,12 @@ class FlorescenceDAL(BaseDAL):
         if "stigma_position" in updates:
             florescence.stigma_position = updates["stigma_position"]
 
-        if "first_flower_opening_date" in updates:
-            florescence.first_flower_opening_date = updates["first_flower_opening_date"]
-        if "last_flower_closing_date" in updates:
-            florescence.last_flower_closing_date = updates["last_flower_closing_date"]
-        if "inflorescence_appearance_date" in updates:
-            florescence.inflorescence_appearance_date = updates[
-                "inflorescence_appearance_date"
-            ]
+        if "first_flower_opened_at" in updates:
+            florescence.first_flower_opened_at = updates["first_flower_opened_at"]
+        if "last_flower_closed_at" in updates:
+            florescence.last_flower_closed_at = updates["last_flower_closed_at"]
+        if "inflorescence_appeared_at" in updates:
+            florescence.inflorescence_appeared_at = updates["inflorescence_appeared_at"]
         if "last_update_context" in updates:
             florescence.last_update_context = updates["last_update_context"]
 

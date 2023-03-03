@@ -2,7 +2,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Extra, Field, constr
+from pydantic import Extra, constr
 
 from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
 from plants.shared.base_schema import (
@@ -33,8 +33,8 @@ class PlantCurrentSoil(BaseSchema):
 
 
 class PlantLatestImage(BaseSchema):
-    relative_path: Path = Field(alias="path")  # todo remove alias
-    record_date_time: datetime = Field(alias="date")  # todo remove alias
+    relative_path: Path
+    record_date_time: datetime
 
     class Config:
         allow_population_by_field_name = True

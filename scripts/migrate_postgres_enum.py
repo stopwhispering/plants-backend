@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.sql import sqltypes
 
+from plants.modules.event.enums import PotMaterial
+from plants.modules.event.models import Pot
 from plants.modules.pollination.enums import Context, PollinationStatus
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.enums import FBRank
@@ -127,6 +129,6 @@ if __name__ == "__main__":
     # - Copy & Paste the output into the alembic migration file
     # - Run `alembic upgrade head`
     """
-    enum_migration = EnumMigration(enum=Context, model=Florescence)
+    enum_migration = EnumMigration(enum=PotMaterial, model=Pot)
     enum_migration.print_migrate_column_from_varchar_to_enum()
     # enum_migration.print_upgrade_enum_type()

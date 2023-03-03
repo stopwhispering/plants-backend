@@ -14,3 +14,9 @@ class FBShapeSide(str, Enum):
     HIGH = "high"
     VERY_HIGH = "very high"
     UNKNOWN = "unknown"  # only for legacy data
+
+
+class PotMaterial(str, Enum):
+    PLASTIC = "Plastik"
+    TERRACOTTA = "Terrakotta"
+    CLAY = "Ton"

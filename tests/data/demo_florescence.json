@@ -1,9 +1,9 @@
 {
-  "inflorescence_appearance_date": null,
+  "inflorescence_appeared_at": null,
   "branches_count": 3,
   "flowers_count": null,
-  "first_flower_opening_date": "2023-02-07",
-  "last_flower_closing_date": null,
+  "first_flower_opened_at": "2023-02-07",
+  "last_flower_closed_at": null,
   "florescence_status": "FLOWERING",
   "first_seed_ripening_date": null,
   "last_seed_ripening_date": null,

@@ -198,7 +198,7 @@ async def plant_valid_with_active_florescence() -> Plant:
         tags=[Tag(text="thirsty", state="Information")],
         florescences=[
             Florescence(
-                inflorescence_appearance_date=date(2023, 1, 1),  # '2023-01-01',
+                inflorescence_appeared_at=date(2023, 1, 1),  # '2023-01-01',
                 branches_count=1,
                 flowers_count=12,
                 florescence_status=FlorescenceStatus.FLOWERING,
@@ -283,7 +283,7 @@ def valid_florescence_dict() -> dict[str, Any]:
     return {
         "plant_id": 1,
         "florescence_status": "flowering",
-        "inflorescence_appearance_date": "2022-11-16",
+        "inflorescence_appeared_at": "2022-11-16",
         "comment": " large & new",
     }
 

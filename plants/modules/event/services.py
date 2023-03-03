@@ -34,8 +34,8 @@ async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
         throw_exception(f"Soil already exists: {soil.id}")
 
     # make sure there isn't a soil yet with same name
-    same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
-    if same_name_soils:
+    same_name_soil = await event_dal.get_soil_by_name(soil.soil_name.strip())
+    if same_name_soil:
         raise SoilNotUniqueError(soil.soil_name.strip())
 
     soil_obj = Soil(
@@ -49,9 +49,8 @@ async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
 async def update_soil(soil: SoilUpdate, event_dal: EventDAL) -> Soil:
     """Update existing soil in database."""
     # make sure there isn't another soil with same name in case of renaming
-    same_name_soils = await event_dal.get_soils_by_name(soil.soil_name.strip())
-    same_name_soils = [s for s in same_name_soils if s.id != soil.id]
-    if same_name_soils:
+    same_name_soil = await event_dal.get_soil_by_name(soil.soil_name.strip())
+    if same_name_soil.id != soil.id:
         raise SoilNotUniqueError(soil.soil_name.strip())
 
     soil_obj: Soil = await event_dal.get_soil_by_id(soil.id)

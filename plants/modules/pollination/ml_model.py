@@ -232,7 +232,7 @@ def _cv_classifier(
     return "mean_f1_score", round(float(np.mean(scores)), 2)
 
 
-async def train_model_for_probability_of_seed_production() -> dict[str, str]:
+async def train_model_for_probability_of_seed_production() -> dict[str, str | float]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
     df_all = await _create_data(feature_container=feature_container)
@@ -271,5 +271,5 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str]:
     return {
         "model": str(model),
         "metric_name": metric_name,
-        "metric_value": str(metric_value),
+        "metric_value": metric_value,
     }

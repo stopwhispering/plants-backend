@@ -58,8 +58,7 @@ class Florescence(Base):
     plant: Mapped[Plant] = relationship(
         "Plant", back_populates="florescences"
     )  # class name is 'Plant'
-    # todo rename to inflorescence_appeared_at
-    inflorescence_appearance_date: datetime.date | None = Column(DATE)
+    inflorescence_appeared_at: datetime.date | None = Column(DATE)
     branches_count = Column(INTEGER)
     flowers_count = Column(INTEGER)
 
@@ -75,10 +74,8 @@ class Florescence(Base):
     )
     stigma_position: StigmaPosition | None = Column(sqlalchemy.Enum(StigmaPosition))
 
-    # todo renamed to first_flower_opened_at
-    first_flower_opening_date: datetime.date | None = Column(DATE)
-    # todo renamed to last_flower_closed_at
-    last_flower_closing_date: datetime.date | None = Column(DATE)
+    first_flower_opened_at: datetime.date | None = Column(DATE)
+    last_flower_closed_at: datetime.date | None = Column(DATE)
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status: FlorescenceStatus = Column(
@@ -127,6 +124,7 @@ class Pollination(Base):
     )
 
     florescence_id: int | None = Column(INTEGER, ForeignKey("florescence.id"))
+    # noinspection PyTypeChecker
     florescence: Mapped[Florescence | None] = relationship(
         "Florescence", back_populates="pollinations", foreign_keys=[florescence_id]
     )
@@ -135,6 +133,7 @@ class Pollination(Base):
     seed_capsule_plant_id: int = Column(
         INTEGER, ForeignKey("plants.id"), nullable=False
     )
+    # noinspection PyTypeChecker
     seed_capsule_plant: Mapped[Plant] = relationship(
         "Plant", foreign_keys=[seed_capsule_plant_id]
     )
@@ -142,6 +141,7 @@ class Pollination(Base):
     pollen_donor_plant_id: int = Column(
         INTEGER, ForeignKey("plants.id"), nullable=False
     )
+    # noinspection PyTypeChecker
     pollen_donor_plant: Mapped[Plant] = relationship(
         "Plant",  # back_populates="pollinations_as_donor_plant",
         foreign_keys=[pollen_donor_plant_id],

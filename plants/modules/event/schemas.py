@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import constr
 
 from plants.constants import REGEX_DATE
-from plants.modules.event.enums import FBShapeSide, FBShapeTop
+from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 
@@ -38,8 +38,7 @@ class SoilWithCountRead(SoilBase):
 
 
 class PotBase(BaseSchema):
-    # todo enum?
-    material: constr(min_length=1, max_length=50)  # type: ignore[valid-type]
+    material: PotMaterial
     shape_top: FBShapeTop
     shape_side: FBShapeSide
     diameter_width: Decimal

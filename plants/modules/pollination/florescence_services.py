@@ -61,8 +61,8 @@ async def read_active_florescences(
             "plant_id": flor.plant_id,
             "plant_name": flor.plant.plant_name if flor.plant else None,
             "florescence_status": flor.florescence_status,
-            "inflorescence_appearance_date": format_api_date(
-                flor.inflorescence_appearance_date
+            "inflorescence_appeared_at": format_api_date(
+                flor.inflorescence_appeared_at
             ),
             "comment": flor.comment,
             "branches_count": flor.branches_count,
@@ -73,10 +73,8 @@ async def read_active_florescences(
             "flower_color_second": flor.flower_color_second,
             "flower_colors_differentiation": flor.flower_colors_differentiation,
             "stigma_position": flor.stigma_position,
-            "first_flower_opening_date": format_api_date(
-                flor.first_flower_opening_date
-            ),
-            "last_flower_closing_date": format_api_date(flor.last_flower_closing_date),
+            "first_flower_opened_at": format_api_date(flor.first_flower_opened_at),
+            "last_flower_closed_at": format_api_date(flor.last_flower_closed_at),
             "available_colors_rgb": (
                 await pollination_dal.get_available_colors_for_plant(plant=flor.plant)
             ),
@@ -134,14 +132,14 @@ async def update_active_florescence(
         )
 
     updates = edited_florescence_data.dict(exclude={})
-    updates["first_flower_opening_date"] = parse_api_date(
-        edited_florescence_data.first_flower_opening_date
+    updates["first_flower_opened_at"] = parse_api_date(
+        edited_florescence_data.first_flower_opened_at
     )
-    updates["last_flower_closing_date"] = parse_api_date(
-        edited_florescence_data.last_flower_closing_date
+    updates["last_flower_closed_at"] = parse_api_date(
+        edited_florescence_data.last_flower_closed_at
     )
-    updates["inflorescence_appearance_date"] = parse_api_date(
-        edited_florescence_data.inflorescence_appearance_date
+    updates["inflorescence_appeared_at"] = parse_api_date(
+        edited_florescence_data.inflorescence_appeared_at
     )
     updates["last_update_context"] = Context.API.value
 
@@ -166,8 +164,8 @@ async def create_new_florescence(
         plant_id=new_florescence_data.plant_id,
         plant=plant,
         florescence_status=new_florescence_data.florescence_status,
-        inflorescence_appearance_date=parse_api_date(
-            new_florescence_data.inflorescence_appearance_date
+        inflorescence_appeared_at=parse_api_date(
+            new_florescence_data.inflorescence_appeared_at
         ),
         comment=new_florescence_data.comment,
         creation_context=Context.API,

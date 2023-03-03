@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, relationship
 
 from plants.extensions.orm import Base
-from plants.modules.event.enums import FBShapeSide, FBShapeTop
+from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 
 if TYPE_CHECKING:
     from decimal import Decimal
@@ -37,7 +37,7 @@ class Soil(Base):
         primary_key=True,
         nullable=False,
     )
-    soil_name: str = Column(VARCHAR(100), nullable=False)  # todo make unique
+    soil_name: str = Column(VARCHAR(100), unique=True, nullable=False)
     description: str | None = Column(TEXT)
     mix: str = Column(TEXT, nullable=False)
 
@@ -60,7 +60,7 @@ class Pot(Base):
         primary_key=True,
         nullable=False,
     )
-    material = Column(VARCHAR(50))  # todo enum
+    material: PotMaterial = Column(sqlalchemy.Enum(PotMaterial), nullable=False)
     shape_top: FBShapeTop = Column(sqlalchemy.Enum(FBShapeTop), nullable=False)
     shape_side: FBShapeSide = Column(sqlalchemy.Enum(FBShapeSide), nullable=False)
     # 5 digits, 1 decimal --> max 9999.9
@@ -119,7 +119,7 @@ class Event(Base):
         primary_key=True,
         nullable=False,
     )
-    date: str = Column(VARCHAR(12), nullable=False)  # yyyy-mm-dd  # todo make it 10
+    date: str = Column(VARCHAR(10), nullable=False)  # yyyy-mm-dd
     event_notes = Column(TEXT)
 
     # 1:1 relationship to observation (joins usually from event to observation, not the

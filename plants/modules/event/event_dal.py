@@ -93,13 +93,10 @@ class EventDAL(BaseDAL):
 
         await self.session.flush()
 
-    async def get_soils_by_name(self, soil_name: str) -> list[Soil]:
-        # todo: once we have made soil names unique, we can change this with singular
-        #  version
+    async def get_soil_by_name(self, soil_name: str) -> Soil | None:
         # noinspection PyTypeChecker
         query = select(Soil).where(Soil.soil_name == soil_name)
-        soils: list[Soil] = list((await self.session.scalars(query)).all())
-        return soils
+        return (await self.session.scalars(query)).first()
 
     async def get_event_by_plant_and_date(
         self, plant: Plant, event_date: str
