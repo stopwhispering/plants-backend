@@ -1,9 +1,14 @@
-import datetime
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import INTEGER, TEXT, VARCHAR, Column, Identity
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
+
+if TYPE_CHECKING:
+    import datetime
 
 
 class History(Base):

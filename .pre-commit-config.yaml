@@ -11,12 +11,13 @@ repos:
     -   id: ruff
         args:
         - --fix
--   repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: isort (python)
-        args: ["--profile", "black"]  # avoid conflicts with black
+#-   repo: https://github.com/pycqa/isort
+##   (included in ruff)
+#    rev: 5.12.0
+#    hooks:
+#      - id: isort
+#        name: isort (python)
+#        args: ["--profile", "black"]  # avoid conflicts with black
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

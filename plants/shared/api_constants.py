@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 FORMAT_YYYY_MM = "%Y-%m"
 FORMAT_FULL_DATETIME = "%Y-%m-%d %H:%M:%S"
 FORMAT_YYYY_MM_DD = "%Y-%m-%d"

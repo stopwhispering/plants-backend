@@ -1,5 +1,7 @@
 """Testing utility functions, i.e. no fixtures, database dependencies or test client
 required."""
+from __future__ import annotations
+
 import pytest
 
 from plants.modules.plant.util import (

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from pydantic import Extra
@@ -7,7 +9,7 @@ from plants.shared.enums import MajorResource, MessageType
 
 
 class BMessage(BaseModel):
-    type: MessageType
+    type: MessageType  # noqa: A003
     message: str
     additionalText: Optional[str]  # noqa: N815  # todo rename
     description: Optional[str]

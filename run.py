@@ -1,4 +1,5 @@
 """Run the app on local dev system."""
+from __future__ import annotations
 
 import uvicorn
 
