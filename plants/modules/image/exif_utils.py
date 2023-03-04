@@ -52,37 +52,37 @@ def encode_record_date_time(dt: datetime.datetime) -> bytes:
 def _auto_rotate_by_exif_flag(
     img: PilImage.Image, orientation_flag: int
 ) -> PilImage.Image:
-    if orientation_flag == 2:  # noqa: PLR2004
+    if orientation_flag == 2:
         img = img.transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: flip left "
             f"or right."
         )
-    elif orientation_flag == 3:  # noqa: PLR2004
+    elif orientation_flag == 3:
         img = img.rotate(180)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: 180.")
-    elif orientation_flag == 4:  # noqa: PLR2004
+    elif orientation_flag == 4:
         img = img.rotate(180).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 180 & flip "
             f"left to right."
         )
-    elif orientation_flag == 5:  # noqa: PLR2004
+    elif orientation_flag == 5:
         img = img.rotate(-90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: -90 & flip "
             f"left to right."
         )
-    elif orientation_flag == 6:  # noqa: PLR2004
+    elif orientation_flag == 6:
         img = img.rotate(-90, expand=True)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: -90.")
-    elif orientation_flag == 7:  # noqa: PLR2004
+    elif orientation_flag == 7:
         img = img.rotate(90, expand=True).transpose(PilImage.FLIP_LEFT_RIGHT)
         logger.info(
             f"Rotating with orientation exif tag {orientation_flag}: 90 & flip "
             f"left to right."
         )
-    elif orientation_flag == 8:  # noqa: PLR2004
+    elif orientation_flag == 8:
         img = img.rotate(90, expand=True)
         logger.info(f"Rotating with orientation exif tag {orientation_flag}: 90.")
     return img
@@ -162,7 +162,7 @@ def read_record_datetime_from_exif_tags(
     #     )
 
     if (
-        36867 in exif_dict["Exif"]  # noqa: PLR2004
+        36867 in exif_dict["Exif"]
     ):  # DateTimeOriginal (date and time when the original image data was generated)
         return decode_record_date_time(exif_dict["Exif"][36867])
 

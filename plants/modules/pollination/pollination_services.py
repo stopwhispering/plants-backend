@@ -12,7 +12,6 @@ from plants.modules.pollination.enums import (
     COLORS_MAP_TO_RGB,
     Context,
     FlorescenceStatus,
-    Location,
     PollenType,
     PollinationStatus,
 )
@@ -239,12 +238,7 @@ async def save_new_pollination(
     pollen_donor_plant = await plant_dal.by_id(
         new_pollination_data.pollen_donor_plant_id
     )
-    if not (
-        seed_capsule_plant is florescence.plant
-        and PollenType.has_value(new_pollination_data.pollen_type)
-        and Location.has_value(new_pollination_data.location)
-    ):
-        raise ValueError("Invalid pollination data")
+
     if new_pollination_data.label_color_rgb not in COLORS_MAP:
         raise UnknownColorError(new_pollination_data.label_color_rgb)
 
@@ -315,15 +309,6 @@ async def update_pollination(
         )
 
     # semantic validation
-    if not (
-        PollenType.has_value(pollination_data.pollen_type)
-        and Location.has_value(pollination_data.location)
-        and PollinationStatus.has_value(pollination_data.pollination_status)
-    ):
-        raise HTTPException(
-            400,
-            detail={"message": "Invalid value for pollination data."},
-        )
     if pollination_data.label_color_rgb not in COLORS_MAP:
         raise HTTPException(
             500,

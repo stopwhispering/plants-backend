@@ -22,19 +22,11 @@ class PollinationStatus(str, enum.Enum):
     UNKNOWN = "unknown"
     SELF_POLLINATED = "self_pollinated"
 
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
-
 
 class PollenType(str, enum.Enum):
     FRESH = "fresh"
     FROZEN = "frozen"
     UNKNOWN = "unknown"
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
 
 
 class Context(str, enum.Enum):
@@ -48,10 +40,6 @@ class Location(str, enum.Enum):
     INDOOR = "indoor"
     OUTDOOR = "outdoor"
     INDOOR_LED = "indoor_led"
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
 
 
 COLORS_MAP: dict[str, str] = {
@@ -77,14 +65,6 @@ class FlorescenceStatus(str, enum.Enum):
     FLOWERING = "flowering"
     FINISHED = "finished"  # as soon as the last flower is closed
     ABORTED = "aborted"  # not made it to flowering
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
-
-    @classmethod
-    def get_names(cls) -> list[str]:
-        return [name for name, value in vars(cls).items() if type(value) is cls]
 
 
 class FlowerColorDifferentiation(str, enum.Enum):

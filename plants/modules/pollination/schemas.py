@@ -9,6 +9,7 @@ from plants.modules.pollination.enums import (
     BFloweringState,
     FlorescenceStatus,
     FlowerColorDifferentiation,
+    Location,
     PollenQuality,
     PollenType,
     PollinationStatus,
@@ -40,8 +41,7 @@ class PollinationBase(BaseSchema):
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
     pollination_timestamp: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
-    # todo enum  # e.g. 'outside_led'
-    location: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    location: Location
     count: conint(ge=1)  # type: ignore[valid-type]
 
 

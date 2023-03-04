@@ -138,6 +138,7 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside the exception class
     "B905",  # `zip()` without an explicit `strict=` parameter
     "ISC001",  # Implicitly concatenated string literals (conflicts with black)
+    "PLR2004",  # magic numbers, i.e. literals
 
     # to be checked every once and then
     "ERA001",  # commented-out code
@@ -170,13 +171,16 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "pathlib.Path"]
 # A003 Exceptions
 builtins-ignorelist = ["id", "format"]
 
+[tool.ruff.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment (N805)
+classmethod-decorators = ["pydantic.validator", "classmethod"]
 
 [tool.ruff.per-file-ignores]
 # assert, missing type annotations + docstrings, constant numbers,
 "./tests/*" = [
     "S101", "ANN001", "ANN201",
     "D100", "D103",  # type annotations + docstrings
-    "PLR2004",  # magic numbers
+#    "PLR2004",  # magic numbers
     "S101"  # assert
 ]
 # move ... type-checking block (conflicts w. fastapi dep. inj,)
@@ -195,6 +199,10 @@ builtins-ignorelist = ["id", "format"]
     "F401",  # unused imports
     "SLF001",  # private-member access
 ]
+
+#[tool.ruff.pylint]
+## allow literals (magic numbers) (PLR2004)
+#allow-magic-value-types = ["int"]
 
 [tool.mypy]
 python_version = "3.11"

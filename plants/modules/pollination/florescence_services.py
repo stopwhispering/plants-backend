@@ -152,13 +152,6 @@ async def create_new_florescence(
     plant_dal: PlantDAL,
 ) -> None:
     """Create a new active florescence."""
-    if not FlorescenceStatus.has_value(new_florescence_data.florescence_status):
-        raise HTTPException(
-            status_code=400,
-            detail=f"bad florescence_status value: "
-            f"{new_florescence_data.florescence_status}",
-        )
-
     plant = await plant_dal.by_id(new_florescence_data.plant_id)
     florescence = Florescence(
         plant_id=new_florescence_data.plant_id,

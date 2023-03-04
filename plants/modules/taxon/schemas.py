@@ -55,7 +55,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
     # noinspection PyMethodParameters
     @validator("created_on")
-    def datetime_to_string(cls, v: datetime.datetime) -> str:  # noqa: N805
+    def datetime_to_string(cls, v: datetime.datetime) -> str:
         """Validator decorator makes this a class method and enforces cls param."""
         return v.strftime(
             FORMAT_API_YYYY_MM_DD_HH_MM
@@ -192,7 +192,7 @@ class TaxonRead(TaxonBase):
     # noinspection PyMethodParameters
     @validator("images", pre=True)
     def _transform_images(
-        cls, images: list[Image], values: dict[str, Any]  # noqa: N805
+        cls, images: list[Image], values: dict[str, Any]
     ) -> list[TaxonImageRead]:
         """Extract major information from Image model; and read the description from
         taxon-to-image link table, not from image itself."""
@@ -216,7 +216,7 @@ class TaxonRead(TaxonBase):
     # noinspection PyMethodParameters
     @validator("distribution", pre=True)
     def _transform_distribution(
-        cls, distribution: list[Distribution]  # noqa: N805
+        cls, distribution: list[Distribution]
     ) -> DistributionRead:
         # distribution codes according to WGSRPD (level 3)
         results: dict[str, list[str]] = {"native": [], "introduced": []}

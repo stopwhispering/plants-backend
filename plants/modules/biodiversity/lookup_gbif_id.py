@@ -37,7 +37,7 @@ class GBIFIdentifierLookup:
             nubKey=nub_key, datasetKey=IPNI_DATASET_KEY
         )
         resp = requests.get(url, timeout=10)
-        if resp.status_code != 200:  # noqa: PLR2004
+        if resp.status_code != 200:
             logger.error(f"Error at GET request for GBIF REST API: {resp.status_code}")
             return None
         if resp.json().get("results"):
