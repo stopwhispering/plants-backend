@@ -4,16 +4,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    INTEGER,
-    TEXT,
-    TIMESTAMP,
-    VARCHAR,
-    Column,
-    DateTime,
-    ForeignKey,
-    Identity,
-)
+from sqlalchemy import INTEGER, TEXT, VARCHAR, Column, DateTime, ForeignKey, Identity
 from sqlalchemy.orm import Mapped, relationship
 
 from plants import settings
@@ -90,7 +81,8 @@ class Image(Base):
     # relative path to the original image file incl. file name
     # relative_path: str = Column(VARCHAR(240), nullable=False)
     description: str | None = Column(VARCHAR(500))
-    record_date_time: datetime = Column(TIMESTAMP, nullable=False)
+    record_date_time: datetime = Column(DateTime(timezone=True), nullable=False)
+    # timestamp: datetime.datetime = Column(DateTime(timezone=True), nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(
