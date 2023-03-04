@@ -167,21 +167,10 @@ target-version = "py311"
     "PLR2004",  # magic numbers
     "S101"  # assert
 ]
-'routes.py' = [
-    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
-]
-'*schemas.py' = [
-    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
-]
-'dependencies.py' = [
-    "TCH001",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)
-    "TCH003",  # move ... into a type-checking block (not supported by fastapi dep inj)
-]
+# move ... type-checking block (conflicts w. fastapi dep. inj,)
+'routes.py' = ["TCH001", "TCH002", "TCH003" ]
+'*schemas.py' = ["TCH001", "TCH002", "TCH003" ]
+'dependencies.py' = ["TCH001", "TCH002", "TCH003" ]
 'api_typedefs.py' = [
     "N815",  # mixedCase
     "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)

@@ -19,11 +19,6 @@ def modified_date(path_to_file: Path) -> float:
     """tries to get the file's last modified date (in seconds) see
     http://stackoverflow.com/a/39501288/1709587 for explanation."""
     return path_to_file.lstat().st_mtime
-    # if platform.system() == 'Windows':
-    #     return os.path.getmtime(path_to_file.as_posix())
-    # else:
-    #     stat = os.stat(path_to_file.as_posix())
-    #     return stat.st_mtime
 
 
 def set_modified_date(path_to_file: Path, modified_time_seconds: float) -> None:
