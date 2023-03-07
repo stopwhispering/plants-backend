@@ -50,7 +50,7 @@ async def update_soil(soil: SoilUpdate, event_dal: EventDAL) -> Soil:
     """Update existing soil in database."""
     # make sure there isn't another soil with same name in case of renaming
     same_name_soil = await event_dal.get_soil_by_name(soil.soil_name.strip())
-    if same_name_soil.id != soil.id:
+    if same_name_soil and same_name_soil.id != soil.id:
         raise SoilNotUniqueError(soil.soil_name.strip())
 
     soil_obj: Soil = await event_dal.get_soil_by_id(soil.id)
@@ -155,7 +155,7 @@ class EventWriter:
                 counts=counts,
             )
 
-            await self._maybe_update_soil(
+            await self._maybe_change_soil(
                 event=event,
                 event_obj=event_obj,
                 counts=counts,
@@ -164,7 +164,7 @@ class EventWriter:
             # changes to images attached to the event
             await self._create_or_update_event_images(event=event, event_obj=event_obj)
 
-    async def _maybe_update_soil(
+    async def _maybe_change_soil(
         self,
         event: EventCreateUpdate,
         event_obj: Event,
@@ -253,7 +253,7 @@ class EventWriter:
                 link: ImageToEventAssociation = next(
                     li
                     for li in event_obj.image_to_event_associations
-                    if li.image.filename == image_obj.filename
+                    if li.image.id == image_obj.id
                 )
                 await self.event_dal.delete_image_to_event_associations(links=[link])
 

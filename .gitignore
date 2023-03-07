@@ -15,3 +15,4 @@ htmlcov
 venv311
 ts_api_interfaces
 /.mypy_cache/
+/.venv

@@ -20,6 +20,7 @@ from plants.extensions import orm
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.event.event_dal import EventDAL
+from plants.modules.event.models import Soil
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
@@ -381,3 +382,17 @@ async def pollination_in_db(
     await test_db.commit()
 
     return pollination
+
+
+@pytest_asyncio.fixture(scope="function")
+async def soil_in_db(test_db: AsyncSession) -> Soil:
+    """Create a valid soil in the db and return it."""
+    soil = Soil(
+        soil_name="Pumice",
+        mix="100% Pumice",
+        description="Pure Pumice, 3-5mm",
+    )
+    test_db.add(soil)
+    await test_db.commit()
+
+    return soil

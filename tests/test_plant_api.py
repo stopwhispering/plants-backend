@@ -182,6 +182,26 @@ async def test_clone_plant(
 
 
 @pytest.mark.asyncio()
+async def test_clone_plant_bad_name(
+    ac: AsyncClient,
+    valid_plant_in_db_with_image: Plant,
+    another_valid_plant_in_db: Plant,
+) -> None:
+    """Test cloning a plant and give clone a name that already exists.
+
+    Expecting failure.
+    """
+
+    response = await ac.post(
+        f"/api/plants/{valid_plant_in_db_with_image.id}/clone?"
+        f"plant_name_clone={another_valid_plant_in_db.plant_name}"
+    )
+    assert response.status_code == 400
+    resp = response.json()
+    assert "exist" in resp["detail"]
+
+
+@pytest.mark.asyncio()
 async def test_delete_plant(
     ac: AsyncClient,
     test_db: AsyncSession,

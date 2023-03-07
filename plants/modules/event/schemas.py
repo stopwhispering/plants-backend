@@ -23,11 +23,11 @@ class SoilBase(BaseSchema):
 
 
 class SoilUpdate(SoilBase):
-    id: int
+    pass
 
 
 class SoilCreate(SoilBase):
-    pass
+    id: int | None = None
 
 
 class SoilRead(SoilBase):
@@ -92,7 +92,6 @@ class EventRead(EventBase):
 
 class FImageDelete(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
 
 
 class FImagesToDelete(BaseSchema):

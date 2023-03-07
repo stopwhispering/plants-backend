@@ -63,13 +63,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# # override 422 request validation error (pydantic models) to log them
-# # todo deprecated
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request, exc):
-#     logger.error(exc)
-#     return await request_validation_exception_handler(request, exc)
-
 
 app.include_router(taxon_router, prefix=COMMON_PREFIX)
 app.include_router(plant_router.router, prefix=COMMON_PREFIX)

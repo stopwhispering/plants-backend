@@ -15,7 +15,7 @@ def create_db_engine(connection_string: URL) -> AsyncEngine:
     the work of executing a SQL query. With the connection, you could run several
     different SQL statements and rollback if required.
     """
-    if "sqlite" in connection_string:
+    if "sqlite" in connection_string:  # pragma: no cover
         return create_async_engine(
             connection_string, connect_args={"check_same_thread": False}
         )

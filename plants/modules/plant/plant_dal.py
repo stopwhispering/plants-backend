@@ -46,6 +46,9 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.florescences),
         )
 
+    def expire(self, plant: Plant) -> None:
+        self.session.expire(plant)
+
     async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
         # noinspection PyTypeChecker
         query = (

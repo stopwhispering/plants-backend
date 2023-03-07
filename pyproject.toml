@@ -78,12 +78,16 @@ testpaths = [
 concurrency = ["greenlet"]
 omit = []
 
+
 [tool.coverage.report]
+# pytest coverage configuration
 exclude_lines = [
-  "def __repr__",
-  "def __str__",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
 
 [tool.ruff]

@@ -279,20 +279,12 @@ async def delete_image(
 ) -> Any:
     """move the file that should be deleted to another folder (not actually deleted,
     currently)"""
+    deleted_files: list[str] = []
     for image_to_delete in image_container.images:
         image = await image_dal.by_id(image_id=image_to_delete.id)
-        if image.filename != image_to_delete.filename:
-            logger.error(
-                err_msg := f"Image {image.id} has unexpected filename: "
-                f"{image.filename}. "
-                f"Expected filename: {image_to_delete.filename}. Analyze this "
-                f"inconsistency!"
-            )
-            throw_exception(err_msg)
-
+        deleted_files.append(image.filename)
         await delete_image_file_and_db_entries(image=image, image_dal=image_dal)
 
-    deleted_files = [image.filename for image in image_container.images]
     return {
         "action": "Deleted",
         "message": get_message(

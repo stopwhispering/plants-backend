@@ -12,7 +12,7 @@ class BaseSchema(BaseModel):
     class Config:
         orm_mode = True
         anystr_strip_whitespace = True
-        extra = Extra.forbid
+        extra = Extra.ignore
 
 
 class ResponseContainer(BaseModel):

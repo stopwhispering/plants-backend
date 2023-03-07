@@ -7,12 +7,15 @@ from typing import TYPE_CHECKING
 import pytest
 
 import plants as plants_package
+from plants.exceptions import ImageNotFoundError
+from plants.modules.event.schemas import FImageDelete, FImagesToDelete
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
 
     from plants.modules.image.image_dal import ImageDAL
     from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
 
 
 @pytest.mark.asyncio()
@@ -154,3 +157,49 @@ async def test_update_image(
     keywords = [kw["keyword"] for kw in image["keywords"]]
     assert "flower" in keywords
     assert "new leaf" in keywords
+
+
+@pytest.mark.asyncio()
+async def test_delete_image(
+    ac: AsyncClient,
+    valid_plant_in_db_with_image: Plant,
+    image_dal: ImageDAL,
+    plant_dal: PlantDAL,
+) -> None:
+    """Delete an image that is assigned to a plant.
+
+    Make sure that it is deleted from db, file system, and plant.
+    """
+    payload = FImagesToDelete(
+        images=[
+            FImageDelete(
+                id=valid_plant_in_db_with_image.images[0].id,
+                filename=valid_plant_in_db_with_image.images[0].filename,
+            )
+        ]
+    )
+    image_filename = valid_plant_in_db_with_image.images[0].filename
+    # unfortunately, HTTPX does not support DELETE with body, so we generate
+    # the request manually
+    response = await ac.request(
+        url="/api/images/", method="DELETE", json=payload.dict()
+    )
+    assert response.status_code == 200
+
+    # check that image file is deleted
+    file_paths = list(
+        plants_package.settings.paths.path_original_photos_uploaded.glob("*")
+    )
+    file_names = {f.name for f in file_paths}
+    assert image_filename not in file_names
+
+    # check that image is deleted from db
+    with pytest.raises(ImageNotFoundError):
+        await image_dal.by_id(payload.images[0].id)
+
+    # check that image is deleted from plant
+    plant_id = valid_plant_in_db_with_image.id
+    # force reload from db
+    plant_dal.expire(valid_plant_in_db_with_image)
+    plant_in_db = await plant_dal.by_id(plant_id)
+    assert len(plant_in_db.images) == 0

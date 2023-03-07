@@ -4,3 +4,4 @@
 /deploy.bat
 /database.db
 /pollination_estimator.pkl
+/.venv
