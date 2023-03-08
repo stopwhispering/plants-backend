@@ -27,6 +27,7 @@ from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import Context, FlorescenceStatus
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.taxon.models import Taxon
@@ -299,6 +300,12 @@ def plant_dal(test_db: AsyncSession) -> PlantDAL:
 def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
     """"""
     return PollinationDAL(test_db)
+
+
+@pytest.fixture()
+def florescence_dal(test_db: AsyncSession) -> FlorescenceDAL:
+    """"""
+    return FlorescenceDAL(test_db)
 
 
 @pytest.fixture()

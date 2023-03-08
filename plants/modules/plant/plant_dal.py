@@ -112,7 +112,6 @@ class PlantDAL(BaseDAL):
             query = self._add_eager_load_options(query)
 
         plants: list[int] = list((await self.session.scalars(query)).all())
-        # todo does it reutrn tuple or list??
         return plants
 
     async def get_plant_by_criteria(self, criteria: dict[str, Any]) -> list[Plant]:

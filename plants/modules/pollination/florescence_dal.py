@@ -46,6 +46,7 @@ class FlorescenceDAL(BaseDAL):
         query = (
             select(Florescence)
             .options(selectinload(Florescence.plant))
+            .options(selectinload(Florescence.pollinations))
             .where(Florescence.id == florescence_id)
         )
         florescence: Florescence | None = (await self.session.scalars(query)).first()

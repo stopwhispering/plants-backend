@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from plants.exceptions import FlorescenceNotFoundError
 from plants.modules.pollination.enums import FlorescenceStatus
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.pollination.models import Florescence
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
 
 
 @pytest.mark.asyncio()
@@ -119,7 +120,7 @@ async def test_create_and_abort_florescence(
     assert response.status_code == 200
     plant_valid_in_db = await plant_dal.by_id(plant_valid_in_db.id)
     assert len(plant_valid_in_db.florescences) == 1
-    florescence_in_db: Florescence = plant_valid_in_db.florescences[0]
+    florescence_in_db = plant_valid_in_db.florescences[0]
     assert (
         florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
     )
@@ -148,3 +149,27 @@ async def test_create_and_abort_florescence(
     assert response.status_code == 200
     await test_db.refresh(florescence_in_db)
     assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED
+
+
+@pytest.mark.asyncio()
+async def test_delete_florescence(
+    ac: AsyncClient,
+    plant_valid_with_active_florescence_in_db: Plant,
+    florescence_dal: FlorescenceDAL,
+) -> None:
+    florescence_id = plant_valid_with_active_florescence_in_db.florescences[0].id
+    response = await ac.delete(f"/api/florescences/{florescence_id}")
+    assert response.status_code == 200
+
+    # check that florscence is no longer returned by api
+    response = await ac.get("/api/active_florescences")
+    assert response.status_code == 200
+    active_florescences = response.json()["active_florescence_collection"]
+    assert not any(
+        florescence["id"] == florescence_id for florescence in active_florescences
+    )
+
+    # check that florescence is no longer in db (it is actually deleted, there
+    # is no "deleted" flag)
+    with pytest.raises(FlorescenceNotFoundError):
+        _ = await florescence_dal.by_id(florescence_id)
