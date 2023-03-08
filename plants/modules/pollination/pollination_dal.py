@@ -44,8 +44,8 @@ class PollinationDAL(BaseDAL):
             pollination.pollen_type = updates["pollen_type"]
         if "location" in updates:
             pollination.location = updates["location"]
-        if "pollination_timestamp" in updates:
-            pollination.pollination_timestamp = updates["pollination_timestamp"]
+        if "pollinated_at" in updates:
+            pollination.pollinated_at = updates["pollinated_at"]
         if "count" in updates:
             pollination.count = updates["count"]
         if "label_color" in updates:

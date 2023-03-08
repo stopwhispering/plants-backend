@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from PIL import Image
 
 import plants as plants_package
+from plants import settings
 from plants.exceptions import ImageNotFoundError
 from plants.modules.event.schemas import FImageDelete, FImagesToDelete
 
@@ -203,3 +206,30 @@ async def test_delete_image(
     plant_dal.expire(valid_plant_in_db_with_image)
     plant_in_db = await plant_dal.by_id(plant_id)
     assert len(plant_in_db.images) == 0
+
+
+@pytest.mark.asyncio()
+async def test_get_image_in_different_sizes(
+    ac: AsyncClient,
+    valid_plant_in_db_with_image: Plant,
+) -> None:
+    filename: str = valid_plant_in_db_with_image.images[0].filename
+
+    # get image in original size
+    response = await ac.get(url=f"/api/photo?filename={filename}")
+    assert response.status_code == 200
+    image_response = Image.open(BytesIO(response.content))
+    assert image_response.format == "JPEG"
+
+    # get image in different sizes
+    for size in settings.images.sizes:
+        params: dict[str, str] = {
+            "filename": filename,
+            "width": str(size[0]),
+            "height": str(size[1]),
+        }
+        response = await ac.get(url="/api/photo", params=params)
+        assert response.status_code == 200
+        image_response = Image.open(BytesIO(response.content))
+        assert image_response.format == "JPEG"
+        assert image_response.width == size[0] or image_response.height == size[1]

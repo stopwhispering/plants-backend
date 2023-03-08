@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Final
 import pytz
 from fastapi import HTTPException
 
-from plants.exceptions import ColorAlreadyTakenError, UnknownColorError
+from plants.exceptions import BaseError, ColorAlreadyTakenError, UnknownColorError
 from plants.modules.pollination.enums import (
     COLORS_MAP,
     COLORS_MAP_TO_RGB,
@@ -71,10 +71,8 @@ async def _read_pollination_attempts(
         attempt_dict = {
             "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
             "pollination_status": pollination.pollination_status,
-            "pollination_at": pollination.pollination_timestamp.strftime(
-                FORMAT_FULL_DATETIME
-            )
-            if pollination.pollination_timestamp
+            "pollination_at": pollination.pollinated_at.strftime(FORMAT_FULL_DATETIME)
+            if pollination.pollinated_at
             else None,
             "harvest_at": pollination.harvest_date.strftime(FORMAT_YYYY_MM_DD)
             if pollination.harvest_date
@@ -235,6 +233,9 @@ async def save_new_pollination(
     seed_capsule_plant = await plant_dal.by_id(
         new_pollination_data.seed_capsule_plant_id
     )
+    if florescence.plant_id != seed_capsule_plant.id:
+        raise BaseError("Plant ID mismatch")
+
     pollen_donor_plant = await plant_dal.by_id(
         new_pollination_data.pollen_donor_plant_id
     )
@@ -243,8 +244,8 @@ async def save_new_pollination(
         raise UnknownColorError(new_pollination_data.label_color_rgb)
 
     # apply transformations
-    pollination_timestamp = datetime.strptime(
-        new_pollination_data.pollination_timestamp, FORMAT_API_YYYY_MM_DD_HH_MM
+    pollinated_at = datetime.strptime(
+        new_pollination_data.pollinated_at, FORMAT_API_YYYY_MM_DD_HH_MM
     ).astimezone(pytz.timezone("Europe/Berlin"))
 
     # make sure there's no ongoing pollination for that plant with the same thread color
@@ -270,7 +271,7 @@ async def save_new_pollination(
         pollen_quality=new_pollination_data.pollen_quality,
         count=new_pollination_data.count,
         location=new_pollination_data.location,
-        pollination_timestamp=pollination_timestamp,
+        pollinated_at=pollinated_at,
         ongoing=True,
         label_color=COLORS_MAP[
             new_pollination_data.label_color_rgb
@@ -342,9 +343,7 @@ async def update_pollination(
         germination_rate = None
 
     updates = pollination_data.dict(exclude={})
-    updates["pollination_timestamp"] = parse_api_datetime(
-        pollination_data.pollination_timestamp
-    )
+    updates["pollinated_at"] = parse_api_datetime(pollination_data.pollinated_at)
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["germination_rate"] = germination_rate
@@ -376,8 +375,8 @@ async def read_ongoing_pollinations(
             "seed_capsule_plant_name": p.seed_capsule_plant.plant_name,
             "pollen_donor_plant_id": p.pollen_donor_plant_id,
             "pollen_donor_plant_name": p.pollen_donor_plant.plant_name,
-            "pollination_timestamp": format_api_datetime(
-                p.pollination_timestamp
+            "pollinated_at": format_api_datetime(
+                p.pollinated_at
             ),  # e.g. '2022-11-16 12:06'
             "pollen_type": p.pollen_type,
             "count": p.count,

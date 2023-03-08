@@ -39,7 +39,7 @@ class PollinationBase(BaseSchema):
     seed_capsule_plant_id: int
     pollen_donor_plant_id: int
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
-    pollination_timestamp: str  # e.g. '2022-11-16 12:06'
+    pollinated_at: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     location: Location
     count: conint(ge=1)  # type: ignore[valid-type]

@@ -57,7 +57,6 @@ async def search_taxa_by_name(
         "ResultsCollection": search_results,
         "message": get_message(
             "Received species search results",
-            additional_text=f'Search term "{taxon_info_request.taxon_name_pattern}"',
             description=f"Count: {len(search_results)}",
         ),
     }

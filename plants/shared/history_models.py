@@ -21,7 +21,7 @@ class History(Base):
         primary_key=True,
         nullable=False,
     )
-    # todo rename
+
     timestamp: datetime.datetime = Column(DateTime(timezone=True), nullable=False)
     plant_id: int = Column(INTEGER, nullable=False)
     plant_name: str = Column(VARCHAR(100), nullable=False)

@@ -129,7 +129,6 @@ class Pollination(Base):
         "Florescence", back_populates="pollinations", foreign_keys=[florescence_id]
     )
 
-    # todo: make sure it is same as florescence.plant_id if available
     seed_capsule_plant_id: int = Column(
         INTEGER, ForeignKey("plants.id"), nullable=False
     )
@@ -157,7 +156,8 @@ class Pollination(Base):
 
     count: int | None = Column(INTEGER)
 
-    pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
+    # pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
+    pollinated_at = Column(DateTime(timezone=True))  # todo rename
     label_color: str | None = Column(VARCHAR(60))
     # ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
     pollination_status: PollinationStatus = Column(

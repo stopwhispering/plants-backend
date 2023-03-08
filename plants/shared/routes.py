@@ -37,13 +37,6 @@ async def get_proposals(
     if entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
         nurseries = await plant_dal.get_distinct_nurseries()
-        # nurseries_tuples = (db.query(Plant.nursery_source)
-        #                     # .order_by(Plant.last_update.desc())
-        #                     .distinct(Plant.nursery_source)
-        #                     .filter(Plant.nursery_source.isnot(None)).all())
-        # if not nurseries:
-        #     results = {'NurseriesSourcesCollection': []}
-        # else:
         results = {"NurseriesSourcesCollection": [{"name": n} for n in nurseries]}
 
     elif entity_id == ProposalEntity.KEYWORD:

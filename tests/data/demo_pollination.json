@@ -1,7 +1,7 @@
 {
   "pollen_type": "fresh",
   "location": "indoor_led",
-  "pollination_timestamp": "2022-12-29T21:16:00",
+  "pollinated_at": "2022-12-29T21:16:00",
   "label_color": "red",
   "pollination_status": "seed_capsule",
   "ongoing": true,

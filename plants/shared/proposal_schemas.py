@@ -16,7 +16,7 @@ class BNurseryProposal(BaseSchema):
 
 class BResultsProposals(ResponseContainer):
     NurseriesSourcesCollection: Optional[list[BNurseryProposal]]
-    KeywordsCollection: Optional[list[BKeywordProposal]]  # todo remove
+    KeywordsCollection: Optional[list[BKeywordProposal]]
 
 
 class BTaxonTreeNode(BaseSchema):

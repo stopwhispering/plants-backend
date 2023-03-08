@@ -23,7 +23,6 @@ def modified_date(path_to_file: Path) -> float:
 
 def set_modified_date(path_to_file: Path, modified_time_seconds: float) -> None:
     """Set file's last access and modified time."""
-    # todo pathlib
     os.utime(path_to_file.as_posix(), (modified_time_seconds, modified_time_seconds))
 
 

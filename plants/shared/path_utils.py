@@ -19,7 +19,6 @@ def get_generated_filename(
     """get the derivative filename of a resized photo_file file (when creating
     thumbnails, a common naming convention is applied that adds resolution as a suffix
     to the filename)"""
-    # todo implement with pathlib
     if not size:
         return filename_original
 

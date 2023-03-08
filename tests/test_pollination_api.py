@@ -60,7 +60,7 @@ async def test_create_pollination(
         pollen_donor_plant_id=plant2.id,
         pollen_type="frozen",
         pollen_quality="good",
-        pollination_timestamp="2022-11-16 12:06",
+        pollinated_at="2022-11-16 12:06",
         label_color_rgb="#ff7c09",
         location="indoor",
         count=3,
