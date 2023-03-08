@@ -18,6 +18,7 @@ from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_services_simple import remove_files_already_existing
 from plants.modules.image.image_writer import ImageWriter
+from plants.modules.image.models import Image
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.schemas import (
     BImageUpdated,
@@ -25,7 +26,6 @@ from plants.modules.image.schemas import (
     BResultsImageResource,
     BResultsImagesUploaded,
     FImageUploadedMetadata,
-    ImageCreateUpdate,
     ImageRead,
 )
 from plants.modules.image.services import (
@@ -101,7 +101,7 @@ async def upload_images_plant(
         ]
     paths: list[Path] = [task.result() for task in tasks]
 
-    images: list[ImageCreateUpdate] = []
+    images: list[Image] = []
     for path in paths:
         images.append(
             await save_image_to_db(
@@ -142,9 +142,7 @@ async def upload_images_plant(
 @router.get("/images/untagged/", response_model=BResultsImageResource)
 async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)) -> Any:
     """Get images with no plants assigned, yet."""
-    untagged_images: list[ImageCreateUpdate] = await fetch_untagged_images(
-        image_dal=image_dal
-    )
+    untagged_images: list[Image] = await fetch_untagged_images(image_dal=image_dal)
     logger.info(msg := f"Returned {len(untagged_images)} images.")
     return {
         "action": "Get untagged images",
@@ -240,7 +238,7 @@ async def upload_images(
         ]
     paths: list[Path] = [task.result() for task in tasks]
 
-    images: list[ImageCreateUpdate] = []
+    images: list[Image] = []
     for path in paths:
         images.append(
             await save_image_to_db(

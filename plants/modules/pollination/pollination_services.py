@@ -27,7 +27,6 @@ from plants.modules.pollination.schemas import (
     PollenContainerCreateUpdate,
     PollenContainerRead,
     PollinationCreate,
-    PollinationRead,
     PollinationUpdate,
 )
 from plants.shared.api_constants import (
@@ -353,16 +352,11 @@ async def update_pollination(
 
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
-) -> list[PollinationRead]:
-    # query = (db.query(Pollination)
-    #          .filter(Pollination.ongoing)
-    #          )
-    # ongoing_pollinations_orm: list[Pollination] = query.all()
+) -> list[dict[str, object]]:
     ongoing_pollinations_orm: list[
         Pollination
     ] = await pollination_dal.get_ongoing_pollinations()
-    # todo pydantic orm mode
-    ongoing_pollinations = []
+    ongoing_pollinations: list[dict[str, object]] = []
     p: Pollination
     for p in ongoing_pollinations_orm:
         label_color_rgb = (
@@ -400,8 +394,7 @@ async def read_ongoing_pollinations(
             "first_seeds_germinated": p.first_seeds_germinated,
             "germination_rate": p.germination_rate,
         }
-        # POngoingPollination.validate(ongoing_pollination_dict)
-        ongoing_pollinations.append(PollinationRead.parse_obj(ongoing_pollination_dict))
+        ongoing_pollinations.append(ongoing_pollination_dict)
     return ongoing_pollinations
 
 

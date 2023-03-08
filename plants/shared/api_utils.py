@@ -90,7 +90,13 @@ def parse_api_datetime(dt_str: str) -> datetime:
 
 def format_api_datetime(dt: datetime | None) -> str | None:
     """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
-    return dt.strftime(FORMAT_API_YYYY_MM_DD_HH_MM) if dt else None
+    return (
+        dt.astimezone(pytz.timezone("Europe/Berlin")).strftime(
+            FORMAT_API_YYYY_MM_DD_HH_MM
+        )
+        if dt
+        else None
+    )
 
 
 def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:

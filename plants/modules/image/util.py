@@ -115,3 +115,12 @@ def resize_image(
 def generate_timestamp_filename() -> str:
     dt_cet = datetime.datetime.now(tz=pytz.timezone("Europe/Berlin"))
     return f"{dt_cet.strftime(FORMAT_FILENAME_TIMESTAMP)}.jpg"
+
+
+def shorten_plant_name(plant_name: str, max_length: int) -> str:
+    """Shorten plant name to 20 chars for display in ui5 table."""
+    return (
+        plant_name[: max_length - 3] + "..."
+        if len(plant_name) > max_length
+        else plant_name
+    )

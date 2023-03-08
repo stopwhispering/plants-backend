@@ -87,8 +87,6 @@ class Florescence(Base):
     last_seed_ripening_date: datetime.date | None = Column(DATE)
     # in days
     avg_ripening_time: float | None = Column(FLOAT)  # type:ignore[misc]
-    # todo via relationship: first_seed_ripe_date, last_seed_ripe_date,
-    #  average_ripening_time
 
     # limited to max 40 chars in frontend, longer only for imported data
     comment: str | None = Column(TEXT)
@@ -156,8 +154,7 @@ class Pollination(Base):
 
     count: int | None = Column(INTEGER)
 
-    # pollination_timestamp = Column(DateTime(timezone=True))  # todo rename
-    pollinated_at = Column(DateTime(timezone=True))  # todo rename
+    pollinated_at = Column(DateTime(timezone=True))
     label_color: str | None = Column(VARCHAR(60))
     # ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
     pollination_status: PollinationStatus = Column(
@@ -180,7 +177,7 @@ class Pollination(Base):
     )  # days from sowing seeds to first seed germinated
     first_seeds_sown = Column(INTEGER)
     first_seeds_germinated = Column(INTEGER)
-    germination_rate = Column(FLOAT)
+    germination_rate: float | None = Column(FLOAT)  # type: ignore[misc]
 
     comment = Column(TEXT)
 
@@ -191,5 +188,3 @@ class Pollination(Base):
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
     creation_at_context = Column(VARCHAR(30), nullable=False)
-
-    # todo via 1:n association table: plants

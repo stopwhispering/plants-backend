@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
 from plants.modules.pollination.schemas import (
     FRequestPollenContainers,
     PollenContainerCreateUpdate,
     PollinationCreate,
 )
+from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
@@ -75,6 +77,42 @@ async def test_create_pollination(
     assert pollination.pollen_type == "frozen"
     assert pollination.location == "indoor"
     assert pollination.count == 3
+
+
+@pytest.mark.asyncio()
+async def test_get_pollinations(
+    ac: AsyncClient,
+    # pollination_dal: PollinationDAL,
+    pollination_in_db: Pollination,
+) -> None:
+    """Update a pollination."""
+    # get pollination via test client
+    response = await ac.get("/api/ongoing_pollinations")
+    assert response.status_code == 200
+    resp = response.json()
+
+    ongoing_pollinations = resp["ongoing_pollination_collection"]
+    pollination = next(
+        p for p in ongoing_pollinations if p["id"] == pollination_in_db.id
+    )
+    assert pollination["seed_capsule_plant_id"] == (
+        pollination_in_db.seed_capsule_plant_id
+    )
+    assert pollination["pollen_donor_plant_id"] == (
+        pollination_in_db.pollen_donor_plant_id
+    )
+    assert pollination["pollen_type"] == pollination_in_db.pollen_type
+    assert pollination["location"] == pollination_in_db.location
+
+    assert pollination_in_db.pollinated_at is not None  # mypy...
+    assert pollination["pollinated_at"] == (
+        pollination_in_db.pollinated_at.strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
+    )
+    assert pollination_in_db.label_color is not None  # mypy...
+    assert (
+        pollination["label_color_rgb"]
+        == COLORS_MAP_TO_RGB[pollination_in_db.label_color]
+    )
 
 
 @pytest.mark.asyncio()

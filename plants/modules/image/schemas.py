@@ -3,9 +3,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import constr
+from pydantic import constr, validator
 
 from plants import settings
+from plants.modules.image.models import ImageKeyword
+from plants.modules.image.util import shorten_plant_name
+from plants.modules.plant.models import Plant
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 from plants.shared.message_schemas import BMessage
 
@@ -37,7 +40,30 @@ class ImageCreateUpdate(ImageBase):
 
 
 class ImageRead(ImageBase):
-    pass
+    # noinspection PyMethodParameters
+    @validator("keywords", pre=True)
+    def _transform_keywords(
+        cls, keywords: list[ImageKeyword]
+    ) -> list[dict[str, object]]:
+        return [{"keyword": k.keyword} for k in keywords]
+
+    # noinspection PyMethodParameters
+    @validator("plants", pre=True)
+    def _transform_plants(cls, plants: list[Plant]) -> list[dict[str, object]]:
+        return [
+            {
+                "plant_id": p.id,
+                "plant_name": p.plant_name,
+                "plant_name_short": (
+                    shorten_plant_name(
+                        p.plant_name,
+                        settings.frontend.restrictions.length_shortened_plant_name_for_tag,
+                    )
+                ),
+                "key": p.plant_name,
+            }
+            for p in plants
+        ]
 
 
 class BImageUpdated(RequestContainer):

@@ -13,7 +13,6 @@ from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.image_services_simple import resizing_required
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
-from plants.modules.image.schemas import FBImagePlantTag, ImageCreateUpdate
 from plants.modules.image.util import (
     generate_thumbnail,
     generate_timestamp_filename,
@@ -70,7 +69,7 @@ async def save_image_to_db(
     plant_dal: PlantDAL,
     plant_ids: tuple[int] | None = None,
     keywords: tuple[str] | None = None,
-) -> ImageCreateUpdate:
+) -> Image:
     # add to db
     record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
     plants = [await plant_dal.by_id(p) for p in plant_ids] if plant_ids else []
@@ -81,7 +80,7 @@ async def save_image_to_db(
         keywords=keywords,
         plants=plants,
     )
-    return _to_response_image(image)
+    return image
 
 
 async def save_image_file(
@@ -139,34 +138,42 @@ async def save_image_file(
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) -> None:
     """Delete image file and entries in db."""
     if image.image_to_event_associations:
+        # noinspection PyTypeChecker
         logger.info(
             f"Deleting {len(image.image_to_event_associations)} associated Image to "
             f"Event associations."
         )
+        # noinspection PyTypeChecker
         await image_dal.delete_image_to_event_associations(
             image, image.image_to_event_associations
         )
         image.events = []
     if image.image_to_plant_associations:
+        # noinspection PyTypeChecker
         logger.info(
             f"Deleting {len(image.image_to_plant_associations)} associated Image to "
             f"Plant associations."
         )
+        # noinspection PyTypeChecker
         await image_dal.delete_image_to_plant_associations(
             image, image.image_to_plant_associations
         )
         image.plants = []
     if image.image_to_taxon_associations:
+        # noinspection PyTypeChecker
         logger.info(
             f"Deleting {len(image.image_to_taxon_associations)} associated Image to "
             f"Taxon associations."
         )
+        # noinspection PyTypeChecker
         await image_dal.delete_image_to_taxon_associations(
             image, image.image_to_taxon_associations
         )
         image.taxa = []
     if image.keywords:
+        # noinspection PyTypeChecker
         logger.info(f"Deleting {len(image.keywords)} associated Keywords.")
+        # noinspection PyTypeChecker
         await image_dal.delete_keywords_from_image(image, image.keywords)
 
     await image_dal.delete_image(image)
@@ -294,59 +301,14 @@ async def trigger_generation_of_missing_thumbnails(
         msg := f"Generating thumbnails for {len(images)} images in "
         f"sizes: {settings.images.sizes} in background."
     )
-    # todo correct like that with async?
     background_tasks.add_task(_generate_missing_thumbnails, images)
     return msg
 
 
-async def fetch_images_for_plant(
-    plant: Plant, image_dal: ImageDAL
-) -> list[ImageCreateUpdate]:
+async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[Image]:
     # for async, we need to reload the image relationships
-    images = await image_dal.by_ids([i.id for i in plant.images])
-    # todo switch to orm mode
-    return [_to_response_image(image) for image in images]
+    return await image_dal.by_ids([i.id for i in plant.images])
 
 
-def _to_response_image(image: Image) -> ImageCreateUpdate:
-    # todo swithc toorm mode
-    # from sqlalchemy import inspect
-    # ins = inspect(image)
-    # if 'plants' in ins.unloaded or 'keywords' in ins.unloaded:
-    #     a = 1
-
-    return ImageCreateUpdate(
-        id=image.id,
-        filename=image.filename or "",
-        keywords=[{"keyword": k.keyword} for k in image.keywords],
-        plants=[
-            FBImagePlantTag(
-                plant_id=p.id,
-                plant_name=p.plant_name,
-                plant_name_short=_shorten_plant_name(p.plant_name),
-                # key=p.plant_name,
-                # text=p.plant_name,
-            )
-            for p in image.plants
-        ],
-        description=image.description,
-        record_date_time=image.record_date_time,
-    )
-
-
-async def fetch_untagged_images(image_dal: ImageDAL) -> list[ImageCreateUpdate]:
-    untagged_images = await image_dal.get_untagged_images()
-    return [_to_response_image(image) for image in untagged_images]
-
-
-def _shorten_plant_name(plant_name: str) -> str:
-    """Shorten plant name to 20 chars for display in ui5 table."""
-    return (
-        plant_name[
-            : settings.frontend.restrictions.length_shortened_plant_name_for_tag - 3
-        ]
-        + "..."
-        if len(plant_name)
-        > settings.frontend.restrictions.length_shortened_plant_name_for_tag
-        else plant_name
-    )
+async def fetch_untagged_images(image_dal: ImageDAL) -> list[Image]:
+    return await image_dal.get_untagged_images()
