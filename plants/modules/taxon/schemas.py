@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from pydantic import Extra, HttpUrl, constr, validator
 
 from plants.modules.taxon.enums import FBRank
-from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM
+from plants.shared.api_utils import format_api_datetime
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class TaxonOccurrenceImageBase(BaseSchema):
     verbatim_locality: Optional[  # type: ignore[valid-type]
         constr(min_length=1, max_length=125)
     ]
-    created_on: datetime.datetime
+    photographed_at: datetime.datetime
     creator_identifier: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     publisher_dataset: Optional[  # type: ignore[valid-type]
         constr(min_length=1, max_length=100)
@@ -54,12 +54,11 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
         extra = Extra.ignore
 
     # noinspection PyMethodParameters
-    @validator("created_on")
+    # @validator("created_on")
+    @validator("photographed_at")
     def datetime_to_string(cls, v: datetime.datetime) -> str:
         """Validator decorator makes this a class method and enforces cls param."""
-        return v.strftime(
-            FORMAT_API_YYYY_MM_DD_HH_MM
-        )  # todo required for Backend variant?
+        return format_api_datetime(v)
 
 
 class TaxonImageBase(BaseSchema):

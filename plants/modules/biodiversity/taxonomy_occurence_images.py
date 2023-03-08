@@ -40,7 +40,7 @@ class ImageMetadata:
     scientific_name: str
     basis_of_record: str
     verbatim_locality: str | None
-    created_on: datetime | None
+    photographed_at: datetime | None
     creator_identifier: str
     publisher_dataset: str
     href: str
@@ -90,7 +90,7 @@ class TaxonOccurencesLoader:
                 ],  # redundant, but show as additional info
                 basis_of_record=occ["basisOfRecord"],
                 verbatim_locality=self._parse_verbatim_locality(occ),
-                created_on=date_,
+                photographed_at=date_,
                 creator_identifier=m.get("identifiedBy")
                 or m.get("creator")
                 or occ.get("recordedBy")

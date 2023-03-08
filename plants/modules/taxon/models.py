@@ -140,8 +140,7 @@ class TaxonOccurrenceImage(Base):
     scientific_name: str = Column(VARCHAR(100), nullable=False)
     basis_of_record: str = Column(VARCHAR(25), nullable=False)
     verbatim_locality: str | None = Column(VARCHAR(120))
-    # todo rename datetime or make it date type
-    created_on: datetime = Column(DateTime(timezone=True), nullable=False)
+    photographed_at: datetime = Column(DateTime(timezone=True), nullable=False)
     # date: datetime = Column(DateTime(timezone=True), nullable=False)
     creator_identifier: str = Column(VARCHAR(100), nullable=False)
     publisher_dataset: str | None = Column(VARCHAR(100))

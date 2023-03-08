@@ -112,14 +112,6 @@ async def upload_images_plant(
             )
         )
 
-    # images: list[ImageCreateUpdate] = []
-    # for file in files:
-    #     images.append(await save_image_file(file=file,
-    #                                         image_dal=image_dal,
-    #                                         plant_dal=plant_dal,
-    #                                         plant_ids=(plant.id,),
-    #                                         ))
-
     desc = (
         f"Saved: {[p.filename for p in files]}."
         f"\nSkipped Duplicates: {duplicate_filenames}."

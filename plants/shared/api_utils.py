@@ -4,7 +4,7 @@ import json
 from contextlib import suppress
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, overload
 
 import pytz
 
@@ -88,14 +88,22 @@ def parse_api_datetime(dt_str: str) -> datetime:
     )
 
 
+@overload
+def format_api_datetime(dt: datetime) -> str:
+    ...
+
+
+@overload
+def format_api_datetime(dt: None) -> None:
+    ...
+
+
 def format_api_datetime(dt: datetime | None) -> str | None:
     """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
-    return (
-        dt.astimezone(pytz.timezone("Europe/Berlin")).strftime(
-            FORMAT_API_YYYY_MM_DD_HH_MM
-        )
-        if dt
-        else None
+    if not dt:
+        return None
+    return dt.astimezone(pytz.timezone("Europe/Berlin")).strftime(
+        FORMAT_API_YYYY_MM_DD_HH_MM
     )
 
 
