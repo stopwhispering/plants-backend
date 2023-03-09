@@ -4,7 +4,7 @@ import logging
 import urllib.parse
 from typing import TYPE_CHECKING, Any, Final, Optional
 
-import requests  # todo replace with async http client
+import aiohttp
 from bs4 import BeautifulSoup, Tag
 from pygbif import species
 from wikidata.client import Client
@@ -28,22 +28,29 @@ logger = logging.getLogger(__name__)
 
 
 class GBIFIdentifierLookup:
-    def lookup(self, taxon_name: str, lsid: str) -> int | None:
-        return self._gbif_id_from_gbif_api(taxon_name=taxon_name, lsid=lsid)
+    async def lookup(self, taxon_name: str, lsid: str) -> int | None:
+        return await self._gbif_id_from_gbif_api(taxon_name=taxon_name, lsid=lsid)
 
     @staticmethod
-    def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> Optional[int]:
+    async def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> Optional[int]:
         url = GBIF_REST_API_RELATED_NAME_USAGES.format(
             nubKey=nub_key, datasetKey=IPNI_DATASET_KEY
         )
-        resp = requests.get(url, timeout=10)
-        if resp.status_code != 200:
-            logger.error(f"Error at GET request for GBIF REST API: {resp.status_code}")
-            return None
-        if resp.json().get("results"):
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    logger.error(
+                        "Error at GET request for GBIF REST API: " f"{response.status}"
+                    )
+                    return None
+                response_json = await response.json()
+
+        if response_json.get("results"):
             # find our plant's record in ipni dataset at gbif
             ipni_record: Any = next(
-                (r for r in resp.json().get("results") if r.get("taxonID") == lsid), {}
+                (r for r in response_json.get("results") if r.get("taxonID") == lsid),
+                {},
             )
             # ... and make sure it has the correct identifier; if it has, we know we
             # have the correct gbif id (=nubKey)
@@ -51,7 +58,7 @@ class GBIFIdentifierLookup:
                 return nub_key
         return None
 
-    def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> int | None:
+    async def _gbif_id_from_gbif_api(self, taxon_name: str, lsid: str) -> int | None:
         """the GBIF API does not allow searching by other database's taxonId; therefore,
         we search by botanical name and IPNI dataset key, then we compare the (external)
         taxonId"; if we have a match, we can return the GBIF taxon ID.
@@ -80,7 +87,9 @@ class GBIFIdentifierLookup:
             "REST API."
         )
         for r in (r for r in lookup["results"] if r.get("nubKey")):
-            gbif_id = self._gbif_id_from_rest_api(nub_key=r.get("nubKey"), lsid=lsid)
+            gbif_id = await self._gbif_id_from_rest_api(
+                nub_key=r.get("nubKey"), lsid=lsid
+            )
             if gbif_id:
                 return gbif_id
 
@@ -89,13 +98,15 @@ class GBIFIdentifierLookup:
 
 class WikidataGbifLookup:
     @staticmethod
-    def _scrape_from_wikidata(lsid_number: str) -> BeautifulSoup:
+    async def _scrape_from_wikidata(lsid_number: str) -> BeautifulSoup:
         lsid_number_quoted = f'"{lsid_number}"'
         logger.debug(f"Beginning search for {lsid_number_quoted}")
         lsid_number_encoded = urllib.parse.quote(lsid_number_quoted)
         search_url = URL_PATTERN_WIKIDATA_SEARCH.format(lsid_number_encoded)
-        page = requests.get(search_url, timeout=10)  # todo async http client
-        return BeautifulSoup(page.content, "html.parser")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(search_url) as response:
+                page = await response.text()
+        return BeautifulSoup(page, "html.parser")
 
     @staticmethod
     def _parse_wikidata_entity(tag: Tag) -> EntityId | None:
@@ -183,7 +194,7 @@ class WikidataGbifLookup:
 
         return int(gbif_id)
 
-    def lookup(self, lsid: str) -> int | None:
+    async def lookup(self, lsid: str) -> int | None:
         """Get mapping from ipni id to gbif id from wikidata; unfortunately, the
         wikidata api is defect, thus we parse using beautifulsoup4."""
 
@@ -191,7 +202,7 @@ class WikidataGbifLookup:
         lsid_number = lsid[lsid.rfind(":") + 1 :].strip()
 
         # fulltext-search wikidata for ipni id
-        soup = self._scrape_from_wikidata(lsid_number=lsid_number)
+        soup = await self._scrape_from_wikidata(lsid_number=lsid_number)
 
         # extract wikidata entity
         wikidata_entity = self._parse_wikidata_entity(tag=soup)
@@ -213,7 +224,7 @@ class WikidataGbifLookup:
         return self._get_gbif_id(wikidata_claims=wikidata_claims)
 
 
-def lookup_gbif_id(taxon_name: str, lsid: str) -> int | None:
-    return GBIFIdentifierLookup().lookup(
+async def lookup_gbif_id(taxon_name: str, lsid: str) -> int | None:
+    return await GBIFIdentifierLookup().lookup(
         taxon_name=taxon_name, lsid=lsid
-    ) or WikidataGbifLookup().lookup(lsid=lsid)
+    ) or await WikidataGbifLookup().lookup(lsid=lsid)

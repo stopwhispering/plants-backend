@@ -51,9 +51,17 @@ class TaxonDAL(BaseDAL):
             raise TaxonNotFoundError(taxon_id)
         return taxon
 
+    def expire_all(self) -> None:
+        self.session.expire_all()
+
     async def by_gbif_id(self, gbif_id: int) -> list[Taxon]:
         # noinspection PyTypeChecker
-        query = select(Taxon).where(Taxon.gbif_id == gbif_id)
+        query = (
+            select(Taxon)
+            .where(Taxon.gbif_id == gbif_id)
+            .options(selectinload(Taxon.occurrence_images))
+        )
+
         taxa: list[Taxon] = list((await self.session.scalars(query)).all())
         return taxa
 

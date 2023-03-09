@@ -71,7 +71,7 @@ async def fetch_taxon_occurrence_images(
 
     # lookup ocurrences & images at gbif and generate thumbnails
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
-    occurrence_images = loader.scrape_occurrences_for_taxon(
+    occurrence_images = await loader.scrape_occurrences_for_taxon(
         gbif_id=fetch_taxon_occurrence_images_request.gbif_id
     )
 

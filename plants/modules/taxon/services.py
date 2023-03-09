@@ -110,9 +110,11 @@ async def save_new_taxon(
             raise ValueError("Custom fields unexpectedly set for non-custom taxon.")
         locations = await _retrieve_locations(new_taxon.lsid)
 
-        gbif_id = await run_in_threadpool(
-            lookup_gbif_id, taxon_name=name, lsid=new_taxon.lsid
-        )
+        # gbif_id = await run_in_threadpool(
+        #     lookup_gbif_id, taxon_name=name, lsid=new_taxon.lsid
+        # )
+
+        gbif_id = await lookup_gbif_id(taxon_name=name, lsid=new_taxon.lsid)
 
     if await taxon_dal.exists(taxon_name=name):
         raise TaxonAlreadyExistsError(name)

@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import plants as plants_package
 from plants.modules.biodiversity.taxonomy_occurence_images import TaxonOccurencesLoader
 
 if TYPE_CHECKING:
-    # from plants.modules.taxon.models import TaxonOccurrenceImage
+    from plants.modules.taxon.models import Taxon
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 
@@ -18,24 +19,32 @@ async def test_taxon_occurrence_loader(
     # plant_dal: PlantDAL,
     # event_dal: EventDAL,
     taxon_dal: TaxonDAL,
+    taxon_in_db: Taxon,
 ) -> None:
-    TaxonOccurencesLoader(taxon_dal=taxon_dal)
-    # loader.scrape_occurrences_for_taxon(gbif_id=9549498)  # H. coarctata
-    # images: list[TaxonOccurrenceImage]
-    # await loader.scrape_occurrences_for_taxon(gbif_id=9549498)  # H. coarctata
+    # Scrape occurrences for taxon "Haworthia coarctata"
+    loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
+    assert taxon_in_db.gbif_id is not None
+    await loader.scrape_occurrences_for_taxon(gbif_id=taxon_in_db.gbif_id)
 
-    # todo : test...
-    #
-    #
-    # test_db.add(plant_valid)
-    # await test_db.commit()
-    # plant_valid = await plant_dal.by_id(plant_valid.id)
-    #
-    # await deep_clone_plant(
-    #     plant_valid,
-    #     plant_name_clone="Aloe Vera Clone",
-    #     plant_dal=plant_dal,
-    #     event_dal=event_dal,
-    #     # property_dal=property_dal
-    # )
-    # await test_db.commit()
+    # Check if occurrences were added to the taxon in the db
+    taxon_id = taxon_in_db.id
+    taxon_dal.expire_all()
+    taxon = await taxon_dal.by_id(taxon_id)
+    assert len(taxon.occurrence_images) > 0
+    occurrence_image = taxon.occurrence_images[0]
+    assert occurrence_image.gbif_id == taxon.gbif_id
+
+    # Check if image thumbnail was saved to file system
+    folder_content = (
+        plants_package.settings.paths.path_generated_thumbnails_taxon.iterdir()
+    )
+    file_names = [f.name for f in folder_content]
+
+    # the thumbnail filenames contain at least the occurrence_id, img_no, and gbif_id
+    assert next(
+        f
+        for f in file_names
+        if str(occurrence_image.occurrence_id) in f
+        and str(occurrence_image.img_no) in f
+        and str(occurrence_image.gbif_id) in f
+    )

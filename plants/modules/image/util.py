@@ -78,7 +78,7 @@ def _rotate_if_required(
     """Rotate photo_file if exif file has a rotate directive (solves chrome bug not
     respecting orientation exif tag) no exif tag manipulation required as this is not
     saved to thumbnails anyway."""
-    # noinspection PyProtectedMember
+    # noinspection PyTypeChecker
     exif = dict(exif_obj.items())
     if piexif.ImageIFD.Orientation in exif:
         if exif[piexif.ImageIFD.Orientation] == _ORIENT_180:

@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
-import requests
+import aiohttp
 from dateutil.parser import isoparse
 from pydantic.error_wrappers import ValidationError
 from pygbif import occurrences as occ_api
 from sqlalchemy.exc import IntegrityError
+from starlette.concurrency import run_in_threadpool
 
 from plants import local_config, settings
 from plants.modules.image.util import generate_thumbnail
@@ -91,17 +93,21 @@ class TaxonOccurencesLoader:
                 basis_of_record=occ["basisOfRecord"],
                 verbatim_locality=self._parse_verbatim_locality(occ),
                 photographed_at=date_,
-                creator_identifier=m.get("identifiedBy")
-                or m.get("creator")
-                or occ.get("recordedBy")
-                or "Unknown Creator",
-                publisher_dataset=occ.get("publisher")
-                or m.get("publisher")
-                or occ.get("institutionCode")
-                or occ.get("rightsHolder")
-                or occ.get("datasetName")
-                or occ.get("collectionCode")
-                or "Unknown Publisher",
+                creator_identifier=(
+                    m.get("identifiedBy")
+                    or m.get("creator")
+                    or occ.get("recordedBy")
+                    or "Unknown Creator"
+                ),
+                publisher_dataset=(
+                    occ.get("publisher")
+                    or m.get("publisher")
+                    or occ.get("institutionCode")
+                    or occ.get("rightsHolder")
+                    or occ.get("datasetName")
+                    or occ.get("collectionCode")
+                    or "Unknown Publisher"
+                ),
                 references=references_,
                 href=href_,
             )
@@ -129,7 +135,7 @@ class TaxonOccurencesLoader:
         return verbatim_locality
 
     @staticmethod
-    def _download_and_generate_thumbnail(info: ImageMetadata) -> Optional[str]:
+    async def _download_and_generate_thumbnail(info: ImageMetadata) -> Optional[str]:
         filename = (
             f"{info.gbif_id}_{info.occurrence_id}_{info.img_no}."
             f"{settings.images.size_thumbnail_image_taxon[0]}_"
@@ -140,13 +146,15 @@ class TaxonOccurencesLoader:
             logger.debug(f"File already downloaded. Skipping download - {info.href}")
             return filename
 
-        logger.info(f"Downloading... {str(info.href)}")
-        result = requests.get(info.href, timeout=10)  # todo async http client
-        if result.status_code >= 300:
-            logger.warning(f"Download failed: {info.href}")
-            return None
+        logger.debug(f"Downloading... {str(info.href)}")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(info.href) as response:
+                if response.status >= 300:
+                    logger.warning(f"Download failed: {info.href}")
+                    return None
+                payload = await response.read()
+        image_bytes_io = BytesIO(payload)
 
-        image_bytes_io = BytesIO(result.content)
         try:
             path_thumbnail = generate_thumbnail(
                 image=image_bytes_io,
@@ -166,7 +174,35 @@ class TaxonOccurencesLoader:
 
         return filename
 
-    def _treat_occurences(
+    async def _download_and_save_thumbnail(
+        self,
+        occ: GbifOccurrenceResultDict,
+        gbif_id: int,
+        img_no: int,
+        gbif_media_dict: GbifMediaDict,
+    ) -> ImageMetadata | None:
+        image_metadata = self._get_image_metadata(occ, gbif_media_dict, gbif_id)
+        if not image_metadata:
+            return None
+        image_metadata.img_no = img_no
+
+        if filename_thumbnail := (
+            await self._download_and_generate_thumbnail(image_metadata)
+        ):
+            image_metadata.filename_thumbnail = filename_thumbnail
+        else:
+            return None
+
+        # validate (don't convert as this would validate datetime to str
+        try:
+            TaxonOccurrenceImageRead(**image_metadata.__dict__)
+        except ValidationError as err:
+            throw_exception(str(err))
+            return None
+
+        return image_metadata
+
+    async def _treat_occurences(
         self, occs: list[GbifOccurrenceResultDict], gbif_id: int
     ) -> list[ImageMetadata]:
         image_dicts: list[ImageMetadata] = []
@@ -176,33 +212,19 @@ class TaxonOccurencesLoader:
 
             # some entries are not parseable
             media = [m for m in occ["media"] if "format" in m]
-            m: GbifMediaDict
-            for j, m in enumerate(media, 1):
-                if len(image_dicts) >= local_config.max_images_per_taxon:
-                    break
-
-                image_metadata = self._get_image_metadata(occ, m, gbif_id)
-                if image_metadata:
-                    image_metadata.img_no = j
-
-                    if filename_thumbnail := self._download_and_generate_thumbnail(
-                        image_metadata
-                    ):
-                        image_metadata.filename_thumbnail = filename_thumbnail
-                    else:
-                        continue
-
-                    # validate (don't convert as this would validate datetime to str
-                    try:
-                        # TaxonOccurrenceImageRead(**d).dict()
-                        TaxonOccurrenceImageRead.parse_obj(image_metadata.__dict__)
-                    except ValidationError as err:
-                        throw_exception(str(err))
-                        # logger.warning(str(err))
-                        continue
-
-                    # saving will happen later
-                    image_dicts.append(image_metadata)
+            gbif_media_dict: GbifMediaDict
+            tasks = []
+            for img_no, gbif_media_dict in enumerate(media, 1):
+                tasks.append(
+                    self._download_and_save_thumbnail(
+                        occ=occ,
+                        gbif_id=gbif_id,
+                        img_no=img_no,
+                        gbif_media_dict=gbif_media_dict,
+                    )
+                )
+            results = await asyncio.gather(*tasks)
+            image_dicts.extend([r for r in results if r])
 
         return image_dicts
 
@@ -248,11 +270,12 @@ class TaxonOccurencesLoader:
     async def scrape_occurrences_for_taxon(
         self, gbif_id: int
     ) -> list[TaxonOccurrenceImage]:
-        logger.info(f"Searching occurrence immages for  {gbif_id}.")
-        occ_search: GbifOccurrenceResultResponse = occ_api.search(
-            taxonKey=gbif_id, mediaType="StillImage"
-        )
+        logger.info(f"Searching occurrence images for  {gbif_id}.")
 
+        # the gbif api is blocking, so we better run it in a threadpool
+        occ_search: GbifOccurrenceResultResponse = await run_in_threadpool(
+            occ_api.search, taxonKey=gbif_id, mediaType="StillImage"
+        )
         if not occ_search["results"]:
             logger.info(f"nothing found for {gbif_id}")
             return []
@@ -267,16 +290,19 @@ class TaxonOccurencesLoader:
         ]
 
         # get photo_file information & save thumbnail
-        image_dicts: list[ImageMetadata] = self._treat_occurences(occurrences, gbif_id)
+        image_dicts: list[ImageMetadata] = await self._treat_occurences(
+            occurrences, gbif_id
+        )
 
         # save information to database
         logger.info(
             f"Saving/Updating {len(image_dicts)} occurrence images to database."
         )
+
         await self._save_to_db(image_dicts, gbif_id)
 
+        self.taxon_dal.expire_all()
         taxa = await self.taxon_dal.by_gbif_id(gbif_id)
         # we assigned to each taxon with that gbif id, here we just use the first
         taxon = taxa[0]
-        # taxon: Taxon = self.db.query(Taxon).filter(Taxon.gbif_id == gbif_id).first()
         return taxon.occurrence_images

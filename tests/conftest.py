@@ -117,6 +117,7 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
         await conn.execute(text("DELETE FROM event;"))
         await conn.execute(text("DELETE FROM plants;"))
         await conn.execute(text("DELETE FROM distribution;"))
+        await conn.execute(text("DELETE FROM taxon_to_occurrence_association;"))
         await conn.execute(text("DELETE FROM taxon;"))
         # TRUNCATE table_a, table_b, …, table_z;
         await conn.commit()
@@ -219,15 +220,19 @@ async def plant_valid_with_active_florescence_in_db(
     return plant_valid_with_active_florescence
 
 
-@pytest_asyncio.fixture(scope="session")
-def app() -> FastAPI:
-    """only here do we import the main module.
+@pytest_asyncio.fixture(scope="function", autouse=True)
+def reset_paths() -> None:
+    """reset paths before each test function."""
+    _reset_paths()
 
-    to avoid the regular database being initialized, we override the database url with a
-    test database url we also override the get_db dependency called by most api
-    endpoints to return a test database session
-    """
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+def set_test_paths() -> None:
+    """To avoid the regular database being initialized, we override the database url
+    with a test database url we also override the get_db dependency called by most api
+    endpoints to return a test database session."""
     plants_package.local_config.connection_string = generate_db_url(TEST_DB_NAME)
+    plants_package.local_config.max_images_per_taxon = 2
 
     plants_package.local_config.log_settings.log_level_console = LogLevel.WARNING
     plants_package.local_config.log_settings.log_level_file = LogLevel.NONE
@@ -240,8 +245,10 @@ def app() -> FastAPI:
         "/common/plants_test/pickled"
     )
 
-    _reset_paths()
 
+@pytest_asyncio.fixture(scope="session")
+def app() -> FastAPI:
+    """only here do we import the main module."""
     from plants.main import app as main_app
 
     return main_app
