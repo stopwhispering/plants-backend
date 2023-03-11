@@ -56,6 +56,7 @@ COLORS_MAP: dict[str, str] = {
     "#104e8b": "dark blue",
     "#b0e2ff": "light blue",
     "#46f953": "neon green",
+    "#e8dcca": "beige",
 }
 COLORS_MAP_TO_RGB = {v: k for k, v in COLORS_MAP.items()}
 
