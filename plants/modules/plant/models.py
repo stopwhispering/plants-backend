@@ -105,9 +105,6 @@ class Plant(Base):
     preview_image: Mapped[Image | None] = relationship(
         "Image", foreign_keys=[preview_image_id]
     )
-    # filename_previewimage = Column(
-    #     VARCHAR(240)
-    # )  # original filen. of the photo_file that is set as preview photo_file
 
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow

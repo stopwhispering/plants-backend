@@ -10,9 +10,9 @@ from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 
-class FBImageAssignedToEvent(BaseSchema):
+class ImageAssignedToEvent(BaseSchema):
     id: int
-    filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
+    # filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
 
 
 class SoilBase(BaseSchema):
@@ -73,7 +73,7 @@ class EventBase(BaseSchema):
     plant_id: int
     date: constr(regex=REGEX_DATE)  # type: ignore[valid-type]
     event_notes: str | None
-    images: Optional[list[FBImageAssignedToEvent]]
+    images: Optional[list[ImageAssignedToEvent]]
 
 
 class EventCreateUpdate(EventBase):

@@ -40,7 +40,8 @@ class TaxonDAL(BaseDAL):
             .options(
                 selectinload(Taxon.images).selectinload(
                     Image.image_to_taxon_associations
-                )
+                ),
+                selectinload(Taxon.image_to_taxon_associations),
             )
             .options(selectinload(Taxon.distribution))
             .limit(1)

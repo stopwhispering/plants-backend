@@ -63,8 +63,6 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
 class TaxonImageBase(BaseSchema):
     id: int
-    # todo remove filename
-    filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
     description: Optional[str]
 
 
@@ -182,7 +180,6 @@ class TaxonUpdate(BaseSchema):
 class TaxonRead(TaxonBase):
     id: int
     name: str
-
     gbif_id: Optional[int]
     custom_notes: Optional[str]
     distribution: DistributionRead  # not filled for each request
@@ -206,7 +203,6 @@ class TaxonRead(TaxonBase):
                 TaxonImageRead.parse_obj(
                     {
                         "id": image.id,
-                        "filename": image.filename,
                         "description": image_to_taxon_assignment.description,  # !
                     }
                 )

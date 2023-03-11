@@ -242,12 +242,10 @@ class EventWriter:
     ) -> None:
         """Change images attached to the event."""
         # deleted images
-        filenames_saved = (
-            [image.filename for image in event.images] if event.images else []
-        )
+        image_ids_saved = {image.id for image in event.images} if event.images else {}
         image_obj: Image
         for image_obj in event_obj.images:
-            if image_obj.filename not in filenames_saved:
+            if image_obj.id not in image_ids_saved:
                 # don't delete photo_file object, but only the association
                 # (photo_file might be assigned to other events)
                 link: ImageToEventAssociation = next(
@@ -260,7 +258,7 @@ class EventWriter:
         # newly assigned images
         if event.images:
             for image in event.images:
-                image_obj = await self.image_dal.get_image_by_filename(image.filename)
+                image_obj = await self.image_dal.by_id(image.id)
 
                 # not assigned to that specific event, yet
                 if image_obj not in event_obj.images:

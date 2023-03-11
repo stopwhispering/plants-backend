@@ -177,21 +177,19 @@ async def modify_taxon(
 
     # changes to images attached to the taxon
     image: TaxonImageUpdate
-    filenames_saved = (
-        [image.filename for image in taxon_modified.images]
-        if taxon_modified.images
-        else []
+    image_ids_saved = (
+        {image.id for image in taxon_modified.images} if taxon_modified.images else {}
     )
     image_obj: Image
     for image_obj in taxon.images:
-        if image_obj.filename not in filenames_saved:
+        if image_obj.id not in image_ids_saved:
             # don't delete photo_file object, but only the association
             # (photo_file might be assigned otherwise)
             link: ImageToTaxonAssociation
             deleted_link = next(
                 link
                 for link in taxon.image_to_taxon_associations
-                if link.image.filename == image_obj.filename
+                if link.image.id == image_obj.id
             )
             await taxon_dal.delete_image_association_from_taxon(taxon, deleted_link)
 
@@ -213,14 +211,12 @@ async def modify_taxon(
                     description=image.description,
                 )
                 await taxon_dal.create_image_to_taxon_association(link)
-                logger.info(
-                    f"Image {image_obj.filename} assigned to taxon {taxon.name}"
-                )
+                logger.info(f"Image {image_obj.id} assigned to taxon {taxon.name}")
 
             # update description
             elif current_taxon_to_image_link[0].description != image.description:
                 current_taxon_to_image_link[0].description = image.description
                 logger.info(
                     f"Update description of link between image "
-                    f"{image_obj.filename} and taxon {taxon.name}"
+                    f"{image_obj.id} and taxon {taxon.name}"
                 )
