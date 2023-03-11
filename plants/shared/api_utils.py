@@ -82,10 +82,13 @@ def format_api_date(d: date | None) -> str | None:
 
 
 def parse_api_datetime(dt_str: str) -> datetime:
-    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object."""
-    return datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM).astimezone(
-        pytz.timezone("Europe/Berlin")
-    )
+    """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object.
+
+    the problem is that using astimezone() on a naive datetime object will assume that
+    the datetime object is in local TZ, so we use pytz' localize() method
+    """
+    naive_dt = datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)  # noqa: DTZ007
+    return pytz.timezone("Europe/Berlin").localize(naive_dt)
 
 
 @overload

@@ -350,16 +350,6 @@ async def update_pollination(
 
     updates = pollination_data.dict(exclude={})
     updates["pollinated_at"] = parse_api_datetime(pollination_data.pollinated_at)
-    logger.warning(updates["pollinated_at"])  # todo remove
-    logger.warning(updates["pollinated_at"].tzinfo)  # todo remove
-    logger.warning(
-        datetime.strptime(  # noqa: PGH004,E501,RUF100,DTZ007
-            pollination_data.pollinated_at,  # noqa: PGH004,E501,RUF100,DTZ007
-            FORMAT_API_YYYY_MM_DD_HH_MM,  # noqa: PGH004,E501,RUF100,DTZ007
-        )
-    )  # noqa: PGH004,E501,RUF100,DTZ007
-    # todo remove
-    logger.warning(pollination_data.pollinated_at)  # todo remove
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["germination_rate"] = germination_rate
