@@ -20,13 +20,13 @@ from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
+from plants.modules.event.models import Event
 from plants.modules.plant.enums import FBCancellationReason, FBPropagationType
+from plants.modules.pollination.models import Florescence
+from plants.modules.taxon.models import Taxon
 
 if TYPE_CHECKING:
-    from plants.modules.event.models import Event
     from plants.modules.image.models import Image, ImageToPlantAssociation
-    from plants.modules.pollination.models import Florescence
-    from plants.modules.taxon.models import Taxon
 
 logger = logging.getLogger(__name__)
 
@@ -101,9 +101,13 @@ class Plant(Base):
     )
 
     plant_notes = Column(TEXT)
-    filename_previewimage = Column(
-        VARCHAR(240)
-    )  # original filen. of the photo_file that is set as preview photo_file
+    preview_image_id = Column(INTEGER, ForeignKey("image.id"))
+    preview_image: Mapped[Image | None] = relationship(
+        "Image", foreign_keys=[preview_image_id]
+    )
+    # filename_previewimage = Column(
+    #     VARCHAR(240)
+    # )  # original filen. of the photo_file that is set as preview photo_file
 
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
@@ -112,7 +116,7 @@ class Plant(Base):
 
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey("taxon.id"))
-    taxon: Mapped[Taxon] = relationship("Taxon", back_populates="plants")
+    taxon: Mapped[Taxon | None] = relationship("Taxon", back_populates="plants")
 
     # plant to tag: 1:n
     tags: Mapped[list[Tag]] = relationship("Tag", back_populates="plant")

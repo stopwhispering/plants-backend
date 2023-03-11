@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from pathlib import Path
 from typing import Optional
 
 from pydantic import Extra, constr
@@ -61,7 +60,7 @@ class PlantBase(BaseSchema):
     parent_plant: ShortPlant | None
     parent_plant_pollen: ShortPlant | None
     plant_notes: str | None
-    filename_previewimage: Path | None
+    preview_image_id: int | None
 
     tags: list[FBPlantTag]
 

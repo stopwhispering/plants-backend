@@ -19,6 +19,8 @@ def get_data(
     pollen_type: PollenType,
     feature_container: FeatureContainer,
 ) -> pd.DataFrame:
+    if not florescence.plant.taxon or not pollen_donor.taxon:
+        raise ValueError("Plant must have a taxon")
     data = {  # todo type-check with dataclass or pydantic or similar
         "pollen_type": pollen_type.value,
         "flowers_count": florescence.flowers_count,

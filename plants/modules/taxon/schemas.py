@@ -63,6 +63,7 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
 class TaxonImageBase(BaseSchema):
     id: int
+    # todo remove filename
     filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
     description: Optional[str]
 

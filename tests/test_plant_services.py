@@ -50,4 +50,4 @@ async def test_deep_clone_plant(
     )
     assert all(pt.plant_id == cloned_plant.id for pt in cloned_plant.tags)
 
-    assert cloned_plant.filename_previewimage is None
+    assert cloned_plant.preview_image_id is None

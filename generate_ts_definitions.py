@@ -23,36 +23,36 @@ shared_message: tuple[str, ...] = ("BMessage", "BConfirmation")
 exclude = shared_message
 
 models = [
-    PydanticModel(
-        r".\plants\modules\event\schemas.py",
-        r"./ts_api_interfaces/apiTypes_event.ts",
-        exclude,
-    ),
+    # PydanticModel(
+    #     r".\plants\modules\event\schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_event.ts",
+    #     exclude,
+    # ),
     PydanticModel(
         r".\plants\modules\image\schemas.py",
         r"./ts_api_interfaces/apiTypes_image.ts",
         exclude,
     ),
-    PydanticModel(
-        r".\plants\modules\taxon\schemas.py",
-        r"./ts_api_interfaces/apiTypes_taxon.ts",
-        exclude,
-    ),
+    # PydanticModel(
+    #     r".\plants\modules\taxon\schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_taxon.ts",
+    #     exclude,
+    # ),
     PydanticModel(
         r".\plants\modules\plant\schemas.py",
         r"./ts_api_interfaces/apiTypes_plant.ts",
         exclude,
     ),
-    PydanticModel(
-        r".\plants\shared\message_schemas.py",
-        r"./ts_api_interfaces/apiTypes_message.ts",
-        (),
-    ),
-    PydanticModel(
-        r".\plants\modules\pollination\schemas.py",
-        r"./ts_api_interfaces/apiTypes_pollination.ts",
-        (),
-    ),
+    # PydanticModel(
+    #     r".\plants\shared\message_schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_message.ts",
+    #     (),
+    # ),
+    # PydanticModel(
+    #     r".\plants\modules\pollination\schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_pollination.ts",
+    #     (),
+    # ),
 ]
 
 
@@ -145,5 +145,5 @@ for model in models:
     generate_typescript_defs(model.path_pydantic, model.path_ts)
     models_to_remove = get_surplus_models_to_remove(model)
     model.exclude = models_to_remove
-    remove_shared_models(model)
+    # remove_shared_models(model)
     remove_comments(model)

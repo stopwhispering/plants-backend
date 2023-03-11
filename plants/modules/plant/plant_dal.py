@@ -308,8 +308,8 @@ class PlantDAL(BaseDAL):
                 plant.parent_plant_pollen_id = value
             elif key == "parent_plant_pollen":
                 plant.parent_plant_pollen = value
-            elif key == "filename_previewimage":
-                plant.filename_previewimage = value
+            elif key == "preview_image_id":
+                plant.preview_image_id = value
             elif key == "taxon_id":
                 plant.taxon_id = value
             elif key == "taxon":

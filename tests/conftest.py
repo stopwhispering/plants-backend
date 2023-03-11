@@ -144,7 +144,7 @@ async def plant_valid() -> Plant:
         deleted=False,
         nursery_source="Worldwide Cactus",
         propagation_type=FBPropagationType.LEAF_CUTTING,
-        filename_previewimage="somefile.jpg",
+        # filename_previewimage="somefile.jpg",
         tags=[
             Tag(text="new", state="Information"),
             Tag(text="wow", state="Information"),

@@ -52,9 +52,9 @@ async def update_plants_from_list_of_dicts(
         updates["parent_plant_pollen_id"] = (
             plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         )
-        updates["filename_previewimage"] = (
-            plant.filename_previewimage.name if plant.filename_previewimage else None
-        )
+        # updates["preview_image_id"] = (
+        #     plant.preview_image_id if plant.preview_image_id else None
+        # )
         updates["taxon"] = (
             await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
         )
@@ -81,7 +81,7 @@ async def deep_clone_plant(
         plant_original,
         {
             "plant_name": plant_name_clone,
-            "filename_previewimage": None,
+            # "filename_previewimage": None,
         },
     )
 

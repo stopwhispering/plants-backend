@@ -157,7 +157,7 @@ exclude = [
     "./alembic",
     "./.git",
     "./plants/scripts",
-    "./ml_helpers"  # todo to be refactored anyway
+    "./ml_helpers"  # to be refactored anyway
 ]
 # Allow ambiguous unicode characters
 allowed-confusables = ["×"]
@@ -193,6 +193,7 @@ classmethod-decorators = ["pydantic.validator", "classmethod"]
 'base_schema.py' = ["TCH001", "TCH002", "TCH003" ]
 'config_values.py' = ["TCH001", "TCH002", "TCH003" ]
 'dependencies.py' = ["TCH001", "TCH002", "TCH003" ]
+'models.py' = ["TCH001", "TCH002", "TCH003" ]
 'api_typedefs.py' = [
     "N815",  # mixedCase
     "TCH002",  # move ... into a type-checking block (not supported by fastapi dep inj)

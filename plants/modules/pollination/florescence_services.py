@@ -22,7 +22,6 @@ from plants.modules.pollination.schemas import (
 from plants.shared.api_utils import format_api_date, parse_api_date
 
 if TYPE_CHECKING:
-    from plants.modules.image.image_dal import ImageDAL
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.pollination.florescence_dal import FlorescenceDAL
@@ -50,7 +49,6 @@ async def read_plants_for_new_florescence(
 async def read_active_florescences(
     florescence_dal: FlorescenceDAL,
     pollination_dal: PollinationDAL,
-    image_dal: ImageDAL,
 ) -> list[FlorescenceRead]:
     """Read all active florescences for the pollination frontend main table."""
     florescences_orm = await florescence_dal.by_status(
@@ -59,23 +57,12 @@ async def read_active_florescences(
     florescences = []
     flor: Florescence
     for flor in florescences_orm:
-        # todo switch plant.filename_previewimage to s.th.like
-        # plant.preview_image_id everywhere; here we already use the id but
-        # must look it up
-        if flor.plant.filename_previewimage:
-            plant_preview_image_id = (
-                await image_dal.get_image_by_filename(
-                    filename=flor.plant.filename_previewimage
-                )
-            ).id
-        else:
-            plant_preview_image_id = None
-
+        # noinspection PyTypeChecker
         f_dict = {
             "id": flor.id,
             "plant_id": flor.plant_id,
             "plant_name": flor.plant.plant_name if flor.plant else None,
-            "plant_preview_image_id": plant_preview_image_id,
+            "plant_preview_image_id": flor.plant.preview_image_id,
             "florescence_status": flor.florescence_status,
             "inflorescence_appeared_at": format_api_date(
                 flor.inflorescence_appeared_at
