@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_e
 from sqlalchemy.orm import selectinload
 
 import plants as plants_package
+from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
 from plants.extensions import orm
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
@@ -26,7 +27,14 @@ from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
-from plants.modules.pollination.enums import Context, FlorescenceStatus
+from plants.modules.pollination.enums import (
+    Context,
+    FlorescenceStatus,
+    Location,
+    PollenQuality,
+    PollenType,
+    PollinationStatus,
+)
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.pollination_dal import PollinationDAL
@@ -34,6 +42,7 @@ from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import date_hook
 from plants.shared.history_dal import HistoryDAL
+from plants.shared.orm_util import clone_orm_instance
 from tests.config_test import create_tables_if_required, generate_db_url
 
 if TYPE_CHECKING:
@@ -140,15 +149,16 @@ async def plant_valid() -> Plant:
             Tag(text="new", state="Information"),
             Tag(text="wow", state="Information"),
         ],
+        count_stored_pollen_containers=3,
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid_in_db(
-    test_db: AsyncSession, plant_valid: Plant, taxon_in_db: Taxon
+    test_db: AsyncSession, plant_valid: Plant, taxa_in_db: list[Taxon]
 ) -> Plant:
     """create a valid plant in the database and return it."""
-    plant_valid.taxon = taxon_in_db
+    plant_valid.taxon = taxa_in_db[0]
     test_db.add(plant_valid)
     await test_db.commit()
     return plant_valid
@@ -273,13 +283,16 @@ def valid_simple_plant_dict() -> dict[str, Any]:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def another_valid_plant_in_db(test_db: AsyncSession) -> Plant:
+async def another_valid_plant_in_db(
+    test_db: AsyncSession, taxa_in_db: list[Taxon]
+) -> Plant:
     """create a valid plant in the database and return it."""
     new_plant_data = {
         "plant_name": "Gasteria bicolor var. fallax",
         "active": True,
         "deleted": False,
         "tags": [],
+        "taxon_id": taxa_in_db[1].id,
     }
     new_plant = Plant(**new_plant_data)  # type:ignore[arg-type]
     test_db.add(new_plant)
@@ -340,18 +353,91 @@ def image_dal(test_db: AsyncSession) -> ImageDAL:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def taxon_in_db(test_db: AsyncSession) -> Taxon:
+# async def taxon_in_db(test_db: AsyncSession) -> Taxon:
+async def taxa_in_db(test_db: AsyncSession) -> list[Taxon]:
     """Create a valid taxon in the db and return it."""
-    path = Path(__file__).resolve().parent.joinpath("./data/demo_taxon.json")
+    path = Path(__file__).resolve().parent.joinpath("./data/demo_taxa.json")
     with path.open() as f:
-        taxon_dict = json.load(f)
+        taxon_dicts = json.load(f)
 
-    taxon = Taxon(**taxon_dict)
+    taxa = [Taxon(**taxon_dict) for taxon_dict in taxon_dicts]
+    test_db.add_all(taxa)
 
-    test_db.add(taxon)
+    # taxon_dict = taxa[0]
+    # taxon = Taxon(**taxon_dict)
+    #
+    # test_db.add(taxon)
     await test_db.commit()
 
-    return taxon
+    return taxa
+
+
+@pytest_asyncio.fixture(scope="function")
+async def trained_pollination_ml_model() -> None:
+    path_pickled_demo_pipeline = (
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/demo_pollination_estimator.pkl")
+    )
+    target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_PICKLED_POLLINATION_ESTIMATOR
+    )
+
+    target_path.write_bytes(path_pickled_demo_pipeline.read_bytes())
+
+
+@pytest_asyncio.fixture(scope="function")
+async def finished_pollinations_in_db(
+    plant_valid_in_db: Plant,
+    another_valid_plant_in_db: Plant,
+    test_db: AsyncSession,
+) -> list[Pollination]:
+    """To train the pollination ml model, we need at least three finished pollination
+    attempts."""
+    pollination_1 = Pollination(
+        seed_capsule_plant_id=plant_valid_in_db.id,
+        pollen_donor_plant_id=another_valid_plant_in_db.id,
+        pollen_type=PollenType.FROZEN,
+        pollen_quality=PollenQuality.GOOD,
+        location=Location.INDOOR,
+        creation_at_context=Context.API,
+        pollination_status=PollinationStatus.GERMINATED,
+        ongoing=False,
+    )
+    pollination_2 = Pollination(
+        seed_capsule_plant_id=plant_valid_in_db.id,
+        pollen_donor_plant_id=another_valid_plant_in_db.id,
+        pollen_type=PollenType.FRESH,
+        pollen_quality=PollenQuality.BAD,
+        location=Location.INDOOR,
+        creation_at_context=Context.API,
+        pollination_status=PollinationStatus.SEED,
+        ongoing=False,
+    )
+    pollination_3 = Pollination(
+        seed_capsule_plant_id=another_valid_plant_in_db.id,
+        pollen_donor_plant_id=plant_valid_in_db.id,
+        pollen_type=PollenType.FRESH,
+        pollen_quality=PollenQuality.GOOD,
+        location=Location.INDOOR,
+        creation_at_context=Context.API,
+        pollination_status=PollinationStatus.ATTEMPT,
+        ongoing=False,
+    )
+    clones_1 = [clone_orm_instance(pollination_1) for _ in range(20)]
+    clones_2 = [clone_orm_instance(pollination_2) for _ in range(20)]
+    clones_3 = [clone_orm_instance(pollination_3) for _ in range(20)]
+    pollinations = [
+        pollination_1,
+        pollination_2,
+        pollination_3,
+        *clones_1,
+        *clones_2,
+        *clones_3,
+    ]
+    test_db.add_all(pollinations)
+    await test_db.commit()
+    return pollinations
 
 
 @pytest_asyncio.fixture(scope="function")

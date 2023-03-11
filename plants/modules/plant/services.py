@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING
 
 from plants import settings
 from plants.exceptions import PlantAlreadyExistsError
@@ -12,6 +12,7 @@ from plants.modules.plant.util import (
     parse_roman_plant_index,
     roman_to_int,
 )
+from plants.shared.orm_util import clone_orm_instance
 
 if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
@@ -67,20 +68,6 @@ async def update_plants_from_list_of_dicts(
     return plants_saved
 
 
-def _clone_instance(
-    model_instance: Any, clone_attrs: Optional[dict[str, Any]] = None
-) -> Any:
-    """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
-    # get data of non-primary-key columns; exclude relationships
-    table = model_instance.__table__
-    non_pk_columns = [k for k in table.columns if k not in set(table.primary_key)]
-    non_pk_column_names = [c.name for c in non_pk_columns]
-    data = {c: getattr(model_instance, c) for c in non_pk_column_names}
-    if clone_attrs:
-        data.update(clone_attrs)
-    return model_instance.__class__(**data)
-
-
 async def deep_clone_plant(
     plant_original: Plant,
     plant_name_clone: str,
@@ -90,7 +77,7 @@ async def deep_clone_plant(
     """clone supplied plant includes duplication of events, photo_file-to-event
     assignments, tags excludes descendant plants assignments to same instances of parent
     plants, parent plants pollen (nothing to do here)"""
-    plant_clone: Plant = _clone_instance(
+    plant_clone: Plant = clone_orm_instance(
         plant_original,
         {
             "plant_name": plant_name_clone,
@@ -100,7 +87,7 @@ async def deep_clone_plant(
 
     cloned_tags = []
     for tag in plant_original.tags:
-        tag_clone = _clone_instance(tag, {})
+        tag_clone = clone_orm_instance(tag, {})
         tag_clone.plant = plant_clone
         cloned_tags.append(tag_clone)
     if cloned_tags:
@@ -108,7 +95,7 @@ async def deep_clone_plant(
 
     cloned_events = []
     for event in plant_original.events:
-        event_clone = _clone_instance(event)
+        event_clone = clone_orm_instance(event)
         event_clone.plant = plant_clone
         cloned_events.append(event_clone)
 

@@ -37,7 +37,8 @@ class SessionFactory:
     def create_session(cls) -> AsyncSession:
         if cls.session_factory is None:
             raise RuntimeError("SessionFactory not initialized")
-        return cls.session_factory()  # type: ignore[no-any-return]
+        session: AsyncSession = cls.session_factory()
+        return session
 
 
 async def init_orm(engine: AsyncEngine) -> None:

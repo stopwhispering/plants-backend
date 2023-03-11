@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import selectinload
@@ -160,10 +160,8 @@ class PlantDAL(BaseDAL):
             .where(Plant.deleted.is_(False))  # noqa: FBT003
             .where(Plant.active)
         )
-        count: int = (
-            await self.session.scalars(query)  # type: ignore[assignment]
-        ).first()
-        return count
+        count = (await self.session.scalars(query)).first()
+        return cast(int, count)
 
     async def get_plants_ids_without_taxon(self) -> list[int]:
         # noinspection PyTypeChecker

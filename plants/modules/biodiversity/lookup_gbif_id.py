@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Final, Optional
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Final, Optional, cast
 
 import aiohttp
 from bs4 import BeautifulSoup, Tag
@@ -211,10 +212,8 @@ class WikidataGbifLookup:
 
         # once we have the wikidata entity, we can use the python api
         wikidata_object = Client().get(wikidata_entity, load=True)
-        # noinspection PyTypeChecker
-        wikidata_claims: dict[str, Any] = wikidata_object.data[
-            "claims"
-        ]  # type: ignore[index, assignment]
+        wikidata_object.data = cast(Mapping[str, object], wikidata_object.data)
+        wikidata_claims = cast(dict[str, Any], wikidata_object.data["claims"])
 
         if not self._is_correct_plant(
             wikidata_claims=wikidata_claims, lsid=lsid, lsid_number=lsid_number

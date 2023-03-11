@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends
 from starlette import status as starlette_status
@@ -77,13 +77,14 @@ async def clone_plant(
         plant_name_clone,
         plant_dal=plant_dal,
         event_dal=event_dal,
-        # property_dal=property_dal,
     )
 
-    plant_clone: Plant = await plant_dal.by_name(
-        plant_name_clone,  # type: ignore[assignment]
+    plant_clone = await plant_dal.by_name(
+        plant_name_clone,
         raise_not_found=True,
     )
+    plant_clone = cast(Plant, plant_clone)
+
     await create_history_entry(
         description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
         history_dal=history_dal,

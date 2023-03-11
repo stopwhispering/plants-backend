@@ -41,7 +41,7 @@ async def test_get_image_keyword_proposals(
 @pytest.mark.asyncio()
 async def test_get_taxon_tree(
     ac: AsyncClient,
-    taxon_in_db: Taxon,
+    taxa_in_db: list[Taxon],
     plant_valid_in_db: Plant,
 ) -> None:
     response = await ac.get("/api/selection_data/")
@@ -51,6 +51,7 @@ async def test_get_taxon_tree(
     assert "TaxonTree" in resp["Selection"]
     assert len(resp["Selection"]["TaxonTree"]) >= 1
 
+    taxon_in_db = taxa_in_db[0]
     node_family = next(
         t for t in resp["Selection"]["TaxonTree"] if t["key"] == taxon_in_db.family
     )

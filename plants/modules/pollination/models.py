@@ -187,4 +187,4 @@ class Pollination(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
     )
-    creation_at_context = Column(VARCHAR(30), nullable=False)
+    creation_at_context = Column(VARCHAR(30), nullable=False)  # todo enum

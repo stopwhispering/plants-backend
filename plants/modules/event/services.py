@@ -279,8 +279,8 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[dict[str
         if events := [
             e for e in plant.events if e.soil is not None and e.soil.id is not None
         ]:
-            latest_event = max(events, key=attrgetter("date"))
-            soil_counter[latest_event.soil.id] += 1  # type: ignore[valid-type]
+            latest_event: Event = max(events, key=attrgetter("date"))
+            soil_counter[latest_event.soil.id] += 1
 
     all_soils = event_dal.get_all_soils()
     for soil in await all_soils:

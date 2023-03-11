@@ -163,7 +163,9 @@ async def read_potential_pollen_donors(
                 florescence=florescence,
                 pollen_donor=f.plant,
                 pollen_type=PollenType.FRESH,
-            ),
+            )
+            if f.plant.taxon and florescence.plant.taxon
+            else None,
             "pollination_attempts": await _read_pollination_attempts(
                 plant=plant, pollen_donor=f.plant, pollination_dal=pollination_dal
             ),
@@ -202,7 +204,9 @@ async def read_potential_pollen_donors(
                 florescence=florescence,
                 pollen_donor=frozen_pollen_plant,
                 pollen_type=PollenType.FROZEN,
-            ),
+            )
+            if frozen_pollen_plant.taxon and florescence.plant.taxon
+            else None,
             "pollination_attempts": await _read_pollination_attempts(
                 plant=plant,
                 pollen_donor=frozen_pollen_plant,

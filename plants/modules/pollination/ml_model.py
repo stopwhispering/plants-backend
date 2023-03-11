@@ -109,13 +109,15 @@ async def _read_db_and_join() -> pd.DataFrame:
         )
 
     # merge with florescences
-    df_merged = df_pollination.merge(
-        df_florescence[["id", "branches_count", "flowers_count", "avg_ripening_time"]],
-        how="left",
-        left_on=["florescence_id"],
-        right_on=["id"],
-        validate="many_to_one",  # raise if not unique on right side
-    )
+    # todo un-un-comment once enough data
+    df_merged = df_pollination
+    # df_merged = df_pollination.merge(
+    #     df_florescence[["id", "branches_count", "flowers_count", "avg_ripening_time"]],
+    #     how="left",
+    #     left_on=["florescence_id"],
+    #     right_on=["id"],
+    #     validate="many_to_one",  # raise if not unique on right side
+    # )
 
     # merge with plants for seed capsule
     df_merged2 = df_merged.merge(

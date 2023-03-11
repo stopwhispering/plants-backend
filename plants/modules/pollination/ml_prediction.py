@@ -19,7 +19,7 @@ def get_data(
     pollen_type: PollenType,
     feature_container: FeatureContainer,
 ) -> pd.DataFrame:
-    data = {
+    data = {  # todo type-check with dataclass or pydantic or similar
         "pollen_type": pollen_type.value,
         "flowers_count": florescence.flowers_count,
         "branches_count": florescence.branches_count,

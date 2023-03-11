@@ -19,10 +19,11 @@ async def test_taxon_occurrence_loader(
     # plant_dal: PlantDAL,
     # event_dal: EventDAL,
     taxon_dal: TaxonDAL,
-    taxon_in_db: Taxon,
+    taxa_in_db: list[Taxon],
 ) -> None:
     # Scrape occurrences for taxon "Haworthia coarctata"
     loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
+    taxon_in_db = taxa_in_db[0]
     assert taxon_in_db.gbif_id is not None
     await loader.scrape_occurrences_for_taxon(gbif_id=taxon_in_db.gbif_id)
 

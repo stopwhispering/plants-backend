@@ -5,6 +5,7 @@ import pickle
 from typing import TYPE_CHECKING
 
 from plants import settings
+from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
 from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
@@ -14,7 +15,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-FILENAME_PICKLED_POLLINATION_ESTIMATOR = "pollination_estimator.pkl"
 pipeline, feature_container = None, None
 
 

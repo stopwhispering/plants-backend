@@ -79,7 +79,8 @@ async def test_save_taxon(
 
 
 @pytest.mark.asyncio()
-async def test_update_taxon(ac: AsyncClient, taxon_in_db: Taxon) -> None:
+async def test_update_taxon(ac: AsyncClient, taxa_in_db: list[Taxon]) -> None:
+    taxon_in_db = taxa_in_db[0]
     """Update taxon attribute custom_notes."""
     payload = {  # FModifiedTaxa
         "ModifiedTaxaCollection": [
