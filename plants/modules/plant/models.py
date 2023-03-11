@@ -101,7 +101,6 @@ class Plant(Base):
     )
 
     plant_notes = Column(TEXT)
-    filename_previewimage = Column(VARCHAR(240))
     preview_image_id = Column(INTEGER, ForeignKey("image.id"))
     preview_image: Mapped[Image | None] = relationship(
         "Image", foreign_keys=[preview_image_id]
