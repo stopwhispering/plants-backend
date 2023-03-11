@@ -205,7 +205,8 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
 #
 
 
-async def get_image_path_by_size(
+# todo replace everywhere with get_image_path_by_size_legacy
+async def get_image_path_by_size_legacy(
     filename: str, size: tuple[int, int] | None, image_dal: ImageDAL
 ) -> Path:
     if size is None:
@@ -216,6 +217,18 @@ async def get_image_path_by_size(
     # the pixel size is part of the resized images' filenames rem size must be
     # converted to px
     filename_sized = get_generated_filename(filename, size)
+    return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
+
+
+async def get_image_path_by_size(image: Image, size: tuple[int, int] | None) -> Path:
+    if size is None:
+        # get image db entry for the directory it is stored at in local filesystem
+        # image: Image = await image_dal.get_image_by_filename(filename=filename)
+        return image.absolute_path
+
+    # the pixel size is part of the resized images' filenames rem size must be
+    # converted to px
+    filename_sized = get_generated_filename(image.filename, size)
     return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 

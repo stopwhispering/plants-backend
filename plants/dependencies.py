@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from plants.extensions import orm
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
+from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
@@ -70,6 +71,13 @@ async def valid_plant(
 ) -> Plant:
     """Injects a plant orm object into the route function if plant_id is valid."""
     return await plant_dal.by_id(plant_id)
+
+
+async def valid_image(
+    image_id: int, image_dal: ImageDAL = Depends(get_image_dal)
+) -> Image:
+    """Injects an image orm object into the route function if image_id is valid."""
+    return await image_dal.by_id(image_id)
 
 
 async def valid_pollination(

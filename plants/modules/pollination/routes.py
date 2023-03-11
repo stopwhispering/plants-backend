@@ -7,11 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from plants.dependencies import (
     get_florescence_dal,
+    get_image_dal,
     get_plant_dal,
     get_pollination_dal,
     valid_florescence,
     valid_pollination,
 )
+from plants.modules.image.image_dal import ImageDAL
 
 # if TYPE_CHECKING:
 from plants.modules.plant.plant_dal import PlantDAL
@@ -170,10 +172,13 @@ async def retrain_probability_pollination_to_seed_model() -> dict[str, str | flo
 async def get_active_florescences(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+    image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
     """Read active florescences, either after inflorescence appeared or flowering."""
     florescences = await read_active_florescences(
-        florescence_dal=florescence_dal, pollination_dal=pollination_dal
+        florescence_dal=florescence_dal,
+        pollination_dal=pollination_dal,
+        image_dal=image_dal,
     )
     return {
         "action": "Get active florescences",

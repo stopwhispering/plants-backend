@@ -148,6 +148,7 @@ class FlorescenceUpdate(FlorescenceBase):
 class FlorescenceRead(FlorescenceBase):
     id: int
     plant_name: str
+    plant_preview_image_id: int | None
     available_colors_rgb: list[str]  # e.g. ['#FF0000', '#FF00FF']
     branches_count: int | None
     flowers_count: int | None

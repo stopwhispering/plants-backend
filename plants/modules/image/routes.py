@@ -12,7 +12,13 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from pydantic.error_wrappers import ValidationError
 from starlette.responses import FileResponse
 
-from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal, valid_plant
+from plants.dependencies import (
+    get_image_dal,
+    get_plant_dal,
+    get_taxon_dal,
+    valid_image,
+    valid_plant,
+)
 from plants.exceptions import ImageFileNotFoundError
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
@@ -33,6 +39,7 @@ from plants.modules.image.services import (
     fetch_images_for_plant,
     fetch_untagged_images,
     get_image_path_by_size,
+    get_image_path_by_size_legacy,
     get_occurrence_thumbnail_path,
     save_image_file,
     save_image_to_db,
@@ -304,6 +311,7 @@ async def get_occurrence_thumbnail(
     return FileResponse(path=path, media_type="image/jpeg", filename=path.name)
 
 
+# todo replace with get_image (i.e. id instead of filename)
 @router.get("/photo", response_class=FileResponse)
 async def get_photo(
     filename: str,
@@ -312,7 +320,7 @@ async def get_photo(
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
     size = (width, height) if width and height else None
-    image_path = await get_image_path_by_size(
+    image_path = await get_image_path_by_size_legacy(
         filename=filename, size=size, image_dal=image_dal
     )
 
@@ -320,6 +328,27 @@ async def get_photo(
         # if local_config.log_settings.ignore_missing_image_files:
         #     return None
         raise ImageFileNotFoundError(filename=filename)
+
+    # media_type here sets the media type of the actual response sent to the client.
+    return FileResponse(
+        path=image_path, media_type="image/jpeg", filename=image_path.name
+    )
+
+
+# todo replace with get_image (i.e. id instead of filename)
+@router.get("/image/{image_id}", response_class=FileResponse)
+async def get_image(
+    image: Image = Depends(valid_image),
+    width: int | None = None,
+    height: int | None = None,
+) -> Any:
+    size = (width, height) if width and height else None
+    image_path = await get_image_path_by_size(image=image, size=size)
+
+    if not image_path.is_file():
+        # if local_config.log_settings.ignore_missing_image_files:
+        #     return None
+        raise ImageFileNotFoundError(filename=image.filename)
 
     # media_type here sets the media type of the actual response sent to the client.
     return FileResponse(
