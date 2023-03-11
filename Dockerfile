@@ -7,8 +7,6 @@ RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11
 # switch working directory to have module "plants" available
 WORKDIR "/app/"
-COPY ./prestart.sh ./alembic.ini /app/
-COPY alembic /app/alembic
 COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
@@ -16,6 +14,8 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 # default app module is app.app.main:app and app.main:app -> we need to specify explicitly
 ENV APP_MODULE="plants.main:app"
 
+COPY ./prestart.sh ./alembic.ini /app/
+COPY alembic /app/alembic
 COPY config.toml /app/config.toml
 COPY ml_helpers /app/ml_helpers
 COPY plants /app/plants
