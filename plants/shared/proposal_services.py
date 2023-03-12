@@ -77,10 +77,10 @@ async def build_taxon_tree(
             new_genus = False
 
         # create species leaf
-        current_species = current_species or "[Custom]"
+        current_species_: str = current_species or "[Custom]"
         if (current_species != previous_species) or new_genus:
             species_leaf = {
-                "key": current_species,
+                "key": current_species_,
                 "level": 2,
                 "plant_ids": [],
                 "count": 0,
@@ -101,7 +101,7 @@ async def build_taxon_tree(
 
         previous_family = current_family
         previous_genus = current_genus
-        previous_species = current_species
+        previous_species = current_species_
 
     # add empty family to allow for selecting plants with no taxon assigned
     count_empty = await plant_dal.get_count_plants_without_taxon()
