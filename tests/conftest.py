@@ -88,7 +88,8 @@ async def setup_db() -> None:
 
 
 def _reset_paths() -> None:
-    # cf. parse_settings()
+    """Warning: Make sure the pats are set to test paths before calling this
+    function!"""
     for path in [
         plants_package.settings.paths.path_deleted_photos,
         plants_package.settings.paths.path_generated_thumbnails,

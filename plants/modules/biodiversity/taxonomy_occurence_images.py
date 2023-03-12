@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import aiohttp
 from dateutil.parser import isoparse
@@ -35,89 +34,64 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+# @dataclass
+# class ImageMetadata:
+#     occurrence_id: int
+#     gbif_id: int
+#     scientific_name: str
+#     basis_of_record: str
+#     verbatim_locality: str | None
+#     photographed_at: datetime | None
+#     creator_identifier: str
+#     publisher_dataset: str
+#     href: str
+#     references: str | None
+#     img_no: int | None = None
+#     filename_thumbnail: str | None = None
+
+
+class OccurrenceNotCompleteError(Exception):
+    """Raised when a GBIF occurrence object is not complete or can't be parsed for any
+    other reason."""
+
+
 class ImageMetadata:
-    occurrence_id: int
-    gbif_id: int
-    scientific_name: str
-    basis_of_record: str
-    verbatim_locality: str | None
-    photographed_at: datetime | None
-    creator_identifier: str
-    publisher_dataset: str
-    href: str
-    references: str | None
-    img_no: int | None = None
-    filename_thumbnail: str | None = None
+    def __init__(
+        self, occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int, img_no: int
+    ):
+        self.occurrence_id: int = occ["key"]
+        self.gbif_id: int = gbif_id
+        self.img_no: int = img_no
+        self.scientific_name: str = occ["scientificName"]
+        self.basis_of_record: str = occ["basisOfRecord"]
+        self.verbatim_locality: str | None = self._parse_verbatim_locality(occ)
+        self.photographed_at: datetime | None = self._parse_photographed_at(
+            m=m, occ=occ
+        )
+        self.creator_identifier: str = self._parse_creator_identifier(m=m, occ=occ)
+        self.publisher_dataset: str = self._parse_publisher_dataset(m=m, occ=occ)
+        self.href = self._parse_href(m=m)
+        self.references: str | None = self._parse_references(occ=occ)
+        self.filename_thumbnail = self.generate_filename_thumbnail(
+            gbif_id=gbif_id, img_no=img_no, occurrence_id=self.occurrence_id
+        )
 
+    @staticmethod
+    def _parse_references(occ: GbifOccurrenceResultDict) -> str | None:
+        if (references := occ.get("references")) and references[:4].lower() == "http":
+            return occ["references"]
+        return None
 
-class TaxonOccurencesLoader:
-    def __init__(self, taxon_dal: TaxonDAL):
-        self.taxon_dal = taxon_dal
-
-    def _get_image_metadata(
-        self, occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int
-    ) -> ImageMetadata | None:
-        # todo refactor this function
-        if "created" not in m and "eventDate" not in occ:
-            # happens very rarely, so wen can skip entries with unknown date
-            return None
-
-        try:
-            # some fields requiring validation
-            if (references := occ.get("references")) and references[
-                :4
-            ].lower() == "http":
-                references_ = occ["references"]
-            else:
-                references_ = None
-
-            # get the photo_file href
-            if m.get("references") and (
-                "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
-            ):
-                href_ = m["references"]
-            elif m.get("identifier"):
-                href_ = m["identifier"]
-            else:
-                return None
-
-            created_ = m.get("created") or occ.get("eventDate")
-            date_ = isoparse(created_) if created_ else None
-            image_metadata = ImageMetadata(
-                occurrence_id=occ["key"],
-                gbif_id=gbif_id,  # occ['taxonKey'],
-                scientific_name=occ[
-                    "scientificName"
-                ],  # redundant, but show as additional info
-                basis_of_record=occ["basisOfRecord"],
-                verbatim_locality=self._parse_verbatim_locality(occ),
-                photographed_at=date_,
-                creator_identifier=(
-                    m.get("identifiedBy")
-                    or m.get("creator")
-                    or occ.get("recordedBy")
-                    or "Unknown Creator"
-                ),
-                publisher_dataset=(
-                    occ.get("publisher")
-                    or m.get("publisher")
-                    or occ.get("institutionCode")
-                    or occ.get("rightsHolder")
-                    or occ.get("datasetName")
-                    or occ.get("collectionCode")
-                    or "Unknown Publisher"
-                ),
-                references=references_,
-                href=href_,
-            )
-
-        # in rare cases, essential properties are missing
-        except KeyError as err:
-            logger.warning(str(err))
-            return None
-
-        return image_metadata
+    @staticmethod
+    def _parse_href(m: GbifMediaDict) -> str:
+        """Get the photo_file href."""
+        if m.get("references") and (
+            "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
+        ):
+            return m["references"]
+        if m.get("identifier"):
+            return m["identifier"]
+        raise OccurrenceNotCompleteError('No "references" or "identifier" found')
 
     @staticmethod
     def _parse_verbatim_locality(occ: GbifOccurrenceResultDict) -> str | None:
@@ -135,23 +109,82 @@ class TaxonOccurencesLoader:
         return verbatim_locality
 
     @staticmethod
-    async def _download_and_generate_thumbnail(info: ImageMetadata) -> Optional[str]:
-        filename = (
-            f"{info.gbif_id}_{info.occurrence_id}_{info.img_no}."
+    def _parse_photographed_at(
+        occ: GbifOccurrenceResultDict, m: GbifMediaDict
+    ) -> datetime | None:
+        if "created" not in m and "eventDate" not in occ:
+            # happens very rarely, so wen can skip entries with unknown date
+            raise OccurrenceNotCompleteError('No "created" or "eventDate" found')
+        created_ = m.get("created") or occ.get("eventDate")
+        return isoparse(created_) if created_ else None
+
+    @staticmethod
+    def _parse_creator_identifier(
+        occ: GbifOccurrenceResultDict, m: GbifMediaDict
+    ) -> str:
+        return (
+            m.get("identifiedBy")
+            or m.get("creator")
+            or occ.get("recordedBy")
+            or "Unknown Creator"
+        )
+
+    @staticmethod
+    def _parse_publisher_dataset(
+        occ: GbifOccurrenceResultDict, m: GbifMediaDict
+    ) -> str:
+        return (
+            occ.get("publisher")
+            or m.get("publisher")
+            or occ.get("institutionCode")
+            or occ.get("rightsHolder")
+            or occ.get("datasetName")
+            or occ.get("collectionCode")
+            or "Unknown Publisher"
+        )
+
+    @staticmethod
+    def generate_filename_thumbnail(
+        gbif_id: int, img_no: int, occurrence_id: int
+    ) -> str:
+        return (
+            f"{gbif_id}_{occurrence_id}_{img_no}."
             f"{settings.images.size_thumbnail_image_taxon[0]}_"
             f"{settings.images.size_thumbnail_image_taxon[1]}.jpg"
         )
 
-        if settings.paths.path_generated_thumbnails_taxon.joinpath(filename).is_file():
+
+class TaxonOccurencesLoader:
+    def __init__(self, taxon_dal: TaxonDAL):
+        self.taxon_dal = taxon_dal
+
+    @staticmethod
+    def _get_image_metadata(
+        occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int, img_no: int
+    ) -> ImageMetadata | None:
+        try:
+            image_metadata = ImageMetadata(occ=occ, m=m, gbif_id=gbif_id, img_no=img_no)
+        except (KeyError, OccurrenceNotCompleteError) as err:
+            # in rare cases, essential properties are missing
+            logger.warning(str(err))
+            return None
+
+        return image_metadata
+
+    @staticmethod
+    async def _download_and_generate_thumbnail(info: ImageMetadata) -> bool:
+        if settings.paths.path_generated_thumbnails_taxon.joinpath(
+            info.filename_thumbnail
+        ).is_file():
             logger.debug(f"File already downloaded. Skipping download - {info.href}")
-            return filename
+            return True
 
         logger.debug(f"Downloading... {str(info.href)}")
         async with aiohttp.ClientSession() as session:
             async with session.get(info.href) as response:
                 if response.status >= 300:
                     logger.warning(f"Download failed: {info.href}")
-                    return None
+                    return False
                 payload = await response.read()
         image_bytes_io = BytesIO(payload)
 
@@ -160,19 +193,19 @@ class TaxonOccurencesLoader:
                 image=image_bytes_io,
                 size=settings.images.size_thumbnail_image_taxon,
                 path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
-                filename_thumb=filename,
+                filename_thumb=info.filename_thumbnail,
                 ignore_missing_image_files=(
                     local_config.log_settings.ignore_missing_image_files
                 ),
             )
         except OSError as err:
             logger.warning(f"Could not load as image: {info.href} ({str(err)}")
-            return None
+            return False
 
-        info.filename_thumbnail = filename
+        info.filename_thumbnail = info.filename_thumbnail
         logger.debug(f"Saved {path_thumbnail}")
 
-        return filename
+        return True
 
     async def _download_and_save_thumbnail(
         self,
@@ -181,19 +214,14 @@ class TaxonOccurencesLoader:
         img_no: int,
         gbif_media_dict: GbifMediaDict,
     ) -> ImageMetadata | None:
-        image_metadata = self._get_image_metadata(occ, gbif_media_dict, gbif_id)
+        image_metadata = self._get_image_metadata(occ, gbif_media_dict, gbif_id, img_no)
         if not image_metadata:
             return None
-        image_metadata.img_no = img_no
 
-        if filename_thumbnail := (
-            await self._download_and_generate_thumbnail(image_metadata)
-        ):
-            image_metadata.filename_thumbnail = filename_thumbnail
-        else:
+        if not await self._download_and_generate_thumbnail(image_metadata):
             return None
 
-        # validate (don't convert as this would validate datetime to str
+        # validate (don't convert as this would convert datetime to str
         try:
             TaxonOccurrenceImageRead(**image_metadata.__dict__)
         except ValidationError as err:

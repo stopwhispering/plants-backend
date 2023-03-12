@@ -14,10 +14,6 @@ if TYPE_CHECKING:
 
 @pytest.mark.asyncio()
 async def test_taxon_occurrence_loader(
-    # test_db: AsyncSession,
-    # plant_valid,
-    # plant_dal: PlantDAL,
-    # event_dal: EventDAL,
     taxon_dal: TaxonDAL,
     taxa_in_db: list[Taxon],
 ) -> None:
