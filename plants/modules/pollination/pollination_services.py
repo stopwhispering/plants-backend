@@ -235,7 +235,7 @@ async def save_new_pollination(
 ) -> None:
     """Save a new pollination attempt."""
     # validate data quality
-    florescence = await florescence_dal.by_id(new_pollination_data.florescenceId)
+    florescence = await florescence_dal.by_id(new_pollination_data.florescence_id)
     seed_capsule_plant = await plant_dal.by_id(
         new_pollination_data.seed_capsule_plant_id
     )
@@ -267,7 +267,7 @@ async def save_new_pollination(
 
     # create new pollination orm object and write it to db
     pollination = Pollination(
-        florescence_id=new_pollination_data.florescenceId,
+        florescence_id=new_pollination_data.florescence_id,
         florescence=florescence,
         seed_capsule_plant_id=new_pollination_data.seed_capsule_plant_id,
         seed_capsule_plant=seed_capsule_plant,

@@ -20,15 +20,12 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 
 class PollenContainerBase(BaseSchema):
     plant_id: int
-    # todo remove/ignore for CreateUpdate
-    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    # todo remove/ignore for CreateUpdate
-    genus: constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
     count_stored_pollen_containers: int  # mandatory in this case
 
 
 class PollenContainerRead(PollenContainerBase):
-    pass
+    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    genus: constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
 
 
 class PollenContainerCreateUpdate(PollenContainerBase):
@@ -96,7 +93,7 @@ class PollinationUpdate(PollinationBase):
 
 
 class PollinationCreate(PollinationBase):
-    florescenceId: int  # noqa: N815  # todo rename
+    florescence_id: int
     pollen_quality: PollenQuality
 
     class Config:

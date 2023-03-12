@@ -60,7 +60,7 @@ async def test_create_pollination(
     # create a florescence from active florescence and container
     # PollinationCreate
     payload_pollination = PollinationCreate(
-        florescenceId=plant_valid_with_active_florescence_in_db.florescences[0].id,
+        florescence_id=plant_valid_with_active_florescence_in_db.florescences[0].id,
         seed_capsule_plant_id=plant_valid_with_active_florescence_in_db.id,
         pollen_donor_plant_id=plant2.id,
         pollen_type="frozen",
