@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.taxon.taxon_dal import TaxonDAL
+    from plants.modules.taxon.taxon_dal import TaxaWithPlantIds, TaxonDAL
 
 
 class FamilyNodeDict(TypedDict):
@@ -35,9 +35,7 @@ async def build_taxon_tree(
     at least one plant."""
     # todo optimize sql performance
     # get distinct families, genus, and species (as list of four-element-tuples); sort
-    dist_tuples: list[
-        tuple[str, str, str | None, int]
-    ] = await taxon_dal.get_distinct_species_as_tuples()
+    dist_tuples: TaxaWithPlantIds = await taxon_dal.get_distinct_species_as_tuples()
 
     # build up tree
     tree = []
@@ -49,7 +47,13 @@ async def build_taxon_tree(
     genus_node: GenusNodeDict = {"key": "", "nodes": [], "level": 1, "count": 0}
     species_leaf: SpeciesLeafDict = {"key": "", "plant_ids": [], "level": 2, "count": 0}
 
-    for current_family, current_genus, current_species, current_taxon_id in dist_tuples:
+    for (
+        current_family,
+        current_genus,
+        current_species,
+        _current_taxon_id,
+        plant_ids,
+    ) in dist_tuples:
         # get family node
         if current_family != previous_family:
             new_family = True
@@ -87,15 +91,10 @@ async def build_taxon_tree(
             }
             genus_node["nodes"].append(species_leaf)
 
-        # we might have multiple taxon ids for that species (e.g. varieties), for
-        # each of them, get plant ids
-        # todo: do a join at the top so we don't need that lookup here
-        plant_ids_tuple = await plant_dal.get_plant_ids_by_taxon_id(
-            taxon_id=current_taxon_id, eager_load=False
-        )  # load no relationships
-        species_leaf["plant_ids"].extend(list(plant_ids_tuple))
+        # we might have multiple taxon ids for that species (e.g. varieties)
+        species_leaf["plant_ids"].extend(list(plant_ids))
 
-        genus_node["count"] += (plants_current_taxon := len(plant_ids_tuple))
+        genus_node["count"] += (plants_current_taxon := len(plant_ids))
         family_node["count"] += plants_current_taxon
         species_leaf["count"] += plants_current_taxon
 

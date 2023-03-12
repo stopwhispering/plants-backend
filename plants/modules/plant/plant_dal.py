@@ -95,25 +95,6 @@ class PlantDAL(BaseDAL):
 
         return plant
 
-    async def get_plant_ids_by_taxon_id(
-        self, taxon_id: int, *, eager_load: bool = True, only_active: bool = True
-    ) -> list[int]:
-        query = (
-            select(Plant.id)
-            .where(Plant.taxon_id == taxon_id)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-        )
-
-        if only_active:
-            # noinspection PyTypeChecker
-            query = query.where(Plant.active)
-
-        if eager_load:
-            query = self._add_eager_load_options(query)
-
-        plants: list[int] = list((await self.session.scalars(query)).all())
-        return plants
-
     async def get_plant_by_criteria(self, criteria: dict[str, Any]) -> list[Plant]:
         query = select(Plant).where(Plant.deleted.is_(False))  # noqa: FBT003
         value: str

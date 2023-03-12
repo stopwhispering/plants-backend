@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import String, delete, func, select
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
@@ -25,6 +26,9 @@ from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
     from plants.modules.taxon.enums import FBRank
+
+
+TaxaWithPlantIds = list[tuple[str, str, str | None, int, list[int]]]
 
 
 class TaxonDAL(BaseDAL):
@@ -102,8 +106,7 @@ class TaxonDAL(BaseDAL):
 
     async def get_distinct_species_as_tuples(
         self,
-    ) -> list[tuple[str, str, str | None, int]]:
-        # todo performance optimize
+    ) -> TaxaWithPlantIds:
         plant_exists_filter = and_(
             Plant.deleted.is_(False), Plant.active  # noqa: FBT003
         )
@@ -111,11 +114,18 @@ class TaxonDAL(BaseDAL):
             plant_exists_filter  # type:ignore[arg-type]
         )
 
-        query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id).where(
-            has_any_plant_filter
+        # array_agg seems to not work with int array, so we need to cast to string
+        # this will, however, return a list of int not string
+        plant_ids_agg = func.array_agg(Plant.id, type_=ARRAY(String))
+        query = select(
+            Taxon.family, Taxon.genus, Taxon.species, Taxon.id, plant_ids_agg
         )
+        query = query.join(Taxon.plants)
+        query = query.where(has_any_plant_filter)
         # noinspection PyTypeChecker
-        species_tuples: list[tuple[str, str, str | None, int]] = list(
+        query = query.group_by(Taxon.family, Taxon.genus, Taxon.species, Taxon.id)
+        # noinspection PyTypeChecker
+        species_tuples: TaxaWithPlantIds = list(
             (await self.session.execute(query)).all()  # type:ignore[arg-type]
         )
         return species_tuples

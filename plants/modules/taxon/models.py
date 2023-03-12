@@ -19,10 +19,10 @@ from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
+from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.taxon.enums import FBRank
 
 if TYPE_CHECKING:
-    from plants.modules.image.models import Image, ImageToTaxonAssociation
     from plants.modules.plant.models import Plant
 
 
