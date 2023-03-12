@@ -8,7 +8,7 @@ jpg_quality = 82
 filter_hidden = true
 taxon_search_max_results = 30
 
-[frontend.restrictions]  # todo use
+[frontend.restrictions]
 length_shortened_plant_name_for_tag = 25  # # keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
 
 [paths]

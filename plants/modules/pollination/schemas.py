@@ -102,7 +102,6 @@ class PollinationCreate(PollinationBase):
 
 class FlorescenceBase(BaseSchema):
     plant_id: int
-    # FlorescenceStatus (inflorescence_appeared | flowering | finished)
     florescence_status: FlorescenceStatus
     inflorescence_appeared_at: constr(  # type: ignore[valid-type]
         regex=REGEX_DATE
