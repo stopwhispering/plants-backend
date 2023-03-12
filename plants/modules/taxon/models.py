@@ -146,7 +146,6 @@ class TaxonOccurrenceImage(Base):
     publisher_dataset: str | None = Column(VARCHAR(100))
     references: str | None = Column(VARCHAR(120))
     href: str = Column(VARCHAR(150), nullable=False)
-    # todo switch to other id
     filename_thumbnail: str = Column(VARCHAR(120), nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)

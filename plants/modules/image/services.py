@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiofiles
@@ -23,6 +22,8 @@ from plants.shared.message_services import throw_exception
 from plants.shared.path_utils import get_generated_filename, with_suffix
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from plants.modules.image.image_dal import ImageDAL
     from plants.modules.image.models import Image
     from plants.modules.plant.models import Plant
@@ -198,26 +199,6 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
         )
         throw_exception(err_msg, description=f"Filename: {old_path.name}")
     logger.info(f"Moved file {old_path} to {new_path}")
-
-
-# def _get_sized_image_path(filename: str, size_px: int) -> Path:
-#     """return the path to the image file with the given pixel size"""
-#
-
-
-# todo replace everywhere with get_image_path_by_size_legacy
-async def get_image_path_by_size_legacy(
-    filename: str, size: tuple[int, int] | None, image_dal: ImageDAL
-) -> Path:
-    if size is None:
-        # get image db entry for the directory it is stored at in local filesystem
-        image: Image = await image_dal.get_image_by_filename(filename=filename)
-        return Path(image.absolute_path)
-
-    # the pixel size is part of the resized images' filenames rem size must be
-    # converted to px
-    filename_sized = get_generated_filename(filename, size)
-    return settings.paths.path_generated_thumbnails.joinpath(filename_sized)
 
 
 async def get_image_path_by_size(image: Image, size: tuple[int, int] | None) -> Path:

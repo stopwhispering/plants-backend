@@ -310,30 +310,6 @@ async def get_occurrence_thumbnail(
     return FileResponse(path=path, media_type="image/jpeg", filename=path.name)
 
 
-# # todo replace with get_image (i.e. id instead of filename)
-# @router.get("/photo", response_class=FileResponse)
-# async def get_photo(
-#     filename: str,
-#     width: int | None = None,
-#     height: int | None = None,
-#     image_dal: ImageDAL = Depends(get_image_dal),
-# ) -> Any:
-#     size = (width, height) if width and height else None
-#     image_path = await get_image_path_by_size_legacy(
-#         filename=filename, size=size, image_dal=image_dal
-#     )
-#
-#     if not image_path.is_file():
-#         # if local_config.log_settings.ignore_missing_image_files:
-#         #     return None
-#         raise ImageFileNotFoundError(filename=filename)
-#
-#     # media_type here sets the media type of the actual response sent to the client.
-#     return FileResponse(
-#         path=image_path, media_type="image/jpeg", filename=image_path.name
-#     )
-
-
 @router.get("/image/{image_id}", response_class=FileResponse)
 async def get_image(
     image: Image = Depends(valid_image),

@@ -44,10 +44,6 @@ class TaxonOccurrenceImageBase(BaseSchema):
     references: Optional[HttpUrl]
     href: HttpUrl  # link to iamge at inaturalist etc.
 
-    filename_thumbnail: constr(  # type: ignore[valid-type]
-        min_length=1, max_length=120
-    )  # filename for generated thumbnails
-
 
 class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
     class Config:
