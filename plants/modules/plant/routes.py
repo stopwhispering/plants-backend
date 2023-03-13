@@ -105,7 +105,6 @@ async def clone_plant(
     }
 
 
-# @router.post("/", response_model=PResultsPlantsUpdate)
 @router.post("/", response_model=BResultsPlantsUpdate)
 async def create_or_update_plants(
     data: FPlantsUpdateRequest,
@@ -115,20 +114,18 @@ async def create_or_update_plants(
     """update existing or create new plants if no id is supplied, a new plant is created
     having the supplied attributes (only plant_name is mandatory, others may be
     provided)"""
-    plants_modified = data.PlantsCollection
-
     # update plants
     plants_saved = await update_plants_from_list_of_dicts(
-        plants_modified, plant_dal=plant_dal, taxon_dal=taxon_dal
+        data.PlantsCollection, plant_dal=plant_dal, taxon_dal=taxon_dal
     )
 
-    logger.info(message := f"Saved updates for {len(plants_modified)} plants.")
+    logger.info(message := f"Saved updates for {len(data.PlantsCollection)} plants.")
     return {
         "action": "Saved Plants",
         "resource": MajorResource.PLANT,
         "message": get_message(message),
         "plants": plants_saved,
-    }  # return the updated/created plants
+    }
 
 
 @router.delete("/{plant_id}", response_model=BConfirmation)

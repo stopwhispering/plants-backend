@@ -52,9 +52,6 @@ async def update_plants_from_list_of_dicts(
         updates["parent_plant_pollen_id"] = (
             plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         )
-        # updates["preview_image_id"] = (
-        #     plant.preview_image_id if plant.preview_image_id else None
-        # )
         updates["taxon"] = (
             await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
         )
@@ -134,8 +131,10 @@ async def _treat_tags(
         await plant_dal.update_tag(tag_object, tag.dict())
 
     # delete tags not supplied anymore
-    updated_plant_ids = {t.id for t in tags if t.id is not None}
-    for deleted_tag in [t for t in plant.tags if t.id not in updated_plant_ids]:
+    updated_ids = {t.id for t in tags if t.id is not None}
+    created_ids = {t.id for t in new_tags}
+    deleted_tags = [t for t in plant.tags if t.id not in updated_ids.union(created_ids)]
+    for deleted_tag in deleted_tags:
         await plant_dal.remove_tag_from_plant(plant, deleted_tag)
 
 

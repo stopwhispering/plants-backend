@@ -126,7 +126,7 @@ class BKewSearchResultEntry(BaseSchema):
     hybrid: bool
     hybridgenus: bool
 
-    name_published_in_year: int | None
+    name_published_in_year: int
     basionym: str | None
     # phylum: str
     synonyms_concat: str | None
@@ -231,7 +231,7 @@ class TaxonCreate(TaxonBase):
     custom_suffix: str | None
 
 
-class BResultsTaxonInfoRequest(ResponseContainer):
+class ResultsTaxonInfoRequest(ResponseContainer):
     ResultsCollection: list[BKewSearchResultEntry]
 
 

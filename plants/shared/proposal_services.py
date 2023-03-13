@@ -33,7 +33,6 @@ async def build_taxon_tree(
 ) -> list[FamilyNodeDict]:
     """Build up taxon tree from distinct families, genus, and species that are assigned
     at least one plant."""
-    # todo optimize sql performance
     # get distinct families, genus, and species (as list of four-element-tuples); sort
     dist_tuples: TaxaWithPlantIds = await taxon_dal.get_distinct_species_as_tuples()
 

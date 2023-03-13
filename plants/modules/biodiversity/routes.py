@@ -13,9 +13,9 @@ from plants.modules.biodiversity.taxonomy_search import (
 )
 from plants.modules.taxon.schemas import (
     BResultsFetchTaxonImages,
-    BResultsTaxonInfoRequest,
     FFetchTaxonOccurrenceImagesRequest,
     FTaxonInfoRequest,
+    ResultsTaxonInfoRequest,
 )
 
 # if TYPE_CHECKING:
@@ -30,7 +30,7 @@ router = APIRouter(
 )
 
 
-@router.post("/search_taxa_by_name", response_model=BResultsTaxonInfoRequest)
+@router.post("/search_taxa_by_name", response_model=ResultsTaxonInfoRequest)
 async def search_taxa_by_name(
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
