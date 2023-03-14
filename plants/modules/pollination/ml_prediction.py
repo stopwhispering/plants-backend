@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -13,6 +14,23 @@ if TYPE_CHECKING:
     from plants.modules.pollination.models import Florescence
 
 
+@dataclass
+class TrainingData:
+    pollen_type: str
+    flowers_count: int | None
+    branches_count: int | None
+    genus_seed_capsule: str
+    genus_pollen_donor: str
+    species_seed_capsule: str | None
+    species_pollen_donor: str | None
+    hybrid_seed_capsule: bool
+    hybrid_pollen_donor: bool
+    hybridgenus_seed_capsule: bool
+    hybridgenus_pollen_donor: bool
+    same_genus: bool
+    same_species: bool
+
+
 def get_data(
     florescence: Florescence,
     pollen_donor: Plant,
@@ -21,25 +39,23 @@ def get_data(
 ) -> pd.DataFrame:
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
-    data = {  # todo type-check with dataclass or pydantic or similar
-        "pollen_type": pollen_type.value,
-        "flowers_count": florescence.flowers_count,
-        "branches_count": florescence.branches_count,
-        "genus_seed_capsule": florescence.plant.taxon.genus,
-        "genus_pollen_donor": pollen_donor.taxon.genus,
-        "species_seed_capsule": florescence.plant.taxon.species,
-        "species_pollen_donor": pollen_donor.taxon.species,
-        "hybrid_seed_capsule": florescence.plant.taxon.hybrid,
-        "hybrid_pollen_donor": pollen_donor.taxon.hybrid,
-        "hybridgenus_seed_capsule": florescence.plant.taxon.hybridgenus,
-        "hybridgenus_pollen_donor": pollen_donor.taxon.hybridgenus,
-    }
-    df_all = pd.Series(data).to_frame().T
 
-    df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
-    df_all["same_species"] = (
-        df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
+    traing_data = TrainingData(
+        pollen_type=pollen_type.value,
+        flowers_count=florescence.flowers_count,
+        branches_count=florescence.branches_count,
+        genus_seed_capsule=florescence.plant.taxon.genus,
+        genus_pollen_donor=pollen_donor.taxon.genus,
+        species_seed_capsule=florescence.plant.taxon.species,
+        species_pollen_donor=pollen_donor.taxon.species,
+        hybrid_seed_capsule=florescence.plant.taxon.hybrid,
+        hybrid_pollen_donor=pollen_donor.taxon.hybrid,
+        hybridgenus_seed_capsule=florescence.plant.taxon.hybridgenus,
+        hybridgenus_pollen_donor=pollen_donor.taxon.hybridgenus,
+        same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
+        same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
     )
+    df_all = pd.Series(traing_data.__dict__).to_frame().T
 
     if missing := [
         f for f in feature_container.get_columns() if f not in df_all.columns

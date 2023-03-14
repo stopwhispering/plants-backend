@@ -13,9 +13,8 @@ def get_accepted_synonym_label(powo_lookup: dict[str, Any]) -> str | None:
             if isinstance(powo_lookup["accepted"], str):
                 return "Accepted: " + powo_lookup["accepted"]
             if isinstance(powo_lookup["accepted"], dict):
-                return (
-                    "Accepted: "
-                    + powo_lookup["accepted"]["name"]  # type: ignore[no-any-return]
+                return (  # type: ignore[no-any-return]
+                    "Accepted: " + powo_lookup["accepted"]["name"]
                 )
             logger.warning(
                 f"Accepted synonym is neither a string nor a "
