@@ -17,29 +17,43 @@ from plants.shared.orm_util import clone_orm_instance
 if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.plant.schemas import FBPlantTag, PlantCreateUpdate
+    from plants.modules.plant.schemas import FBPlantTag, PlantCreate, PlantUpdate
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
 
 
-async def _add_new_plant(plant_name: str, plant_dal: PlantDAL) -> Plant:
-    if await plant_dal.exists(plant_name):
-        raise PlantAlreadyExistsError(plant_name)
-    return await plant_dal.create_empty_plant(plant_name=plant_name)
+async def create_new_plant(
+    new_plant: PlantCreate, plant_dal: PlantDAL, taxon_dal: TaxonDAL
+) -> Plant:
+    if await plant_dal.exists(new_plant.plant_name):
+        raise PlantAlreadyExistsError(new_plant.plant_name)
+    # await plant_dal.create_empty_plant(plant_name=new_plant.plant_name)
+
+    new_plant_data = new_plant.dict(
+        exclude={"tags", "parent_plant", "parent_plant_pollen"}
+    )
+    new_plant_data["parent_plant_id"] = (
+        new_plant.parent_plant.id if new_plant.parent_plant else None
+    )
+    new_plant_data["parent_plant_pollen_id"] = (
+        new_plant.parent_plant_pollen.id if new_plant.parent_plant_pollen else None
+    )
+    new_plant_data["taxon"] = (
+        await taxon_dal.by_id(new_plant.taxon_id) if new_plant.taxon_id else None
+    )
+    plant = await plant_dal.create_plant(new_plant_data)
+    await _treat_tags(plant, new_plant.tags, plant_dal=plant_dal)
+    return plant
 
 
 async def update_plants_from_list_of_dicts(
-    plants: list[PlantCreateUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
+    plants: list[PlantUpdate], plant_dal: PlantDAL, taxon_dal: TaxonDAL
 ) -> list[Plant]:
     plants_saved = []
-    logger.info(f"Updating/Creating {len(plants)} plants")
+    logger.info(f"Updating {len(plants)} plants")
     for plant in plants:
-        if plant.id is None:
-            # create the plant and flush to get plant id
-            record_update = await _add_new_plant(plant.plant_name, plant_dal)
-        else:
-            record_update = await plant_dal.by_id(plant.id)
+        record_update = await plant_dal.by_id(plant.id)
 
         # update plant
         updates = plant.dict(
@@ -103,7 +117,7 @@ async def deep_clone_plant(
     if cloned_events:
         await event_dal.create_events(cloned_events)
 
-    await plant_dal.create_plant(plant_clone)
+    await plant_dal.save_plant(plant_clone)
 
 
 async def _treat_tags(

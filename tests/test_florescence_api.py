@@ -23,13 +23,13 @@ async def test_florescence_create_valid(
     valid_florescence_dict: dict[str, Any],
 ) -> None:
     # create plant
-    payload: dict[str, Any] = {"PlantsCollection": [valid_simple_plant_dict]}
-    response = await ac.post("/api/plants/", json=payload)
+    # payload: dict[str, Any] = {"PlantsCollection": [valid_simple_plant_dict]}
+    response = await ac.post("/api/plants/", json=valid_simple_plant_dict)
     assert response.status_code == 200
-    assert response.json().get("plants")[0] is not None
+    assert response.json().get("plant") is not None
 
     # create florescence for plant
-    plant_id = response.json().get("plants")[0].get("id")
+    plant_id = response.json().get("plant").get("id")
     valid_florescence_dict["plant_id"] = plant_id
     response = await ac.post("/api/active_florescences", json=valid_florescence_dict)
     assert response.status_code == 200

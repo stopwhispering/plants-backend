@@ -213,10 +213,10 @@ async def test_get_image_in_different_sizes(
     ac: AsyncClient,
     valid_plant_in_db_with_image: Plant,
 ) -> None:
-    filename: str = valid_plant_in_db_with_image.images[0].filename
+    image_id: int = valid_plant_in_db_with_image.images[0].id
 
     # get image in original size
-    response = await ac.get(url=f"/api/photo?filename={filename}")
+    response = await ac.get(url=f"/api/image/{image_id}")
     assert response.status_code == 200
     image_response = Image.open(BytesIO(response.content))
     assert image_response.format == "JPEG"
@@ -224,11 +224,10 @@ async def test_get_image_in_different_sizes(
     # get image in different sizes
     for size in settings.images.sizes:
         params: dict[str, str] = {
-            "filename": filename,
             "width": str(size[0]),
             "height": str(size[1]),
         }
-        response = await ac.get(url="/api/photo", params=params)
+        response = await ac.get(url=f"/api/image/{image_id}", params=params)
         assert response.status_code == 200
         image_response = Image.open(BytesIO(response.content))
         assert image_response.format == "JPEG"

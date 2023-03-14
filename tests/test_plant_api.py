@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from plants.exceptions import PlantNotFoundError
-from plants.modules.plant.schemas import BPlantsRenameRequest
+from plants.modules.plant.schemas import PlantRenameRequest
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
@@ -38,12 +38,11 @@ async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant) -> No
 
 @pytest.mark.asyncio()
 async def test_plant_create_valid(
-    ac: AsyncClient, valid_simple_plant_dict: Plant
+    ac: AsyncClient, valid_simple_plant_dict: dict[str, Any]
 ) -> None:
-    payload = {"PlantsCollection": [valid_simple_plant_dict]}
-    response = await ac.post("/api/plants/", json=payload)
+    response = await ac.post("/api/plants/", json=valid_simple_plant_dict)
     assert response.status_code == 200
-    assert response.json().get("plants")[0] is not None
+    assert response.json().get("plant") is not None
 
     # check that plant was created
     response = await ac.get("/api/plants/")
@@ -61,16 +60,17 @@ async def test_plant_rename_valid(
     plant_dal: PlantDAL,
     history_dal: HistoryDAL,
 ) -> None:
-    payload_ = BPlantsRenameRequest(
-        plant_id=plant_valid_in_db.id,
-        old_plant_name=plant_valid_in_db.plant_name,
+    old_plant_name = plant_valid_in_db.plant_name
+    payload_ = PlantRenameRequest(
         new_plant_name="Aloe ferox var. ferox 'variegata'",
     )
-    response = await ac.put("/api/plants/", json=payload_.dict())
+    response = await ac.put(
+        f"/api/plants/{plant_valid_in_db.id}/rename", json=payload_.dict()
+    )
     assert response.status_code == 200
 
     await test_db.refresh(plant_valid_in_db)
-    assert not await plant_dal.exists(payload_.old_plant_name)
+    assert not await plant_dal.exists(old_plant_name)
     assert plant_valid_in_db.plant_name == "Aloe ferox var. ferox 'variegata'"
 
     history_entries = await history_dal.get_all()
@@ -87,11 +87,9 @@ async def test_plant_rename_target_exists(
     history_dal: HistoryDAL,
 ) -> None:
     payload = {
-        "plant_id": plant_valid_in_db.id,
-        "old_plant_name": plant_valid_in_db.plant_name,
         "new_plant_name": plant_valid_with_active_florescence_in_db.plant_name,
     }
-    response = await ac.put("/api/plants/", json=payload)
+    response = await ac.put(f"/api/plants/{plant_valid_in_db.id}/rename", json=payload)
     assert 400 <= response.status_code < 500
     assert "already exists" in response.json().get("detail")
 
@@ -102,11 +100,9 @@ async def test_plant_rename_target_exists(
 @pytest.mark.asyncio()
 async def test_plant_rename_source_not_exists(ac: AsyncClient) -> None:
     payload = {
-        "plant_id": 11551,
-        "old_plant_name": "Aloe nonexista",
         "new_plant_name": "Aloe redundata",
     }
-    response = await ac.put("/api/plants/", json=payload)
+    response = await ac.put("/api/plants/11551/rename", json=payload)
     assert 400 <= response.status_code < 500
     assert "Plant" in str(response.json())
     assert "not found" in str(response.json())
@@ -226,12 +222,10 @@ async def test_rename_plant(
     ac: AsyncClient, test_db: AsyncSession, valid_plant_in_db_with_image: Plant
 ) -> None:
     """Test renaming a plant."""
-    payload = {  # BPlantsRenameRequest
-        "plant_id": valid_plant_in_db_with_image.id,
-        "old_plant_name": valid_plant_in_db_with_image.plant_name,
-        "new_plant_name": "Aloe barbadensis",
-    }
-    response = await ac.put("/api/plants/", json=payload)
+    payload = PlantRenameRequest(new_plant_name="Aloe barbadensis")
+    response = await ac.put(
+        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.dict()
+    )
     assert response.status_code == 200
 
     # check that the plant is renamed
@@ -249,12 +243,10 @@ async def test_rename_plant_invalid(
     """Test renaming a plant to a name that already exists."""
     old_name = valid_plant_in_db_with_image.plant_name
     new_name = another_valid_plant_in_db.plant_name
-    payload = {  # BPlantsRenameRequest
-        "plant_id": valid_plant_in_db_with_image.id,
-        "old_plant_name": old_name,
-        "new_plant_name": new_name,
-    }
-    response = await ac.put("/api/plants/", json=payload)
+    payload = PlantRenameRequest(new_plant_name=new_name)
+    response = await ac.put(
+        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.dict()
+    )
     assert response.status_code == 400
     assert "already exists" in response.json()["detail"]
 

@@ -155,15 +155,21 @@ class PlantDAL(BaseDAL):
         plant_ids: list[int] = list((await self.session.scalars(query)).all())
         return plant_ids
 
-    async def create_plant(self, plant: Plant) -> None:
+    async def save_plant(self, plant: Plant) -> None:
         self.session.add(plant)
         await self.session.flush()
 
-    async def create_empty_plant(self, plant_name: str) -> Plant:
-        new_plant = Plant(plant_name=plant_name, deleted=False, active=True)
+    # async def create_empty_plant(self, plant_name: str) -> Plant:
+    #     new_plant = Plant(plant_name=plant_name, deleted=False, active=True)
+    #     self.session.add(new_plant)
+    #     await self.session.flush()
+    #     return await self.by_id(new_plant.id)  # adds eager load options
+
+    async def create_plant(self, new_plant_data: dict[str, Any]) -> Plant:
+        new_plant = Plant(**new_plant_data, deleted=False)
         self.session.add(new_plant)
         await self.session.flush()
-        return await self.by_id(new_plant.id)  # adds eager load options
+        return await self.by_id(new_plant.id)
 
     async def create_tags(self, tags: list[Tag]) -> None:
         self.session.add_all(tags)

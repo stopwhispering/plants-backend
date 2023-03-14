@@ -36,10 +36,10 @@ async def test_create_pollination(
     """Includes creation of pollen container."""
     # via test client:
     # create plant 2 with pollen container for it
-    payload = {"PlantsCollection": [valid_simple_plant_dict]}
-    response = await ac.post("/api/plants/", json=payload)
+    # payload = {"PlantsCollection": [valid_simple_plant_dict]}
+    response = await ac.post("/api/plants/", json=valid_simple_plant_dict)
     assert response.status_code == 200
-    assert (p := response.json().get("plants")[0]) is not None
+    assert (p := response.json().get("plant")) is not None
     payload_pc = FRequestPollenContainers(
         pollen_container_collection=[
             PollenContainerCreateUpdate(

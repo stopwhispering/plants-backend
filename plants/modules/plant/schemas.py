@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import Extra, constr
+from pydantic import constr
 
 from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
 from plants.shared.base_schema import (
@@ -83,20 +83,19 @@ class PlantRead(PlantBase):
     latest_image: PlantLatestImage | None
 
 
-class PlantCreateUpdate(PlantBase):
-    id: int | None  # None for new plants
-
-    class Config:
-        extra = Extra.ignore
+class PlantUpdate(PlantBase):
+    id: int
 
 
-class FPlantsUpdateRequest(RequestContainer):
-    PlantsCollection: list[PlantCreateUpdate]
+class PlantCreate(PlantBase):
+    pass
 
 
-class BPlantsRenameRequest(BaseSchema):
-    plant_id: int
-    old_plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+class PlantsUpdateRequest(RequestContainer):
+    PlantsCollection: list[PlantUpdate]
+
+
+class PlantRenameRequest(BaseSchema):
     new_plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
 
 
@@ -106,6 +105,10 @@ class BResultsPlants(ResponseContainer):
 
 class BResultsPlantsUpdate(MajorResponseContainer):
     plants: list[PlantRead]
+
+
+class ResultsPlantCreated(MajorResponseContainer):
+    plant: PlantRead
 
 
 class BResultsPlantCloned(ResponseContainer):

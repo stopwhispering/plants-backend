@@ -38,7 +38,7 @@ async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL) -> None
 async def test_plant_valid(plant_dal: PlantDAL) -> None:
     plant_name = "Aloe Vera"
     plant = Plant(plant_name=plant_name, active=True, deleted=False)
-    await plant_dal.create_plant(plant)
+    await plant_dal.save_plant(plant)
 
     p = await plant_dal.by_name(plant_name)
     assert p is not None

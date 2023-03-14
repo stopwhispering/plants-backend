@@ -24,14 +24,17 @@ from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import (
-    BPlantsRenameRequest,
     BResultsPlantCloned,
     BResultsPlants,
     BResultsPlantsUpdate,
     BResultsProposeSubsequentPlantName,
-    FPlantsUpdateRequest,
+    PlantCreate,
+    PlantRenameRequest,
+    PlantsUpdateRequest,
+    ResultsPlantCreated,
 )
 from plants.modules.plant.services import (
+    create_new_plant,
     deep_clone_plant,
     fetch_plants,
     generate_subsequent_plant_name,
@@ -105,16 +108,36 @@ async def clone_plant(
     }
 
 
-@router.post("/", response_model=BResultsPlantsUpdate)
-async def create_or_update_plants(
-    data: FPlantsUpdateRequest,
+@router.post("/", response_model=ResultsPlantCreated)
+async def create_plant(
+    new_plant: PlantCreate,
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
-    """update existing or create new plants if no id is supplied, a new plant is created
-    having the supplied attributes (only plant_name is mandatory, others may be
-    provided)"""
-    # update plants
+    """create new plant using the supplied attributes (only plant_name is mandatory,
+    others may be provided)"""
+    plant_saved = await create_new_plant(
+        new_plant, plant_dal=plant_dal, taxon_dal=taxon_dal
+    )
+
+    logger.info(
+        message := f"Created new plant {plant_saved.id} " f"({plant_saved.plant_name})."
+    )
+    return {
+        "action": "Saved Plant",
+        "resource": MajorResource.PLANT,
+        "message": get_message(message),
+        "plant": plant_saved,
+    }
+
+
+@router.put("/", response_model=BResultsPlantsUpdate)
+async def update_plants(
+    data: PlantsUpdateRequest,
+    plant_dal: PlantDAL = Depends(get_plant_dal),
+    taxon_dal: TaxonDAL = Depends(get_taxon_dal),
+) -> Any:
+    """Update existing plants."""
     plants_saved = await update_plants_from_list_of_dicts(
         data.PlantsCollection, plant_dal=plant_dal, taxon_dal=taxon_dal
     )
@@ -144,16 +167,17 @@ async def delete_plant(
     }
 
 
-@router.put("/", response_model=BConfirmation)
+@router.put("/{plant_id}/rename", response_model=BConfirmation)
 async def rename_plant(
-    args: BPlantsRenameRequest,
+    args: PlantRenameRequest,
+    plant: Plant = Depends(valid_plant),
     plant_dal: PlantDAL = Depends(get_plant_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
     """We use the put method to rename a plant."""
-    plant = await plant_dal.by_id(args.plant_id)
-
+    # plant = await plant_dal.by_id(args.plant_id)
+    old_plant_name = plant.plant_name
     if await plant_dal.exists(args.new_plant_name):
         raise PlantAlreadyExistsError(args.new_plant_name)
 
@@ -163,7 +187,7 @@ async def rename_plant(
     # most difficult task: jpg exif tags use plant name not id; we need to change
     # each plant name occurence
     count_modified_images = await rename_plant_in_image_files(
-        plant=plant, plant_name_old=args.old_plant_name, image_dal=image_dal
+        plant=plant, plant_name_old=old_plant_name, image_dal=image_dal
     )
 
     await create_history_entry(
@@ -171,14 +195,14 @@ async def rename_plant(
         history_dal=history_dal,
         plant_dal=plant_dal,
         plant_id=plant.id,
-        plant_name=args.old_plant_name,
+        plant_name=old_plant_name,
     )
 
     logger.info(f"Modified {count_modified_images} images.")
     return {
         "action": "Renamed plant",
         "message": get_message(
-            f"Renamed {args.old_plant_name} to {args.new_plant_name}",
+            f"Renamed {old_plant_name} to {args.new_plant_name}",
             description=f"Modified {count_modified_images} images.",
         ),
     }
