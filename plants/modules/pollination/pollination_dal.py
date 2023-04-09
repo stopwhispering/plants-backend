@@ -46,8 +46,12 @@ class PollinationDAL(BaseDAL):
             pollination.location = updates["location"]
         if "pollinated_at" in updates:
             pollination.pollinated_at = updates["pollinated_at"]
-        if "count" in updates:
-            pollination.count = updates["count"]
+        if "count_attempted" in updates:
+            pollination.count_attempted = updates["count_attempted"]
+        if "count_pollinated" in updates:
+            pollination.count_pollinated = updates["count_pollinated"]
+        if "count_capsules" in updates:
+            pollination.count_capsules = updates["count_capsules"]
         if "label_color" in updates:
             pollination.label_color = updates["label_color"]
         if "pollination_status" in updates:

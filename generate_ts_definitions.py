@@ -48,11 +48,11 @@ models = [
     #     r"./ts_api_interfaces/apiTypes_message.ts",
     #     (),
     # ),
-    # PydanticModel(
-    #     r".\plants\modules\pollination\schemas.py",
-    #     r"./ts_api_interfaces/apiTypes_pollination.ts",
-    #     (),
-    # ),
+    PydanticModel(
+        r".\plants\modules\pollination\schemas.py",
+        r"./ts_api_interfaces/apiTypes_pollination.ts",
+        (),
+    ),
 ]
 
 

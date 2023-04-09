@@ -68,7 +68,7 @@ async def test_create_pollination(
         pollinated_at="2022-11-16 12:06",
         label_color_rgb="#ff7c09",
         location="indoor",
-        count=3,
+        count_attempted=3,
     )
     response = await ac.post("/api/pollinations", json=payload_pollination.dict())
     assert response.status_code == 200
@@ -79,7 +79,7 @@ async def test_create_pollination(
     pollination = pollinations[0]
     assert pollination.pollen_type == "frozen"
     assert pollination.location == "indoor"
-    assert pollination.count == 3
+    assert pollination.count_attempted == 3
 
 
 @pytest.mark.asyncio()
@@ -138,7 +138,7 @@ async def test_update_pollination(
 
     # update attributes and send via test client
     pollination["location"] = "indoor"
-    pollination["count"] = 2
+    pollination["count_attempted"] = 2
     pollination["seed_capsule_length"] = 14.5
     pollination["label_color_rgb"] = "#ffffff"
     response = await ac.put(f"/api/pollinations/{pollination['id']}", json=pollination)
@@ -147,7 +147,7 @@ async def test_update_pollination(
     # check if attributes have been updated
     await test_db.refresh(pollination_in_db)
     assert pollination_in_db.location == "indoor"
-    assert pollination_in_db.count == 2
+    assert pollination_in_db.count_attempted == 2
     assert pollination_in_db.seed_capsule_length == 14.5
     assert pollination_in_db.label_color == "white"
 

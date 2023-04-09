@@ -176,12 +176,9 @@ async def rename_plant(
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
     """We use the put method to rename a plant."""
-    # plant = await plant_dal.by_id(args.plant_id)
     old_plant_name = plant.plant_name
     if await plant_dal.exists(args.new_plant_name):
         raise PlantAlreadyExistsError(args.new_plant_name)
-
-    # rename plant name
     plant.plant_name = args.new_plant_name
 
     # most difficult task: jpg exif tags use plant name not id; we need to change

@@ -107,4 +107,4 @@ docker-compose -f ./docker-compose.base.yml -f ./docker-compose.prod.yml up --bu
 
 Test API (dev): Open in Browser - http://plants.localhost/api/plants/
 
-Test API (prod): Open in Browser - http://plants.example-com/api/plants/
+Test API (prod): Open in Browser - https://plants.example-com/api/plants/

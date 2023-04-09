@@ -275,7 +275,7 @@ async def save_new_pollination(
         pollen_donor_plant=pollen_donor_plant,
         pollen_type=new_pollination_data.pollen_type,
         pollen_quality=new_pollination_data.pollen_quality,
-        count=new_pollination_data.count,
+        count_attempted=new_pollination_data.count_attempted,
         location=new_pollination_data.location,
         pollinated_at=pollinated_at,
         ongoing=True,
@@ -380,7 +380,9 @@ async def read_ongoing_pollinations(
                 p.pollinated_at
             ),  # e.g. '2022-11-16 12:06'
             "pollen_type": p.pollen_type,
-            "count": p.count,
+            "count_attempted": p.count_attempted,
+            "count_pollinated": p.count_pollinated,
+            "count_capsules": p.count_capsules,
             "pollen_quality": p.pollen_quality,
             "location": p.location,
             "location_text": LOCATION_TEXTS[p.location],

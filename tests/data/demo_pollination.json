@@ -20,6 +20,6 @@
   "comment": null,
   "last_update_context": "api",
   "creation_at_context": "api",
-  "count": null,
+  "count_attempted": null,
   "pollen_quality": "unknown"
 }

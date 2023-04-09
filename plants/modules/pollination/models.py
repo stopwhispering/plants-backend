@@ -152,7 +152,10 @@ class Pollination(Base):
     # (indoor | outdoor | indoor_led | unknown)
     location: Location = Column(sa.Enum(Location), nullable=False)
 
-    count: int | None = Column(INTEGER)
+    # count: int | None = Column(INTEGER)
+    count_attempted: int | None = Column(INTEGER)  # attempted pollinations
+    count_pollinated: int | None = Column(INTEGER)  # pollinated flowers
+    count_capsules: int | None = Column(INTEGER)  # seed capsules
 
     pollinated_at = Column(DateTime(timezone=True))
     label_color: str | None = Column(VARCHAR(60))

@@ -39,7 +39,7 @@ class PollinationBase(BaseSchema):
     pollinated_at: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     location: Location
-    count: conint(ge=1)  # type: ignore[valid-type]
+    count_attempted: conint(ge=1)  # type: ignore[valid-type]
 
 
 class PollinationRead(PollinationBase):
@@ -49,7 +49,10 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
-    count: conint(ge=1) | None  # type: ignore[valid-type]  # allow None for old data
+    # allow None for old data
+    count_attempted: conint(ge=1) | None  # type: ignore[valid-type]
+    count_pollinated: conint(ge=1) | None  # type: ignore[valid-type]
+    count_capsules: conint(ge=1) | None  # type: ignore[valid-type]
 
     pollination_status: str
     ongoing: bool
@@ -75,6 +78,9 @@ class PollinationUpdate(PollinationBase):
     # self_pollinated )
     pollination_status: PollinationStatus
     ongoing: bool
+
+    count_pollinated: conint(ge=1) | None  # type: ignore[valid-type]
+    count_capsules: conint(ge=1) | None  # type: ignore[valid-type]
 
     harvest_date: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
     seed_capsule_length: float | None
