@@ -79,10 +79,10 @@ class Pot(Base):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
-    # # 1:n relationship to events
-    # events: Mapped[list[Event]] = relationship(
-    #     "Event", back_populates="pot", uselist=True
-    # )
+    # 1:n relationship to events
+    events: Mapped[list[Event]] = relationship(
+        "Event", back_populates="pot", uselist=True
+    )
 
     def __repr__(self):
         return (
