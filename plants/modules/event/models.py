@@ -60,10 +60,11 @@ class Pot(Base):
         primary_key=True,
         nullable=False,
     )
-    event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    # event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    event_id = Column(INTEGER)
     # 1:1 relationship to event
     event: Mapped[Event | None] = relationship(
-        "Event", back_populates="pot", uselist=False
+        "Events", back_populates="pot", uselist=False
     )
 
     material: PotMaterial = Column(sqlalchemy.Enum(PotMaterial), nullable=False)
@@ -145,7 +146,7 @@ class Event(Base):
     # n:1 relationship to pot, bi-directional
     pot_id = Column(INTEGER, ForeignKey("pot.id"))
     # pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
-    pot: Mapped[Pot | None] = relationship("Pot", back_populates="event")
+    pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey("soil.id"))
