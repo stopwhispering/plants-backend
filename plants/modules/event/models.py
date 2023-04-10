@@ -64,7 +64,7 @@ class Pot(Base):
     event_id = Column(INTEGER)
     # 1:1 relationship to event
     event: Mapped[Event | None] = relationship(
-        "Events", back_populates="pot", uselist=False
+        "Event", back_populates="pot", uselist=False
     )
 
     material: PotMaterial = Column(sqlalchemy.Enum(PotMaterial), nullable=False)
