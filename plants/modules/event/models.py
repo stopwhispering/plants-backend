@@ -60,8 +60,8 @@ class Pot(Base):
         primary_key=True,
         nullable=False,
     )
-    # event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
-    event_id = Column(INTEGER)
+    event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    # event_id = Column(INTEGER)
     # 1:1 relationship to event
     event: Mapped[Event | None] = relationship(
         "Event", back_populates="pot", uselist=False
@@ -79,10 +79,10 @@ class Pot(Base):
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
-    # 1:n relationship to events
-    events: Mapped[list[Event]] = relationship(
-        "Event", back_populates="pot", uselist=True
-    )
+    # # 1:n relationship to events
+    # events: Mapped[list[Event]] = relationship(
+    #     "Event", back_populates="pot", uselist=True
+    # )
 
     def __repr__(self):
         return (
@@ -146,7 +146,7 @@ class Event(Base):
     # n:1 relationship to pot, bi-directional
     pot_id = Column(INTEGER, ForeignKey("pot.id"))
     # pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
-    pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
+    pot: Mapped[Pot | None] = relationship("Pot", back_populates="event")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey("soil.id"))
