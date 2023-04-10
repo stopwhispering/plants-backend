@@ -151,7 +151,16 @@ class Event(Base):
         "Image",
         secondary="image_to_event_association",
         overlaps="events,image,image_to_event_associations,event",  # silence warnings
+        # cascade="all",  # includes 'delete' but not 'delete-orphan'
+        # cascade="all, delete-orphan",
+        passive_deletes=True,
     )
+    # todo remove if possible
     image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
-        "ImageToEventAssociation", back_populates="event", overlaps="events,images"
-    )  # silence warnings
+        "ImageToEventAssociation",
+        # back_populates="event",
+        overlaps="events,images",
+        # cascade="all",  # includes 'delete' but not 'delete-orphan'
+        # cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

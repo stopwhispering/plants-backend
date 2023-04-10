@@ -42,6 +42,7 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.events).selectinload(Event.observation),
             selectinload(Plant.events).selectinload(Event.pot),
             selectinload(Plant.events).selectinload(Event.images),
+            selectinload(Plant.events).selectinload(Event.image_to_event_associations),
             selectinload(Plant.images).selectinload(Image.keywords),
             selectinload(Plant.florescences),
         )

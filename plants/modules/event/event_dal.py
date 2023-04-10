@@ -136,6 +136,15 @@ class EventDAL(BaseDAL):
             await self.session.delete(link)
         await self.session.flush()
 
+    async def delete_all_images_from_event(self, event: Event) -> None:
+        """Remove image associations from event."""
+        for link in event.image_to_event_associations:
+            event.image_to_event_associations.remove(link)
+            await self.session.delete(link)
+        for image in event.images:
+            event.images.remove(image)
+        await self.session.flush()
+
     async def delete_event(self, event: Event) -> None:
         await self.session.delete(event)
         await self.session.flush()

@@ -118,7 +118,7 @@ class Image(Base):
     )
     image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
         "ImageToEventAssociation",
-        back_populates="image",
+        # back_populates="image",
         overlaps="events",  # silence warnings
         uselist=True,
     )
@@ -140,25 +140,38 @@ class Image(Base):
 
 class ImageToEventAssociation(Base):
     __tablename__ = "image_to_event_association"
-    image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
-    event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
-
-    # silence warnings for deletions of associated entities (image has
-    # image_to_event_association and events)
-    __mapper_args__ = {
-        "confirm_deleted_rows": False,
-    }
-
-    image: Mapped[Image] = relationship(
-        "Image",
-        back_populates="image_to_event_associations",
-        overlaps="events",  # silence warnings
+    # image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
+    image_id: int = Column(
+        INTEGER, ForeignKey("image.id", ondelete="CASCADE"), primary_key=True
     )
-    event: Mapped[Event] = relationship(
-        "Event",
-        back_populates="image_to_event_associations",
-        overlaps="events",  # silence warnings
+    # event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
+    event_id: int = Column(
+        INTEGER, ForeignKey("event.id", ondelete="CASCADE"), primary_key=True
     )
+
+    # # silence warnings for deletions of associated entities (image has
+    # # image_to_event_association and events)
+    # __mapper_args__ = {
+    #     "confirm_deleted_rows": False,
+    # }
+
+    # image: Mapped[Image] = relationship(
+    #     "Image",
+    #     back_populates="image_to_event_associations",
+    #     overlaps="events",  # silence warnings
+    #     cascade="all",
+    #     passive_deletes=True,
+    # )
+    # event: Mapped[Event] = relationship(
+    #     "Event",
+    #     back_populates="image_to_event_associations",
+    #     overlaps="events",  # silence warnings
+    #     cascade="all",
+    #     passive_deletes=True,
+    # )
+
+    def __repr__(self) -> str:
+        return f"<ImageToEventAssociation {self.image_id} {self.event_id}>"
 
 
 class ImageToTaxonAssociation(Base):

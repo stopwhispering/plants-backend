@@ -105,12 +105,14 @@ class EventWriter:
         event_obj: Optional[Event]
         for event_obj in plant_obj.events:
             if event_obj.id not in event_ids:
-                logger.info(f"Deleting event {event_obj.id}")
+                logger.info(f"Deleting event {event_obj}")
                 if event_obj.image_to_event_associations:
                     # noinspection PyTypeChecker
-                    await self.event_dal.delete_image_to_event_associations(
-                        event_obj.image_to_event_associations, event=event_obj
-                    )
+                    await self.event_dal.delete_all_images_from_event(event=event_obj)
+                    # await self.event_dal.delete_image_to_event_associations(
+                    #     links=event_obj.image_to_event_associations,
+                    #     event=event_obj
+                    # )
                 await self.event_dal.delete_event(event_obj)
                 counts["Deleted Events"] += 1
 
@@ -195,11 +197,9 @@ class EventWriter:
             event_obj.pot = None
 
         else:
-            # event_obj.pot_event_type = event.pot_event_type
-            # add empty if not existing
+            # add if not existing
             if not event_obj.pot:
                 pot_obj = Pot()
-                await self.event_dal.create_pot(pot_obj)
                 event_obj.pot = pot_obj
                 counts["Added Pots"] += 1
 
@@ -251,7 +251,7 @@ class EventWriter:
                 link: ImageToEventAssociation = next(
                     li
                     for li in event_obj.image_to_event_associations
-                    if li.image.id == image_obj.id
+                    if li.image_id == image_obj.id
                 )
                 await self.event_dal.delete_image_to_event_associations(links=[link])
 
