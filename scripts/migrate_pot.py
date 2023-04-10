@@ -11,6 +11,7 @@ from plants.extensions import orm
 from plants.extensions.db import create_db_engine
 from plants.extensions.orm import init_orm
 from plants.modules.event.models import Event, Pot
+from plants.modules.plant.models import Plant
 from plants.shared.orm_util import clone_orm_instance
 
 if TYPE_CHECKING:
