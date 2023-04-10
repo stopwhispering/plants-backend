@@ -60,6 +60,12 @@ class Pot(Base):
         primary_key=True,
         nullable=False,
     )
+    event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    # 1:1 relationship to event
+    event: Mapped[Event | None] = relationship(
+        "Event", back_populates="pot", uselist=False
+    )
+
     material: PotMaterial = Column(sqlalchemy.Enum(PotMaterial), nullable=False)
     shape_top: FBShapeTop = Column(sqlalchemy.Enum(FBShapeTop), nullable=False)
     shape_side: FBShapeSide = Column(sqlalchemy.Enum(FBShapeSide), nullable=False)
@@ -76,6 +82,13 @@ class Pot(Base):
     events: Mapped[list[Event]] = relationship(
         "Event", back_populates="pot", uselist=True
     )
+
+    def __repr__(self):
+        return (
+            f"Pot(id={self.id}, material={self.material}, "
+            f"shape_top={self.shape_top}, "
+            f"shape_side={self.shape_side}, diameter_width={self.diameter_width})"
+        )
 
 
 class Observation(Base):
@@ -130,8 +143,9 @@ class Event(Base):
     )
 
     # n:1 relationship to pot, bi-directional
-    pot_id = Column(INTEGER, ForeignKey("pot.id"))
-    pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
+    # pot_id = Column(INTEGER, ForeignKey("pot.id"))
+    # pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
+    pot: Mapped[Pot | None] = relationship("Pot", back_populates="event")
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey("soil.id"))
@@ -150,17 +164,18 @@ class Event(Base):
     images: Mapped[list[Image]] = relationship(
         "Image",
         secondary="image_to_event_association",
-        overlaps="events,image,image_to_event_associations,event",  # silence warnings
+        # overlaps="events,image,image_to_event_associations,event",  # silence warnings
         # cascade="all",  # includes 'delete' but not 'delete-orphan'
         # cascade="all, delete-orphan",
-        passive_deletes=True,
+        # passive_deletes=True,
     )
+
     # todo remove if possible
     image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
         "ImageToEventAssociation",
         # back_populates="event",
-        overlaps="events,images",
+        # overlaps="events,images",
         # cascade="all",  # includes 'delete' but not 'delete-orphan'
         # cascade="all, delete-orphan",
-        passive_deletes=True,
+        # passive_deletes=True,
     )

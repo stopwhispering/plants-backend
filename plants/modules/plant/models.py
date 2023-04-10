@@ -65,6 +65,8 @@ class Plant(Base):
         overlaps="plants,image_to_plant_associations",  # silence warnings
         uselist=True,
     )
+
+    # todo remove if possible
     image_to_plant_associations: Mapped[list[ImageToPlantAssociation]] = relationship(
         "ImageToPlantAssociation",
         back_populates="plant",

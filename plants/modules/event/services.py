@@ -106,13 +106,11 @@ class EventWriter:
         for event_obj in plant_obj.events:
             if event_obj.id not in event_ids:
                 logger.info(f"Deleting event {event_obj}")
-                if event_obj.image_to_event_associations:
-                    # noinspection PyTypeChecker
-                    await self.event_dal.delete_all_images_from_event(event=event_obj)
-                    # await self.event_dal.delete_image_to_event_associations(
-                    #     links=event_obj.image_to_event_associations,
-                    #     event=event_obj
-                    # )
+                # if event_obj.image_to_event_associations:
+                # pass # todo asdf
+                await self.event_dal.delete_all_images_from_event(event=event_obj)
+                await self.event_dal.delete_pot(event=event_obj)
+
                 await self.event_dal.delete_event(event_obj)
                 counts["Deleted Events"] += 1
 

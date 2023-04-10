@@ -140,10 +140,10 @@ class Image(Base):
 
 class ImageToEventAssociation(Base):
     __tablename__ = "image_to_event_association"
-    # image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
-    image_id: int = Column(
-        INTEGER, ForeignKey("image.id", ondelete="CASCADE"), primary_key=True
-    )
+    image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
+    # image_id: int = Column(
+    #     INTEGER, ForeignKey("image.id", ondelete="CASCADE"), primary_key=True
+    # )
     # event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
     event_id: int = Column(
         INTEGER, ForeignKey("event.id", ondelete="CASCADE"), primary_key=True

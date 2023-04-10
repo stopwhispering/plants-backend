@@ -42,7 +42,7 @@ def configure_root_logger(
     if log_severity_console != LogLevel.NONE:
         # create console handler
         stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
         stream_handler.setFormatter(formatter)
         stream_handler.setLevel(log_severity_console.value)
 

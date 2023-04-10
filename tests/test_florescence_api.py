@@ -109,16 +109,18 @@ async def test_create_and_abort_florescence(
     plant_valid_in_db: Plant,
     plant_dal: PlantDAL,
 ) -> None:
+    plant_id = plant_valid_in_db.id
     # FRequestNewFlorescence
     payload = {
-        "plant_id": plant_valid_in_db.id,
+        "plant_id": plant_id,
         "florescence_status": "inflorescence_appeared",
         "inflorescence_appeared_at": "2022-11-16",
         "comment": "    large & new ",
     }
     response = await ac.post("/api/active_florescences", json=payload)
     assert response.status_code == 200
-    plant_valid_in_db = await plant_dal.by_id(plant_valid_in_db.id)
+    test_db.expire(plant_valid_in_db)
+    plant_valid_in_db = await plant_dal.by_id(plant_id)
     assert len(plant_valid_in_db.florescences) == 1
     florescence_in_db = plant_valid_in_db.florescences[0]
     assert (

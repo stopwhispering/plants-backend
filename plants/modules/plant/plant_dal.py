@@ -44,11 +44,17 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.events).selectinload(Event.images),
             selectinload(Plant.events).selectinload(Event.image_to_event_associations),
             selectinload(Plant.images).selectinload(Image.keywords),
+            selectinload(Plant.image_to_plant_associations),
             selectinload(Plant.florescences),
         )
 
     def expire(self, plant: Plant) -> None:
         self.session.expire(plant)
+
+    # async def refresh(self, plant: Plant) -> None:
+    #     """refresh does not use any eager-load options
+    #     -> use expire and re-read with by_id"""
+    #     await self.session.refresh(plant)
 
     async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
         # noinspection PyTypeChecker
@@ -159,6 +165,9 @@ class PlantDAL(BaseDAL):
     async def save_plant(self, plant: Plant) -> None:
         self.session.add(plant)
         await self.session.flush()
+
+        # re-fetch plant to get eager load options
+        await self.by_id(plant.id, eager_load=True)
 
     # async def create_empty_plant(self, plant_name: str) -> Plant:
     #     new_plant = Plant(plant_name=plant_name, deleted=False, active=True)

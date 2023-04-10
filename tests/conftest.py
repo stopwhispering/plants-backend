@@ -5,25 +5,25 @@ import json
 import shutil
 from asyncio import AbstractEventLoop
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
-from sqlalchemy.orm import selectinload
 
 import plants as plants_package
 from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
 from plants.extensions import orm
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
+from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 from plants.modules.event.event_dal import EventDAL
-from plants.modules.event.models import Soil
+from plants.modules.event.models import Event, Pot, Soil
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.models import Image
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
@@ -156,20 +156,26 @@ async def plant_valid() -> Plant:
 
 @pytest_asyncio.fixture(scope="function")
 async def plant_valid_in_db(
-    test_db: AsyncSession, plant_valid: Plant, taxa_in_db: list[Taxon]
+    plant_valid: Plant, taxa_in_db: list[Taxon], plant_dal: PlantDAL
 ) -> Plant:
     """create a valid plant in the database and return it."""
     plant_valid.taxon = taxa_in_db[0]
-    test_db.add(plant_valid)
-    await test_db.commit()
+    # test_db.add(plant_valid)
+    #  # re-read to have joined relations ready
+    # await test_db.commit()
+    await plant_dal.save_plant(plant_valid)
+    # plant_valid = await plant_dal.by_id(plant_valid.id, eager_load=True)
     return plant_valid
 
 
 @pytest_asyncio.fixture(scope="function")
 async def valid_plant_in_db_with_image(
-    ac: AsyncClient, test_db: AsyncSession, plant_valid_in_db: Plant
+    ac: AsyncClient,
+    plant_valid_in_db: Plant,
+    plant_dal: PlantDAL,
 ) -> Plant:
     """upload an image for the plant and return it."""
+    plant_id = plant_valid_in_db.id
     path = Path(__file__).resolve().parent.joinpath("./static/demo_valid_plant.jpg")
     files = [
         (
@@ -177,7 +183,7 @@ async def valid_plant_in_db_with_image(
             ("demo_image_plant.jpg", path.open("rb")),
         )
     ]
-    response = await ac.post(f"/api/plants/{plant_valid_in_db.id}/images/", files=files)
+    response = await ac.post(f"/api/plants/{plant_id}/images/", files=files)
     assert response.status_code == 200
     resp = response.json()
 
@@ -189,18 +195,37 @@ async def valid_plant_in_db_with_image(
     await ac.put("/api/images/", json=payload)
 
     # reload to have image reations available
-    # noinspection PyTypeChecker
-    q = (
-        select(Plant)
-        .where(Plant.id == plant_valid_in_db.id)
-        .options(
-            selectinload(Plant.images).selectinload(Image.keywords),
-            selectinload(Plant.image_to_plant_associations),
-        )
+    plant_dal.expire(plant_valid_in_db)
+    await plant_dal.by_id(plant_id, eager_load=True)
+    assert plant_valid_in_db.images
+    return plant_valid_in_db
+
+
+@pytest_asyncio.fixture(scope="function")
+async def plant_in_db_with_image_and_events(
+    test_db: AsyncSession,
+    valid_plant_in_db_with_image: Plant,
+    soil_in_db: Soil,
+) -> Plant:
+    """Create events for plant."""
+    event = Event(
+        date="2021-01-01",
+        event_notes="Event Note 1",
+        soil=soil_in_db,
+        plant=valid_plant_in_db_with_image,
+        images=[valid_plant_in_db_with_image.images[0]],
     )
-    plant_with_image: Plant | None = (await test_db.scalars(q)).first()
-    assert plant_with_image is not None
-    return plant_with_image
+    pot = Pot(
+        event=event,
+        material=PotMaterial.TERRACOTTA,
+        shape_top=FBShapeTop.HEXAGONAL,
+        shape_side=FBShapeSide.FLAT,
+        diameter_width=Decimal(10.4),
+    )
+    test_db.add(event)
+    test_db.add(pot)
+    await test_db.flush()
+    return valid_plant_in_db_with_image
 
 
 @pytest_asyncio.fixture(scope="function")
