@@ -126,7 +126,7 @@ class Observation(Base):
         "Event",
         back_populates="observation",
         uselist=False,
-        foreign_keys=[event_id],
+        # foreign_keys=[event_id],
     )
 
 
