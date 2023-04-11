@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 from plants.exceptions import (
     CriterionNotImplementedError,
-    ImageNotAssignedToTaxonError,
     TaxonNotFoundError,
 )
 from plants.modules.image.models import Image, ImageToTaxonAssociation
@@ -42,9 +41,7 @@ class TaxonDAL(BaseDAL):
             .where(Taxon.id == taxon_id)
             .options(selectinload(Taxon.occurrence_images))
             .options(
-                selectinload(Taxon.images).selectinload(
-                    Image.image_to_taxon_associations
-                ),
+                selectinload(Taxon.images).selectinload(Image.image_to_taxon_associations),
                 selectinload(Taxon.image_to_taxon_associations),
             )
             .options(selectinload(Taxon.distribution))
@@ -75,9 +72,7 @@ class TaxonDAL(BaseDAL):
     ) -> list[Taxon]:
         query = (
             select(Taxon)
-            .where(
-                Taxon.name.ilike(taxon_name_pattern)
-            )  # ilike ~ case-insensitive like
+            .where(Taxon.name.ilike(taxon_name_pattern))  # ilike ~ case-insensitive like
             .options(selectinload(Taxon.plants))
         )
         if rank:
@@ -99,17 +94,13 @@ class TaxonDAL(BaseDAL):
             else:
                 raise CriterionNotImplementedError(key)
 
-        images: list[TaxonOccurrenceImage] = list(
-            (await self.session.scalars(query)).all()
-        )
+        images: list[TaxonOccurrenceImage] = list((await self.session.scalars(query)).all())
         return images
 
     async def get_distinct_species_as_tuples(
         self,
     ) -> TaxaWithPlantIds:
-        plant_exists_filter = and_(
-            Plant.deleted.is_(False), Plant.active  # noqa: FBT003
-        )
+        plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)  # noqa: FBT003
         has_any_plant_filter = Taxon.plants.any(
             plant_exists_filter  # type:ignore[arg-type]
         )
@@ -117,9 +108,7 @@ class TaxonDAL(BaseDAL):
         # array_agg seems to not work with int array, so we need to cast to string
         # this will, however, return a list of int not string
         plant_ids_agg = func.array_agg(Plant.id, type_=ARRAY(String))
-        query = select(
-            Taxon.family, Taxon.genus, Taxon.species, Taxon.id, plant_ids_agg
-        )
+        query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id, plant_ids_agg)
         query = query.join(Taxon.plants)
         query = query.where(has_any_plant_filter)
         # noinspection PyTypeChecker
@@ -148,9 +137,7 @@ class TaxonDAL(BaseDAL):
         self.session.add(image_to_taxon_association)
         await self.session.flush()
 
-    async def delete_taxon_to_occurrence_associations_by_gbif_id(
-        self, gbif_id: int
-    ) -> None:
+    async def delete_taxon_to_occurrence_associations_by_gbif_id(self, gbif_id: int) -> None:
         query = delete(TaxonToOccurrenceAssociation).where(
             TaxonToOccurrenceAssociation.gbif_id == gbif_id
         )
@@ -159,21 +146,19 @@ class TaxonDAL(BaseDAL):
 
     async def delete_taxon_occurrence_image_by_gbif_id(self, gbif_id: int) -> None:
         # noinspection PyTypeChecker
-        query = delete(TaxonOccurrenceImage).where(
-            TaxonOccurrenceImage.gbif_id == gbif_id
-        )
+        query = delete(TaxonOccurrenceImage).where(TaxonOccurrenceImage.gbif_id == gbif_id)
         await self.session.execute(query)
         await self.session.flush()
 
-    async def delete_image_association_from_taxon(
-        self, taxon: Taxon, link: ImageToTaxonAssociation
-    ) -> None:
-        if link not in taxon.image_to_taxon_associations:
-            raise ImageNotAssignedToTaxonError(taxon.id, link.image_id)
-        taxon.image_to_taxon_associations.remove(link)
-
-        await self.session.delete(link)
-        await self.session.flush()
+    # async def delete_image_association_from_taxon(
+    #     self, taxon: Taxon, link: ImageToTaxonAssociation
+    # ) -> None:
+    #     if link not in taxon.image_to_taxon_associations:
+    #         raise ImageNotAssignedToTaxonError(taxon.id, link.image_id)
+    #     taxon.image_to_taxon_associations.remove(link)
+    #
+    #     await self.session.delete(link)
+    #     await self.session.flush()
 
     async def exists(self, taxon_name: str) -> bool:
         # noinspection PyTypeChecker

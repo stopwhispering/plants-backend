@@ -10,9 +10,6 @@ from plants.exceptions import ImageNotFoundError
 from plants.modules.image.models import (
     Image,
     ImageKeyword,
-    ImageToEventAssociation,
-    ImageToPlantAssociation,
-    ImageToTaxonAssociation,
 )
 from plants.shared.base_dal import BaseDAL
 
@@ -28,9 +25,7 @@ class ImageDAL(BaseDAL):
         return query.options(
             selectinload(Image.keywords),
             selectinload(Image.plants),
-            selectinload(Image.image_to_plant_associations),
-            selectinload(Image.plants),
-            selectinload(Image.image_to_event_associations),
+            # selectinload(Image.image_to_plant_associations),
             selectinload(Image.events),
             selectinload(Image.image_to_taxon_associations),
             selectinload(Image.taxa),
@@ -102,33 +97,7 @@ class ImageDAL(BaseDAL):
         await self.session.delete(image)
         await self.session.flush()
 
-    async def delete_image_to_event_associations(
-        self, image: Image, links: list[ImageToEventAssociation]
-    ) -> None:
-        for link in links:
-            image.image_to_event_associations.remove(link)
-            await self.session.delete(link)
-        await self.session.flush()
-
-    async def delete_image_to_plant_associations(
-        self, image: Image, links: list[ImageToPlantAssociation]
-    ) -> None:
-        for link in links:
-            image.image_to_plant_associations.remove(link)
-            await self.session.delete(link)
-        await self.session.flush()
-
-    async def delete_image_to_taxon_associations(
-        self, image: Image, links: list[ImageToTaxonAssociation]
-    ) -> None:
-        for link in links:
-            image.image_to_taxon_associations.remove(link)
-            await self.session.delete(link)
-        await self.session.flush()
-
-    async def delete_keywords_from_image(
-        self, image: Image, keywords: list[ImageKeyword]
-    ) -> None:
+    async def delete_keywords_from_image(self, image: Image, keywords: list[ImageKeyword]) -> None:
         for keyword in keywords[:]:
             image.keywords.remove(keyword)
             await self.session.delete(keyword)

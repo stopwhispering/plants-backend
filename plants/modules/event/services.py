@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.event.schemas import EventCreateUpdate, SoilCreate, SoilUpdate
     from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.image.models import Image, ImageToEventAssociation
+    from plants.modules.image.models import Image
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
 
@@ -227,22 +227,16 @@ class EventWriter:
         # deleted images
         image_ids_saved = {image.id for image in event.images} if event.images else {}
         image_obj: Image
-        for image_obj in event_obj.images:
+        for image_obj in event_obj.images[:]:
             if image_obj.id not in image_ids_saved:
-                # don't delete photo_file object, but only the association
-                # (photo_file might be assigned to other events)
-                link: ImageToEventAssociation = next(
-                    li
-                    for li in event_obj.image_to_event_associations
-                    if li.image_id == image_obj.id
-                )
-                await self.event_dal.delete_image_to_event_associations(links=[link])
+                # don't delete image, but only the association
+                # (image might be assigned to other events, or plants, or taxa)
+                event_obj.images.remove(image_obj)
 
         # newly assigned images
         if event.images:
             for image in event.images:
                 image_obj = await self.image_dal.by_id(image.id)
-
                 # not assigned to that specific event, yet
                 if image_obj not in event_obj.images:
                     event_obj.images.append(image_obj)

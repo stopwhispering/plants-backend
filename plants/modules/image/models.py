@@ -25,35 +25,18 @@ class ImageKeyword(Base):
 
     __tablename__ = "image_keywords"
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
-
+    image: Mapped[Image] = relationship("Image", back_populates="keywords", foreign_keys=[image_id])
     keyword: str = Column(VARCHAR(60), primary_key=True, nullable=False)
-    image: Mapped[Image] = relationship("Image", back_populates="keywords")
 
 
 class ImageToPlantAssociation(Base):
     """Plants tagged at images."""
 
     __tablename__ = "image_to_plant_association"
+    __mapper_args__ = {"confirm_deleted_rows": False}
+
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
     plant_id: int = Column(INTEGER, ForeignKey("plants.id"), primary_key=True, nullable=False)
-
-    # silence warnings for deletions of associated entities
-    # (image has image_to_plant_association and plants)
-    __mapper_args__ = {
-        "confirm_deleted_rows": False,
-    }
-
-    image: Mapped[Image] = relationship(
-        "Image",
-        back_populates="image_to_plant_associations",
-        overlaps="images,plants",  # silence warnings
-    )
-
-    plant: Mapped[Plant] = relationship(
-        "Plant",
-        back_populates="image_to_plant_associations",
-        overlaps="images,plants",  # silence warnings
-    )
 
     def __repr__(self) -> str:
         return f"<ImageToPlantAssociation {self.image_id} {self.plant_id}>"
@@ -72,11 +55,8 @@ class Image(Base):
         nullable=False,
     )
     filename: str = Column(VARCHAR(150), unique=True, nullable=False)  # pseudo-key
-    # relative path to the original image file incl. file name
-    # relative_path: str = Column(VARCHAR(240), nullable=False)
     description: str | None = Column(VARCHAR(500))
     record_date_time: datetime = Column(DateTime(timezone=True), nullable=False)
-    # timestamp: datetime.datetime = Column(DateTime(timezone=True), nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
@@ -91,34 +71,22 @@ class Image(Base):
         # PurePath(self.relative_path))
 
     keywords: Mapped[list[ImageKeyword]] = relationship(
-        "ImageKeyword", back_populates="image", uselist=True
+        "ImageKeyword",
+        back_populates="image",
+        uselist=True,
+        cascade="all",
     )
 
     plants: Mapped[list[Plant]] = relationship(
         "Plant", secondary="image_to_plant_association", uselist=True
     )
-    image_to_plant_associations: Mapped[list[ImageToPlantAssociation]] = relationship(
-        "ImageToPlantAssociation",
-        back_populates="image",
-        overlaps="plants",  # silence warnings
-        uselist=True,
-    )
 
-    # 1:n relationship to the image/event link table
     events: Mapped[list[Event]] = relationship(
         "Event",
         secondary="image_to_event_association",
         back_populates="images",
     )
 
-    # todo remove if possible
-    image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
-        "ImageToEventAssociation",
-        uselist=True,
-        cascade="all",
-    )
-
-    # 1:n relationship to the image/taxon link table
     taxa: Mapped[list[Taxon]] = relationship(
         "Taxon",
         secondary="image_to_taxon_association",
@@ -127,17 +95,14 @@ class Image(Base):
     )
     image_to_taxon_associations: Mapped[list[ImageToTaxonAssociation]] = relationship(
         "ImageToTaxonAssociation",
-        back_populates="image",
-        overlaps="images,taxa",  # silence warnings
         uselist=True,
+        cascade="all",
     )
 
 
 class ImageToEventAssociation(Base):
     __tablename__ = "image_to_event_association"
-    __mapper_args__ = {
-        "confirm_deleted_rows": False  # silence warnings due to image_to_event_associations in rel.
-    }
+    __mapper_args__ = {"confirm_deleted_rows": False}
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
     event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
 
@@ -147,24 +112,8 @@ class ImageToEventAssociation(Base):
 
 class ImageToTaxonAssociation(Base):
     __tablename__ = "image_to_taxon_association"
+    __mapper_args__ = {"confirm_deleted_rows": False}
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
     taxon_id: int = Column(INTEGER, ForeignKey("taxon.id"), primary_key=True)
 
     description: str | None = Column(TEXT)
-
-    # silence warnings for deletions of associated entities (image has
-    # image_to_taxa_association and taxa)
-    __mapper_args__ = {
-        "confirm_deleted_rows": False,
-    }
-
-    image: Mapped[Image] = relationship(
-        "Image",
-        back_populates="image_to_taxon_associations",
-        overlaps="images,taxa",  # silence warnings
-    )
-    taxon: Mapped[Taxon] = relationship(
-        "Taxon",
-        back_populates="image_to_taxon_associations",
-        overlaps="images,taxa",  # silence warnings
-    )

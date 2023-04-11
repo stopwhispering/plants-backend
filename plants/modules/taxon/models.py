@@ -44,9 +44,7 @@ class Distribution(Base):
     tdwg_level: int = Column(INTEGER, nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     taxon_id: int = Column(INTEGER, ForeignKey("taxon.id"), nullable=False)
     taxon: Mapped[Taxon] = relationship("Taxon", back_populates="distribution")
@@ -95,13 +93,9 @@ class Taxon(Base):
     custom_notes: str | None = Column(TEXT)  # may be updated on web frontend
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
-    plants: Mapped[list[Plant]] = relationship(
-        "Plant", back_populates="taxon", uselist=True
-    )
+    plants: Mapped[list[Plant]] = relationship("Plant", back_populates="taxon", uselist=True)
     distribution: Mapped[list[Distribution]] = relationship(
         "Distribution", back_populates="taxon", uselist=True
     )
@@ -112,9 +106,8 @@ class Taxon(Base):
     )
     image_to_taxon_associations: Mapped[list[ImageToTaxonAssociation]] = relationship(
         "ImageToTaxonAssociation",
-        back_populates="taxon",
-        overlaps="images",  # silence warnings
         uselist=True,
+        cascade="all",
     )
 
     # taxon to occurence images (n:m)
@@ -149,9 +142,7 @@ class TaxonOccurrenceImage(Base):
     filename_thumbnail: str = Column(VARCHAR(120), nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # relationship to Taxon (m:n) via TaxonToOccurrenceImageAssociation
     taxa: Mapped[list[Taxon]] = relationship(
@@ -162,10 +153,7 @@ class TaxonOccurrenceImage(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<TaxonOccurrenceImage - {self.occurrence_id} - {self.img_no} "
-            f"{self.gbif_id}>"
-        )
+        return f"<TaxonOccurrenceImage - {self.occurrence_id} - {self.img_no} " f"{self.gbif_id}>"
 
 
 class TaxonToOccurrenceAssociation(Base):
@@ -178,9 +166,7 @@ class TaxonToOccurrenceAssociation(Base):
     img_no = Column(INTEGER, primary_key=True, nullable=False)
     gbif_id = Column(INTEGER, primary_key=True, nullable=False)
 
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # noinspection PyTypeChecker
     __table_args__ = (  # type: ignore[var-annotated]

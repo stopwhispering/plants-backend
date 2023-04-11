@@ -36,14 +36,10 @@ logger = logging.getLogger(__name__)
 NOT_AVAILABLE_IMAGE_FILENAME = "not_available.png"
 
 
-def _rename_plant_in_image_files(
-    images: list[Image], exif: PhotoMetadataAccessExifTags
-) -> None:
+def _rename_plant_in_image_files(images: list[Image], exif: PhotoMetadataAccessExifTags) -> None:
     for image in images:
         plant_names = [p.plant_name for p in image.plants]
-        exif.rewrite_plant_assignments(
-            absolute_path=image.absolute_path, plants=plant_names
-        )
+        exif.rewrite_plant_assignments(absolute_path=image.absolute_path, plants=plant_names)
 
 
 async def rename_plant_in_image_files(
@@ -119,16 +115,13 @@ async def save_image_file(
             image=path,
             size=size,
             path_thumbnail=settings.paths.path_generated_thumbnails,
-            ignore_missing_image_files=(
-                local_config.log_settings.ignore_missing_image_files
-            ),
+            ignore_missing_image_files=(local_config.log_settings.ignore_missing_image_files),
         )
 
     # save metadata in jpg exif tags
-    # plants = [await plant_dal.by_id(p) for p in plant_ids]
     await PhotoMetadataAccessExifTags().save_photo_metadata(
         image_absolute_path=path,
-        plant_names=plant_names,  # [p.plant_name for p in plants],
+        plant_names=plant_names,
         keywords=list(keywords) if keywords else [],
         description="",
     )
@@ -138,45 +131,9 @@ async def save_image_file(
 
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) -> None:
     """Delete image file and entries in db."""
-    if image.image_to_event_associations:
-        # noinspection PyTypeChecker
-        logger.info(
-            f"Deleting {len(image.image_to_event_associations)} associated Image to "
-            f"Event associations."
-        )
-        # noinspection PyTypeChecker
-        await image_dal.delete_image_to_event_associations(
-            image, image.image_to_event_associations
-        )
-        image.events = []
-    if image.image_to_plant_associations:
-        # noinspection PyTypeChecker
-        logger.info(
-            f"Deleting {len(image.image_to_plant_associations)} associated Image to "
-            f"Plant associations."
-        )
-        # noinspection PyTypeChecker
-        await image_dal.delete_image_to_plant_associations(
-            image, image.image_to_plant_associations
-        )
-        image.plants = []
-    if image.image_to_taxon_associations:
-        # noinspection PyTypeChecker
-        logger.info(
-            f"Deleting {len(image.image_to_taxon_associations)} associated Image to "
-            f"Taxon associations."
-        )
-        # noinspection PyTypeChecker
-        await image_dal.delete_image_to_taxon_associations(
-            image, image.image_to_taxon_associations
-        )
-        image.taxa = []
-    if image.keywords:
-        # noinspection PyTypeChecker
-        logger.info(f"Deleting {len(image.keywords)} associated Keywords.")
-        # noinspection PyTypeChecker
-        await image_dal.delete_keywords_from_image(image, image.keywords)
 
+    # delete in db, cascadedes to image_to_event_associations, image_to_plant_associations,
+    # and keywords
     await image_dal.delete_image(image)
 
     old_path = image.absolute_path
@@ -190,9 +147,6 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
     new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
         old_path.replace(target=new_path)
-        # os.replace(
-        #     src=old_path, dst=new_path
-        # )  # silently overwrites if privileges are sufficient
     except OSError as e:
         logger.exception(
             err_msg := f"OSError when moving file {old_path} to {new_path}", exc_info=e
@@ -232,8 +186,7 @@ async def get_occurrence_thumbnail_path(
     if len(taxon_occurrence_images) > 1:
         raise HTTPException(
             status_code=400,
-            detail=f"Multiple  occurrence images found for {gbif_id}/"
-            f"{occurrence_id}/{img_no}",
+            detail=f"Multiple  occurrence images found for {gbif_id}/" f"{occurrence_id}/{img_no}",
         )
     taxon_occurrence_image = taxon_occurrence_images[0]
 
@@ -276,13 +229,9 @@ def _generate_missing_thumbnails(images: list[Image]) -> None:
                     ),
                 )
                 count_generated += 1
-                logger.info(
-                    f"Generated thumbnail in size {size} for {image.absolute_path}"
-                )
+                logger.info(f"Generated thumbnail in size {size} for {image.absolute_path}")
 
-    logger.info(
-        f"Thumbnail Generation - Count already existed: {count_already_existed}"
-    )
+    logger.info(f"Thumbnail Generation - Count already existed: {count_already_existed}")
     logger.info(f"Thumbnail Generation - Count generated: {count_generated}")
     logger.info(f"Thumbnail Generation - Files not found: {count_files_not_found}")
 

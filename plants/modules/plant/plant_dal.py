@@ -13,7 +13,7 @@ from plants.exceptions import (
     UpdateNotImplementedError,
 )
 from plants.modules.event.models import Event
-from plants.modules.image.models import Image, ImageToPlantAssociation
+from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant, Tag
 from plants.shared.base_dal import BaseDAL
 
@@ -42,19 +42,13 @@ class PlantDAL(BaseDAL):
             selectinload(Plant.events).selectinload(Event.observation),
             selectinload(Plant.events).selectinload(Event.pot),
             selectinload(Plant.events).selectinload(Event.images),
-            selectinload(Plant.events).selectinload(Event.image_to_event_associations),
+            # selectinload(Plant.events).selectinload(Event.image_to_event_associations),
             selectinload(Plant.images).selectinload(Image.keywords),
-            selectinload(Plant.image_to_plant_associations),
             selectinload(Plant.florescences),
         )
 
     def expire(self, plant: Plant) -> None:
         self.session.expire(plant)
-
-    # async def refresh(self, plant: Plant) -> None:
-    #     """refresh does not use any eager-load options
-    #     -> use expire and re-read with by_id"""
-    #     await self.session.refresh(plant)
 
     async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
         # noinspection PyTypeChecker
@@ -193,9 +187,7 @@ class PlantDAL(BaseDAL):
         )
         return list((await self.session.scalars(query)).all())
 
-    async def set_count_stored_pollen_containers(
-        self, plant: Plant, count: int
-    ) -> None:
+    async def set_count_stored_pollen_containers(self, plant: Plant, count: int) -> None:
         plant.count_stored_pollen_containers = count
         await self.session.flush()
 
@@ -275,9 +267,7 @@ class PlantDAL(BaseDAL):
         nurseries: list[str] = list((await self.session.scalars(query)).all())
         return nurseries
 
-    async def update(  # noqa: C901 PLR0912
-        self, plant: Plant, updates: dict[str, Any]
-    ) -> None:
+    async def update(self, plant: Plant, updates: dict[str, Any]) -> None:  # noqa: C901 PLR0912
         for key, value in updates.items():
             if key == "plant_name":
                 plant.plant_name = value
@@ -341,14 +331,6 @@ class PlantDAL(BaseDAL):
         await self.session.delete(tag)
         await self.session.flush()
 
-    async def delete_image_to_plant_association(
-        self, link: ImageToPlantAssociation, plant: Plant | None = None
-    ) -> None:
-        if plant:
-            plant.image_to_plant_associations.remove(link)
-        await self.session.delete(link)
-        await self.session.flush()
-
     async def get_all_plants_with_relationships_loaded(
         self, *, include_deleted: bool = False
     ) -> list[Plant]:
@@ -389,9 +371,7 @@ class PlantDAL(BaseDAL):
     ) -> list[Plant]:
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants
-        query = select(Plant).options(
-            selectinload(Plant.events).selectinload(Event.soil)
-        )
+        query = select(Plant).options(selectinload(Plant.events).selectinload(Event.soil))
         if not include_deleted:
             query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
 

@@ -26,7 +26,7 @@ from plants.modules.pollination.models import Florescence
 from plants.modules.taxon.models import Taxon
 
 if TYPE_CHECKING:
-    from plants.modules.image.models import Image, ImageToPlantAssociation
+    from plants.modules.image.models import Image
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,7 @@ class Plant(Base):
 
     active: bool = Column(BOOLEAN, nullable=False)
     # only set if active == False
-    cancellation_reason: FBCancellationReason | None = Column(
-        sa.Enum(FBCancellationReason)
-    )
+    cancellation_reason: FBCancellationReason | None = Column(sa.Enum(FBCancellationReason))
     cancellation_date: datetime.date | None = Column(Date())
 
     generation_notes: str = Column(VARCHAR(250))
@@ -63,14 +61,6 @@ class Plant(Base):
         "Image",
         secondary="image_to_plant_association",
         overlaps="plants,image_to_plant_associations",  # silence warnings
-        uselist=True,
-    )
-
-    # todo remove if possible
-    image_to_plant_associations: Mapped[list[ImageToPlantAssociation]] = relationship(
-        "ImageToPlantAssociation",
-        back_populates="plant",
-        overlaps="plants",  # silence warnings
         uselist=True,
     )
 
@@ -104,13 +94,9 @@ class Plant(Base):
 
     plant_notes = Column(TEXT)
     preview_image_id = Column(INTEGER, ForeignKey("image.id"))
-    preview_image: Mapped[Image | None] = relationship(
-        "Image", foreign_keys=[preview_image_id]
-    )
+    preview_image: Mapped[Image | None] = relationship("Image", foreign_keys=[preview_image_id])
 
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
 
     # plant to taxon: n:1
@@ -124,9 +110,7 @@ class Plant(Base):
     events: Mapped[list[Event]] = relationship("Event", back_populates="plant")
 
     # plant to florescences: 1:n
-    florescences: Mapped[list[Florescence]] = relationship(
-        "Florescence", back_populates="plant"
-    )
+    florescences: Mapped[list[Florescence]] = relationship("Florescence", back_populates="plant")
 
     count_stored_pollen_containers = Column(INTEGER)
 
@@ -219,6 +203,4 @@ class Tag(Base):
     plant: Mapped[Plant | None] = relationship("Plant", back_populates="tags")
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)

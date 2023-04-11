@@ -23,7 +23,7 @@ from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 if TYPE_CHECKING:
     from decimal import Decimal
 
-    from plants.modules.image.models import Image, ImageToEventAssociation
+    from plants.modules.image.models import Image
     from plants.modules.plant.models import Plant
 
 logger = logging.getLogger(__name__)
@@ -96,14 +96,10 @@ class Observation(Base):
     )
 
     event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
-    # event_id = Column(INTEGER)
-
-    # plant_name = Column(VARCHAR(60), nullable=False)
     diseases: str | None = Column(TEXT)
     # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
     stem_max_diameter: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     height: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
-    # location = Column(VARCHAR(30))
     observation_notes: str | None = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
@@ -159,15 +155,4 @@ class Event(Base):
         "Image",
         secondary="image_to_event_association",
         back_populates="events",
-        # cascade="all",  # includes 'delete' but not 'delete-orphan'
-        # Note: cascade is NOT required for many-to-many association tables,
-        #       deletion is triggered automatically by SQLAlchemy
-    )
-
-    # todo remove if possible
-    image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
-        "ImageToEventAssociation",
-        uselist=True,
-        cascade="all",  # includes 'delete' but not 'delete-orphan'
-        # overlaps="events,images",
     )

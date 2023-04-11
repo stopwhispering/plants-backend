@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from plants.modules.image.models import Image, ImageKeyword, ImageToPlantAssociation
+from plants.modules.image.models import Image, ImageKeyword
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -31,30 +31,34 @@ class ImageWriter:
         updating it.
         """
         # description
-        if description != image.description and not (
-            not description and not image.description
-        ):
+        if description != image.description and not (not description and not image.description):
             image.description = description
 
         # plants
         new_plants = {await self.plant_dal.by_id(plant_id) for plant_id in plant_ids}
-        removed_image_to_plant_associations = [
-            a for a in image.image_to_plant_associations if a.plant not in new_plants
-        ]
-        added_image_to_plant_associations = [
-            ImageToPlantAssociation(
-                image=image,
-                plant=p,
-            )
-            for p in new_plants
-            if p not in image.plants
-        ]
-        for removed_image_to_plant_association in removed_image_to_plant_associations:
-            await self.plant_dal.delete_image_to_plant_association(
-                removed_image_to_plant_association
-            )
-        if added_image_to_plant_associations:
-            image.image_to_plant_associations.extend(added_image_to_plant_associations)
+        removed_plants = [p for p in image.plants if p not in new_plants]
+        # removed_image_to_plant_associations = [
+        #     a for a in image.image_to_plant_associations if a.plant_id not in plant_ids
+        # ]
+        added_plants = [p for p in new_plants if p not in image.plants]
+        # added_image_to_plant_associations = [
+        #     ImageToPlantAssociation(
+        #         image=image,
+        #         plant=p,
+        #     )
+        #     for p in new_plants
+        #     if p not in image.plants
+        # ]
+        for removed_plant in removed_plants:
+            image.plants.remove(removed_plant)
+        # for removed_image_to_plant_association in removed_image_to_plant_associations:
+        #     await self.plant_dal.delete_image_to_plant_association(
+        #         removed_image_to_plant_association
+        #     )
+        if added_plants:
+            image.plants.extend(added_plants)
+        # if added_image_to_plant_associations:
+        #     image.image_to_plant_associations.extend(added_image_to_plant_associations)
 
         # keywords
         current_keywords = {k.keyword for k in image.keywords}
@@ -93,8 +97,7 @@ class ImageWriter:
 
         if keywords:
             keywords_orm = [
-                ImageKeyword(image_id=image.id, image=image, keyword=k)
-                for k in keywords
+                ImageKeyword(image_id=image.id, image=image, keyword=k) for k in keywords
             ]
             await self.image_dal.create_new_keywords_for_image(image, keywords_orm)
         return image

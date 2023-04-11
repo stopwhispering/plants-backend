@@ -16,7 +16,7 @@ from plants.shared.base_dal import BaseDAL
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from plants.modules.image.models import Image, ImageToEventAssociation
+    from plants.modules.image.models import Image
     from plants.modules.plant.models import Plant
 
 
@@ -124,15 +124,6 @@ class EventDAL(BaseDAL):
         if not event:
             raise EventNotFoundError(event_id)
         return event
-
-    async def delete_image_to_event_associations(
-        self, links: list[ImageToEventAssociation], event: Event | None = None
-    ) -> None:
-        for link in links:
-            if event:
-                event.image_to_event_associations.remove(link)
-            await self.session.delete(link)
-        await self.session.flush()
 
     async def delete_event(self, event: Event) -> None:
         await self.session.delete(event)

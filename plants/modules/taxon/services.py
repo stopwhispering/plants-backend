@@ -21,7 +21,7 @@ from plants.modules.taxon.models import Distribution, Taxon
 
 if TYPE_CHECKING:
     from plants.modules.image.image_dal import ImageDAL
-    from plants.modules.taxon.schemas import TaxonCreate, TaxonImageUpdate, TaxonUpdate
+    from plants.modules.taxon.schemas import TaxonCreate, TaxonUpdate
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
@@ -158,10 +158,7 @@ async def save_new_taxon(
         # URLs
         loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
 
-        logger.info(
-            f"Starting background task to load occurences for gbif_id "
-            f"{str(gbif_id)}"
-        )
+        logger.info(f"Starting background task to load occurences for gbif_id " f"{str(gbif_id)}")
         background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
 
     return taxon
@@ -176,47 +173,41 @@ async def modify_taxon(
         await taxon_dal.update(taxon, {"custom_notes": taxon_modified.custom_notes})
 
     # changes to images attached to the taxon
-    image: TaxonImageUpdate
-    image_ids_saved = (
-        {image.id for image in taxon_modified.images} if taxon_modified.images else {}
-    )
+    new_image_ids = {image.id for image in taxon_modified.images} if taxon_modified.images else {}
+    new_images = {await image_dal.by_id(image_id) for image_id in new_image_ids}
+
+    # remove images that are no longer assigned to the taxon
     image_obj: Image
-    for image_obj in taxon.images:
-        if image_obj.id not in image_ids_saved:
-            # don't delete photo_file object, but only the association
-            # (photo_file might be assigned otherwise)
-            link: ImageToTaxonAssociation
-            deleted_link = next(
-                link
-                for link in taxon.image_to_taxon_associations
-                if link.image.id == image_obj.id
-            )
-            await taxon_dal.delete_image_association_from_taxon(taxon, deleted_link)
-
+    for image_obj in taxon.images[:]:
+        if image_obj.id not in new_image_ids:
+            taxon.images.remove(image_obj)
     # newly assigned images
-    if taxon_modified.images:
-        for image in taxon_modified.images:
-            image_obj = await image_dal.by_id(image.id)
+    # if taxon_modified.images:
+    for image_obj in new_images:
+        image_description = (
+            next(image.description for image in taxon_modified.images if image.id == image_obj.id)
+            if taxon_modified.images
+            else None
+        )
 
-            # update link table including the photo_file description
-            current_taxon_to_image_link = [
-                t for t in taxon.image_to_taxon_associations if t.image == image_obj
-            ]
+        current_taxon_to_image_link = [
+            t for t in taxon.image_to_taxon_associations if t.image_id == image_obj.id
+        ]
 
-            # insert link
-            if not current_taxon_to_image_link:
-                link = ImageToTaxonAssociation(
-                    image_id=image_obj.id,
-                    taxon_id=taxon.id,
-                    description=image.description,
-                )
-                await taxon_dal.create_image_to_taxon_association(link)
-                logger.info(f"Image {image_obj.id} assigned to taxon {taxon.name}")
+        # insert link
+        if not current_taxon_to_image_link:
+            link = ImageToTaxonAssociation(
+                image_id=image_obj.id,
+                taxon_id=taxon.id,
+                description=image_description,
+            )
+            await taxon_dal.create_image_to_taxon_association(link)
+            logger.info(f"Image {image_obj.id} assigned to taxon {taxon.name}")
 
-            # update description
-            elif current_taxon_to_image_link[0].description != image.description:
-                current_taxon_to_image_link[0].description = image.description
-                logger.info(
-                    f"Update description of link between image "
-                    f"{image_obj.id} and taxon {taxon.name}"
-                )
+        # update description
+        elif current_taxon_to_image_link[0].description != image_description:
+            current_taxon_to_image_link[0].description = image_description
+            logger.info(
+                f"Update description of link between image "
+                f"{image_obj.id} and taxon {taxon.name}"
+            )
