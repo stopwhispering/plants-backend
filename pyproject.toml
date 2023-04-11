@@ -93,6 +93,7 @@ exclude_lines = [
 [tool.ruff]
 # rule sources; default: pycodestyle (`E`) and Pyflakes (`F`) codes
 select = [
+#    "ALL",
     "E",  # pycodestyle
     "F",  # Pyflakes
     "W",  # Warning
@@ -241,3 +242,12 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "pydantic2ts.*"
 ignore_missing_imports = true
+
+#[tool.vulture]
+#ignore_decorators = ["@pytest_asyncio.fixture", "@pytest.fixture", "@router*", "@validator"]
+#ignore_names = ["Config", "last_updated_at", "created_at", "id"]
+##make_whitelist = true
+##min_confidence = 70
+#paths = ["./plants", "./tests"]
+##sort_by_size = true
+##verbose = true

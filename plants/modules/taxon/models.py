@@ -19,7 +19,7 @@ from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
-from plants.modules.image.models import Image, ImageToTaxonAssociation
+from plants.modules.image.models import Image
 from plants.modules.taxon.enums import FBRank
 
 if TYPE_CHECKING:
@@ -102,12 +102,10 @@ class Taxon(Base):
 
     # 1:n relationship to the photo_file/taxon link table
     images: Mapped[list[Image]] = relationship(
-        "Image", secondary="image_to_taxon_association", uselist=True
-    )
-    image_to_taxon_associations: Mapped[list[ImageToTaxonAssociation]] = relationship(
-        "ImageToTaxonAssociation",
+        "Image",
+        back_populates="taxa",
+        secondary="image_to_taxon_association",
         uselist=True,
-        cascade="all",
     )
 
     # taxon to occurence images (n:m)

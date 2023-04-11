@@ -190,9 +190,9 @@ async def modify_taxon(
             else None
         )
 
-        current_taxon_to_image_link = [
-            t for t in taxon.image_to_taxon_associations if t.image_id == image_obj.id
-        ]
+        current_taxon_to_image_link = await taxon_dal.fetch_image_to_taxon_association(
+            image_id=image_obj.id, taxon_id=taxon.id
+        )
 
         # insert link
         if not current_taxon_to_image_link:
@@ -205,8 +205,8 @@ async def modify_taxon(
             logger.info(f"Image {image_obj.id} assigned to taxon {taxon.name}")
 
         # update description
-        elif current_taxon_to_image_link[0].description != image_description:
-            current_taxon_to_image_link[0].description = image_description
+        elif current_taxon_to_image_link.description != image_description:
+            current_taxon_to_image_link.description = image_description
             logger.info(
                 f"Update description of link between image "
                 f"{image_obj.id} and taxon {taxon.name}"

@@ -28,7 +28,7 @@ class ImageDAL(BaseDAL):
             # selectinload(Image.image_to_plant_associations),
             selectinload(Image.events),
             selectinload(Image.image_to_taxon_associations),
-            selectinload(Image.taxa),
+            # selectinload(Image.taxa),
             selectinload(Image.keywords),
         )
 

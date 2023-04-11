@@ -25,6 +25,7 @@ class ImageKeyword(Base):
 
     __tablename__ = "image_keywords"
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
+    # noinspection PyTypeChecker
     image: Mapped[Image] = relationship("Image", back_populates="keywords", foreign_keys=[image_id])
     keyword: str = Column(VARCHAR(60), primary_key=True, nullable=False)
 
@@ -67,8 +68,6 @@ class Image(Base):
     @property
     def absolute_path(self) -> Path:
         return settings.paths.path_original_photos_uploaded.joinpath(self.filename)
-        # return settings.paths.path_photos.parent.joinpath(
-        # PurePath(self.relative_path))
 
     keywords: Mapped[list[ImageKeyword]] = relationship(
         "ImageKeyword",
@@ -78,7 +77,7 @@ class Image(Base):
     )
 
     plants: Mapped[list[Plant]] = relationship(
-        "Plant", secondary="image_to_plant_association", uselist=True
+        "Plant", back_populates="images", secondary="image_to_plant_association", uselist=True
     )
 
     events: Mapped[list[Event]] = relationship(
@@ -89,12 +88,15 @@ class Image(Base):
 
     taxa: Mapped[list[Taxon]] = relationship(
         "Taxon",
+        viewonly=True,  # only image_to_taxon_associations may be modified
+        back_populates="images",
         secondary="image_to_taxon_association",
-        overlaps="image_to_taxon_associations,images",  # silence warnings
         uselist=True,
     )
+
     image_to_taxon_associations: Mapped[list[ImageToTaxonAssociation]] = relationship(
         "ImageToTaxonAssociation",
+        viewonly=True,
         uselist=True,
         cascade="all",
     )

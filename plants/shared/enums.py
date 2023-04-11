@@ -6,7 +6,7 @@ from enum import Enum
 class ProposalEntity(str, Enum):
     """Proposal entities that may be requested by frontend."""
 
-    SOIL = "SoilProposals"
+    # SOIL = "SoilProposals"
     NURSERY = "NurserySourceProposals"
     KEYWORD = "KeywordProposals"
 

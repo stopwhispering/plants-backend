@@ -42,7 +42,7 @@ class TaxonDAL(BaseDAL):
             .options(selectinload(Taxon.occurrence_images))
             .options(
                 selectinload(Taxon.images).selectinload(Image.image_to_taxon_associations),
-                selectinload(Taxon.image_to_taxon_associations),
+                # selectinload(Taxon.image_to_taxon_associations),
             )
             .options(selectinload(Taxon.distribution))
             .limit(1)
@@ -150,15 +150,18 @@ class TaxonDAL(BaseDAL):
         await self.session.execute(query)
         await self.session.flush()
 
-    # async def delete_image_association_from_taxon(
-    #     self, taxon: Taxon, link: ImageToTaxonAssociation
-    # ) -> None:
-    #     if link not in taxon.image_to_taxon_associations:
-    #         raise ImageNotAssignedToTaxonError(taxon.id, link.image_id)
-    #     taxon.image_to_taxon_associations.remove(link)
-    #
-    #     await self.session.delete(link)
-    #     await self.session.flush()
+    async def fetch_image_to_taxon_association(
+        self, image_id: int, taxon_id: int
+    ) -> ImageToTaxonAssociation | None:
+        query = select(ImageToTaxonAssociation)
+        query = query.where(
+            and_(  # type:ignore[arg-type]
+                ImageToTaxonAssociation.image_id == image_id,
+                ImageToTaxonAssociation.taxon_id == taxon_id,
+            )
+        )
+        link: ImageToTaxonAssociation | None = (await self.session.scalars(query)).first()
+        return link
 
     async def exists(self, taxon_name: str) -> bool:
         # noinspection PyTypeChecker

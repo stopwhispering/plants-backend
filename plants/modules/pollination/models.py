@@ -78,9 +78,7 @@ class Florescence(Base):
     last_flower_closed_at: datetime.date | None = Column(DATE)
 
     # FlorescenceStatus (inflorescence_appeared | flowering | finished)
-    florescence_status: FlorescenceStatus = Column(
-        Enum(FlorescenceStatus), nullable=False
-    )
+    florescence_status: FlorescenceStatus = Column(Enum(FlorescenceStatus), nullable=False)
 
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date: datetime.date | None = Column(DATE)
@@ -92,10 +90,9 @@ class Florescence(Base):
     comment: str | None = Column(TEXT)
 
     last_update_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
-    last_update_context = Column(VARCHAR(30))
-    creation_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
-    )
+    # last_update_context = Column(VARCHAR(30))
+    last_update_context = Column(Enum(Context))
+    creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     creation_context = Column(Enum(Context), nullable=False)
 
     # pollinations of this florescence (with plant as mother plant)
@@ -127,17 +124,11 @@ class Pollination(Base):
         "Florescence", back_populates="pollinations", foreign_keys=[florescence_id]
     )
 
-    seed_capsule_plant_id: int = Column(
-        INTEGER, ForeignKey("plants.id"), nullable=False
-    )
+    seed_capsule_plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     # noinspection PyTypeChecker
-    seed_capsule_plant: Mapped[Plant] = relationship(
-        "Plant", foreign_keys=[seed_capsule_plant_id]
-    )
+    seed_capsule_plant: Mapped[Plant] = relationship("Plant", foreign_keys=[seed_capsule_plant_id])
 
-    pollen_donor_plant_id: int = Column(
-        INTEGER, ForeignKey("plants.id"), nullable=False
-    )
+    pollen_donor_plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     # noinspection PyTypeChecker
     pollen_donor_plant: Mapped[Plant] = relationship(
         "Plant",  # back_populates="pollinations_as_donor_plant",
@@ -160,9 +151,7 @@ class Pollination(Base):
     pollinated_at = Column(DateTime(timezone=True))
     label_color: str | None = Column(VARCHAR(60))
     # ( attempt | seed_capsule | seed | germinated | unknown | self_pollinated )
-    pollination_status: PollinationStatus = Column(
-        sa.Enum(PollinationStatus), nullable=False
-    )
+    pollination_status: PollinationStatus = Column(sa.Enum(PollinationStatus), nullable=False)
     ongoing: bool = Column(BOOLEAN, nullable=False)
 
     # first harvest in case of multiple harvests
@@ -185,9 +174,9 @@ class Pollination(Base):
     comment = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
-    last_update_context = Column(VARCHAR(30))
+    # last_update_context = Column(VARCHAR(30))
+    last_update_context = Column(Enum(Context))
 
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow
-    )
-    creation_at_context = Column(VARCHAR(30), nullable=False)  # todo enum
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+    # creation_at_context = Column(VARCHAR(30), nullable=False)  # todo enum Context
+    creation_at_context = Column(sa.Enum(Context), nullable=False)

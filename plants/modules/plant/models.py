@@ -59,8 +59,8 @@ class Plant(Base):
 
     images: Mapped[list[Image]] = relationship(
         "Image",
+        back_populates="plants",
         secondary="image_to_plant_association",
-        overlaps="plants,image_to_plant_associations",  # silence warnings
         uselist=True,
     )
 
@@ -101,7 +101,9 @@ class Plant(Base):
 
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey("taxon.id"))
-    taxon: Mapped[Taxon | None] = relationship("Taxon", back_populates="plants")
+    taxon: Mapped[Taxon | None] = relationship(
+        "Taxon", back_populates="plants", foreign_keys=[taxon_id]
+    )
 
     # plant to tag: 1:n
     tags: Mapped[list[Tag]] = relationship("Tag", back_populates="plant")
