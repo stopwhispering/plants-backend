@@ -24,7 +24,6 @@ db = next(get_db())
 def create_model_for_probability_of_successful_germination():
     """Predict whether a seed is going to germinate, i.e. pollination reaches GERMINATED
     status."""
-    pass
     # feature_container = create_features(
     # model_type=ModelType.POLLINATION_TO_GERMINATION)
     # df = create_data(feature_container=feature_container)

@@ -64,9 +64,7 @@ async def read_active_florescences(
             "plant_name": flor.plant.plant_name if flor.plant else None,
             "plant_preview_image_id": flor.plant.preview_image_id,
             "florescence_status": flor.florescence_status,
-            "inflorescence_appeared_at": format_api_date(
-                flor.inflorescence_appeared_at
-            ),
+            "inflorescence_appeared_at": format_api_date(flor.inflorescence_appeared_at),
             "comment": flor.comment,
             "branches_count": flor.branches_count,
             "flowers_count": flor.flowers_count,
@@ -110,13 +108,11 @@ async def update_active_florescence(
     ):
         raise HTTPException(
             status_code=400,
-            detail="flower_color_second is required "
-            "if flower_colors_differentiation is set",
+            detail="flower_color_second is required " "if flower_colors_differentiation is set",
         )
 
     if (
-        edited_florescence_data.flower_colors_differentiation
-        == FlowerColorDifferentiation.UNIFORM
+        edited_florescence_data.flower_colors_differentiation == FlowerColorDifferentiation.UNIFORM
         and edited_florescence_data.flower_color_second
     ):
         raise HTTPException(
@@ -126,8 +122,7 @@ async def update_active_florescence(
 
     if (
         edited_florescence_data.flower_color
-        and edited_florescence_data.flower_color_second
-        == edited_florescence_data.flower_color
+        and edited_florescence_data.flower_color_second == edited_florescence_data.flower_color
     ):
         raise HTTPException(
             status_code=400,
@@ -138,13 +133,11 @@ async def update_active_florescence(
     updates["first_flower_opened_at"] = parse_api_date(
         edited_florescence_data.first_flower_opened_at
     )
-    updates["last_flower_closed_at"] = parse_api_date(
-        edited_florescence_data.last_flower_closed_at
-    )
+    updates["last_flower_closed_at"] = parse_api_date(edited_florescence_data.last_flower_closed_at)
     updates["inflorescence_appeared_at"] = parse_api_date(
         edited_florescence_data.inflorescence_appeared_at
     )
-    updates["last_update_context"] = Context.API.value
+    updates["last_update_context"] = Context.API
 
     await florescence_dal.update_florescence(florescence, updates=updates)
 
@@ -160,18 +153,14 @@ async def create_new_florescence(
         plant_id=new_florescence_data.plant_id,
         plant=plant,
         florescence_status=new_florescence_data.florescence_status,
-        inflorescence_appeared_at=parse_api_date(
-            new_florescence_data.inflorescence_appeared_at
-        ),
+        inflorescence_appeared_at=parse_api_date(new_florescence_data.inflorescence_appeared_at),
         comment=new_florescence_data.comment,
         creation_context=Context.API,
     )
     await florescence_dal.create_florescence(florescence)
 
 
-async def remove_florescence(
-    florescence: Florescence, florescence_dal: FlorescenceDAL
-) -> None:
+async def remove_florescence(florescence: Florescence, florescence_dal: FlorescenceDAL) -> None:
     """Delete a florescence."""
     if florescence.pollinations:
         raise BaseError(detail={"message": "Florescence has pollinations"})

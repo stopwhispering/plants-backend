@@ -64,9 +64,7 @@ async def _read_pollination_attempts(
     """Read all pollination attempts for a plant and a pollen donor plus the other way
     around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
-    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(
-        pollen_donor, plant
-    )
+    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(pollen_donor, plant)
     attempts = []
     pollination: Pollination
     for pollination in attempts_orm + attempts_orm_reverse:
@@ -89,9 +87,7 @@ async def _read_pollination_attempts(
 async def _read_resulting_plants(
     plant: Plant, pollen_donor: Plant, plant_dal: PlantDAL
 ) -> list[BPollinationResultingPlant]:
-    resulting_plants_orm: list[Plant] = await plant_dal.get_children(
-        plant, pollen_donor
-    )
+    resulting_plants_orm: list[Plant] = await plant_dal.get_children(plant, pollen_donor)
     resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
     resulting_plants = []
     for plant in resulting_plants_orm + resulting_plants_orm_reverse:
@@ -100,9 +96,7 @@ async def _read_resulting_plants(
             "plant_id": plant.id,
             "plant_name": plant.plant_name,
         }
-        resulting_plants.append(
-            BPollinationResultingPlant.parse_obj(resulting_plant_dict)
-        )
+        resulting_plants.append(BPollinationResultingPlant.parse_obj(resulting_plant_dict))
     return resulting_plants
 
 
@@ -199,9 +193,7 @@ async def read_potential_pollen_donors(
             "plant_id": frozen_pollen_plant.id,
             "plant_name": frozen_pollen_plant.plant_name,
             "pollen_type": PollenType.FROZEN.value,
-            "count_stored_pollen_containers": (
-                frozen_pollen_plant.count_stored_pollen_containers
-            ),
+            "count_stored_pollen_containers": (frozen_pollen_plant.count_stored_pollen_containers),
             "already_ongoing_attempt": already_ongoing_attempt,
             "probability_pollination_to_seed": get_probability_pollination_to_seed(
                 florescence=florescence,
@@ -236,15 +228,11 @@ async def save_new_pollination(
     """Save a new pollination attempt."""
     # validate data quality
     florescence = await florescence_dal.by_id(new_pollination_data.florescence_id)
-    seed_capsule_plant = await plant_dal.by_id(
-        new_pollination_data.seed_capsule_plant_id
-    )
+    seed_capsule_plant = await plant_dal.by_id(new_pollination_data.seed_capsule_plant_id)
     if florescence.plant_id != seed_capsule_plant.id:
         raise BaseError("Plant ID mismatch")
 
-    pollen_donor_plant = await plant_dal.by_id(
-        new_pollination_data.pollen_donor_plant_id
-    )
+    pollen_donor_plant = await plant_dal.by_id(new_pollination_data.pollen_donor_plant_id)
 
     if new_pollination_data.label_color_rgb not in COLORS_MAP:
         raise UnknownColorError(new_pollination_data.label_color_rgb)
@@ -283,15 +271,13 @@ async def save_new_pollination(
             new_pollination_data.label_color_rgb
         ],  # save the name of color, not the hex value
         pollination_status=PollinationStatus.ATTEMPT,
-        creation_at_context=Context.API.value,
+        creation_at_context=Context.API,
     )
 
     await pollination_dal.create(pollination)
 
 
-async def remove_pollination(
-    pollination: Pollination, pollination_dal: PollinationDAL
-) -> None:
+async def remove_pollination(pollination: Pollination, pollination_dal: PollinationDAL) -> None:
     """Delete a pollination attempt."""
     await pollination_dal.delete(pollination)
 
@@ -309,10 +295,7 @@ async def update_pollination(
     ):
         raise HTTPException(
             400,
-            detail={
-                "message": "Seed capsule plant and pollen donor plant cannot be "
-                "changed."
-            },
+            detail={"message": "Seed capsule plant and pollen donor plant cannot be " "changed."},
         )
 
     # semantic validation
@@ -329,9 +312,7 @@ async def update_pollination(
     if pollination_data.first_seeds_sown == 0:
         raise HTTPException(
             500,
-            detail={
-                "message": '0 not allowed for "first seeds sown". Set empty instead.'
-            },
+            detail={"message": '0 not allowed for "first seeds sown". Set empty instead.'},
         )
     if (
         pollination_data.first_seeds_sown is not None
@@ -339,9 +320,7 @@ async def update_pollination(
     ):
         germination_rate = round(
             float(
-                pollination_data.first_seeds_germinated
-                * 100
-                / pollination_data.first_seeds_sown
+                pollination_data.first_seeds_germinated * 100 / pollination_data.first_seeds_sown
             ),
             0,
         )
@@ -353,32 +332,26 @@ async def update_pollination(
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["germination_rate"] = germination_rate
-    updates["last_update_context"] = Context.API.value
+    updates["last_update_context"] = Context.API
     await pollination_dal.update(pollination, updates)
 
 
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
 ) -> list[dict[str, object]]:
-    ongoing_pollinations_orm: list[
-        Pollination
-    ] = await pollination_dal.get_ongoing_pollinations()
+    ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations()
     ongoing_pollinations: list[dict[str, object]] = []
     p: Pollination
     for p in ongoing_pollinations_orm:
         label_color_rgb = (
-            COLORS_MAP_TO_RGB.get(p.label_color, "transparent")
-            if p.label_color
-            else None
+            COLORS_MAP_TO_RGB.get(p.label_color, "transparent") if p.label_color else None
         )
         ongoing_pollination_dict = {
             "seed_capsule_plant_id": p.seed_capsule_plant_id,
             "seed_capsule_plant_name": p.seed_capsule_plant.plant_name,
             "pollen_donor_plant_id": p.pollen_donor_plant_id,
             "pollen_donor_plant_name": p.pollen_donor_plant.plant_name,
-            "pollinated_at": format_api_datetime(
-                p.pollinated_at
-            ),  # e.g. '2022-11-16 12:06'
+            "pollinated_at": format_api_datetime(p.pollinated_at),  # e.g. '2022-11-16 12:06'
             "pollen_type": p.pollen_type,
             "count_attempted": p.count_attempted,
             "count_pollinated": p.count_pollinated,

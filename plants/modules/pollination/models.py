@@ -90,7 +90,6 @@ class Florescence(Base):
     comment: str | None = Column(TEXT)
 
     last_update_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
-    # last_update_context = Column(VARCHAR(30))
     last_update_context = Column(Enum(Context))
     creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     creation_context = Column(Enum(Context), nullable=False)
@@ -174,9 +173,7 @@ class Pollination(Base):
     comment = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
-    # last_update_context = Column(VARCHAR(30))
     last_update_context = Column(Enum(Context))
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-    # creation_at_context = Column(VARCHAR(30), nullable=False)  # todo enum Context
     creation_at_context = Column(sa.Enum(Context), nullable=False)
