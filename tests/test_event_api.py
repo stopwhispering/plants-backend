@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from sqlalchemy import select
 
-from plants.modules.event.models import Event, Pot, Soil
+from plants.modules.event.models import Event, Observation, Pot, Soil
 from plants.modules.image.models import Image, ImageToEventAssociation
 
 if TYPE_CHECKING:
@@ -67,6 +67,7 @@ async def test_delete_event(
     event_id = plant_in_db_with_image_and_events.events[0].id
     soil_id = plant_in_db_with_image_and_events.events[0].soil.id
     pot_id = plant_in_db_with_image_and_events.events[0].pot.id
+    observation_id = plant_in_db_with_image_and_events.events[0].observation.id
 
     payload = {"plants_to_events": {plant_id: []}}  # FRequestCreateOrUpdateEvent
     # update (including deletion) events via api
@@ -87,9 +88,7 @@ async def test_delete_event(
     assert len(events) == 0
 
     # check image assignment is deleted
-    query = select(ImageToEventAssociation).where(
-        ImageToEventAssociation.event_id == event_id
-    )
+    query = select(ImageToEventAssociation).where(ImageToEventAssociation.event_id == event_id)
     links = (await test_db.scalars(query)).all()
     assert len(links) == 0
 
@@ -102,6 +101,11 @@ async def test_delete_event(
     query = select(Pot).where(Pot.id == pot_id)
     pot = (await test_db.scalars(query)).first()
     assert not pot
+
+    # check observation is deleted
+    query = select(Observation).where(Observation.id == observation_id)
+    observation = (await test_db.scalars(query)).first()
+    assert not observation
 
     # check soil is not deleted
     query = select(Soil).where(Soil.id == soil_id)

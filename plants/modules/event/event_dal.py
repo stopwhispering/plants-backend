@@ -98,9 +98,7 @@ class EventDAL(BaseDAL):
         query = select(Soil).where(Soil.soil_name == soil_name)
         return (await self.session.scalars(query)).first()
 
-    async def get_event_by_plant_and_date(
-        self, plant: Plant, event_date: str
-    ) -> Event | None:
+    async def get_event_by_plant_and_date(self, plant: Plant, event_date: str) -> Event | None:
         # noinspection PyTypeChecker
         query = (
             select(Event)
@@ -134,22 +132,6 @@ class EventDAL(BaseDAL):
             if event:
                 event.image_to_event_associations.remove(link)
             await self.session.delete(link)
-        await self.session.flush()
-
-    # todo replace with cascade?
-    async def delete_all_images_from_event(self, event: Event) -> None:
-        """Remove image associations from event."""
-        for link in event.image_to_event_associations:
-            event.image_to_event_associations.remove(link)
-            await self.session.delete(link)
-        for image in event.images:
-            event.images.remove(image)
-        await self.session.flush()
-
-    # todo replace with cascade?
-    async def delete_pot(self, event: Event) -> None:
-        if event.pot:
-            await self.session.delete(event.pot)
         await self.session.flush()
 
     async def delete_event(self, event: Event) -> None:

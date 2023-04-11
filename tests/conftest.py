@@ -22,7 +22,7 @@ from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 from plants.modules.event.event_dal import EventDAL
-from plants.modules.event.models import Event, Pot, Soil
+from plants.modules.event.models import Event, Observation, Pot, Soil
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.models import Plant, Tag
@@ -222,7 +222,13 @@ async def plant_in_db_with_image_and_events(
         shape_side=FBShapeSide.FLAT,
         diameter_width=Decimal(10.4),
     )
+    observation = Observation(
+        event=event,
+        diseases="some disease",
+    )
+
     test_db.add(event)
+    test_db.add(observation)
     test_db.add(pot)
     await test_db.flush()
     return valid_plant_in_db_with_image
@@ -274,12 +280,8 @@ def set_test_paths() -> None:
     plants_package.local_config.log_settings.log_level_file = LogLevel.NONE
 
     plants_package.settings.paths.path_photos = Path("/common/plants_test/photos")
-    plants_package.settings.paths.path_deleted_photos = Path(
-        "/common/plants_test/photos/deleted"
-    )
-    plants_package.settings.paths.path_pickled_ml_models = Path(
-        "/common/plants_test/pickled"
-    )
+    plants_package.settings.paths.path_deleted_photos = Path("/common/plants_test/photos/deleted")
+    plants_package.settings.paths.path_pickled_ml_models = Path("/common/plants_test/pickled")
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -309,9 +311,7 @@ def valid_simple_plant_dict() -> dict[str, Any]:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def another_valid_plant_in_db(
-    test_db: AsyncSession, taxa_in_db: list[Taxon]
-) -> Plant:
+async def another_valid_plant_in_db(test_db: AsyncSession, taxa_in_db: list[Taxon]) -> Plant:
     """create a valid plant in the database and return it."""
     new_plant_data = {
         "plant_name": "Gasteria bicolor var. fallax",
@@ -401,9 +401,7 @@ async def taxa_in_db(test_db: AsyncSession) -> list[Taxon]:
 @pytest_asyncio.fixture(scope="function")
 async def trained_pollination_ml_model() -> None:
     path_pickled_demo_pipeline = (
-        Path(__file__)
-        .resolve()
-        .parent.joinpath("./static/demo_pollination_estimator.pkl")
+        Path(__file__).resolve().parent.joinpath("./static/demo_pollination_estimator.pkl")
     )
     target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
         FILENAME_PICKLED_POLLINATION_ESTIMATOR
@@ -469,9 +467,7 @@ async def finished_pollinations_in_db(
 @pytest_asyncio.fixture(scope="function")
 async def florescence_dict() -> dict[str, Any]:
     """Read florescence dict from json; has no plant attached."""
-    path_florescence = (
-        Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
-    )
+    path_florescence = Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
     with path_florescence.open() as f:
         return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 
@@ -480,9 +476,7 @@ async def florescence_dict() -> dict[str, Any]:
 async def pollination_dict() -> dict[str, Any]:
     """Read pollination dict from json; has no florescence, seed_capsule_plant, or
     pollen_donor_plant attached."""
-    path_pollination = (
-        Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
-    )
+    path_pollination = Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
     with path_pollination.open() as f:
         return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
 

@@ -38,9 +38,7 @@ async def create_soil(soil: SoilCreate, event_dal: EventDAL) -> Soil:
     if same_name_soil:
         raise SoilNotUniqueError(soil.soil_name.strip())
 
-    soil_obj = Soil(
-        soil_name=soil.soil_name, mix=soil.mix, description=soil.description
-    )
+    soil_obj = Soil(soil_name=soil.soil_name, mix=soil.mix, description=soil.description)
     await event_dal.create_soil(soil_obj)
     logger.info(f"Created soil {soil_obj.id} - {soil_obj.soil_name}")
     return soil_obj
@@ -90,14 +88,10 @@ class EventWriter:
         # create a new one, then that event in database will be modified, not deleted
         # and re-created
         for event in [e for e in events if not e.id]:
-            existing_event = await self.event_dal.get_event_by_plant_and_date(
-                plant_obj, event.date
-            )
+            existing_event = await self.event_dal.get_event_by_plant_and_date(plant_obj, event.date)
             if existing_event is not None:
                 event.id = existing_event.id
-                logger.info(
-                    f"Identified event without id from browser as id {event.id}"
-                )
+                logger.info(f"Identified event without id from browser as id {event.id}")
         event_ids = [e.id for e in events]
         logger.info(f"Updating {len(events)} events ({event_ids})for plant {plant_id}")
 
@@ -105,12 +99,9 @@ class EventWriter:
         event_obj: Optional[Event]
         for event_obj in plant_obj.events:
             if event_obj.id not in event_ids:
+                # deleting an event includes deleting all image associations, pots, and
+                # observations depending on the event via CASCADE
                 logger.info(f"Deleting event {event_obj}")
-                # if event_obj.image_to_event_associations:
-                # pass # todo asdf
-                await self.event_dal.delete_all_images_from_event(event=event_obj)
-                await self.event_dal.delete_pot(event=event_obj)
-
                 await self.event_dal.delete_event(event_obj)
                 counts["Deleted Events"] += 1
 
@@ -121,9 +112,7 @@ class EventWriter:
             if not event.id:
                 # create event record
                 logger.info("Creating event.")
-                event_obj = Event(
-                    date=event.date, event_notes=event.event_notes, plant=plant_obj
-                )
+                event_obj = Event(date=event.date, event_notes=event.event_notes, plant=plant_obj)
                 await self.event_dal.create_event(event_obj)
                 counts["Added Events"] += 1
 
@@ -225,13 +214,9 @@ class EventWriter:
             event_obj.observation = None
         if event.observation and event_obj.observation:
             event_obj.observation.diseases = event.observation.diseases
-            event_obj.observation.observation_notes = (
-                event.observation.observation_notes
-            )
+            event_obj.observation.observation_notes = event.observation.observation_notes
             event_obj.observation.height = event.observation.height
-            event_obj.observation.stem_max_diameter = (
-                event.observation.stem_max_diameter
-            )
+            event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter
 
     async def _create_or_update_event_images(
         self,
@@ -272,9 +257,7 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[dict[str
     plants = await plant_dal.get_all_plants_with_events_loaded()
     for plant in plants:
         # if events := [e for e in plant.events if e.soil_id]:
-        if events := [
-            e for e in plant.events if e.soil is not None and e.soil.id is not None
-        ]:
+        if events := [e for e in plant.events if e.soil is not None and e.soil.id is not None]:
             latest_event: Event = max(events, key=attrgetter("date"))
             soil_counter[latest_event.soil.id] += 1
 

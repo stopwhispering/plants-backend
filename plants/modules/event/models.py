@@ -42,14 +42,10 @@ class Soil(Base):
     mix: str = Column(TEXT, nullable=False)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # 1:n relationship to events (no need for bidirectional relationship)
-    events: Mapped[list[Event]] = relationship(
-        "Event", back_populates="soil", uselist=True
-    )
+    events: Mapped[list[Event]] = relationship("Event", back_populates="soil", uselist=True)
 
 
 class Pot(Base):
@@ -63,9 +59,7 @@ class Pot(Base):
     event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
     # event_id = Column(INTEGER)
     # 1:1 relationship to event
-    event: Mapped[Event | None] = relationship(
-        "Event", back_populates="pot", uselist=False
-    )
+    event: Mapped[Event | None] = relationship("Event", back_populates="pot", uselist=False)
 
     material: PotMaterial = Column(sqlalchemy.Enum(PotMaterial), nullable=False)
     shape_top: FBShapeTop = Column(sqlalchemy.Enum(FBShapeTop), nullable=False)
@@ -75,9 +69,7 @@ class Pot(Base):
     # pot_notes = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # # 1:n relationship to events
     # events: Mapped[list[Event]] = relationship(
@@ -109,17 +101,13 @@ class Observation(Base):
     # plant_name = Column(VARCHAR(60), nullable=False)
     diseases: str | None = Column(TEXT)
     # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
-    stem_max_diameter: Decimal | None = Column(  # type: ignore[valid-type]
-        Numeric(5, 1)
-    )
+    stem_max_diameter: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     height: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     # location = Column(VARCHAR(30))
     observation_notes: str | None = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
     # 1:1 relationship to event
     event: Mapped[Event | None] = relationship(
@@ -143,45 +131,43 @@ class Event(Base):
     date: str = Column(VARCHAR(10), nullable=False)  # yyyy-mm-dd
     event_notes = Column(TEXT)
 
-    # 1:1 relationship to observation (joins usually from event to observation, not the
-    # other way around)
-    # observation_id = Column(INTEGER, ForeignKey("observation.id"))
     observation: Mapped[Observation | None] = relationship(
-        "Observation", back_populates="event"
+        "Observation",
+        back_populates="event",
+        cascade="all",  # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
     )
-
-    # n:1 relationship to pot, bi-directional
-    pot: Mapped[Pot | None] = relationship("Pot", back_populates="event")
+    pot: Mapped[Pot | None] = relationship(
+        "Pot",
+        back_populates="event",
+        cascade="all",  # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
+    )
 
     # n:1 relationship to soil, bi-directional
     soil_id = Column(INTEGER, ForeignKey("soil.id"))
-    soil: Mapped[Soil | None] = relationship("Soil", back_populates="events")
+    soil: Mapped[Soil | None] = relationship(
+        "Soil", back_populates="events", foreign_keys=[soil_id]
+    )
 
-    # event to plant: n:1, bi-directional
     plant_id = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     plant: Mapped[Plant] = relationship("Plant", back_populates="events")
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)
-    created_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
-    # 1:n relationship to the photo_file/event link table
+    # 1:n relationship to the image/event link table
     images: Mapped[list[Image]] = relationship(
         "Image",
         secondary="image_to_event_association",
-        # overlaps="events,image,image_to_event_associations,event",  # silence warnings
+        back_populates="events",
         # cascade="all",  # includes 'delete' but not 'delete-orphan'
-        # cascade="all, delete-orphan",
-        # passive_deletes=True,
+        # Note: cascade is NOT required for many-to-many association tables,
+        #       deletion is triggered automatically by SQLAlchemy
     )
 
     # todo remove if possible
     image_to_event_associations: Mapped[list[ImageToEventAssociation]] = relationship(
         "ImageToEventAssociation",
-        # back_populates="event",
+        uselist=True,
+        cascade="all",  # includes 'delete' but not 'delete-orphan'
         # overlaps="events,images",
-        # cascade="all",  # includes 'delete' but not 'delete-orphan'
-        # cascade="all, delete-orphan",
-        # passive_deletes=True,
     )
