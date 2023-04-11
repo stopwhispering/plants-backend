@@ -103,8 +103,8 @@ class Observation(Base):
         nullable=False,
     )
 
-    # event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
-    event_id = Column(INTEGER)
+    event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    # event_id = Column(INTEGER)
 
     # plant_name = Column(VARCHAR(60), nullable=False)
     diseases: str | None = Column(TEXT)
@@ -126,7 +126,7 @@ class Observation(Base):
         "Event",
         back_populates="observation",
         uselist=False,
-        # foreign_keys=[event_id],
+        foreign_keys=[event_id],
     )
 
 
@@ -145,7 +145,7 @@ class Event(Base):
 
     # 1:1 relationship to observation (joins usually from event to observation, not the
     # other way around)
-    observation_id = Column(INTEGER, ForeignKey("observation.id"))
+    # observation_id = Column(INTEGER, ForeignKey("observation.id"))
     observation: Mapped[Observation | None] = relationship(
         "Observation", back_populates="event"
     )
