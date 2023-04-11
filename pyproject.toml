@@ -158,7 +158,7 @@ exclude = [
     "./alembic",
     "./.git",
     "./plants/scripts",
-    "./ml_helpers"  # to be refactored anyway
+#    "./ml_helpers"  # to be refactored anyway
 ]
 # Allow ambiguous unicode characters
 allowed-confusables = ["×"]
@@ -205,6 +205,9 @@ classmethod-decorators = ["pydantic.validator", "classmethod"]
     "F401",  # unused imports
     "SLF001",  # private-member access
 ]
+'evaluate_columns.py' = [
+    "T201",  # print statements
+]
 
 #[tool.ruff.pylint]
 ## allow literals (magic numbers) (PLR2004)
@@ -219,7 +222,9 @@ plugins = [
     "numpy.typing.mypy_plugin",
     "pandera.mypy"
 ]
-exclude = ["plants/scripts/*", "backup", "ml_helpers", "venv*", "alembic",
+exclude = ["plants/scripts/*", "backup",
+#    "ml_helpers",
+    "venv*", "alembic",
     "local*", "scripts/*"]
 #mypy_path = "./stubs"
 
@@ -241,6 +246,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "pydantic2ts.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.sparse.*"
 ignore_missing_imports = true
 
 #[tool.vulture]

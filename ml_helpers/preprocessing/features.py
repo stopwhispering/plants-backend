@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 
@@ -19,7 +21,7 @@ class FeatureContainer:
     def __init__(self, features: list[Feature]):
         self.features = features
 
-    def get_columns(self, scale: Scale = None) -> list[str]:
+    def get_columns(self, scale: Scale | None = None) -> list[str]:
         """return - distinct - column names, optionally filtered by scale type"""
         if scale:
             # columns = [c for f in self.features if f.scale == scale for c in f.column]
