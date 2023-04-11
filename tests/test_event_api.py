@@ -6,6 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from plants.modules.event.models import Event, Observation, Pot, Soil
+from plants.modules.event.schemas import EventCreateUpdate, FRequestCreateOrUpdateEvent
 from plants.modules.image.models import Image, ImageToEventAssociation
 
 if TYPE_CHECKING:
@@ -94,6 +95,86 @@ async def test_delete_event(
 
     # check image itself is not deleted and still assigned to image
     query = select(Image).where(Image.id == plant.images[0].id)
+    images = (await test_db.scalars(query)).all()
+    assert len(images) == 1
+
+    # check pot is deleted
+    query = select(Pot).where(Pot.id == pot_id)
+    pot = (await test_db.scalars(query)).first()
+    assert not pot
+
+    # check observation is deleted
+    query = select(Observation).where(Observation.id == observation_id)
+    observation = (await test_db.scalars(query)).first()
+    assert not observation
+
+    # check soil is not deleted
+    query = select(Soil).where(Soil.id == soil_id)
+    soil = (await test_db.scalars(query)).first()
+    assert soil
+
+
+@pytest.mark.asyncio()
+async def test_update_event(
+    ac: AsyncClient,
+    plant_in_db_with_image_and_events: Plant,
+    plant_dal: PlantDAL,
+    event_dal: EventDAL,
+    test_db: AsyncSession,
+):
+    """Test updating an event via api removing a hitherto existing observation, soil,
+    pot, and image assignment."""
+    event: Event = plant_in_db_with_image_and_events.events[0]
+    plant_id = plant_in_db_with_image_and_events.id
+    event_id = plant_in_db_with_image_and_events.events[0].id
+    soil_id = plant_in_db_with_image_and_events.events[0].soil.id
+    pot_id = plant_in_db_with_image_and_events.events[0].pot.id
+    observation_id = plant_in_db_with_image_and_events.events[0].observation.id
+
+    payload = FRequestCreateOrUpdateEvent(
+        plants_to_events={
+            plant_id: [
+                EventCreateUpdate(
+                    id=event.id,
+                    plant_id=event.plant_id,
+                    date=event.date,
+                    event_notes="updated event",
+                    images=[],
+                    observation=None,
+                    soil=None,
+                    pot=None,
+                )
+            ]
+        }
+    )
+
+    # update the event via api
+    response = await ac.post("/api/events/", json=payload.dict())
+    assert response.status_code == 200
+    assert "deleted" in response.json().get("message").get("description").lower()
+
+    test_db.expire(plant_in_db_with_image_and_events)
+    test_db.expire(event)
+    _ = await event_dal.by_id(event_id)
+    _ = await plant_dal.by_id(plant_id)
+
+    # check event has been updated
+    assert event is not None
+    assert event.plant_id == payload.plants_to_events[plant_id][0].plant_id
+    assert event.date == payload.plants_to_events[plant_id][0].date
+    assert event.event_notes == payload.plants_to_events[plant_id][0].event_notes
+    assert len(event.images) == 0
+    assert event.observation is None
+    assert event.soil is None
+    assert event.pot is None
+
+    # check image assignment has been deleted
+    query = select(ImageToEventAssociation).where(ImageToEventAssociation.event_id == event_id)
+    links = (await test_db.scalars(query)).all()
+    assert len(links) == 0
+
+    # check image itself is not deleted and is still assigned to plant
+    query = select(Image).where(Image.id == plant_in_db_with_image_and_events.images[0].id)
     images = (await test_db.scalars(query)).all()
     assert len(images) == 1
 

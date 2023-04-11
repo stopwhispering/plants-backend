@@ -100,14 +100,12 @@ class ImageDAL(BaseDAL):
     async def delete_keywords_from_image(self, image: Image, keywords: list[ImageKeyword]) -> None:
         for keyword in keywords[:]:
             image.keywords.remove(keyword)
-            await self.session.delete(keyword)
         await self.session.flush()
 
     async def create_new_keywords_for_image(
         self, image: Image, keywords: list[ImageKeyword]
     ) -> None:
         image.keywords.extend(keywords)
-        self.session.add_all(keywords)
         await self.session.flush()
 
     async def create_image(self, image: Image) -> None:

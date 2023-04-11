@@ -177,41 +177,42 @@ class EventWriter:
                 event_obj.soil = soil
                 counts["Added Soils"] += 1
 
+    @staticmethod
     async def _create_or_update_pot(
-        self, event_obj: Event, event: EventCreateUpdate, counts: defaultdict[str, int]
+        event_obj: Event, event: EventCreateUpdate, counts: defaultdict[str, int]
     ) -> None:
-        if not event.pot:
+        if event.pot and not event_obj.pot:
+            pot_obj = Pot()
+            event_obj.pot = pot_obj
+            counts["Added Pots"] += 1
+
+        elif not event.pot and event_obj.pot:
+            # pot record is deleted via CASCADE with delete-orphan
             event_obj.pot = None
+            counts["Deleted Pots"] += 1
 
-        else:
-            # add if not existing
-            if not event_obj.pot:
-                pot_obj = Pot()
-                event_obj.pot = pot_obj
-                counts["Added Pots"] += 1
-
-            # pot objects have an id but are not "reused" for other events, so we may
-            # change it here
+        if event.pot and event_obj.pot:
             event_obj.pot.material = event.pot.material
             event_obj.pot.shape_side = event.pot.shape_side
             event_obj.pot.shape_top = event.pot.shape_top
             event_obj.pot.diameter_width = event.pot.diameter_width
 
+    @staticmethod
     async def _create_or_update_observation(
-        self,
         event: EventCreateUpdate,
         event_obj: Event,
         counts: defaultdict[str, int],
     ) -> None:
         if event.observation and not event_obj.observation:
             observation_obj = Observation()
-            await self.event_dal.create_observation(observation_obj)
+            # await self.event_dal.create_observation(observation_obj)
             event_obj.observation = observation_obj
             counts["Added Observations"] += 1
         elif not event.observation and event_obj.observation:
-            # 1:1 relationship, so we can delete the observation directly
-            await self.event_dal.delete_observation(event_obj.observation)
+            # await self.event_dal.delete_observation(event_obj.observation)
+            # observation record is deleted via CASCADE with delete-orphan
             event_obj.observation = None
+            counts["Deleted Observations"] += 1
         if event.observation and event_obj.observation:
             event_obj.observation.diseases = event.observation.diseases
             event_obj.observation.observation_notes = event.observation.observation_notes

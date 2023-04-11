@@ -10,7 +10,7 @@ from plants.exceptions import (
     SoilNotFoundError,
     UpdateNotImplementedError,
 )
-from plants.modules.event.models import Event, Observation, Pot, Soil
+from plants.modules.event.models import Event, Soil
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
@@ -37,18 +37,6 @@ class EventDAL(BaseDAL):
         )
         events: list[Event] = list((await self.session.scalars(query)).all())
         return events
-
-    async def create_pot(self, pot: Pot) -> None:
-        self.session.add(pot)
-        await self.session.flush()
-
-    async def create_observation(self, observation: Observation) -> None:
-        self.session.add(observation)
-        await self.session.flush()
-
-    async def delete_observation(self, observation: Observation) -> None:
-        await self.session.delete(observation)
-        await self.session.flush()
 
     async def create_soil(self, soil: Soil) -> None:
         self.session.add(soil)

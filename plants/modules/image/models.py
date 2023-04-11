@@ -73,7 +73,7 @@ class Image(Base):
         "ImageKeyword",
         back_populates="image",
         uselist=True,
-        cascade="all",
+        cascade="all, delete-orphan",
     )
 
     plants: Mapped[list[Plant]] = relationship(
@@ -98,7 +98,7 @@ class Image(Base):
         "ImageToTaxonAssociation",
         viewonly=True,
         uselist=True,
-        cascade="all",
+        cascade="all, delete-orphan",
     )
 
 

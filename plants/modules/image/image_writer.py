@@ -37,28 +37,11 @@ class ImageWriter:
         # plants
         new_plants = {await self.plant_dal.by_id(plant_id) for plant_id in plant_ids}
         removed_plants = [p for p in image.plants if p not in new_plants]
-        # removed_image_to_plant_associations = [
-        #     a for a in image.image_to_plant_associations if a.plant_id not in plant_ids
-        # ]
         added_plants = [p for p in new_plants if p not in image.plants]
-        # added_image_to_plant_associations = [
-        #     ImageToPlantAssociation(
-        #         image=image,
-        #         plant=p,
-        #     )
-        #     for p in new_plants
-        #     if p not in image.plants
-        # ]
         for removed_plant in removed_plants:
             image.plants.remove(removed_plant)
-        # for removed_image_to_plant_association in removed_image_to_plant_associations:
-        #     await self.plant_dal.delete_image_to_plant_association(
-        #         removed_image_to_plant_association
-        #     )
         if added_plants:
             image.plants.extend(added_plants)
-        # if added_image_to_plant_associations:
-        #     image.image_to_plant_associations.extend(added_image_to_plant_associations)
 
         # keywords
         current_keywords = {k.keyword for k in image.keywords}

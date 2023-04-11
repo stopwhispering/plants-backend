@@ -106,7 +106,13 @@ class Plant(Base):
     )
 
     # plant to tag: 1:n
-    tags: Mapped[list[Tag]] = relationship("Tag", back_populates="plant")
+    tags: Mapped[list[Tag]] = relationship(
+        "Tag",
+        back_populates="plant",
+        # Note: we need no cascade="delete" here as plants are
+        # not physically deleted, but only marked as deleted
+        cascade="save-update, merge, delete-orphan",
+    )
 
     # plant to event: 1:n
     events: Mapped[list[Event]] = relationship("Event", back_populates="plant")
@@ -202,7 +208,9 @@ class Tag(Base):
     state: str | None = Column(VARCHAR(12))
     # tag to plant: n:1
     plant_id: int | None = Column(INTEGER, ForeignKey("plants.id"))
-    plant: Mapped[Plant | None] = relationship("Plant", back_populates="tags")
+    plant: Mapped[Plant | None] = relationship(
+        "Plant", back_populates="tags", foreign_keys=[plant_id]
+    )
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)

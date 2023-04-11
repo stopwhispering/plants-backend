@@ -130,12 +130,14 @@ class Event(Base):
     observation: Mapped[Observation | None] = relationship(
         "Observation",
         back_populates="event",
-        cascade="all",  # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
+        # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
+        cascade="all, delete-orphan",
     )
     pot: Mapped[Pot | None] = relationship(
         "Pot",
         back_populates="event",
-        cascade="all",  # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
+        # includes delete; we delete via SQLAlchemy, not via FK Constraint in db
+        cascade="all, delete-orphan",
     )
 
     # n:1 relationship to soil, bi-directional

@@ -30,9 +30,7 @@ async def create_new_plant(
         raise PlantAlreadyExistsError(new_plant.plant_name)
     # await plant_dal.create_empty_plant(plant_name=new_plant.plant_name)
 
-    new_plant_data = new_plant.dict(
-        exclude={"tags", "parent_plant", "parent_plant_pollen"}
-    )
+    new_plant_data = new_plant.dict(exclude={"tags", "parent_plant", "parent_plant_pollen"})
     new_plant_data["parent_plant_id"] = (
         new_plant.parent_plant.id if new_plant.parent_plant else None
     )
@@ -56,19 +54,13 @@ async def update_plants_from_list_of_dicts(
         record_update = await plant_dal.by_id(plant.id)
 
         # update plant
-        updates = plant.dict(
-            exclude={"id", "tags", "parent_plant", "parent_plant_pollen"}
-        )
+        updates = plant.dict(exclude={"id", "tags", "parent_plant", "parent_plant_pollen"})
 
-        updates["parent_plant_id"] = (
-            plant.parent_plant.id if plant.parent_plant else None
-        )
+        updates["parent_plant_id"] = plant.parent_plant.id if plant.parent_plant else None
         updates["parent_plant_pollen_id"] = (
             plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         )
-        updates["taxon"] = (
-            await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
-        )
+        updates["taxon"] = await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
 
         await plant_dal.update(record_update, updates)
 
@@ -102,7 +94,8 @@ async def deep_clone_plant(
         tag_clone.plant = plant_clone
         cloned_tags.append(tag_clone)
     if cloned_tags:
-        await plant_dal.create_tags(cloned_tags)
+        plant_clone.tags.extend(cloned_tags)
+        # await plant_dal.create_tags(cloned_tags)
 
     cloned_events = []
     for event in plant_original.events:
@@ -120,14 +113,11 @@ async def deep_clone_plant(
     await plant_dal.save_plant(plant_clone)
 
 
-async def _treat_tags(
-    plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL
-) -> None:
+async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL) -> None:
     """Update modified tags; returns list of new tags (not yet added or committed);
     removes deleted tags."""
-    new_tags = []
-
     # create new tags
+    new_tags = []
     for tag in [t for t in tags if t.id is None]:
         new_tag: Tag = Tag(
             text=tag.text,
@@ -135,7 +125,9 @@ async def _treat_tags(
             plant=plant,
         )
         new_tags.append(new_tag)
-    await plant_dal.create_tags(new_tags)
+    if new_tags:
+        plant.tags.extend(new_tags)
+    # await plant_dal.create_tags(new_tags)
 
     # update existing tags (not currently implemented in frontend)
     for tag in tags:

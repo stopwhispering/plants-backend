@@ -161,23 +161,15 @@ class PlantDAL(BaseDAL):
         await self.session.flush()
 
         # re-fetch plant to get eager load options
-        await self.by_id(plant.id, eager_load=True)
-
-    # async def create_empty_plant(self, plant_name: str) -> Plant:
-    #     new_plant = Plant(plant_name=plant_name, deleted=False, active=True)
-    #     self.session.add(new_plant)
-    #     await self.session.flush()
-    #     return await self.by_id(new_plant.id)  # adds eager load options
+        plant_id = plant.id
+        self.session.expire(plant)
+        await self.by_id(plant_id, eager_load=True)
 
     async def create_plant(self, new_plant_data: dict[str, Any]) -> Plant:
         new_plant = Plant(**new_plant_data, deleted=False)
         self.session.add(new_plant)
         await self.session.flush()
         return await self.by_id(new_plant.id)
-
-    async def create_tags(self, tags: list[Tag]) -> None:
-        self.session.add_all(tags)
-        await self.session.flush()
 
     async def get_all_plants_with_taxon(self) -> list[Plant]:
         query = (
@@ -328,7 +320,7 @@ class PlantDAL(BaseDAL):
         if tag not in plant.tags:
             raise TagNotAssignedToPlantError(plant.id, tag.id)
         plant.tags.remove(tag)
-        await self.session.delete(tag)
+        # await self.session.delete(tag)
         await self.session.flush()
 
     async def get_all_plants_with_relationships_loaded(
