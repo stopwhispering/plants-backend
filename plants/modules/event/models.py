@@ -102,6 +102,10 @@ class Observation(Base):
         primary_key=True,
         nullable=False,
     )
+
+    # event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
+    event_id = Column(INTEGER)
+
     # plant_name = Column(VARCHAR(60), nullable=False)
     diseases: str | None = Column(TEXT)
     # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
@@ -119,7 +123,10 @@ class Observation(Base):
 
     # 1:1 relationship to event
     event: Mapped[Event | None] = relationship(
-        "Event", back_populates="observation", uselist=False
+        "Event",
+        back_populates="observation",
+        uselist=False,
+        foreign_keys=[event_id],
     )
 
 
@@ -144,8 +151,6 @@ class Event(Base):
     )
 
     # n:1 relationship to pot, bi-directional
-    # pot_id = Column(INTEGER, ForeignKey("pot.id"))
-    # pot: Mapped[Pot | None] = relationship("Pot", back_populates="events")
     pot: Mapped[Pot | None] = relationship("Pot", back_populates="event")
 
     # n:1 relationship to soil, bi-directional
