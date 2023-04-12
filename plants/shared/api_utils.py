@@ -111,7 +111,7 @@ def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
             json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").astimezone(
                 pytz.timezone("Europe/Berlin")
             )
-        except ValueError:
-            with suppress(ValueError):
+        except (ValueError, TypeError):
+            with suppress(ValueError, TypeError):
                 json_dict[key] = date.fromisoformat(value)
     return json_dict
