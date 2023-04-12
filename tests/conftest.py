@@ -63,8 +63,8 @@ def event_loop() -> AbstractEventLoop:
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db() -> None:
-    """Setup test database: Create & Reset database to initial state; Create all
-    database tables as declared in SQLAlchemy models;"""
+    """Setup test database: Create & Reset database to initial state; Create all database tables as
+    declared in SQLAlchemy models;"""
     # PostGres does not allow to create/drop databases in a transaction, therefore we
     # need a separate engine for that that has isolation_level='AUTOCOMMIT'
     # (unlike default 'READ COMMITTED')
@@ -271,9 +271,9 @@ def reset_paths() -> None:
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 def set_test_paths() -> None:
-    """To avoid the regular database being initialized, we override the database url
-    with a test database url we also override the get_db dependency called by most api
-    endpoints to return a test database session."""
+    """To avoid the regular database being initialized, we override the database url with a test
+    database url we also override the get_db dependency called by most api endpoints to return a
+    test database session."""
     plants_package.local_config.connection_string = generate_db_url(TEST_DB_NAME)
     plants_package.local_config.max_images_per_taxon = 2
 
@@ -417,8 +417,7 @@ async def finished_pollinations_in_db(
     another_valid_plant_in_db: Plant,
     test_db: AsyncSession,
 ) -> list[Pollination]:
-    """To train the pollination ml model, we need at least three finished pollination
-    attempts."""
+    """To train the pollination ml model, we need at least three finished pollination attempts."""
     pollination_1 = Pollination(
         seed_capsule_plant_id=plant_valid_in_db.id,
         pollen_donor_plant_id=another_valid_plant_in_db.id,
@@ -469,8 +468,8 @@ async def finished_pollinations_in_db(
 async def florescence_dict() -> dict[str, Any]:
     """Read florescence dict from json; has no plant attached."""
     path_florescence = Path(__file__).resolve().parent.joinpath("./data/demo_florescence.json")
-    with path_florescence.open() as f:
-        return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
+    with path_florescence.open() as file:
+        return json.load(file, object_hook=date_hook)  # type:ignore[no-any-return]
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -478,8 +477,8 @@ async def pollination_dict() -> dict[str, Any]:
     """Read pollination dict from json; has no florescence, seed_capsule_plant, or
     pollen_donor_plant attached."""
     path_pollination = Path(__file__).resolve().parent.joinpath("./data/demo_pollination.json")
-    with path_pollination.open() as f:
-        return json.load(f, object_hook=date_hook)  # type:ignore[no-any-return]
+    with path_pollination.open() as file:
+        return json.load(file, object_hook=date_hook)  # type:ignore[no-any-return]
 
 
 @pytest_asyncio.fixture(scope="function")

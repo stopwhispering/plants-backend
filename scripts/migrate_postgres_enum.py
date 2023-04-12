@@ -29,23 +29,16 @@ class EnumMigration:
         enum_columns = [
             column
             for column in columns
-            if isinstance(column.type, sqltypes.Enum)
-            and column.type.name == self.enum_type_name
+            if isinstance(column.type, sqltypes.Enum) and column.type.name == self.enum_type_name
         ]
         if not enum_columns:
             raise ValueError("No enum column found")
         if len(enum_columns) > 1:
-            raise ValueError(
-                "Not supported: " "More than one enum column with the same name"
-            )
+            raise ValueError("Not supported: " "More than one enum column with the same name")
         return enum_columns[0].name  # type: ignore[no-any-return]
 
     def _get_names(self) -> list[str]:
-        names = [
-            f'"{name}"'
-            for name, value in vars(self.enum).items()
-            if type(value) is self.enum
-        ]
+        names = [f'"{name}"' for name, value in vars(self.enum).items() if type(value) is self.enum]
         return sorted(names)
 
     @staticmethod
@@ -96,9 +89,7 @@ class EnumMigration:
         <<values>>, we need to update the data to mach the enum's <<names>
         """
         # noinspection PyProtectedMember
-        value_to_name = {
-            value: name.name for value, name in self.enum._value2member_map_.items()
-        }
+        value_to_name = {value: name.name for value, name in self.enum._value2member_map_.items()}
 
         print(f'op.execute("UPDATE {self.table_name} \\')
         print(f"    SET {self.enum_column_name} = (CASE \\")
@@ -109,9 +100,9 @@ class EnumMigration:
     def print_migrate_column_from_varchar_to_enum(self) -> None:
         """Alembic will not auto-detect a changed column from VARCHAR to Enum.
 
-        The code printed here is required to create the eenm type, change the column
-        type, and to migrate the data from VARCHAR to Enum. Enum columns require data to
-        have the Enum <<names>> and not the Enum <<values>>.
+        The code printed here is required to create the eenm type, change the column type, and to
+        migrate the data from VARCHAR to Enum. Enum columns require data to have the Enum <<names>>
+        and not the Enum <<values>>.
         """
         self._print_header()
         self._print_imports()

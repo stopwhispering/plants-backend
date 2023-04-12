@@ -35,8 +35,8 @@ async def search_taxa_by_name(
     taxon_info_request: FTaxonInfoRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
-    """Searches taxon pattern in (1) local database and (2) in kew databases (powo and
-    ipni) if requested."""
+    """Searches taxon pattern in (1) local database and (2) in kew databases (powo and ipni) if
+    requested."""
     taxonomy_search = TaxonomySearch(
         include_external_apis=taxon_info_request.include_external_apis,
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
@@ -48,8 +48,7 @@ async def search_taxa_by_name(
 
     if not search_results:
         throw_exception(
-            f"No search result for search term "
-            f'"{taxon_info_request.taxon_name_pattern}".',
+            f"No search result for search term " f'"{taxon_info_request.taxon_name_pattern}".',
         )
 
     return {
@@ -76,8 +75,7 @@ async def fetch_taxon_occurrence_images(
     )
 
     message = (
-        f"Refetched occurences for GBIF ID "
-        f"{fetch_taxon_occurrence_images_request.gbif_id}"
+        f"Refetched occurences for GBIF ID " f"{fetch_taxon_occurrence_images_request.gbif_id}"
     )
     logger.info(message)
 

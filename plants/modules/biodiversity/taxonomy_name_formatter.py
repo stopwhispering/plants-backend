@@ -13,7 +13,7 @@ class PartOfBotanicalName:
 
 
 @dataclass
-class BotanicalNameInput:
+class BotanicalNameInput:  # pylint: disable=too-many-instance-attributes
     rank: str
     genus: str
     species: str | None
@@ -30,7 +30,7 @@ class BotanicalNameInput:
     custom_suffix: str | None
 
 
-def _disassemble_taxon_name(  # noqa: C901 PLR0912
+def _disassemble_taxon_name(  # noqa: C901 PLR0912  # pylint: disable=R0912
     botanical_name_input: BotanicalNameInput,
 ) -> list[PartOfBotanicalName]:
     genus_name = (
@@ -38,9 +38,7 @@ def _disassemble_taxon_name(  # noqa: C901 PLR0912
         if not botanical_name_input.hybridgenus
         else "× " + botanical_name_input.genus
     )
-    parts: list[PartOfBotanicalName] = [
-        PartOfBotanicalName(name=genus_name, italics=True)
-    ]
+    parts: list[PartOfBotanicalName] = [PartOfBotanicalName(name=genus_name, italics=True)]
 
     if botanical_name_input.species:
         species = (
@@ -53,25 +51,13 @@ def _disassemble_taxon_name(  # noqa: C901 PLR0912
     if botanical_name_input.infraspecies:
         if botanical_name_input.rank == FBRank.SUBSPECIES.value:
             parts.append(PartOfBotanicalName(name="ssp.", italics=False))
-            parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.infraspecies, italics=True
-                )
-            )
+            parts.append(PartOfBotanicalName(name=botanical_name_input.infraspecies, italics=True))
         elif botanical_name_input.rank == FBRank.VARIETY.value:
             parts.append(PartOfBotanicalName(name="var.", italics=False))
-            parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.infraspecies, italics=True
-                )
-            )
+            parts.append(PartOfBotanicalName(name=botanical_name_input.infraspecies, italics=True))
         elif botanical_name_input.rank == FBRank.FORMA.value:
             parts.append(PartOfBotanicalName(name="f.", italics=False))
-            parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.infraspecies, italics=True
-                )
-            )
+            parts.append(PartOfBotanicalName(name=botanical_name_input.infraspecies, italics=True))
         else:
             raise ValueError(f"Unexpected rank: {botanical_name_input.rank}")
 
@@ -79,47 +65,33 @@ def _disassemble_taxon_name(  # noqa: C901 PLR0912
         if botanical_name_input.custom_rank == FBRank.SUBSPECIES.value:
             parts.append(PartOfBotanicalName(name="ssp.", italics=False))
             parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.custom_infraspecies, italics=True
-                )
+                PartOfBotanicalName(name=botanical_name_input.custom_infraspecies, italics=True)
             )
         elif botanical_name_input.custom_rank == FBRank.VARIETY.value:
             parts.append(PartOfBotanicalName(name="var.", italics=False))
             parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.custom_infraspecies, italics=True
-                )
+                PartOfBotanicalName(name=botanical_name_input.custom_infraspecies, italics=True)
             )
         elif botanical_name_input.custom_rank == FBRank.FORMA.value:
             parts.append(PartOfBotanicalName(name="f.", italics=False))
             parts.append(
-                PartOfBotanicalName(
-                    name=botanical_name_input.custom_infraspecies, italics=True
-                )
+                PartOfBotanicalName(name=botanical_name_input.custom_infraspecies, italics=True)
             )
         else:
-            raise ValueError(
-                f"Unexpected custom rank: {botanical_name_input.custom_rank}"
-            )
+            raise ValueError(f"Unexpected custom rank: {botanical_name_input.custom_rank}")
 
     if botanical_name_input.cultivar:
         parts.append(PartOfBotanicalName(name="cv.", italics=False))
         parts.append(
-            PartOfBotanicalName(
-                name="'" + botanical_name_input.cultivar + "'", italics=False
-            )
+            PartOfBotanicalName(name="'" + botanical_name_input.cultivar + "'", italics=False)
         )
 
     if botanical_name_input.affinis:
         parts.append(PartOfBotanicalName(name="aff.", italics=False))
-        parts.append(
-            PartOfBotanicalName(name=botanical_name_input.affinis, italics=False)
-        )
+        parts.append(PartOfBotanicalName(name=botanical_name_input.affinis, italics=False))
 
     if botanical_name_input.custom_suffix:
-        parts.append(
-            PartOfBotanicalName(name=botanical_name_input.custom_suffix, italics=False)
-        )
+        parts.append(PartOfBotanicalName(name=botanical_name_input.custom_suffix, italics=False))
 
     return parts
 
@@ -127,15 +99,15 @@ def _disassemble_taxon_name(  # noqa: C901 PLR0912
 def _create_formatted_name(parts: list[PartOfBotanicalName], *, html: bool) -> str:
     parts_str: list[str] = []
     italics_active = False
-    for p in parts:
-        if html and p.italics and not italics_active:
-            parts_str.append(f"<em>{p.name}")
+    for part in parts:
+        if html and part.italics and not italics_active:
+            parts_str.append(f"<em>{part.name}")
             italics_active = True
-        elif html and not p.italics and italics_active:
-            parts_str.append(f"</em>{p.name}")
+        elif html and not part.italics and italics_active:
+            parts_str.append(f"</em>{part.name}")
             italics_active = False
         else:
-            parts_str.append(p.name)
+            parts_str.append(part.name)
     if html and italics_active:
         parts_str.append("</em>")
 
@@ -147,9 +119,7 @@ def _create_publication_parts(
 ) -> list[PartOfBotanicalName]:
     if not botanical_name_input.authors:
         return []
-    publication_parts = [
-        PartOfBotanicalName(name=botanical_name_input.authors, italics=False)
-    ]
+    publication_parts = [PartOfBotanicalName(name=botanical_name_input.authors, italics=False)]
     if botanical_name_input.name_published_in_year:
         publication_parts.append(
             PartOfBotanicalName(
@@ -189,12 +159,8 @@ def create_formatted_botanical_name(
     else:
         raise TypeError("Either Taxon or Botanical Name Input must be provided")
 
-    name_parts: list[PartOfBotanicalName] = _disassemble_taxon_name(
-        botanical_name_input
-    )
-    publication_parts: list[PartOfBotanicalName] = _create_publication_parts(
-        botanical_name_input
-    )
+    name_parts: list[PartOfBotanicalName] = _disassemble_taxon_name(botanical_name_input)
+    publication_parts: list[PartOfBotanicalName] = _create_publication_parts(botanical_name_input)
 
     if include_publication:
         return _create_formatted_name(parts=name_parts + publication_parts, html=html)

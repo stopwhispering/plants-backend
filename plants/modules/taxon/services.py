@@ -6,9 +6,6 @@ from typing import TYPE_CHECKING
 from fastapi.concurrency import run_in_threadpool
 from pykew import powo
 
-if TYPE_CHECKING:
-    from fastapi import BackgroundTasks
-
 from plants.exceptions import TaxonAlreadyExistsError
 from plants.modules.biodiversity.lookup_gbif_id import lookup_gbif_id
 from plants.modules.biodiversity.taxonomy_name_formatter import (
@@ -20,6 +17,8 @@ from plants.modules.image.models import Image, ImageToTaxonAssociation
 from plants.modules.taxon.models import Distribution, Taxon
 
 if TYPE_CHECKING:
+    from fastapi import BackgroundTasks
+
     from plants.modules.image.image_dal import ImageDAL
     from plants.modules.taxon.schemas import TaxonCreate, TaxonUpdate
     from plants.modules.taxon.taxon_dal import TaxonDAL

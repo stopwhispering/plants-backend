@@ -4,7 +4,7 @@ import datetime
 import logging
 from typing import TYPE_CHECKING
 
-import sqlalchemy
+# import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import (
     BOOLEAN,
@@ -70,9 +70,9 @@ class Florescence(Base):
     flower_color: str | None = Column(VARCHAR(7))
     flower_color_second: str | None = Column(VARCHAR(7))
     flower_colors_differentiation: FlowerColorDifferentiation | None = Column(
-        sqlalchemy.Enum(FlowerColorDifferentiation)
+        sa.Enum(FlowerColorDifferentiation)
     )
-    stigma_position: StigmaPosition | None = Column(sqlalchemy.Enum(StigmaPosition))
+    stigma_position: StigmaPosition | None = Column(sa.Enum(StigmaPosition))
 
     first_flower_opened_at: datetime.date | None = Column(DATE)
     last_flower_closed_at: datetime.date | None = Column(DATE)

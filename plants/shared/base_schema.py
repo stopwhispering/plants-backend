@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Extra
 
 from plants.shared.enums import MajorResource
@@ -16,7 +14,7 @@ class BaseSchema(BaseModel):
 
 
 class ResponseContainer(BaseModel):
-    action: Optional[str]
+    action: str | None
     message: BMessage
 
     class Config:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 from dateutil.parser import isoparse
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 from pygbif import occurrences as occ_api
 from sqlalchemy.exc import IntegrityError
 from starlette.concurrency import run_in_threadpool
@@ -51,13 +51,13 @@ logger = logging.getLogger(__name__)
 
 
 class OccurrenceNotCompleteError(Exception):
-    """Raised when a GBIF occurrence object is not complete or can't be parsed for any
-    other reason."""
+    """Raised when a GBIF occurrence object is not complete or can't be parsed for any other
+    reason."""
 
 
-class ImageMetadata:
+class ImageMetadata:  # pylint: disable=too-many-instance-attributes
     def __init__(
-        self, occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int, img_no: int
+        self, occ: GbifOccurrenceResultDict, gbif_media: GbifMediaDict, gbif_id: int, img_no: int
     ):
         self.occurrence_id: int = occ["key"]
         self.gbif_id: int = gbif_id
@@ -66,11 +66,13 @@ class ImageMetadata:
         self.basis_of_record: str = occ["basisOfRecord"]
         self.verbatim_locality: str | None = self._parse_verbatim_locality(occ)
         self.photographed_at: datetime | None = self._parse_photographed_at(
-            m=m, occ=occ
+            gbif_media=gbif_media, occ=occ
         )
-        self.creator_identifier: str = self._parse_creator_identifier(m=m, occ=occ)
-        self.publisher_dataset: str = self._parse_publisher_dataset(m=m, occ=occ)
-        self.href = self._parse_href(m=m)
+        self.creator_identifier: str = self._parse_creator_identifier(
+            gbif_media=gbif_media, occ=occ
+        )
+        self.publisher_dataset: str = self._parse_publisher_dataset(gbif_media=gbif_media, occ=occ)
+        self.href = self._parse_href(gbif_media=gbif_media)
         self.references: str | None = self._parse_references(occ=occ)
         self.filename_thumbnail = self.generate_filename_thumbnail(
             gbif_id=gbif_id, img_no=img_no, occurrence_id=self.occurrence_id
@@ -83,14 +85,14 @@ class ImageMetadata:
         return None
 
     @staticmethod
-    def _parse_href(m: GbifMediaDict) -> str:
+    def _parse_href(gbif_media: GbifMediaDict) -> str:
         """Get the photo_file href."""
-        if m.get("references") and (
-            "jpg" in m["references"].lower() or "jpeg" in m["references"].lower()
+        if gbif_media.get("references") and (
+            "jpg" in gbif_media["references"].lower() or "jpeg" in gbif_media["references"].lower()
         ):
-            return m["references"]
-        if m.get("identifier"):
-            return m["identifier"]
+            return gbif_media["references"]
+        if gbif_media.get("identifier"):
+            return gbif_media["identifier"]
         raise OccurrenceNotCompleteError('No "references" or "identifier" found')
 
     @staticmethod
@@ -110,32 +112,28 @@ class ImageMetadata:
 
     @staticmethod
     def _parse_photographed_at(
-        occ: GbifOccurrenceResultDict, m: GbifMediaDict
+        occ: GbifOccurrenceResultDict, gbif_media: GbifMediaDict
     ) -> datetime | None:
-        if "created" not in m and "eventDate" not in occ:
+        if "created" not in gbif_media and "eventDate" not in occ:
             # happens very rarely, so wen can skip entries with unknown date
             raise OccurrenceNotCompleteError('No "created" or "eventDate" found')
-        created_ = m.get("created") or occ.get("eventDate")
+        created_ = gbif_media.get("created") or occ.get("eventDate")
         return isoparse(created_) if created_ else None
 
     @staticmethod
-    def _parse_creator_identifier(
-        occ: GbifOccurrenceResultDict, m: GbifMediaDict
-    ) -> str:
+    def _parse_creator_identifier(occ: GbifOccurrenceResultDict, gbif_media: GbifMediaDict) -> str:
         return (
-            m.get("identifiedBy")
-            or m.get("creator")
+            gbif_media.get("identifiedBy")
+            or gbif_media.get("creator")
             or occ.get("recordedBy")
             or "Unknown Creator"
         )
 
     @staticmethod
-    def _parse_publisher_dataset(
-        occ: GbifOccurrenceResultDict, m: GbifMediaDict
-    ) -> str:
+    def _parse_publisher_dataset(occ: GbifOccurrenceResultDict, gbif_media: GbifMediaDict) -> str:
         return (
             occ.get("publisher")
-            or m.get("publisher")
+            or gbif_media.get("publisher")
             or occ.get("institutionCode")
             or occ.get("rightsHolder")
             or occ.get("datasetName")
@@ -144,9 +142,7 @@ class ImageMetadata:
         )
 
     @staticmethod
-    def generate_filename_thumbnail(
-        gbif_id: int, img_no: int, occurrence_id: int
-    ) -> str:
+    def generate_filename_thumbnail(gbif_id: int, img_no: int, occurrence_id: int) -> str:
         return (
             f"{gbif_id}_{occurrence_id}_{img_no}."
             f"{settings.images.size_thumbnail_image_taxon[0]}_"
@@ -160,10 +156,12 @@ class TaxonOccurencesLoader:
 
     @staticmethod
     def _get_image_metadata(
-        occ: GbifOccurrenceResultDict, m: GbifMediaDict, gbif_id: int, img_no: int
+        occ: GbifOccurrenceResultDict, gbif_media: GbifMediaDict, gbif_id: int, img_no: int
     ) -> ImageMetadata | None:
         try:
-            image_metadata = ImageMetadata(occ=occ, m=m, gbif_id=gbif_id, img_no=img_no)
+            image_metadata = ImageMetadata(
+                occ=occ, gbif_media=gbif_media, gbif_id=gbif_id, img_no=img_no
+            )
         except (KeyError, OccurrenceNotCompleteError) as err:
             # in rare cases, essential properties are missing
             logger.warning(str(err))
@@ -194,9 +192,7 @@ class TaxonOccurencesLoader:
                 size=settings.images.size_thumbnail_image_taxon,
                 path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
                 filename_thumb=info.filename_thumbnail,
-                ignore_missing_image_files=(
-                    local_config.log_settings.ignore_missing_image_files
-                ),
+                ignore_missing_image_files=(local_config.log_settings.ignore_missing_image_files),
             )
         except OSError as err:
             logger.warning(f"Could not load as image: {info.href} ({str(err)}")
@@ -285,19 +281,13 @@ class TaxonOccurencesLoader:
 
         try:
             if new_occurrence_images:
-                await self.taxon_dal.create_taxon_occurrence_images(
-                    new_occurrence_images
-                )
+                await self.taxon_dal.create_taxon_occurrence_images(new_occurrence_images)
             if new_taxon_occ_links:
-                await self.taxon_dal.create_taxon_to_occurrence_associations(
-                    new_taxon_occ_links
-                )
+                await self.taxon_dal.create_taxon_to_occurrence_associations(new_taxon_occ_links)
         except IntegrityError:
             logger.exception("IntegrityError while saving occurrence images.")
 
-    async def scrape_occurrences_for_taxon(
-        self, gbif_id: int
-    ) -> list[TaxonOccurrenceImage]:
+    async def scrape_occurrences_for_taxon(self, gbif_id: int) -> list[TaxonOccurrenceImage]:
         logger.info(f"Searching occurrence images for  {gbif_id}.")
 
         # the gbif api is blocking, so we better run it in a threadpool
@@ -308,9 +298,7 @@ class TaxonOccurencesLoader:
             logger.info(f"nothing found for {gbif_id}")
             return []
 
-        logger.info(
-            f'gbif_id: {str(gbif_id)} --> {occ_search["results"][0]["scientificName"]} '
-        )
+        logger.info(f'gbif_id: {str(gbif_id)} --> {occ_search["results"][0]["scientificName"]} ')
         occurrences = [
             o
             for o in occ_search["results"]
@@ -318,14 +306,10 @@ class TaxonOccurencesLoader:
         ]
 
         # get photo_file information & save thumbnail
-        image_dicts: list[ImageMetadata] = await self._treat_occurences(
-            occurrences, gbif_id
-        )
+        image_dicts: list[ImageMetadata] = await self._treat_occurences(occurrences, gbif_id)
 
         # save information to database
-        logger.info(
-            f"Saving/Updating {len(image_dicts)} occurrence images to database."
-        )
+        logger.info(f"Saving/Updating {len(image_dicts)} occurrence images to database.")
 
         await self._save_to_db(image_dicts, gbif_id)
 

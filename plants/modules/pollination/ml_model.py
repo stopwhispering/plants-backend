@@ -18,10 +18,6 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-if TYPE_CHECKING:
-    from sklearn.base import BaseEstimator
-    from sqlalchemy.orm import Session
-
 from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
 from plants import local_config
 from plants.extensions.ml_models import pickle_pipeline
@@ -29,16 +25,16 @@ from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
 
+if TYPE_CHECKING:
+    from sklearn.base import BaseEstimator
+    from sqlalchemy.orm import Session
+
 logger = logging.getLogger(__name__)
 
 
-def _create_pipeline(
-    feature_container: FeatureContainer, model: BaseEstimator
-) -> Pipeline:
+def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator) -> Pipeline:
     nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)
-    nominal_bivalue_features = feature_container.get_columns(
-        scale=Scale.NOMINAL_BIVALUE
-    )
+    nominal_bivalue_features = feature_container.get_columns(scale=Scale.NOMINAL_BIVALUE)
     boolean_features = feature_container.get_columns(scale=Scale.BOOLEAN)
     ordinal_features = feature_container.get_columns(scale=Scale.ORDINAL)
     if ordinal_features:
@@ -104,9 +100,7 @@ async def _read_db_and_join() -> pd.DataFrame:
     # async with engine.begin() as conn:
     session: AsyncSession
     async with AsyncSession(engine) as session:
-        df_pollination, df_florescence, df_plant, df_taxon = await session.run_sync(
-            read_data
-        )
+        df_pollination, _, df_plant, df_taxon = await session.run_sync(read_data)
 
     # merge with florescences
     # todo un-un-comment once enough data
@@ -205,30 +199,22 @@ async def _create_data(feature_container: FeatureContainer) -> pd.DataFrame:
 
     # add some custom features
     df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
-    df_all["same_species"] = (
-        df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
-    )
+    df_all["same_species"] = df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
 
-    if missing := [
-        f for f in feature_container.get_columns() if f not in df_all.columns
-    ]:
+    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
 
     return df_all
 
 
-def _cv_classifier(
-    x: pd.DataFrame, y: pd.Series, pipeline: Pipeline
-) -> tuple[str, float]:
+def _cv_classifier(x: pd.DataFrame, y: pd.Series, pipeline: Pipeline) -> tuple[str, float]:
     n_groups = 3  # test part will be 1/n
     n_splits = 3  # k-fold will score n times; must be <= n_groups
     rng = np.random.default_rng(42)
     kfold_groups = rng.integers(n_groups, size=len(x))
     group_kfold = GroupKFold(n_splits=n_splits)
     with ignore_warnings(category=(ConvergenceWarning, UserWarning)):
-        scores = cross_val_score(
-            pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1"
-        )
+        scores = cross_val_score(pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1")
     logger.info(f"Scores: {scores}")
     logger.info(f"Mean score: {np.mean(scores)}")
     return "mean_f1_score", round(float(np.mean(scores)), 2)
@@ -249,9 +235,7 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
     y: pd.Series = df_all["pollination_status"].apply(  # type: ignore[assignment]
         lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
     )
-    x: pd.DataFrame = df_all[  # type: ignore[assignment]
-        feature_container.get_columns()
-    ]
+    x: pd.DataFrame = df_all[feature_container.get_columns()]  # type: ignore[assignment]
 
     # train directly on full dataset with optimized hyperparams
     params_knn = {

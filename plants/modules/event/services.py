@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from plants.exceptions import SoilNotUniqueError
 from plants.modules.event.models import Event, Observation, Pot, Soil
@@ -96,7 +96,7 @@ class EventWriter:
         logger.info(f"Updating {len(events)} events ({event_ids})for plant {plant_id}")
 
         # loop at the current plant's database events to find deleted ones
-        event_obj: Optional[Event]
+        event_obj: Event | None
         for event_obj in plant_obj.events:
             if event_obj.id not in event_ids:
                 # deleting an event includes deleting all image associations, pots, and

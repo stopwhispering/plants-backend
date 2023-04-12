@@ -21,9 +21,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio()
-async def test_florescence_flower_attrs(
-    test_db: AsyncSession, plant_valid: Plant
-) -> None:
+async def test_florescence_flower_attrs(test_db: AsyncSession, plant_valid: Plant) -> None:
     test_db.add(plant_valid)
     await test_db.commit()
 

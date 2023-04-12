@@ -5,9 +5,6 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
 from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
 from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
 from plants.modules.pollination.models import Pollination
@@ -18,9 +15,6 @@ if TYPE_CHECKING:
 
 
 class PollinationDAL(BaseDAL):
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
-
     async def by_id(self, pollination_id: int) -> Pollination:
         # noinspection PyTypeChecker
         query = select(Pollination).where(Pollination.id == pollination_id)
@@ -75,9 +69,7 @@ class PollinationDAL(BaseDAL):
         if "seed_description" in updates:
             pollination.seed_description = updates["seed_description"]
         if "days_until_first_germination" in updates:
-            pollination.days_until_first_germination = updates[
-                "days_until_first_germination"
-            ]
+            pollination.days_until_first_germination = updates["days_until_first_germination"]
         if "first_seeds_sown" in updates:
             pollination.first_seeds_sown = updates["first_seeds_sown"]
         if "first_seeds_germinated" in updates:
@@ -99,9 +91,7 @@ class PollinationDAL(BaseDAL):
                 selectinload(Pollination.pollen_donor_plant),
             )
         )
-        pollinations: list[Pollination] = list(
-            (await self.session.scalars(query)).all()
-        )
+        pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
 
     async def get_available_colors_for_plant(self, plant: Plant) -> list[str]:
@@ -114,9 +104,7 @@ class PollinationDAL(BaseDAL):
         available_color_names = [c for c in COLORS_MAP_TO_RGB if c not in used_colors]
         return [COLORS_MAP_TO_RGB[c] for c in available_color_names]
 
-    async def get_pollinations_with_filter(
-        self, criteria: dict[str, Any]
-    ) -> list[Pollination]:
+    async def get_pollinations_with_filter(self, criteria: dict[str, Any]) -> list[Pollination]:
         query = select(Pollination)
 
         for key, value in criteria.items():
@@ -133,9 +121,7 @@ class PollinationDAL(BaseDAL):
             else:
                 raise CriterionNotImplementedError(key)
 
-        pollinations: list[Pollination] = list(
-            (await self.session.scalars(query)).all()
-        )
+        pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
 
     async def get_pollinations_by_plants(
@@ -147,9 +133,7 @@ class PollinationDAL(BaseDAL):
             Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
         )
 
-        pollinations: list[Pollination] = list(
-            (await self.session.scalars(query)).all()
-        )
+        pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
 
     async def get_pollinations_by_plant_ids(
@@ -161,7 +145,5 @@ class PollinationDAL(BaseDAL):
             Pollination.pollen_donor_plant_id == pollen_donor_plant_id,
         )
 
-        pollinations: list[Pollination] = list(
-            (await self.session.scalars(query)).all()
-        )
+        pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations

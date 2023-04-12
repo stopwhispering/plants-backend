@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import selectinload
@@ -17,18 +17,13 @@ from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant, Tag
 from plants.shared.base_dal import BaseDAL
 
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
 
-
-class PlantDAL(BaseDAL):
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
-
+class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
+    # todo all methods required?
     @staticmethod
     def _add_eager_load_options(query: Select[Any]) -> Select[Any]:
-        """Apply eager loading the query supplied; use only for single- or limited-
-        number select queries to avoid performance issues."""
+        """Apply eager loading the query supplied; use only for single- or limited- number select
+        queries to avoid performance issues."""
         return query.options(
             selectinload(Plant.parent_plant),
             selectinload(Plant.parent_plant_pollen),
@@ -136,7 +131,7 @@ class PlantDAL(BaseDAL):
     async def get_count_plants_without_taxon(self) -> int:
         # noinspection PyTypeChecker
         query = (
-            select(func.count())
+            select(func.count())  # pylint: disable=not-callable
             .select_from(Plant)
             .where(Plant.taxon_id.is_(None))
             .where(Plant.deleted.is_(False))  # noqa: FBT003

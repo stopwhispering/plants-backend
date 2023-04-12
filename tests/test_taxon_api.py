@@ -26,9 +26,7 @@ async def test_search_taxon(
     results = response.json()["ResultsCollection"]
     assert len(results) == 2
 
-    result = next(
-        r for r in results if r["name"] == "Haworthiopsis koelmaniorum var. mcmurtryi"
-    )
+    result = next(r for r in results if r["name"] == "Haworthiopsis koelmaniorum var. mcmurtryi")
     assert result["id"] is None
     assert result["count"] == 0
     assert result["count_inactive"] == 0

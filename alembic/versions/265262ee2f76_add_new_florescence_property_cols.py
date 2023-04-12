@@ -26,9 +26,7 @@ def upgrade() -> None:
         "florescence",
         sa.Column("perianth_diameter", sa.Numeric(precision=2, scale=1), nullable=True),
     )
-    op.add_column(
-        "florescence", sa.Column("flower_color", sa.VARCHAR(length=7), nullable=True)
-    )
+    op.add_column("florescence", sa.Column("flower_color", sa.VARCHAR(length=7), nullable=True))
     op.add_column(
         "florescence",
         sa.Column("flower_color_second", sa.VARCHAR(length=7), nullable=True),

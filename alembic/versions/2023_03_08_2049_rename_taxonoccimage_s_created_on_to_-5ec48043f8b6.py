@@ -16,9 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "ALTER TABLE taxon_ocurrence_image RENAME created_on TO photographed_at;"
-    )
+    op.execute("ALTER TABLE taxon_ocurrence_image RENAME created_on TO photographed_at;")
 
 
 def downgrade() -> None:

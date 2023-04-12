@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 from plants.shared.message_schemas import BMessage
 
@@ -15,16 +13,16 @@ class BNurseryProposal(BaseSchema):
 
 
 class BResultsProposals(ResponseContainer):
-    NurseriesSourcesCollection: Optional[list[BNurseryProposal]]
-    KeywordsCollection: Optional[list[BKeywordProposal]]
+    NurseriesSourcesCollection: list[BNurseryProposal] | None
+    KeywordsCollection: list[BKeywordProposal] | None
 
 
 class BTaxonTreeNode(BaseSchema):
     key: str
     level: int
     count: int
-    nodes: Optional[list[BTaxonTreeNode]]  # missing on lowest level
-    plant_ids: Optional[list[int]]  # plants themselves on lowest level
+    nodes: list[BTaxonTreeNode] | None  # missing on lowest level
+    plant_ids: list[int] | None  # plants themselves on lowest level
 
 
 # this is required (plus importing annotations) to allow for self-references

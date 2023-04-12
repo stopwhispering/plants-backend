@@ -45,8 +45,7 @@ def _rename_plant_in_image_files(images: list[Image], exif: PhotoMetadataAccessE
 async def rename_plant_in_image_files(
     plant: Plant, plant_name_old: str, image_dal: ImageDAL
 ) -> int:
-    """In each photo_file file that has the old plant name tagged, fit tag to the new
-    plant name."""
+    """In each photo_file file that has the old plant name tagged, fit tag to the new plant name."""
     if not plant.images:
         logger.info(f"No photo_file tag to change for {plant_name_old}.")
     exif = PhotoMetadataAccessExifTags()
@@ -83,8 +82,7 @@ async def save_image_to_db(
 async def save_image_file(
     file: UploadFile, plant_names: list[str], keywords: tuple[str] | None = None
 ) -> Path:
-    """Save the files supplied as starlette uploadfiles on os; assign plants and
-    keywords."""
+    """Save the files supplied as starlette uploadfiles on os; assign plants and keywords."""
     # save to file system
     filename_ = file.filename if file.filename else generate_timestamp_filename()
     path = settings.paths.path_original_photos_uploaded.joinpath(filename_)
@@ -147,9 +145,9 @@ async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) ->
     new_path = settings.paths.path_deleted_photos.joinpath(old_path.name)
     try:
         old_path.replace(target=new_path)
-    except OSError as e:
+    except OSError as err:
         logger.exception(
-            err_msg := f"OSError when moving file {old_path} to {new_path}", exc_info=e
+            err_msg := f"OSError when moving file {old_path} to {new_path}", exc_info=err
         )
         throw_exception(err_msg, description=f"Filename: {old_path.name}")
     logger.info(f"Moved file {old_path} to {new_path}")

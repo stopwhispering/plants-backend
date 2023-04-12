@@ -32,9 +32,7 @@ async def test_taxon_occurrence_loader(
     assert occurrence_image.gbif_id == taxon.gbif_id
 
     # Check if image thumbnail was saved to file system
-    folder_content = (
-        plants_package.settings.paths.path_generated_thumbnails_taxon.iterdir()
-    )
+    folder_content = plants_package.settings.paths.path_generated_thumbnails_taxon.iterdir()
     file_names = [f.name for f in folder_content]
 
     # the thumbnail filenames contain at least the occurrence_id, img_no, and gbif_id

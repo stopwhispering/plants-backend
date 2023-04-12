@@ -38,9 +38,7 @@ async def test_florescence_create_valid(
     response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
     active_florescence = response.json().get("active_florescence_collection")[0]
-    assert (
-        active_florescence.get("comment") == "large & new"
-    )  # first space has been trimmed
+    assert active_florescence.get("comment") == "large & new"  # first space has been trimmed
 
     # update florescence (valid)
     payload = {
@@ -123,9 +121,7 @@ async def test_create_and_abort_florescence(
     plant_valid_in_db = await plant_dal.by_id(plant_id)
     assert len(plant_valid_in_db.florescences) == 1
     florescence_in_db = plant_valid_in_db.florescences[0]
-    assert (
-        florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
-    )
+    assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     # FRequestEditedFlorescence
     payload = {
@@ -133,21 +129,15 @@ async def test_create_and_abort_florescence(
         "plant_id": plant_valid_in_db.id,
         "florescence_status": "doing_great",  # invalid
     }
-    response = await ac.put(
-        f"/api/active_florescences/{florescence_in_db.id}", json=payload
-    )
+    response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert 400 <= response.status_code <= 499
     await test_db.refresh(
         florescence_in_db
     )  # reloads (only) attributes, no relationships are set to not loaded
-    assert (
-        florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
-    )
+    assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     payload["florescence_status"] = "aborted"
-    response = await ac.put(
-        f"/api/active_florescences/{florescence_in_db.id}", json=payload
-    )
+    response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert response.status_code == 200
     await test_db.refresh(florescence_in_db)
     assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED
@@ -167,9 +157,7 @@ async def test_delete_florescence(
     response = await ac.get("/api/active_florescences")
     assert response.status_code == 200
     active_florescences = response.json()["active_florescence_collection"]
-    assert not any(
-        florescence["id"] == florescence_id for florescence in active_florescences
-    )
+    assert not any(florescence["id"] == florescence_id for florescence in active_florescences)
 
     # check that florescence is no longer in db (it is actually deleted, there
     # is no "deleted" flag)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from pydantic import Extra, condecimal, conint, constr
+from pydantic import Extra, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -24,8 +24,8 @@ class PollenContainerBase(BaseSchema):
 
 
 class PollenContainerRead(PollenContainerBase):
-    plant_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    genus: constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
+    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    genus: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
 
 
 class PollenContainerCreateUpdate(PollenContainerBase):
@@ -39,7 +39,7 @@ class PollinationBase(BaseSchema):
     pollinated_at: str  # e.g. '2022-11-16 12:06'
     label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
     location: Location
-    count_attempted: conint(ge=1)  # type: ignore[valid-type]
+    count_attempted: types.conint(ge=1)  # type: ignore[valid-type]
 
 
 class PollinationRead(PollinationBase):
@@ -50,9 +50,9 @@ class PollinationRead(PollinationBase):
     location_text: str
 
     # allow None for old data
-    count_attempted: conint(ge=1) | None  # type: ignore[valid-type]
-    count_pollinated: conint(ge=1) | None  # type: ignore[valid-type]
-    count_capsules: conint(ge=1) | None  # type: ignore[valid-type]
+    count_attempted: types.conint(ge=1) | None  # type: ignore[valid-type]
+    count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
+    count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
 
     pollination_status: str
     ongoing: bool
@@ -79,10 +79,10 @@ class PollinationUpdate(PollinationBase):
     pollination_status: PollinationStatus
     ongoing: bool
 
-    count_pollinated: conint(ge=1) | None  # type: ignore[valid-type]
-    count_capsules: conint(ge=1) | None  # type: ignore[valid-type]
+    count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
+    count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
 
-    harvest_date: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    harvest_date: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
     seed_capsule_length: float | None
     seed_capsule_width: float | None
     seed_length: float | None
@@ -109,9 +109,7 @@ class PollinationCreate(PollinationBase):
 class FlorescenceBase(BaseSchema):
     plant_id: int
     florescence_status: FlorescenceStatus
-    inflorescence_appeared_at: constr(  # type: ignore[valid-type]
-        regex=REGEX_DATE
-    ) | None
+    inflorescence_appeared_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
     comment: str | None  # e.g. location if multiple plants in one container
 
 
@@ -124,24 +122,24 @@ class FlorescenceUpdate(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(  # type: ignore[valid-type]
+    perianth_length: types.condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(99.9)
     ) | None
-    perianth_diameter: condecimal(  # type: ignore[valid-type]
+    perianth_diameter: types.condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(  # type: ignore[valid-type]
+    flower_color: types.constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(  # type: ignore[valid-type]
+    flower_color_second: types.constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opened_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    last_flower_closed_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    first_flower_opened_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    last_flower_closed_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
 
     class Config:
         extra = Extra.ignore
@@ -155,24 +153,24 @@ class FlorescenceRead(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: condecimal(  # type: ignore[valid-type]
+    perianth_length: types.condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(99.9)
     ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: condecimal(  # type: ignore[valid-type]
+    perianth_diameter: types.condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(9.9)
     ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: constr(  # type: ignore[valid-type]
+    flower_color: types.constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: constr(  # type: ignore[valid-type]
+    flower_color_second: types.constr(  # type: ignore[valid-type]
         min_length=7, max_length=7, to_lower=True
     ) | None  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
 
-    first_flower_opened_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    last_flower_closed_at: constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    first_flower_opened_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    last_flower_closed_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
 
 
 class BPollinationAttempt(BaseSchema):
@@ -217,9 +215,7 @@ class FRequestPollenContainers(RequestContainer):
 
 
 class SettingsRead(BaseSchema):
-    colors: list[
-        str
-    ]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#000000']
+    colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#000000']
 
 
 class BResultsActiveFlorescences(ResponseContainer):

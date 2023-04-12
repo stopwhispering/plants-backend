@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 import pytz
 
+from plants.shared.history_models import History
+
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.shared.history_dal import HistoryDAL
-
-from plants.shared.history_models import History
 
 
 async def create_history_entry(

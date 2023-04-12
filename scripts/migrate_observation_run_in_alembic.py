@@ -52,8 +52,7 @@ async def treat_multiple_events_per_observation(session: AsyncSession) -> None:
             if observation is None:
                 raise ValueError(f"observation with id {observation_id} not found")
             print(
-                f"observation {observation} is used by "
-                f"{len(events_current_observation)} events"
+                f"observation {observation} is used by " f"{len(events_current_observation)} events"
             )
             for i in range(len(events_current_observation) - 1):
                 observation_clone = clone_orm_instance(observation)

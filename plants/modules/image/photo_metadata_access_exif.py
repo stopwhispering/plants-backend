@@ -57,14 +57,12 @@ class PhotoMetadataAccessExifTags:
 
     def rewrite_plant_assignments(self, absolute_path: Path, plants: list[str]) -> None:
         """Rewrite the plants assigned to the photo_file at the supplied path."""
-        self._rewrite_plant_assignments_in_exif_tags(
-            absolute_path=absolute_path, plants=plants
-        )
+        self._rewrite_plant_assignments_in_exif_tags(absolute_path=absolute_path, plants=plants)
 
     @staticmethod
     def _write_exif_tags(absolute_path: Path, metadata: MetadataDTO) -> None:
-        """Adjust exif tags in file described in photo_file object; optionally append to
-        photo_file directory (used for newly uploaded photo_file files)."""
+        """Adjust exif tags in file described in photo_file object; optionally append to photo_file
+        directory (used for newly uploaded photo_file files)."""
         tag_descriptions = metadata.description.encode("utf-8")
         tag_keywords = encode_keywords_tag(metadata.keywords)
 
@@ -76,8 +74,7 @@ class PhotoMetadataAccessExifTags:
         if not absolute_path.is_file():
             if local_config.log_settings.ignore_missing_image_files:
                 logger.warning(
-                    f"File {absolute_path} not found. Can"
-                    "t write EXIF Tags. Ignoring."
+                    f"File {absolute_path} not found. Can" "t write EXIF Tags. Ignoring."
                 )
                 return
             raise FileNotFoundError(f"File {absolute_path} not found.")
@@ -107,13 +104,13 @@ class PhotoMetadataAccessExifTags:
 
             # fix some problem with windows photo_file editor writing exif tag in
             # wrong format
-            if exif_dict.get("GPS") and type(exif_dict["GPS"].get(11)) is bytes:
+            if exif_dict.get("GPS") and isinstance(exif_dict["GPS"].get(11), bytes):
                 del exif_dict["GPS"][11]
             try:
                 exif_bytes = piexif.dump(exif_dict)
-            except ValueError as e:
+            except ValueError as err:
                 logger.warning(
-                    f"Catched exception when modifying exif: {str(e)}. Trying again "
+                    f"Catched exception when modifying exif: {str(err)}. Trying again "
                     "after deleting embedded thumbnail."
                 )
                 del exif_dict["thumbnail"]
@@ -122,20 +119,13 @@ class PhotoMetadataAccessExifTags:
             # ... save using piexif
             piexif.insert(exif_bytes, absolute_path.as_posix())
             # reset modified time
-            set_modified_date(
-                absolute_path, modified_time_seconds
-            )  # set access and modifide date
+            set_modified_date(absolute_path, modified_time_seconds)  # set access and modifide date
 
     @staticmethod
-    def _rewrite_plant_assignments_in_exif_tags(
-        absolute_path: Path, plants: list[str]
-    ) -> None:
-        """rewrite the plants assigned to the photo_file at the supplied path; keep the
-        last-modifide date (called in context of renaming)"""
-        if (
-            not absolute_path.is_file()
-            and local_config.log_settings.ignore_missing_image_files
-        ):
+    def _rewrite_plant_assignments_in_exif_tags(absolute_path: Path, plants: list[str]) -> None:
+        """rewrite the plants assigned to the photo_file at the supplied path; keep the last-
+        modifide date (called in context of renaming)"""
+        if not absolute_path.is_file() and local_config.log_settings.ignore_missing_image_files:
             return
 
         # we want to preserve the file's last-change-date
@@ -154,6 +144,4 @@ class PhotoMetadataAccessExifTags:
         piexif.insert(exif_bytes, absolute_path.as_posix())
 
         # reset file's last modified date to the previous date
-        set_modified_date(
-            absolute_path, modified_time_seconds
-        )  # set access and modified date
+        set_modified_date(absolute_path, modified_time_seconds)  # set access and modified date

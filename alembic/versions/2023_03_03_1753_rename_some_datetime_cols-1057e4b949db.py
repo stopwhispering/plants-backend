@@ -25,9 +25,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE observation RENAME last_update TO last_updated_at;")
     op.execute("ALTER TABLE taxon RENAME last_update TO last_updated_at;")
     op.execute("ALTER TABLE tags RENAME last_update TO last_updated_at;")
-    op.execute(
-        "ALTER TABLE taxon_ocurrence_image RENAME last_update TO last_updated_at;"
-    )
+    op.execute("ALTER TABLE taxon_ocurrence_image RENAME last_update TO last_updated_at;")
     op.execute("ALTER TABLE event RENAME last_update TO last_updated_at;")
 
 

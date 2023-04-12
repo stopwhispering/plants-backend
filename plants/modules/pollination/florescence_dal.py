@@ -13,15 +13,10 @@ from plants.shared.base_dal import BaseDAL
 if TYPE_CHECKING:
     from collections.abc import Collection
 
-    from sqlalchemy.ext.asyncio import AsyncSession
-
     from plants.modules.pollination.enums import FlorescenceStatus
 
 
 class FlorescenceDAL(BaseDAL):
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
-
     async def create_florescence(self, florescence: Florescence) -> None:
         self.session.add(florescence)
         await self.session.flush()
@@ -30,9 +25,7 @@ class FlorescenceDAL(BaseDAL):
         await self.session.delete(florescence)
         await self.session.flush()
 
-    async def by_status(
-        self, status: Collection[FlorescenceStatus]
-    ) -> list[Florescence]:
+    async def by_status(self, status: Collection[FlorescenceStatus]) -> list[Florescence]:
         query = (
             select(Florescence)
             .options(selectinload(Florescence.plant).selectinload(Plant.taxon))
@@ -74,9 +67,7 @@ class FlorescenceDAL(BaseDAL):
         if "flower_color_second" in updates:
             florescence.flower_color_second = updates["flower_color_second"]
         if "flower_colors_differentiation" in updates:
-            florescence.flower_colors_differentiation = updates[
-                "flower_colors_differentiation"
-            ]
+            florescence.flower_colors_differentiation = updates["flower_colors_differentiation"]
         if "stigma_position" in updates:
             florescence.stigma_position = updates["stigma_position"]
 

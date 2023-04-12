@@ -3,13 +3,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-
-# if TYPE_CHECKING:
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 from starlette.responses import FileResponse
 
 from plants.dependencies import (
@@ -64,20 +62,20 @@ async def get_images_for_plant(
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
-    """Get photo_file information for requested plant_id including (other) plants and
-    keywords."""
+    """Get photo_file information for requested plant_id including (other) plants and keywords."""
     images = await fetch_images_for_plant(plant, image_dal=image_dal)
     logger.info(f"Returned {len(images)} images for plant {plant.id}.")
     return images
 
 
 @router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
-async def upload_images_plant(
+async def upload_images_plant(  # pylint: disable=too-many-locals
     request: Request,
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
+    # todo refactor
     """Upload images and directly assign them to supplied plant; no keywords included.
 
     # the ui5 uploader control does somehow not work with the expected form/multipart
@@ -90,9 +88,7 @@ async def upload_images_plant(
     files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = await remove_files_already_existing(
-        files, image_dal=image_dal
-    )
+    duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
 
     # schedule and run tasks to save images concurrently
     # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
@@ -100,9 +96,9 @@ async def upload_images_plant(
     # to be run concurrently - at least writing stops with "Session is already flushing"
     # InvalidRequestError) (2023-02)
     plant_names = [(await plant_dal.by_id(plant.id)).plant_name]
-    async with asyncio.TaskGroup() as tg:
+    async with asyncio.TaskGroup() as task_group:
         tasks = [
-            tg.create_task(save_image_file(file=file, plant_names=plant_names))
+            task_group.create_task(save_image_file(file=file, plant_names=plant_names))
             for file in files
         ]
     paths: list[Path] = [task.result() for task in tasks]
@@ -118,19 +114,14 @@ async def upload_images_plant(
             )
         )
 
-    desc = (
-        f"Saved: {[p.filename for p in files]}."
-        f"\nSkipped Duplicates: {duplicate_filenames}."
-    )
+    desc = f"Saved: {[p.filename for p in files]}." f"\nSkipped Duplicates: {duplicate_filenames}."
     if warnings:
         warnings_s = "\n".join(warnings)
         desc += f"\n{warnings_s}"
     message = get_message(
         msg := f"Saved {len(files)} images."
         + (" Duplicates found." if duplicate_filenames else ""),
-        message_type=MessageType.WARNING
-        if duplicate_filenames
-        else MessageType.INFORMATION,
+        message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
         description=desc,
     )
     logger.info(msg)
@@ -157,8 +148,7 @@ async def update_images(
 ) -> Any:
     """Modify existing photo_file's metadata."""
     logger.info(
-        f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and "
-        f"exif tags."
+        f"Saving updates for {len(modified_ext.ImagesCollection)} images in db and " f"exif tags."
     )
     for image_ext in modified_ext.ImagesCollection:
         # alter metadata in jpg exif tags
@@ -181,18 +171,17 @@ async def update_images(
 
     return {
         "resource": MajorResource.IMAGE,
-        "message": get_message(
-            f"Saved updates for {len(modified_ext.ImagesCollection)} images."
-        ),
+        "message": get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images."),
     }
 
 
 @router.post("/images/", response_model=BResultsImagesUploaded)
-async def upload_images(
+async def upload_images(  # pylint: disable=too-many-locals
     request: Request,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
+    # todo refactor
     """upload new photo_file(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart
     # format expected
@@ -210,9 +199,7 @@ async def upload_images(
         throw_exception(str(err))
 
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = await remove_files_already_existing(
-        files, image_dal=image_dal
-    )
+    duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
 
     # schedule and run tasks to save images concurrently
     # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
@@ -220,12 +207,11 @@ async def upload_images(
     # to be run concurrently - at least writing stops with "Session is already flushing"
     # InvalidRequestError) (2023-02)
     plant_names = [
-        (await plant_dal.by_id(plant_id)).plant_name
-        for plant_id in additional_data["plants"]
+        (await plant_dal.by_id(plant_id)).plant_name for plant_id in additional_data["plants"]
     ]
-    async with asyncio.TaskGroup() as tg:
+    async with asyncio.TaskGroup() as task_group:
         tasks = [
-            tg.create_task(
+            task_group.create_task(
                 save_image_file(
                     file=file,
                     plant_names=plant_names,
@@ -248,10 +234,7 @@ async def upload_images(
             )
         )
 
-    desc = (
-        f"Saved: {[p.filename for p in files]}."
-        f"\nSkipped Duplicates: {duplicate_filenames}."
-    )
+    desc = f"Saved: {[p.filename for p in files]}." f"\nSkipped Duplicates: {duplicate_filenames}."
     if warnings:
         warnings_s = "\n".join(warnings)
         desc += f"\n{warnings_s}"
@@ -259,9 +242,7 @@ async def upload_images(
     message = get_message(
         msg := f"Saved {len(files)} images."
         + (" Duplicates found." if duplicate_filenames else ""),
-        message_type=MessageType.WARNING
-        if duplicate_filenames
-        else MessageType.INFORMATION,
+        message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
         description=f"Saved: {[p.filename for p in files]}."
         f"\nSkipped Duplicates: {duplicate_filenames}.",
     )
@@ -273,8 +254,7 @@ async def upload_images(
 async def delete_image(
     image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)
 ) -> Any:
-    """move the file that should be deleted to another folder (not actually deleted,
-    currently)"""
+    """move the file that should be deleted to another folder (not actually deleted, currently)"""
     deleted_files: list[str] = []
     for image_to_delete in image_container.images:
         image = await image_dal.by_id(image_id=image_to_delete.id)
@@ -325,9 +305,7 @@ async def get_image(
         raise ImageFileNotFoundError(filename=image.filename)
 
     # media_type here sets the media type of the actual response sent to the client.
-    return FileResponse(
-        path=image_path, media_type="image/jpeg", filename=image_path.name
-    )
+    return FileResponse(path=image_path, media_type="image/jpeg", filename=image_path.name)
 
 
 @router.post("/generate_missing_thumbnails", response_model=BConfirmation)

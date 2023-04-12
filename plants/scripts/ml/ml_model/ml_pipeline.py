@@ -9,9 +9,7 @@ from ml_helpers.preprocessing.features import FeatureContainer, Scale
 
 def create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):
     nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)
-    nominal_bivalue_features = feature_container.get_columns(
-        scale=Scale.NOMINAL_BIVALUE
-    )
+    nominal_bivalue_features = feature_container.get_columns(scale=Scale.NOMINAL_BIVALUE)
     boolean_features = feature_container.get_columns(scale=Scale.BOOLEAN)
     ordinal_features = feature_container.get_columns(scale=Scale.ORDINAL)
     if ordinal_features:

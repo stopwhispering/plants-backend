@@ -22,9 +22,7 @@ def upgrade() -> None:
     op.execute(
         "ALTER TABLE florescence RENAME first_flower_opening_date TO first_flower_opened_at;"
     )
-    op.execute(
-        "ALTER TABLE florescence RENAME last_flower_closing_date TO last_flower_closed_at;"
-    )
+    op.execute("ALTER TABLE florescence RENAME last_flower_closing_date TO last_flower_closed_at;")
     #
     #
 

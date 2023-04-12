@@ -21,11 +21,11 @@ def treat_non_serializable(x: Any) -> Any:
         make_dict_values_json_serializable(x)
         return x
     if isinstance(x, list):
-        for i, li in enumerate(x):
+        for position, list_item in enumerate(x):
             try:
-                _ = json.dumps(li)
+                _ = json.dumps(list_item)
             except TypeError:
-                x[i] = treat_non_serializable(li)
+                x[position] = treat_non_serializable(list_item)
         return x
     if isinstance(x, Path):
         return x.as_posix()
@@ -33,10 +33,9 @@ def treat_non_serializable(x: Any) -> Any:
 
 
 def make_list_items_json_serializable(items: list[Any]) -> None:
-    """Tries to convert items in a supplied list into something that is json
-    serializable."""
+    """Tries to convert items in a supplied list into something that is json serializable."""
     for count, value in enumerate(items):
-        if type(value) is dict:
+        if isinstance(value, dict):
             make_dict_values_json_serializable(items[count])
         else:
             try:
@@ -45,22 +44,18 @@ def make_list_items_json_serializable(items: list[Any]) -> None:
                 items[count] = treat_non_serializable(value)
 
 
-def make_dict_values_json_serializable(d: dict[Any, Any]) -> None:
-    """Tries to convert the values of a dict into something that is json serializable if
-    it is not; works recursively for nested dicts, i.e. if value is also a dict."""
-    for (
-        key
-    ) in (
-        d
-    ):  # can't loop at items() as value will then be a copy, not a reference to orig
+def make_dict_values_json_serializable(dict_: dict[Any, Any]) -> None:
+    """Tries to convert the values of a dict into something that is json serializable if it is not;
+    works recursively for nested dicts, i.e. if value is also a dict."""
+    for key in dict_:  # can't loop at items() as value will then be a copy, not a reference to orig
         # obj
-        if type(d[key]) is dict:
-            make_dict_values_json_serializable(d[key])
+        if isinstance(dict_[key], dict):
+            make_dict_values_json_serializable(dict_[key])
         else:
             try:
-                _ = json.dumps(d[key])
+                _ = json.dumps(dict_[key])
             except TypeError:
-                d[key] = treat_non_serializable(d[key])
+                dict_[key] = treat_non_serializable(dict_[key])
 
 
 def parse_api_date(date_str: str | None) -> date | None:
@@ -76,16 +71,16 @@ def parse_api_date(date_str: str | None) -> date | None:
     )
 
 
-def format_api_date(d: date | None) -> str | None:
+def format_api_date(date_: date | None) -> str | None:
     """Format date from date object to API format (e.g. '2022-11-16')"""
-    return d.strftime(FORMAT_YYYY_MM_DD) if d else None
+    return date_.strftime(FORMAT_YYYY_MM_DD) if date_ else None
 
 
 def parse_api_datetime(dt_str: str) -> datetime:
     """Parse datetime from API request (e.g. '2022-11-16 23:59') to datetime object.
 
-    the problem is that using astimezone() on a naive datetime object will assume that
-    the datetime object is in local TZ, so we use pytz' localize() method
+    the problem is that using astimezone() on a naive datetime object will assume that the datetime
+    object is in local TZ, so we use pytz' localize() method
     """
     naive_dt = datetime.strptime(dt_str, FORMAT_API_YYYY_MM_DD_HH_MM)  # noqa: DTZ007
     return pytz.timezone("Europe/Berlin").localize(naive_dt)
@@ -105,9 +100,7 @@ def format_api_datetime(dt: datetime | None) -> str | None:
     """Format date from date object to API format (e.g. '2022-11-16 23:59')"""
     if not dt:
         return None
-    return dt.astimezone(pytz.timezone("Europe/Berlin")).strftime(
-        FORMAT_API_YYYY_MM_DD_HH_MM
-    )
+    return dt.astimezone(pytz.timezone("Europe/Berlin")).strftime(FORMAT_API_YYYY_MM_DD_HH_MM)
 
 
 def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
@@ -118,7 +111,7 @@ def date_hook(json_dict: dict[Any, Any]) -> dict[Any, Any]:
             json_dict[key] = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").astimezone(
                 pytz.timezone("Europe/Berlin")
             )
-        except Exception:
-            with suppress(Exception):
+        except ValueError:
+            with suppress(ValueError):
                 json_dict[key] = date.fromisoformat(value)
     return json_dict

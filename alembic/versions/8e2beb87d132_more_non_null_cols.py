@@ -25,13 +25,9 @@ def upgrade() -> None:
         nullable=False,
     )
     op.alter_column("history", "plant_id", existing_type=sa.INTEGER(), nullable=False)
-    op.alter_column(
-        "history", "plant_name", existing_type=sa.VARCHAR(length=100), nullable=False
-    )
+    op.alter_column("history", "plant_name", existing_type=sa.VARCHAR(length=100), nullable=False)
     op.alter_column("history", "description", existing_type=sa.TEXT(), nullable=False)
-    op.alter_column(
-        "image", "relative_path", existing_type=sa.VARCHAR(length=240), nullable=False
-    )
+    op.alter_column("image", "relative_path", existing_type=sa.VARCHAR(length=240), nullable=False)
     op.alter_column("soil", "mix", existing_type=sa.TEXT(), nullable=False)
     op.alter_column(
         "taxon_ocurrence_image",
@@ -117,13 +113,9 @@ def downgrade() -> None:
         nullable=True,
     )
     op.alter_column("soil", "mix", existing_type=sa.TEXT(), nullable=True)
-    op.alter_column(
-        "image", "relative_path", existing_type=sa.VARCHAR(length=240), nullable=True
-    )
+    op.alter_column("image", "relative_path", existing_type=sa.VARCHAR(length=240), nullable=True)
     op.alter_column("history", "description", existing_type=sa.TEXT(), nullable=True)
-    op.alter_column(
-        "history", "plant_name", existing_type=sa.VARCHAR(length=100), nullable=True
-    )
+    op.alter_column("history", "plant_name", existing_type=sa.VARCHAR(length=100), nullable=True)
     op.alter_column("history", "plant_id", existing_type=sa.INTEGER(), nullable=True)
     op.alter_column(
         "history",

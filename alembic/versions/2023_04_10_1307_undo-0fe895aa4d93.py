@@ -27,12 +27,8 @@ def upgrade() -> None:
         "image_to_event_association",
         type_="foreignkey",
     )
-    op.create_foreign_key(
-        None, "image_to_event_association", "image", ["image_id"], ["id"]
-    )
-    op.create_foreign_key(
-        None, "image_to_event_association", "event", ["event_id"], ["id"]
-    )
+    op.create_foreign_key(None, "image_to_event_association", "image", ["image_id"], ["id"])
+    op.create_foreign_key(None, "image_to_event_association", "event", ["event_id"], ["id"])
     # ### end Alembic commands ###
 
 

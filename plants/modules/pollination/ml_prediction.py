@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class TrainingData:
+class TrainingData:  # pylint: disable=too-many-instance-attributes
     pollen_type: str
     flowers_count: int | None
     branches_count: int | None
@@ -57,9 +57,7 @@ def get_data(
     )
     df_all = pd.Series(traing_data.__dict__).to_frame().T
 
-    if missing := [
-        f for f in feature_container.get_columns() if f not in df_all.columns
-    ]:
+    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
     return df_all
 

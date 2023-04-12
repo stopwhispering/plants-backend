@@ -90,8 +90,8 @@ async def save_taxon(
     background_tasks: BackgroundTasks,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
-    """Save a custom or non-custom taxon from search results list; if taxon already is
-    in db, just return it."""
+    """Save a custom or non-custom taxon from search results list; if taxon already is in db, just
+    return it."""
     logger.info(
         f"Received request to save taxon if not exists: ID={new_taxon_data.id}, LSID: "
         f"{new_taxon_data.lsid}"
@@ -117,15 +117,12 @@ async def update_taxa(
 ) -> Any:
     """Update 1..n taxa in database."""
     for taxon_modified in modified_taxa.ModifiedTaxaCollection:
-        await modify_taxon(
-            taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal
-        )
+        await modify_taxon(taxon_modified=taxon_modified, taxon_dal=taxon_dal, image_dal=image_dal)
 
     results = {
         "resource": MajorResource.TAXON,
         "message": get_message(
-            msg := f"Updated {len(modified_taxa.ModifiedTaxaCollection)} taxa in "
-            f"database."
+            msg := f"Updated {len(modified_taxa.ModifiedTaxaCollection)} taxa in " f"database."
         ),
     }
     logger.info(msg)

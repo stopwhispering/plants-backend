@@ -55,9 +55,7 @@ def upgrade() -> None:
             WHEN location = 'indoor_led' THEN 'INDOOR_LED' \
          END);"
     )
-    enum_new_type = postgresql.ENUM(
-        "INDOOR", "INDOOR_LED", "OUTDOOR", "UNKNOWN", name="location"
-    )
+    enum_new_type = postgresql.ENUM("INDOOR", "INDOOR_LED", "OUTDOOR", "UNKNOWN", name="location")
     enum_new_type.create(op.get_bind())
     op.execute(
         "ALTER TABLE pollination ALTER COLUMN location TYPE location USING location::text::location"

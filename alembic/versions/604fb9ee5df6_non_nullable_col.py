@@ -34,9 +34,7 @@ def upgrade() -> None:
     op.alter_column(
         "pot",
         "shape_top",
-        existing_type=postgresql.ENUM(
-            "HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop"
-        ),
+        existing_type=postgresql.ENUM("HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop"),
         nullable=False,
     )
     # ### end Alembic commands ###
@@ -47,9 +45,7 @@ def downgrade() -> None:
     op.alter_column(
         "pot",
         "shape_top",
-        existing_type=postgresql.ENUM(
-            "HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop"
-        ),
+        existing_type=postgresql.ENUM("HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop"),
         nullable=True,
     )
     # ### end Alembic commands ###

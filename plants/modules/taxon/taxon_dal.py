@@ -7,9 +7,6 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
 from plants.exceptions import (
     CriterionNotImplementedError,
     TaxonNotFoundError,
@@ -31,9 +28,6 @@ TaxaWithPlantIds = list[tuple[str, str, str | None, int, list[int]]]
 
 
 class TaxonDAL(BaseDAL):
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
-
     async def by_id(self, taxon_id: int) -> Taxon:
         # noinspection PyTypeChecker
         query = (
@@ -107,6 +101,7 @@ class TaxonDAL(BaseDAL):
 
         # array_agg seems to not work with int array, so we need to cast to string
         # this will, however, return a list of int not string
+        # pylint: disable=not-callable
         plant_ids_agg = func.array_agg(Plant.id, type_=ARRAY(String))
         query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id, plant_ids_agg)
         query = query.join(Taxon.plants)

@@ -16,9 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "ALTER TABLE image ALTER COLUMN record_date_time TYPE timestamp with time zone;"
-    )
+    op.execute("ALTER TABLE image ALTER COLUMN record_date_time TYPE timestamp with time zone;")
 
 
 def downgrade() -> None:

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional
 
-from pydantic import constr
+from pydantic import types
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
@@ -12,12 +11,12 @@ from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 class ImageAssignedToEvent(BaseSchema):
     id: int
-    # filename: constr(min_length=1, max_length=150)  # type: ignore[valid-type]
+    # filename: types.constr(min_length=1, max_length=150)  # type: ignore[valid-type]
 
 
 class SoilBase(BaseSchema):
     id: int
-    soil_name: constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    soil_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     mix: str
     description: str | None
 
@@ -47,7 +46,7 @@ class PotBase(BaseSchema):
 
 
 class PotCreateUpdate(PotBase):
-    id: Optional[int]  # missing if new
+    id: int | None  # missing if new
 
 
 class PotRead(PotBase):
@@ -71,13 +70,13 @@ class ObservationCreateUpdate(ObservationBase):
 
 class EventBase(BaseSchema):
     plant_id: int
-    date: constr(regex=REGEX_DATE)  # type: ignore[valid-type]
+    date: types.constr(regex=REGEX_DATE)  # type: ignore[valid-type]
     event_notes: str | None
-    images: Optional[list[ImageAssignedToEvent]]
+    images: list[ImageAssignedToEvent] | None
 
 
 class EventCreateUpdate(EventBase):
-    id: Optional[int]  # empty for new, filled for updated events
+    id: int | None  # empty for new, filled for updated events
     observation: ObservationCreateUpdate | None
     soil: SoilUpdate | None
     pot: PotCreateUpdate | None

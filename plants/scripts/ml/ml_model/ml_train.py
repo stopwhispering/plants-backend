@@ -132,9 +132,7 @@ def optimize_knn_classifier(x, y, feature_container: FeatureContainer):
         "estimator__p": [1, 2],  # default 2
     }
     with ignore_warnings(category=(FutureWarning, UserWarning)):
-        trained_pipeline = apply_grid_search(
-            pipeline=pipeline, x=x, y=y, param_grid=param_grid
-        )
+        trained_pipeline = apply_grid_search(pipeline=pipeline, x=x, y=y, param_grid=param_grid)
         print(trained_pipeline)
     # Results:
     # {'estimator__algorithm': 'ball_tree', 'estimator__leaf_size': 20,
@@ -149,9 +147,7 @@ def cv_classifier(x, y, pipeline: Pipeline):
     kfold_groups = np.random.randint(n_groups, size=len(x))
     group_kfold = GroupKFold(n_splits=n_splits)
     with ignore_warnings(category=(ConvergenceWarning, UserWarning)):
-        scores = cross_val_score(
-            pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1"
-        )
+        scores = cross_val_score(pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1")
     print(f"Scores: {scores}")
     print(f"Mean score: {np.mean(scores)}")
 
@@ -192,9 +188,7 @@ def optimize_randomforest_classifier(x, y, feature_container: FeatureContainer):
         ],  # default None -> None
     }
     with ignore_warnings(category=(FutureWarning, UserWarning)):
-        trained_pipeline = apply_grid_search(
-            pipeline=pipeline, x=x, y=y, param_grid=param_grid
-        )
+        trained_pipeline = apply_grid_search(pipeline=pipeline, x=x, y=y, param_grid=param_grid)
         print(trained_pipeline)
     # Results:
     # {'estimator__n_estimators': 5, 'estimator__min_samples_split': 0.01,

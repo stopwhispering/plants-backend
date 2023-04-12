@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import Extra
 from pydantic.main import BaseModel
 
@@ -11,7 +9,7 @@ from plants.shared.enums import MajorResource, MessageType
 class BMessage(BaseModel):
     type: MessageType  # noqa: A003
     message: str
-    description: Optional[str]
+    description: str | None
 
     class Config:
         extra = Extra.forbid
@@ -26,9 +24,8 @@ class BConfirmation(BaseModel):
 
 
 class BSaveConfirmation(BaseModel):
-    """For the major resources (plants, images, taxa, events, we need to return the
-    updated resource to the frontend to enable the frontend to identify when all
-    resources have been saved."""
+    """For the major resources (plants, images, taxa, events, we need to return the updated resource
+    to the frontend to enable the frontend to identify when all resources have been saved."""
 
     resource: MajorResource
     message: BMessage

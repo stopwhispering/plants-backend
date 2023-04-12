@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
-def clone_orm_instance(
-    model_instance: Any, clone_attrs: Optional[dict[str, Any]] = None
-) -> Any:
+def clone_orm_instance(model_instance: Any, clone_attrs: dict[str, Any] | None = None) -> Any:
     """Generate a transient clone of sqlalchemy instance; supply primary key as dict."""
     # get data of non-primary-key columns; exclude relationships
     table = model_instance.__table__

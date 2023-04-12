@@ -27,9 +27,7 @@ def upgrade() -> None:
             WHEN shape_side = 'very high' THEN 'VERY_HIGH' \
          END);"
     )
-    enum_new_type = postgresql.ENUM(
-        "FLAT", "HIGH", "VERY_FLAT", "VERY_HIGH", name="fbshapeside"
-    )
+    enum_new_type = postgresql.ENUM("FLAT", "HIGH", "VERY_FLAT", "VERY_HIGH", name="fbshapeside")
     enum_new_type.create(op.get_bind())
     op.execute(
         "ALTER TABLE pot ALTER COLUMN shape_side TYPE fbshapeside USING shape_side::text::fbshapeside"

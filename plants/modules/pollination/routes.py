@@ -104,14 +104,10 @@ async def put_pollination(
 async def get_ongoing_pollinations(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ) -> Any:
-    ongoing_pollinations = await read_ongoing_pollinations(
-        pollination_dal=pollination_dal
-    )
+    ongoing_pollinations = await read_ongoing_pollinations(pollination_dal=pollination_dal)
     return {
         "action": "Get ongoing pollinations",
-        "message": get_message(
-            f"Provided {len(ongoing_pollinations)} ongoing pollinations."
-        ),
+        "message": get_message(f"Provided {len(ongoing_pollinations)} ongoing pollinations."),
         "ongoing_pollination_collection": ongoing_pollinations,
     }
 
@@ -183,9 +179,7 @@ async def get_active_florescences(
     }
 
 
-@router.get(
-    "/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence
-)
+@router.get("/plants_for_new_florescence", response_model=BResultsPlantsForNewFlorescence)
 async def get_plants_for_new_florescence(
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
@@ -255,9 +249,7 @@ async def get_potential_pollen_donors(
     )
     return {
         "action": "Get potential pollen donors",
-        "message": get_message(
-            f"Provided {len(potential_pollen_donors)} potential donors."
-        ),
+        "message": get_message(f"Provided {len(potential_pollen_donors)} potential donors."),
         "potential_pollen_donor_collection": potential_pollen_donors,
     }
 
@@ -266,9 +258,7 @@ async def get_potential_pollen_donors(
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
 ) -> Any:
-    months, flower_history = await generate_flower_history(
-        florescence_dal=florescence_dal
-    )
+    months, flower_history = await generate_flower_history(florescence_dal=florescence_dal)
     return {
         "action": "Generate flower history",
         "message": get_message(f"Generated flower history for {len(months)} months."),

@@ -29,12 +29,8 @@ logger = logging.getLogger(__name__)
 COMMON_PREFIX: Final[str] = "/api"
 app = FastAPI(
     title="Plants",
-    docs_url=COMMON_PREFIX + "/docs"
-    if local_config.environment == Environment.DEV
-    else None,
-    redoc_url=COMMON_PREFIX + "/redoc"
-    if local_config.environment == Environment.DEV
-    else None,
+    docs_url=COMMON_PREFIX + "/docs" if local_config.environment == Environment.DEV else None,
+    redoc_url=COMMON_PREFIX + "/redoc" if local_config.environment == Environment.DEV else None,
     openapi_url=COMMON_PREFIX + "/openapi.json"
     if local_config.environment == Environment.DEV
     else None,

@@ -101,9 +101,7 @@ async def create_or_update_events(
     # loop at the plants and their events, identify additions, deletions, and updates
     # and save them
     counts: defaultdict[str, int] = defaultdict(int)
-    event_writer = EventWriter(
-        event_dal=event_dal, image_dal=image_dal, plant_dal=plant_dal
-    )
+    event_writer = EventWriter(event_dal=event_dal, image_dal=image_dal, plant_dal=plant_dal)
     for plant_id, events in events_request.plants_to_events.items():
         await event_writer.create_or_update_event(
             plant_id=plant_id,

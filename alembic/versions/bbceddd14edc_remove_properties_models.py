@@ -43,9 +43,7 @@ def downgrade() -> None:
             autoincrement=True,
             nullable=False,
         ),
-        sa.Column(
-            "category_name", sa.VARCHAR(length=80), autoincrement=False, nullable=False
-        ),
+        sa.Column("category_name", sa.VARCHAR(length=80), autoincrement=False, nullable=False),
         sa.Column(
             "last_update",
             postgresql.TIMESTAMP(timezone=True),
@@ -59,9 +57,7 @@ def downgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name="property_category_pkey"),
-        sa.UniqueConstraint(
-            "category_name", name="property_category_category_name_key"
-        ),
+        sa.UniqueConstraint("category_name", name="property_category_category_name_key"),
         postgresql_ignore_search_path=False,
     )
     op.create_table(
@@ -81,12 +77,8 @@ def downgrade() -> None:
             autoincrement=True,
             nullable=False,
         ),
-        sa.Column(
-            "property_name_id", sa.INTEGER(), autoincrement=False, nullable=False
-        ),
-        sa.Column(
-            "property_value", sa.VARCHAR(length=240), autoincrement=False, nullable=True
-        ),
+        sa.Column("property_name_id", sa.INTEGER(), autoincrement=False, nullable=False),
+        sa.Column("property_value", sa.VARCHAR(length=240), autoincrement=False, nullable=True),
         sa.Column("plant_id", sa.INTEGER(), autoincrement=False, nullable=True),
         sa.Column("taxon_id", sa.INTEGER(), autoincrement=False, nullable=True),
         sa.Column(
@@ -101,17 +93,13 @@ def downgrade() -> None:
             autoincrement=False,
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["plant_id"], ["plants.id"], name="property_value_plant_id_fkey"
-        ),
+        sa.ForeignKeyConstraint(["plant_id"], ["plants.id"], name="property_value_plant_id_fkey"),
         sa.ForeignKeyConstraint(
             ["property_name_id"],
             ["property_name.id"],
             name="property_value_property_name_id_fkey",
         ),
-        sa.ForeignKeyConstraint(
-            ["taxon_id"], ["taxon.id"], name="property_value_taxon_id_fkey"
-        ),
+        sa.ForeignKeyConstraint(["taxon_id"], ["taxon.id"], name="property_value_taxon_id_fkey"),
         sa.PrimaryKeyConstraint("id", name="property_value_pkey"),
     )
     op.create_table(
@@ -131,9 +119,7 @@ def downgrade() -> None:
             autoincrement=True,
             nullable=False,
         ),
-        sa.Column(
-            "property_name", sa.VARCHAR(length=240), autoincrement=False, nullable=False
-        ),
+        sa.Column("property_name", sa.VARCHAR(length=240), autoincrement=False, nullable=False),
         sa.Column("category_id", sa.INTEGER(), autoincrement=False, nullable=False),
         sa.Column(
             "last_update",

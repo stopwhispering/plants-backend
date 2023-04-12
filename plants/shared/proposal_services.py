@@ -28,11 +28,12 @@ class SpeciesLeafDict(TypedDict):
     count: int
 
 
-async def build_taxon_tree(
+async def build_taxon_tree(  # pylint: disable=too-many-locals
     taxon_dal: TaxonDAL, plant_dal: PlantDAL
 ) -> list[FamilyNodeDict]:
-    """Build up taxon tree from distinct families, genus, and species that are assigned
-    at least one plant."""
+    # todo refactor
+    """Build up taxon tree from distinct families, genus, and species that are assigned at least one
+    plant."""
     # get distinct families, genus, and species (as list of four-element-tuples); sort
     dist_tuples: TaxaWithPlantIds = await taxon_dal.get_distinct_species_as_tuples()
 

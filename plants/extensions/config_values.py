@@ -4,33 +4,34 @@ import tomllib
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, BaseSettings, constr
+import pydantic
+from pydantic import BaseSettings, types
 
 from plants.extensions.logging import LogLevel
 from plants.shared.path_utils import create_if_not_exists
 
 
-class ImageSettings(BaseModel):
+class ImageSettings(pydantic.BaseModel):
     size_thumbnail_image_taxon: tuple[int, int]  # e.g.[220, 220]
     sizes: tuple[tuple[int, int], ...]  # required lower-resolution sizes for images
     resizing_size: tuple[int, int]  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
 
 
-class PlantSettings(BaseModel):
+class PlantSettings(pydantic.BaseModel):
     filter_hidden: bool
     taxon_search_max_results: int
 
 
-class FrontendRestrictions(BaseModel):
+class FrontendRestrictions(pydantic.BaseModel):
     length_shortened_plant_name_for_tag: int
 
 
-class FrontendSettings(BaseModel):
+class FrontendSettings(pydantic.BaseModel):
     restrictions: FrontendRestrictions
 
 
-class PathSettings(BaseModel):
+class PathSettings(pydantic.BaseModel):
     path_photos: Path
     path_deleted_photos: Path
     path_pickled_ml_models: Path
@@ -48,7 +49,7 @@ class PathSettings(BaseModel):
         return self.path_photos.joinpath("generated_taxon")
 
 
-class Settings(BaseModel):
+class Settings(pydantic.BaseModel):
     images: ImageSettings
     plants: PlantSettings
     frontend: FrontendSettings
@@ -56,11 +57,9 @@ class Settings(BaseModel):
 
 
 def parse_settings() -> Settings:
-    config_toml_path = (
-        Path(__file__).resolve().parent.parent.parent.joinpath("config.toml")
-    )
-    with config_toml_path.open("rb") as f:
-        settings = Settings.parse_obj(tomllib.load(f))
+    config_toml_path = Path(__file__).resolve().parent.parent.parent.joinpath("config.toml")
+    with config_toml_path.open("rb") as file:
+        settings = Settings.parse_obj(tomllib.load(file))
 
     create_if_not_exists(
         folders=[
@@ -91,13 +90,13 @@ class LogSettings(BaseSettings):
 
 
 class LocalConfig(BaseSettings):
-    """Secrets and other environment-specific settings are specified in environment
-    variables (or .env file) they are case-insensitive by default."""
+    """Secrets and other environment-specific settings are specified in environment variables (or.
+
+    .env file) they are case-insensitive by default.
+    """
 
     environment: Environment
-    connection_string: constr(  # type: ignore[valid-type]
-        min_length=1, strip_whitespace=True
-    )
+    connection_string: types.constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
     max_images_per_taxon: int = 20
     allow_cors: bool = False
     log_settings: LogSettings

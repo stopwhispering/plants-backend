@@ -27,9 +27,7 @@ def upgrade() -> None:
             WHEN shape_top = 'hexagonal' THEN 'HEXAGONAL' \
          END);"
     )
-    enum_new_type = postgresql.ENUM(
-        "HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop"
-    )
+    enum_new_type = postgresql.ENUM("HEXAGONAL", "OVAL", "ROUND", "SQUARE", name="fbshapetop")
     enum_new_type.create(op.get_bind())
     op.execute(
         "ALTER TABLE pot ALTER COLUMN shape_top TYPE fbshapetop USING shape_top::text::fbshapetop"

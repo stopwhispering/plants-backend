@@ -19,8 +19,8 @@ def configure_root_logger(
     log_file_path: Path = Path("./plants.log"),
     log_filter: logging.Filter | None = None,
 ) -> None:
-    """Configure the root logger; each module's default (__name__) logger will inherit
-    these settings."""
+    """Configure the root logger; each module's default (__name__) logger will inherit these
+    settings."""
     logger = logging.getLogger()  # no name returns the root logger
     logger.setLevel(logging.DEBUG)  # global min. level
     # logging.basicConfig(level=logging.DEBUG)
@@ -52,13 +52,9 @@ def configure_root_logger(
         logger.addHandler(stream_handler)
 
     # mute some module's loggers
-    logging.getLogger("multipart.multipart").setLevel(
-        logging.WARNING
-    )  # starlette file requests
+    logging.getLogger("multipart.multipart").setLevel(logging.WARNING)  # starlette file requests
     logging.getLogger("PIL.TiffImagePlugin").setLevel(logging.WARNING)  # PIL Exif
-    logging.getLogger("httpx._client").setLevel(
-        logging.INFO
-    )  # HTTPx (Requests replacement)
+    logging.getLogger("httpx._client").setLevel(logging.INFO)  # HTTPx (Requests replacement)
     logging.getLogger("asyncio").setLevel(logging.INFO)  # HTTPx (Requests replacement)
 
     if log_filter:

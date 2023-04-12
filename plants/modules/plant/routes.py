@@ -70,8 +70,8 @@ async def clone_plant(
     event_dal: EventDAL = Depends(get_event_dal),
     history_dal: HistoryDAL = Depends(get_history_dal),
 ) -> Any:
-    """clone plant with supplied plant_id; include duplication of events; excludes
-    regular image assignments (only to events)"""
+    """clone plant with supplied plant_id; include duplication of events; excludes regular image
+    assignments (only to events)"""
     if not plant_name_clone or await plant_dal.exists(plant_name_clone):
         raise PlantAlreadyExistsError(plant_name_clone)
 
@@ -114,15 +114,11 @@ async def create_plant(
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
-    """create new plant using the supplied attributes (only plant_name is mandatory,
-    others may be provided)"""
-    plant_saved = await create_new_plant(
-        new_plant, plant_dal=plant_dal, taxon_dal=taxon_dal
-    )
+    """create new plant using the supplied attributes (only plant_name is mandatory, others may be
+    provided)"""
+    plant_saved = await create_new_plant(new_plant, plant_dal=plant_dal, taxon_dal=taxon_dal)
 
-    logger.info(
-        message := f"Created new plant {plant_saved.id} " f"({plant_saved.plant_name})."
-    )
+    logger.info(message := f"Created new plant {plant_saved.id} " f"({plant_saved.plant_name}).")
     return {
         "action": "Saved Plant",
         "resource": MajorResource.PLANT,
@@ -221,8 +217,8 @@ async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
     response_model=BResultsProposeSubsequentPlantName,
 )
 async def propose_subsequent_plant_name(original_plant_name: str) -> Any:
-    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe
-    depressa V"."""
+    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa
+    V"."""
     subsequent_plant_name = generate_subsequent_plant_name(original_plant_name)
     return {
         "original_plant_name": original_plant_name,

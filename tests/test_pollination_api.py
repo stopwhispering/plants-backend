@@ -95,15 +95,9 @@ async def test_get_pollinations(
     resp = response.json()
 
     ongoing_pollinations = resp["ongoing_pollination_collection"]
-    pollination = next(
-        p for p in ongoing_pollinations if p["id"] == pollination_in_db.id
-    )
-    assert pollination["seed_capsule_plant_id"] == (
-        pollination_in_db.seed_capsule_plant_id
-    )
-    assert pollination["pollen_donor_plant_id"] == (
-        pollination_in_db.pollen_donor_plant_id
-    )
+    pollination = next(p for p in ongoing_pollinations if p["id"] == pollination_in_db.id)
+    assert pollination["seed_capsule_plant_id"] == (pollination_in_db.seed_capsule_plant_id)
+    assert pollination["pollen_donor_plant_id"] == (pollination_in_db.pollen_donor_plant_id)
     assert pollination["pollen_type"] == pollination_in_db.pollen_type
     assert pollination["location"] == pollination_in_db.location
 
@@ -113,10 +107,7 @@ async def test_get_pollinations(
     )
 
     pollination_in_db.label_color = cast_not_none(pollination_in_db.label_color)
-    assert (
-        pollination["label_color_rgb"]
-        == COLORS_MAP_TO_RGB[pollination_in_db.label_color]
-    )
+    assert pollination["label_color_rgb"] == COLORS_MAP_TO_RGB[pollination_in_db.label_color]
 
 
 @pytest.mark.asyncio()
@@ -131,9 +122,7 @@ async def test_update_pollination(
     assert response.status_code == 200
     resp = response.json()
     pollination = next(
-        p
-        for p in resp["ongoing_pollination_collection"]
-        if p["id"] == pollination_in_db.id
+        p for p in resp["ongoing_pollination_collection"] if p["id"] == pollination_in_db.id
     )
 
     # update attributes and send via test client
@@ -179,8 +168,8 @@ async def test_get_pollen_donors(
     ac: AsyncClient,
     plant_valid_with_active_florescence_in_db: Plant,
 ) -> None:
-    """Get potential pollination pollen donor plants (from active florescences and
-    pollen containers)."""
+    """Get potential pollination pollen donor plants (from active florescences and pollen
+    containers)."""
     florescence = plant_valid_with_active_florescence_in_db.florescences[0]
     response = await ac.get(f"/api/potential_pollen_donors/{florescence.id}")
     assert response.status_code == 200

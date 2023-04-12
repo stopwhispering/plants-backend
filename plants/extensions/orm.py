@@ -37,7 +37,7 @@ class SessionFactory:
     def create_session(cls) -> AsyncSession:
         if cls.session_factory is None:
             raise RuntimeError("SessionFactory not initialized")
-        session: AsyncSession = cls.session_factory()
+        session: AsyncSession = cls.session_factory()  # pylint: disable=not-callable
         return session
 
 

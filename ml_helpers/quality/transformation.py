@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 def _get_feature_names_from_transformer(
     name: str, transformer: Any, columns: list[str]
 ) -> list[str]:
-    """from a supplied transformer (usually step in a ColumnTransformer), try to return
-    meaningful output column name(s)"""
+    """from a supplied transformer (usually step in a ColumnTransformer), try to return meaningful
+    output column name(s)"""
     # todo refactor this
     if name == "drop" or transformer == "drop" or not columns:
         return []
@@ -27,7 +27,7 @@ def _get_feature_names_from_transformer(
     ):
         return columns
 
-    if type(transformer) is Pipeline:
+    if isinstance(transformer, Pipeline):
         # call same function recursively for the first step of the pipeline
         # todo not really working; make this better
         # if last step is a scaler, use the first step, otherwise the last
@@ -43,7 +43,7 @@ def _get_feature_names_from_transformer(
         # names = [name + '_' + n if re.match(r'^x\d$', n) else n for n in names]
         # return names
 
-    if type(transformer) is KNNImputer:
+    if isinstance(transformer, KNNImputer):
         # KNNImputer has no get_feature_names fn, but doesn't alter columns count
         # anyway)
         return list(columns)
@@ -67,8 +67,8 @@ def _get_feature_names_from_transformer(
 def get_transformed_df_from_column_transformer(
     column_transformer: ColumnTransformer, x: pd.DataFrame
 ) -> tuple[list[str], pd.DataFrame]:
-    """from a fitted column transformer, extract the new column names, i.e. including
-    one-hot-encoded columns etc.
+    """from a fitted column transformer, extract the new column names, i.e. including one-hot-
+    encoded columns etc.
 
     create a DataFrame from transformed data with the found column names
     todo: incomplete and buggy; only ad-hoc-usage

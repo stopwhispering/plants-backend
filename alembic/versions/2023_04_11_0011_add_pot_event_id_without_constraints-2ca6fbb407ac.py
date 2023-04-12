@@ -22,9 +22,7 @@ def upgrade() -> None:
         "image_to_event_association",
         type_="foreignkey",
     )
-    op.create_foreign_key(
-        None, "image_to_event_association", "image", ["image_id"], ["id"]
-    )
+    op.create_foreign_key(None, "image_to_event_association", "image", ["image_id"], ["id"])
     op.add_column("pot", sa.Column("event_id", sa.INTEGER(), nullable=True))
     # ### end Alembic commands ###
 

@@ -37,9 +37,7 @@ async def test_plants_query_all(ac: AsyncClient, plant_valid_in_db: Plant) -> No
 
 
 @pytest.mark.asyncio()
-async def test_plant_create_valid(
-    ac: AsyncClient, valid_simple_plant_dict: dict[str, Any]
-) -> None:
+async def test_plant_create_valid(ac: AsyncClient, valid_simple_plant_dict: dict[str, Any]) -> None:
     response = await ac.post("/api/plants/", json=valid_simple_plant_dict)
     assert response.status_code == 200
     assert response.json().get("plant") is not None
@@ -64,9 +62,7 @@ async def test_plant_rename_valid(
     payload_ = PlantRenameRequest(
         new_plant_name="Aloe ferox var. ferox 'variegata'",
     )
-    response = await ac.put(
-        f"/api/plants/{plant_valid_in_db.id}/rename", json=payload_.dict()
-    )
+    response = await ac.put(f"/api/plants/{plant_valid_in_db.id}/rename", json=payload_.dict())
     assert response.status_code == 200
 
     await test_db.refresh(plant_valid_in_db)
@@ -111,16 +107,12 @@ async def test_plant_rename_source_not_exists(ac: AsyncClient) -> None:
 @pytest.mark.asyncio()
 async def test_propose_subsequent_plant_name(ac: AsyncClient) -> None:
     original_plant_name = "Aloe ferox"
-    response = await ac.post(
-        f"/api/plants/propose_subsequent_plant_name/{original_plant_name}"
-    )
+    response = await ac.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}")
     assert response.status_code == 200
     assert response.json().get("subsequent_plant_name") == "Aloe ferox II"
 
     original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana II"
-    response = await ac.post(
-        f"/api/plants/propose_subsequent_plant_name/{original_plant_name}"
-    )
+    response = await ac.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}")
     assert response.status_code == 200
     assert (
         response.json().get("subsequent_plant_name")
@@ -128,9 +120,7 @@ async def test_propose_subsequent_plant_name(ac: AsyncClient) -> None:
     )
 
     original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana V"
-    response = await ac.post(
-        f"/api/plants/propose_subsequent_plant_name/{original_plant_name}"
-    )
+    response = await ac.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}")
     assert response.status_code == 200
     assert (
         response.json().get("subsequent_plant_name")
@@ -138,9 +128,7 @@ async def test_propose_subsequent_plant_name(ac: AsyncClient) -> None:
     )
 
     original_plant_name = "× Aloe rauhii 'Demi' × Gasteria batesiana VIII"
-    response = await ac.post(
-        f"/api/plants/propose_subsequent_plant_name/{original_plant_name}"
-    )
+    response = await ac.post(f"/api/plants/propose_subsequent_plant_name/{original_plant_name}")
     assert response.status_code == 200
     assert (
         response.json().get("subsequent_plant_name")
@@ -153,8 +141,7 @@ async def test_clone_plant(
     ac: AsyncClient, plant_dal: PlantDAL, valid_plant_in_db_with_image: Plant
 ) -> None:
     response = await ac.post(
-        f"/api/plants/{valid_plant_in_db_with_image.id}/clone?"
-        f"plant_name_clone=Aloe vera clone"
+        f"/api/plants/{valid_plant_in_db_with_image.id}/clone?" f"plant_name_clone=Aloe vera clone"
     )
     assert response.status_code == 201
     resp = response.json()
@@ -167,14 +154,10 @@ async def test_clone_plant(
     assert clone.botanical_name == valid_plant_in_db_with_image.botanical_name
     assert clone.field_number == valid_plant_in_db_with_image.field_number
     assert clone.florescences == []
-    assert clone.full_botanical_html_name == (
-        valid_plant_in_db_with_image.full_botanical_html_name
-    )
+    assert clone.full_botanical_html_name == (valid_plant_in_db_with_image.full_botanical_html_name)
     assert clone.propagation_type == valid_plant_in_db_with_image.propagation_type
     assert clone.taxon is valid_plant_in_db_with_image.taxon
-    assert {t.text for t in clone.tags} == {
-        t.text for t in valid_plant_in_db_with_image.tags
-    }
+    assert {t.text for t in clone.tags} == {t.text for t in valid_plant_in_db_with_image.tags}
 
 
 @pytest.mark.asyncio()

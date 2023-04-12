@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import piexif
 import pytz
@@ -30,16 +30,18 @@ def get_thumbnail_name(filename: str, size: tuple[int, int]) -> str:
 
 
 def generate_thumbnail(
-    image: Union[Path, BytesIO],
+    image: Path | BytesIO,
     path_thumbnail: Path,
     size: tuple[int, int] = (100, 100),
-    filename_thumb: Union[PurePath, str] | None = None,
+    filename_thumb: PurePath | str | None = None,
     *,
     ignore_missing_image_files: bool = False,
-) -> Optional[Path]:
-    """Generates a resized variant of an photo_file; returns the full local path supply
-    original photo_file either as filename or i/o stream if Image is supplied as
-    BytesIO, a filename_thumb <<must>> be supplied."""
+) -> Path | None:
+    """Generates a resized variant of an photo_file; returns the full local path supply original
+    photo_file either as filename or i/o stream if Image is supplied as BytesIO, a filename_thumb.
+
+    <<must>> be supplied.
+    """
     if not ignore_missing_image_files:
         logger.debug(f"Generating resized photo_file of {image} in size {size}.")
     # suffix = f'{size[0]}_{size[1]}'
@@ -51,33 +53,31 @@ def generate_thumbnail(
                 f"thumbnail. {image}"
             )
         return None
-    im = PilImage.open(image)
+    pil_image = PilImage.open(image)
 
     # there's a bug in chrome: it's not respecting the orientation exif (unless directly
     # opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
-    exif_obj: dict[str, Any] = im._getexif()  # type: ignore[attr-defined]  # noqa: SLF001
+    exif_obj: dict[str, Any] = pil_image._getexif()  # type: ignore[attr-defined]  # noqa: SLF001
     if exif_obj:
-        im = _rotate_if_required(im, exif_obj)
+        pil_image = _rotate_if_required(pil_image, exif_obj)
 
-    im.thumbnail(size)
+    pil_image.thumbnail(size)
 
     if not filename_thumb:
         filename_thumb = get_thumbnail_name(image.name, size)
 
     path_save = path_thumbnail.joinpath(filename_thumb)
-    im.save(path_save, "JPEG")
+    pil_image.save(path_save, "JPEG")
 
     return path_save
 
 
-def _rotate_if_required(
-    image: PilImage.Image, exif_obj: dict[str, Any]
-) -> PilImage.Image:
-    """Rotate photo_file if exif file has a rotate directive (solves chrome bug not
-    respecting orientation exif tag) no exif tag manipulation required as this is not
-    saved to thumbnails anyway."""
+def _rotate_if_required(image: PilImage.Image, exif_obj: dict[str, Any]) -> PilImage.Image:
+    """Rotate photo_file if exif file has a rotate directive (solves chrome bug not respecting
+    orientation exif tag) no exif tag manipulation required as this is not saved to thumbnails
+    anyway."""
     # noinspection PyTypeChecker
     exif = dict(exif_obj.items())
     if piexif.ImageIFD.Orientation in exif:
@@ -90,11 +90,9 @@ def _rotate_if_required(
     return image
 
 
-def resize_image(
-    path: Path, save_to_path: Path, size: tuple[int, int], quality: int
-) -> None:
-    """load photo_file at supplied path, save resized photo_file to other path; observes
-    size and quality params; original file is finally <<deleted>>"""
+def resize_image(path: Path, save_to_path: Path, size: tuple[int, int], quality: int) -> None:
+    """load photo_file at supplied path, save resized photo_file to other path; observes size and
+    quality params; original file is finally <<deleted>>"""
     with PilImage.open(path.as_posix()) as image:
         image.thumbnail(size)  # preserves aspect ratio
         if image.info.get("exif"):
@@ -119,8 +117,4 @@ def generate_timestamp_filename() -> str:
 
 def shorten_plant_name(plant_name: str, max_length: int) -> str:
     """Shorten plant name to 20 chars for display in ui5 table."""
-    return (
-        plant_name[: max_length - 3] + "..."
-        if len(plant_name) > max_length
-        else plant_name
-    )
+    return plant_name[: max_length - 3] + "..." if len(plant_name) > max_length else plant_name

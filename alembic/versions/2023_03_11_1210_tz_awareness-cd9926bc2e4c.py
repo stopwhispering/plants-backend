@@ -16,9 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "ALTER TABLE pollination ALTER COLUMN pollinated_at TYPE timestamp WITH TIME ZONE;"
-    )
+    op.execute("ALTER TABLE pollination ALTER COLUMN pollinated_at TYPE timestamp WITH TIME ZONE;")
 
 
 def downgrade() -> None:

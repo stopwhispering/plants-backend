@@ -19,14 +19,12 @@ pipeline, feature_container = None, None
 
 
 def _unpickle_pipeline() -> tuple[Pipeline, FeatureContainer]:
-    path = settings.paths.path_pickled_ml_models.joinpath(
-        FILENAME_PICKLED_POLLINATION_ESTIMATOR
-    )
+    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
     if not path.is_file():
         throw_exception(f"Pipeline not found at {path.as_posix()}")
     logger.info(f"Unpickling pipeline from {path.as_posix()}.")
-    with path.open("rb") as f:
-        dump = pickle.load(f)
+    with path.open("rb") as file:
+        dump = pickle.load(file)
     return dump["pipeline"], dump["feature_container"]
 
 
@@ -39,12 +37,9 @@ def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContain
 
 
 def pickle_pipeline(pipeline: Pipeline, feature_container: FeatureContainer) -> None:
-    """Called from manually executed script, not used in
-    application/frontend/automatically."""
-    path = settings.paths.path_pickled_ml_models.joinpath(
-        FILENAME_PICKLED_POLLINATION_ESTIMATOR
-    )
+    """Called from manually executed script, not used in application/frontend/automatically."""
+    path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
     logger.info(f"Pickling pipeline to {path.as_posix()}.")
     dump = {"pipeline": pipeline, "feature_container": feature_container}
-    with path.open("wb") as f:
-        pickle.dump(dump, f)
+    with path.open("wb") as file:
+        pickle.dump(dump, file)

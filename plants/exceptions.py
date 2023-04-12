@@ -10,8 +10,7 @@ class TooManyResultsError(HTTPException):
     def __init__(self, search_pattern: str, count: int):
         super().__init__(
             status_code=400,
-            detail=f"Too many search results for pattern "
-            f"'{search_pattern}' ({count} results)",
+            detail=f"Too many search results for pattern " f"'{search_pattern}' ({count} results)",
         )
 
 

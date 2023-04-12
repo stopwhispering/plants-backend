@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TCH002
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import ImageNotFoundError
@@ -15,13 +14,10 @@ from plants.shared.base_dal import BaseDAL
 
 
 class ImageDAL(BaseDAL):
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session)
-
     @staticmethod
     def _add_eager_load_options(query: Select[Any]) -> Select[Any]:
-        """Apply eager loading the query supplied; use only for single- or limited-
-        number select queries to avoid performance issues."""
+        """Apply eager loading the query supplied; use only for single- or limited- number select
+        queries to avoid performance issues."""
         return query.options(
             selectinload(Image.keywords),
             selectinload(Image.plants),
