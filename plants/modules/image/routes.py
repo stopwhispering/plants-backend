@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
-from pydantic import ValidationError
 from starlette.responses import FileResponse
 
 from plants.dependencies import (
@@ -20,7 +18,6 @@ from plants.dependencies import (
 from plants.exceptions import ImageFileNotFoundError
 from plants.modules.event.schemas import FImagesToDelete
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.image.image_services_simple import remove_files_already_existing
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.models import Image
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
@@ -38,8 +35,7 @@ from plants.modules.image.services import (
     fetch_untagged_images,
     get_image_path_by_size,
     get_occurrence_thumbnail_path,
-    save_image_file,
-    save_image_to_db,
+    handle_image_uploads,
     trigger_generation_of_missing_thumbnails,
 )
 from plants.modules.plant.models import Plant
@@ -47,7 +43,7 @@ from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
-from plants.shared.message_services import get_message, throw_exception
+from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +65,12 @@ async def get_images_for_plant(
 
 
 @router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
-async def upload_images_plant(  # pylint: disable=too-many-locals
+async def upload_images_plant(
     request: Request,
     plant: Plant = Depends(valid_plant),
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
-    # todo refactor
     """Upload images and directly assign them to supplied plant; no keywords included.
 
     # the ui5 uploader control does somehow not work with the expected form/multipart
@@ -86,41 +81,22 @@ async def upload_images_plant(  # pylint: disable=too-many-locals
     form = await request.form()
     # noinspection PyTypeChecker
     files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
+    images, duplicate_filenames, warnings, files = await handle_image_uploads(
+        files=files,
+        plants=[plant],
+        keywords=[],
+        plant_dal=plant_dal,
+        image_dal=image_dal,
+    )
 
-    # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
-
-    # schedule and run tasks to save images concurrently
-    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
-    # don't allow
-    # to be run concurrently - at least writing stops with "Session is already flushing"
-    # InvalidRequestError) (2023-02)
-    plant_names = [(await plant_dal.by_id(plant.id)).plant_name]
-    async with asyncio.TaskGroup() as task_group:
-        tasks = [
-            task_group.create_task(save_image_file(file=file, plant_names=plant_names))
-            for file in files
-        ]
-    paths: list[Path] = [task.result() for task in tasks]
-
-    images: list[Image] = []
-    for path in paths:
-        images.append(
-            await save_image_to_db(
-                path=path,
-                image_dal=image_dal,
-                plant_dal=plant_dal,
-                plant_ids=(plant.id,),
-            )
-        )
-
-    desc = f"Saved: {[p.filename for p in files]}." f"\nSkipped Duplicates: {duplicate_filenames}."
+    desc = f"Saved: {[p.filename for p in files]}.\n" f"Skipped Duplicates: {duplicate_filenames}."
     if warnings:
         warnings_s = "\n".join(warnings)
         desc += f"\n{warnings_s}"
     message = get_message(
-        msg := f"Saved {len(files)} images."
-        + (" Duplicates found." if duplicate_filenames else ""),
+        msg := (
+            (f"Saved {len(files)} images. " "Duplicates found.") if duplicate_filenames else ""
+        ),
         message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
         description=desc,
     )
@@ -176,12 +152,11 @@ async def update_images(
 
 
 @router.post("/images/", response_model=BResultsImagesUploaded)
-async def upload_images(  # pylint: disable=too-many-locals
+async def upload_images(
     request: Request,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
-    # todo refactor
     """upload new photo_file(s)"""
     # the ui5 uploader control does somehow not work with the expected form/multipart
     # format expected
@@ -193,46 +168,16 @@ async def upload_images(  # pylint: disable=too-many-locals
     files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
 
     # validate arguments manually as pydantic doesn't trigger here
-    try:
-        FImageUploadedMetadata(**additional_data)
-    except ValidationError as err:
-        throw_exception(str(err))
+    additional_data_ = FImageUploadedMetadata(**additional_data)
 
-    # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings = await remove_files_already_existing(files, image_dal=image_dal)
-
-    # schedule and run tasks to save images concurrently
-    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
-    # don't allow
-    # to be run concurrently - at least writing stops with "Session is already flushing"
-    # InvalidRequestError) (2023-02)
-    plant_names = [
-        (await plant_dal.by_id(plant_id)).plant_name for plant_id in additional_data["plants"]
-    ]
-    async with asyncio.TaskGroup() as task_group:
-        tasks = [
-            task_group.create_task(
-                save_image_file(
-                    file=file,
-                    plant_names=plant_names,
-                    keywords=additional_data["keywords"],
-                )
-            )
-            for file in files
-        ]
-    paths: list[Path] = [task.result() for task in tasks]
-
-    images: list[Image] = []
-    for path in paths:
-        images.append(
-            await save_image_to_db(
-                path=path,
-                image_dal=image_dal,
-                plant_dal=plant_dal,
-                plant_ids=additional_data["plants"],
-                keywords=additional_data["keywords"],
-            )
-        )
+    plants = [(await plant_dal.by_id(plant_id)) for plant_id in additional_data_.plants]
+    images, duplicate_filenames, warnings, files = await handle_image_uploads(
+        files=files,
+        plants=plants,
+        keywords=additional_data_.keywords,
+        plant_dal=plant_dal,
+        image_dal=image_dal,
+    )
 
     desc = f"Saved: {[p.filename for p in files]}." f"\nSkipped Duplicates: {duplicate_filenames}."
     if warnings:
@@ -300,8 +245,6 @@ async def get_image(
     image_path = await get_image_path_by_size(image=image, size=size)
 
     if not image_path.is_file():
-        # if local_config.log_settings.ignore_missing_image_files:
-        #     return None
         raise ImageFileNotFoundError(filename=image.filename)
 
     # media_type here sets the media type of the actual response sent to the client.

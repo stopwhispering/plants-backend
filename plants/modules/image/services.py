@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,11 @@ from starlette.concurrency import run_in_threadpool
 
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
-from plants.modules.image.image_services_simple import resizing_required
+from plants.modules.image.image_services_simple import (
+    original_image_file_exists,
+    remove_image_from_filesystem,
+    resizing_required,
+)
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.util import (
@@ -22,6 +27,7 @@ from plants.shared.message_services import throw_exception
 from plants.shared.path_utils import get_generated_filename, with_suffix
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
     from plants.modules.image.image_dal import ImageDAL
@@ -63,8 +69,8 @@ async def save_image_to_db(
     path: Path,
     image_dal: ImageDAL,
     plant_dal: PlantDAL,
-    plant_ids: tuple[int] | None = None,
-    keywords: tuple[str] | None = None,
+    plant_ids: Sequence[int] | None = None,
+    keywords: Sequence[str] | None = None,
 ) -> Image:
     # add to db
     record_datetime = read_record_datetime_from_exif_tags(absolute_path=path)
@@ -80,7 +86,7 @@ async def save_image_to_db(
 
 
 async def save_image_file(
-    file: UploadFile, plant_names: list[str], keywords: tuple[str] | None = None
+    file: UploadFile, plant_names: list[str], keywords: Sequence[str] | None = None
 ) -> Path:
     """Save the files supplied as starlette uploadfiles on os; assign plants and keywords."""
     # save to file system
@@ -113,7 +119,7 @@ async def save_image_file(
             image=path,
             size=size,
             path_thumbnail=settings.paths.path_generated_thumbnails,
-            ignore_missing_image_files=(local_config.log_settings.ignore_missing_image_files),
+            ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
         )
 
     # save metadata in jpg exif tags
@@ -253,3 +259,92 @@ async def fetch_images_for_plant(plant: Plant, image_dal: ImageDAL) -> list[Imag
 
 async def fetch_untagged_images(image_dal: ImageDAL) -> list[Image]:
     return await image_dal.get_untagged_images()
+
+
+async def handle_image_uploads(
+    files: list[UploadFile],
+    plants: list[Plant],
+    keywords: list[str],
+    plant_dal: PlantDAL,
+    image_dal: ImageDAL,
+) -> tuple[list[Image], list[str], list[str], list[UploadFile]]:
+    # remove duplicates (filename already exists in file system)
+    duplicate_filenames, warnings, files = await remove_files_already_existing(
+        files, image_dal=image_dal
+    )
+
+    # schedule and run tasks to save images concurrently
+    # (unfortunately, we can't include the db saving here as SQLAlchemy AsyncSessions
+    # don't allow
+    # to be run concurrently - at least writing stops with "Session is already flushing"
+    # InvalidRequestError) (2023-02)
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [
+            task_group.create_task(
+                save_image_file(
+                    file=file,
+                    plant_names=[plant.plant_name for plant in plants],
+                    keywords=keywords,
+                )
+            )
+            for file in files
+        ]
+    paths: list[Path] = [task.result() for task in tasks]
+
+    images: list[Image] = []
+    for path in paths:
+        images.append(
+            await save_image_to_db(
+                path=path,
+                image_dal=image_dal,
+                plant_dal=plant_dal,
+                plant_ids=[plant.id for plant in plants],
+                keywords=keywords,
+            )
+        )
+    return images, duplicate_filenames, warnings, files
+
+
+async def remove_files_already_existing(
+    all_files: list[UploadFile], image_dal: ImageDAL
+) -> tuple[list[str], list[str], list[UploadFile]]:
+    """Iterates over file objects, checks whether a file with that name already exists in filesystem
+    and/or in database.
+
+    - if we have an orphaned file in filesystem, missing in database, it will be
+    deleted with a messasge
+    - if we have have an orphaned entry in database, missing in filesystem, it will
+    be deleted with a messasge
+    - if existent in both filesystem and db, remove it from  files list with a message
+    """
+    duplicate_filenames = []
+    warnings = []
+    files = all_files[:]
+    for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
+        if photo_upload.filename is None:
+            continue
+
+        exists_in_filesystem = original_image_file_exists(filename=photo_upload.filename)
+        exists_in_db = await image_dal.image_exists(filename=photo_upload.filename)
+        if exists_in_filesystem and not exists_in_db:
+            remove_image_from_filesystem(filename=photo_upload.filename)
+            logger.warning(
+                warning := "Found orphaned image {photo_upload.filename} in "
+                "filesystem, "
+                "but not in database. Deleted image file."
+            )
+            warnings.append(warning)
+        elif exists_in_db and not exists_in_filesystem:
+            await image_dal.delete_image_by_filename(filename=photo_upload.filename)
+            logger.warning(
+                warning := f"Found orphaned db entry for uploaded image  "
+                f"{photo_upload.filename} with no "
+                f"corresponsing file. Removed db entry."
+            )
+            warnings.append(warning)
+        # if path.is_file() or with_suffix(path, suffix).is_file():
+        elif exists_in_filesystem and exists_in_db:
+            files.remove(photo_upload)
+            duplicate_filenames.append(photo_upload.filename)
+            logger.warning(f"Skipping file upload (duplicate) for: {photo_upload.filename}")
+    return duplicate_filenames, warnings, files
