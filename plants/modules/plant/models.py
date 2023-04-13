@@ -109,9 +109,9 @@ class Plant(Base):
     tags: Mapped[list[Tag]] = relationship(
         "Tag",
         back_populates="plant",
-        # Note: we need no cascade="delete" here as plants are
+        # Note: we don't actually use cascade="delete" here as plants are
         # not physically deleted, but only marked as deleted
-        cascade="save-update, merge, delete-orphan",
+        cascade="all, delete, delete-orphan",
     )
 
     # plant to event: 1:n

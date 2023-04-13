@@ -21,8 +21,8 @@ class BTaxonTreeNode(BaseSchema):
     key: str
     level: int
     count: int
-    nodes: list[BTaxonTreeNode] | None  # missing on lowest level
-    plant_ids: list[int] | None  # plants themselves on lowest level
+    nodes: list[BTaxonTreeNode] = []  # missing on lowest level
+    plant_ids: list[int] = []  # plants themselves on lowest level
 
 
 # this is required (plus importing annotations) to allow for self-references

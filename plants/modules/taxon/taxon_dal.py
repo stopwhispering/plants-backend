@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import String, delete, func, select
+from sqlalchemy import (
+    String,
+    delete,
+    func,
+    select,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
@@ -24,7 +29,8 @@ if TYPE_CHECKING:
     from plants.modules.taxon.enums import FBRank
 
 
-TaxaWithPlantIds = list[tuple[str, str, str | None, int, list[int]]]
+# TaxaWithPlantIds = tuple[list[tuple[str, str, str | None, int, list[int]]],
+TaxaWithPlantIds = list[tuple[Taxon, list[int]]]
 
 
 class TaxonDAL(BaseDAL):
@@ -91,7 +97,7 @@ class TaxonDAL(BaseDAL):
         images: list[TaxonOccurrenceImage] = list((await self.session.scalars(query)).all())
         return images
 
-    async def get_distinct_species_as_tuples(
+    async def fetch_taxa_with_plant_ids(
         self,
     ) -> TaxaWithPlantIds:
         plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)  # noqa: FBT003
@@ -103,16 +109,15 @@ class TaxonDAL(BaseDAL):
         # this will, however, return a list of int not string
         # pylint: disable=not-callable
         plant_ids_agg = func.array_agg(Plant.id, type_=ARRAY(String))
-        query = select(Taxon.family, Taxon.genus, Taxon.species, Taxon.id, plant_ids_agg)
+        query = select(Taxon, plant_ids_agg)
         query = query.join(Taxon.plants)
         query = query.where(has_any_plant_filter)
-        # noinspection PyTypeChecker
-        query = query.group_by(Taxon.family, Taxon.genus, Taxon.species, Taxon.id)
-        # noinspection PyTypeChecker
-        species_tuples: TaxaWithPlantIds = list(
+        query = query.group_by(Taxon)  # type:ignore[arg-type]
+        query = query.order_by(Taxon.family, Taxon.genus, Taxon.species)
+        taxa_with_plant_ids: TaxaWithPlantIds = list(
             (await self.session.execute(query)).all()  # type:ignore[arg-type]
         )
-        return species_tuples
+        return taxa_with_plant_ids
 
     async def create_taxon_to_occurrence_associations(
         self, links: list[TaxonToOccurrenceAssociation]

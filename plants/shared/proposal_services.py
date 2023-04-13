@@ -1,128 +1,104 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
+
+from plants.shared.proposal_schemas import BTaxonTreeNode
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.taxon.taxon_dal import TaxaWithPlantIds, TaxonDAL
+    from plants.modules.taxon.models import Taxon
+    from plants.modules.taxon.taxon_dal import TaxonDAL
 
 
-class FamilyNodeDict(TypedDict):
-    key: str
-    nodes: list[GenusNodeDict]
-    level: int
-    count: int
+def _insert_into_taxon_tree(
+    taxon_tree: list[BTaxonTreeNode], taxon: Taxon, plant_ids: list[int]
+) -> None:
+    family_node: BTaxonTreeNode | None = next(
+        (node for node in taxon_tree if node.key == taxon.family), None
+    )
+    if not family_node:
+        family_node = BTaxonTreeNode(
+            key=taxon.family,
+            level=0,
+            count=0,
+            nodes=[],
+        )
+        taxon_tree.append(family_node)
+
+    genus_node: BTaxonTreeNode | None = next(
+        (node for node in family_node.nodes if node.key == taxon.genus), None
+    )
+    if not genus_node:
+        genus_node = BTaxonTreeNode(
+            key=taxon.genus,
+            level=1,
+            count=0,
+            nodes=[],
+        )
+        family_node.nodes.append(genus_node)
+
+    # custom taxa might not have a species but a name
+    species_name: str = taxon.species or taxon.name
+    species_leaf: BTaxonTreeNode | None = next(
+        (node for node in genus_node.nodes if node.key == species_name), None
+    )
+    if not species_leaf:
+        species_leaf = BTaxonTreeNode(
+            key=species_name,
+            level=2,
+            count=0,
+            plant_ids=[],
+        )
+        genus_node.nodes.append(species_leaf)
+
+    # we might have multiple taxon ids for that species (e.g. varieties)
+    species_leaf.plant_ids.extend(plant_ids)
+
+    genus_node.count += len(plant_ids)
+    family_node.count += len(plant_ids)
+    species_leaf.count += len(plant_ids)
 
 
-class GenusNodeDict(TypedDict):
-    key: str
-    nodes: list[SpeciesLeafDict]
-    level: int
-    count: int
+async def _create_node_for_plants_without_taxon(plant_dal: PlantDAL) -> BTaxonTreeNode | None:
+    plant_ids_empty = await plant_dal.fetch_plants_ids_without_taxon()
+    count_empty = len(plant_ids_empty)
+    if count_empty:
+        node_empty_species = BTaxonTreeNode(
+            key="",
+            level=2,
+            count=count_empty,
+            plant_ids=plant_ids_empty,
+        )
+        node_empty_genus = BTaxonTreeNode(
+            key="",
+            level=1,
+            count=count_empty,
+            nodes=[node_empty_species],
+        )
+        return BTaxonTreeNode(
+            key="",
+            level=0,
+            count=count_empty,
+            nodes=[node_empty_genus],
+        )
+    return None
 
 
-class SpeciesLeafDict(TypedDict):
-    key: str
-    level: int
-    plant_ids: list[int]
-    count: int
-
-
-async def build_taxon_tree(  # pylint: disable=too-many-locals
-    taxon_dal: TaxonDAL, plant_dal: PlantDAL
-) -> list[FamilyNodeDict]:
-    # todo refactor
+async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list[BTaxonTreeNode]:
     """Build up taxon tree from distinct families, genus, and species that are assigned at least one
     plant."""
-    # get distinct families, genus, and species (as list of four-element-tuples); sort
-    dist_tuples: TaxaWithPlantIds = await taxon_dal.get_distinct_species_as_tuples()
+    # get sorted distinct families, genera, and species with list of plant ids each
+    taxa_with_plant_ids = await taxon_dal.fetch_taxa_with_plant_ids()
 
     # build up tree
-    tree = []
-    previous_family = None
-    previous_genus = None
-    previous_species = None
+    tree: list[BTaxonTreeNode] = []
 
-    family_node: FamilyNodeDict = {"key": "", "nodes": [], "level": 0, "count": 0}
-    genus_node: GenusNodeDict = {"key": "", "nodes": [], "level": 1, "count": 0}
-    species_leaf: SpeciesLeafDict = {"key": "", "plant_ids": [], "level": 2, "count": 0}
-
-    for (
-        current_family,
-        current_genus,
-        current_species,
-        _current_taxon_id,
-        plant_ids,
-    ) in dist_tuples:
-        # get family node
-        if current_family != previous_family:
-            new_family = True
-            family_node = {
-                "key": current_family,
-                "nodes": [],
-                "level": 0,
-                "count": 0,
-            }
-            tree.append(family_node)
-        else:
-            new_family = False
-
-        # get genus node
-        if (current_genus != previous_genus) or new_family:
-            new_genus = True
-            genus_node = {
-                "key": current_genus,
-                "nodes": [],
-                "level": 1,
-                "count": 0,
-            }
-            family_node["nodes"].append(genus_node)
-        else:
-            new_genus = False
-
-        # create species leaf
-        current_species_: str = current_species or "[Custom]"
-        if (current_species != previous_species) or new_genus:
-            species_leaf = {
-                "key": current_species_,
-                "level": 2,
-                "plant_ids": [],
-                "count": 0,
-            }
-            genus_node["nodes"].append(species_leaf)
-
-        # we might have multiple taxon ids for that species (e.g. varieties)
-        species_leaf["plant_ids"].extend(list(plant_ids))
-
-        genus_node["count"] += (plants_current_taxon := len(plant_ids))
-        family_node["count"] += plants_current_taxon
-        species_leaf["count"] += plants_current_taxon
-
-        previous_family = current_family
-        previous_genus = current_genus
-        previous_species = current_species_
+    for taxon, plant_ids in taxa_with_plant_ids:
+        _insert_into_taxon_tree(tree, taxon, plant_ids)
 
     # add empty family to allow for selecting plants with no taxon assigned
-    count_empty = await plant_dal.get_count_plants_without_taxon()
-    if count_empty:
-        plant_ids_empty = await plant_dal.get_plants_ids_without_taxon()
-        node_empty_species: SpeciesLeafDict = {
-            "key": "",
-            "level": 2,
-            "count": count_empty,
-            "plant_ids": plant_ids_empty,
-        }
-        node_empty_genus: GenusNodeDict = {
-            "key": "",
-            "level": 1,
-            "count": count_empty,
-            "nodes": [node_empty_species],
-        }
-        node_empty_family: FamilyNodeDict = {
-            "key": "",
-            "level": 0,
-            "count": count_empty,
-            "nodes": [node_empty_genus],
-        }
-        tree.append(node_empty_family)
+    family_node_no_taxon_assigned = await _create_node_for_plants_without_taxon(plant_dal)
+    if family_node_no_taxon_assigned:
+        tree.append(family_node_no_taxon_assigned)
+
     return tree

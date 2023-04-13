@@ -11,7 +11,6 @@ from plants.dependencies import get_image_dal, get_plant_dal, get_taxon_dal
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
-from plants.shared.api_utils import make_list_items_json_serializable
 from plants.shared.enums import ProposalEntity
 from plants.shared.message_services import get_message, throw_exception
 from plants.shared.proposal_schemas import BResultsProposals, BResultsSelection
@@ -68,7 +67,6 @@ async def get_selection_data(
 ) -> Any:
     """Build & return taxon tree for advanced filtering."""
     taxon_tree = await build_taxon_tree(taxon_dal=taxon_dal, plant_dal=plant_dal)
-    make_list_items_json_serializable(taxon_tree)
 
     return {
         "action": "Get taxon tree",

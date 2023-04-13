@@ -43,7 +43,6 @@ from plants.modules.plant.services import (
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource
 from plants.shared.history_dal import HistoryDAL
-from plants.shared.history_services import create_history_entry
 from plants.shared.message_schemas import BConfirmation
 from plants.shared.message_services import get_message
 
@@ -88,12 +87,9 @@ async def clone_plant(
     )
     plant_clone = cast(Plant, plant_clone)
 
-    await create_history_entry(
+    await history_dal.create_entry(
+        plant=plant_clone,
         description=f"Cloned from {plant_original.plant_name} ({plant_original.id})",
-        history_dal=history_dal,
-        plant_dal=plant_dal,
-        plant_id=plant_clone.id,
-        plant_name=plant_clone.plant_name,
     )
 
     logger.info(
@@ -183,12 +179,8 @@ async def rename_plant(
         plant=plant, plant_name_old=old_plant_name, image_dal=image_dal
     )
 
-    await create_history_entry(
-        description=f"Renamed to {args.new_plant_name}",
-        history_dal=history_dal,
-        plant_dal=plant_dal,
-        plant_id=plant.id,
-        plant_name=old_plant_name,
+    await history_dal.create_entry(
+        plant=plant, description=f"Renamed {old_plant_name} ({plant.id}) to {args.new_plant_name}"
     )
 
     logger.info(f"Modified {count_modified_images} images.")

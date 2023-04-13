@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from plants.modules.plant.models import Plant
@@ -16,20 +17,21 @@ if TYPE_CHECKING:
 
 @pytest_asyncio.fixture(scope="function")
 async def dummy() -> None:
-    """For whatever reason, the unit tests fail with some database connection closed
-    resource error if they don't use any function-scoped fixtures."""
+    """For whatever reason, the unit tests fail with some database connection closed resource error
+    if they don't use any function-scoped fixtures."""
 
 
 @pytest.mark.usefixtures("dummy")
 @pytest.mark.asyncio()
-async def test_plant_invalid(test_db: AsyncSession, plant_dal: PlantDAL) -> None:
+async def test_plant_invalid(test_db: AsyncSession) -> None:
     plant = Plant(field_number="A100")  # plant_name, active, deleted are required
     test_db.add(plant)
     with pytest.raises(IntegrityError):
         await test_db.commit()
     await test_db.rollback()
 
-    plants = await plant_dal.get_plant_by_criteria({"field_number": "A100"})
+    query = select(Plant).where(Plant.field_number == "A100")
+    plants = (await test_db.scalars(query)).all()
     assert len(plants) == 0
 
 

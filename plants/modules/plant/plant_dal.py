@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import (
-    CriterionNotImplementedError,
     PlantNotFoundError,
     TagNotAssignedToPlantError,
     TagNotFoundError,
@@ -19,7 +18,6 @@ from plants.shared.base_dal import BaseDAL
 
 
 class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
-    # todo all methods required?
     @staticmethod
     def _add_eager_load_options(query: Select[Any]) -> Select[Any]:
         """Apply eager loading the query supplied; use only for single- or limited- number select
@@ -91,56 +89,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
 
         return plant
 
-    async def get_plant_by_criteria(self, criteria: dict[str, Any]) -> list[Plant]:
-        query = select(Plant).where(Plant.deleted.is_(False))  # noqa: FBT003
-        value: str
-        for key, value in criteria.items():
-            if "field_number" in key:
-                query = query.filter(Plant.field_number == value)
-            else:
-                raise CriterionNotImplementedError(key)
-        plants: list[Plant] = list((await self.session.scalars(query)).all())
-        return plants
-
-    async def get_name_by_id(self, plant_id: int) -> str:
-        # noinspection PyTypeChecker
-        query = (
-            select(Plant.plant_name)
-            .where(Plant.id == plant_id)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-            .limit(1)
-        )
-        plant_name: str | None = (await self.session.scalars(query)).first()
-        if not plant_name:
-            raise PlantNotFoundError(plant_id)
-        return plant_name
-
-    async def get_id_by_name(self, plant_name: str) -> int:
-        # noinspection PyTypeChecker
-        query = (
-            select(Plant.id)
-            .where(Plant.plant_name == plant_name)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-            .limit(1)
-        )
-        plant_id: int | None = (await self.session.scalars(query)).first()
-        if not plant_id:
-            raise PlantNotFoundError(plant_name)
-        return plant_id
-
-    async def get_count_plants_without_taxon(self) -> int:
-        # noinspection PyTypeChecker
-        query = (
-            select(func.count())  # pylint: disable=not-callable
-            .select_from(Plant)
-            .where(Plant.taxon_id.is_(None))
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-            .where(Plant.active)
-        )
-        count = (await self.session.scalars(query)).first()
-        return cast(int, count)
-
-    async def get_plants_ids_without_taxon(self) -> list[int]:
+    async def fetch_plants_ids_without_taxon(self) -> list[int]:
         # noinspection PyTypeChecker
         query = (
             select(Plant.id)
@@ -158,13 +107,15 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         # re-fetch plant to get eager load options
         plant_id = plant.id
         self.session.expire(plant)
-        await self.by_id(plant_id, eager_load=True)
+        await self.by_id(plant_id)
 
     async def create_plant(self, new_plant_data: dict[str, Any]) -> Plant:
         new_plant = Plant(**new_plant_data, deleted=False)
         self.session.add(new_plant)
         await self.session.flush()
-        return await self.by_id(new_plant.id)
+        new_plant_id = new_plant.id
+        self.session.expire(new_plant)
+        return await self.by_id(new_plant_id)
 
     async def get_all_plants_with_taxon(self) -> list[Plant]:
         query = (
@@ -315,16 +266,14 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         if tag not in plant.tags:
             raise TagNotAssignedToPlantError(plant.id, tag.id)
         plant.tags.remove(tag)
-        # await self.session.delete(tag)
         await self.session.flush()
 
     async def get_all_plants_with_relationships_loaded(
         self, *, include_deleted: bool = False
     ) -> list[Plant]:
+        query = select(Plant)
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants
-        query = select(Plant)
-
         if not include_deleted:
             # sqlite does not like "is None" and pylint doesn't like "== None"
             query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
