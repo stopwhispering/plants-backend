@@ -135,17 +135,20 @@ async def read_potential_pollen_donors(
     potential_pollen_donors = []
 
     # 1. flowering plants
-    # query = (db.query(Florescence)
-    #          .filter(Florescence.florescence_status == FlorescenceStatus.FLOWERING,
-    #                  # Florescence.plant_id != plant_id
-    #                  ))
-    # fresh_pollen_donors = query.all()
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status(
         [FlorescenceStatus.FLOWERING]
     )
     for florescence_pollen_donor in fresh_pollen_donors:
         if florescence_pollen_donor is florescence:
             continue
+        # if plant has multiple active florescences, return only the first one
+        if any(
+            p
+            for p in potential_pollen_donors
+            if p.plant_id == florescence_pollen_donor.plant_id and p.pollen_type == PollenType.FRESH
+        ):
+            continue
+
         already_ongoing_attempt = await _plants_have_ongoing_pollination(
             plant, florescence_pollen_donor.plant, pollination_dal=pollination_dal
         )

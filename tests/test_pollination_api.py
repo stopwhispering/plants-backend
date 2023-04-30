@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
 import plants as plants_package
 from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
-from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, Context, FlorescenceStatus
+from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.schemas import (
     FRequestPollenContainers,
     PollenContainerCreateUpdate,
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
 
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
+    from plants.modules.pollination.florescence_dal import FlorescenceDAL
     from plants.modules.pollination.models import Pollination
     from plants.modules.pollination.pollination_dal import PollinationDAL
 
@@ -167,13 +170,55 @@ async def test_train_pollination_ml_model(
 async def test_get_pollen_donors(
     ac: AsyncClient,
     plant_valid_with_active_florescence_in_db: Plant,
+    another_valid_plant_in_db: Plant,  # will be created other florescences for
+    florescence_dal: FlorescenceDAL,
+    plant_valid_in_db: Plant,  # has frozen pollen container
 ) -> None:
     """Get potential pollination pollen donor plants (from active florescences and pollen
-    containers)."""
-    florescence = plant_valid_with_active_florescence_in_db.florescences[0]
-    response = await ac.get(f"/api/potential_pollen_donors/{florescence.id}")
+    containers).
+
+    plant_valid_in_db ('aloe vera') has frozen pollen container; additionally, we insert two other
+    active florescences ('gasteria bicolor var. fallax') and expect only one of them to be returned.
+    """
+    florescence_id = plant_valid_with_active_florescence_in_db.florescences[0].id
+    another_plant_with_active_florescences_id = another_valid_plant_in_db.id
+
+    await florescence_dal.create_florescence(
+        Florescence(
+            # plant=another_valid_plant_in_db,
+            plant_id=another_plant_with_active_florescences_id,
+            inflorescence_appeared_at=date(2023, 5, 1),  # '2023-01-01',
+            branches_count=1,
+            flowers_count=12,
+            florescence_status=FlorescenceStatus.FLOWERING,
+            creation_context=Context.MANUAL,
+        )
+    )
+    await florescence_dal.create_florescence(
+        Florescence(
+            # plant=another_valid_plant_in_db,
+            plant_id=another_plant_with_active_florescences_id,
+            inflorescence_appeared_at=date(2023, 4, 21),
+            branches_count=2,
+            flowers_count=14,
+            florescence_status=FlorescenceStatus.FLOWERING,
+            creation_context=Context.MANUAL,
+        )
+    )
+
+    response = await ac.get(f"/api/potential_pollen_donors/{florescence_id}")
     assert response.status_code == 200
     resp = response.json()
 
     potential_pollen_donors = resp["potential_pollen_donor_collection"]
-    assert len(potential_pollen_donors) >= 1
+    assert len(potential_pollen_donors) == 2
+
+    frozen = next(p for p in potential_pollen_donors if p["plant_id"] == plant_valid_in_db.id)
+    assert frozen["pollen_type"] == "frozen"
+
+    active = next(
+        p
+        for p in potential_pollen_donors
+        if p["plant_id"] == another_plant_with_active_florescences_id
+    )
+    assert active["pollen_type"] == "fresh"
