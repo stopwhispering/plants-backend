@@ -141,6 +141,11 @@ async def read_potential_pollen_donors(
     for florescence_pollen_donor in fresh_pollen_donors:
         if florescence_pollen_donor is florescence:
             continue
+
+        # also skip other active florescences of our plant
+        if florescence_pollen_donor.plant_id == florescence.plant_id:
+            continue
+
         # if plant has multiple active florescences, return only the first one
         if any(
             p
