@@ -4,13 +4,15 @@ import asyncio
 import json
 import shutil
 from asyncio import AbstractEventLoop
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
 import pytest_asyncio
+import pytz
+from dateutil.relativedelta import relativedelta
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
@@ -34,10 +36,12 @@ from plants.modules.pollination.enums import (
     PollenQuality,
     PollenType,
     PollinationStatus,
+    SeedPlantingStatus,
 )
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
+from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.api_utils import date_hook
@@ -117,6 +121,7 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
         conn = await db.connection()
         await conn.execute(text("DELETE FROM history;"))
         await conn.execute(text("DELETE FROM tags;"))
+        await conn.execute(text("DELETE FROM seed_planting;"))
         await conn.execute(text("DELETE FROM pollination;"))
         await conn.execute(text("DELETE FROM florescence;"))
         await conn.execute(text("DELETE FROM image_keywords;"))
@@ -350,6 +355,12 @@ def pollination_dal(test_db: AsyncSession) -> PollinationDAL:
 
 
 @pytest.fixture()
+def seed_planting_dal(test_db: AsyncSession) -> SeedPlantingDAL:
+    """"""
+    return SeedPlantingDAL(test_db)
+
+
+@pytest.fixture()
 def florescence_dal(test_db: AsyncSession) -> FlorescenceDAL:
     """"""
     return FlorescenceDAL(test_db)
@@ -502,6 +513,59 @@ async def pollination_in_db(
     await test_db.commit()
 
     return pollination
+
+
+@pytest_asyncio.fixture(scope="function")
+async def seed_plantings_in_db(
+    test_db: AsyncSession,
+    pollination_in_db: Pollination,
+    pollination_dal: PollinationDAL,
+) -> list[SeedPlanting]:
+    """Create seed plantings in the db and return them."""
+    # have seed plantings loaded
+    pollination_in_db = await pollination_dal.by_id(pollination_in_db.id)
+    one_year_ago = (datetime.now(tz=pytz.utc) - relativedelta(years=1)).date()
+    one_week_ago = (datetime.now(tz=pytz.utc) - relativedelta(days=7)).date()
+    pollination_in_db.seed_plantings = [
+        SeedPlanting(
+            status=SeedPlantingStatus.PLANTED,
+            comment="Active with known linked Pollination",
+            sterilized=True,
+            soaked=True,
+            planted_on=one_week_ago,
+            count_planted=10,
+        ),
+        SeedPlanting(
+            status=SeedPlantingStatus.ABANDONED,
+            comment="Abandoned with known linked Pollination",
+            sterilized=True,
+            soaked=True,
+            planted_on=one_week_ago,
+            count_planted=10,
+        ),
+        SeedPlanting(
+            status=SeedPlantingStatus.GERMINATED,
+            comment="Germinated not long ago",
+            sterilized=True,
+            soaked=True,
+            planted_on=one_year_ago,
+            germinated_first_on=one_week_ago,
+            count_planted=10,
+        ),
+        SeedPlanting(
+            status=SeedPlantingStatus.GERMINATED,
+            comment="Germinated long ago",
+            sterilized=True,
+            soaked=True,
+            planted_on=one_year_ago,
+            germinated_first_on=one_year_ago,
+            count_planted=10,
+        ),
+    ]
+
+    await test_db.commit()
+
+    return pollination_in_db.seed_plantings
 
 
 @pytest_asyncio.fixture(scope="function")

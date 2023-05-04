@@ -31,6 +31,7 @@ from plants.modules.pollination.enums import (
     PollenQuality,
     PollenType,
     PollinationStatus,
+    SeedPlantingStatus,
     StigmaPosition,
 )
 
@@ -133,6 +134,9 @@ class Pollination(Base):
         "Plant",  # back_populates="pollinations_as_donor_plant",
         foreign_keys=[pollen_donor_plant_id],
     )
+    seed_plantings: Mapped[list[SeedPlanting]] = relationship(
+        "SeedPlanting", back_populates="pollination"
+    )
 
     # (fresh | frozen | unknown)
     pollen_type: PollenType = Column(sa.Enum(PollenType), nullable=False)
@@ -177,3 +181,38 @@ class Pollination(Base):
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     creation_at_context = Column(sa.Enum(Context), nullable=False)
+
+
+class SeedPlanting(Base):
+    """Planting attempt of a seed, possibly from Pollination."""
+
+    __tablename__ = "seed_planting"
+    id: int = Column(
+        INTEGER,
+        Identity(start=1, cycle=True, always=False),
+        primary_key=True,
+        nullable=False,
+    )
+    status: SeedPlantingStatus = Column(sa.Enum(SeedPlantingStatus), nullable=False)
+    pollination_id: int | None = Column(INTEGER, ForeignKey("pollination.id"))
+    # noinspection PyTypeChecker
+    pollination: Mapped[Pollination | None] = relationship(
+        "Pollination", back_populates="seed_plantings", foreign_keys=[pollination_id]
+    )
+    # seed_name: str | None = Column(VARCHAR(60))  # free text, only filled if no pollination linked
+    comment = Column(TEXT)
+
+    sterilized = Column(BOOLEAN, nullable=False)  # e.g. treated with Chinosol
+    soaked = Column(BOOLEAN, nullable=False)  # in water
+
+    planted_on = Column(DATE, nullable=False)
+    germinated_first_on = Column(DATE)
+
+    count_planted = Column(INTEGER, nullable=False)  # number of seeds planted
+    count_germinated = Column(INTEGER)  # number of seeds germinated
+
+    # todo resulting plants (0..n)
+    # todo soil
+
+    last_update_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
+    creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)

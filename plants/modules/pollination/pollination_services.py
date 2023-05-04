@@ -132,7 +132,7 @@ async def read_potential_pollen_donors(
     """Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen."""
     plant = await plant_dal.by_id(florescence.plant_id)
-    potential_pollen_donors = []
+    potential_pollen_donors: list[BPotentialPollenDonor] = []
 
     # 1. flowering plants
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status(

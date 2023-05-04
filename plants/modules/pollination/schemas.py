@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from decimal import Decimal
 
 from pydantic import Extra, types
@@ -13,6 +14,7 @@ from plants.modules.pollination.enums import (
     PollenQuality,
     PollenType,
     PollinationStatus,
+    SeedPlantingStatus,
     StigmaPosition,
 )
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
@@ -104,6 +106,33 @@ class PollinationCreate(PollinationBase):
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
+
+
+class SeedPlantingBase(BaseSchema):
+    pollination_id: int | None
+    comment: str | None  # optional free text
+    sterilized: bool
+    soaked: bool
+    planted_on: datetime.date
+    count_planted: int
+
+
+class SeedPlantingCreate(SeedPlantingBase):
+    pass
+
+
+class SeedPlantingRead(SeedPlantingBase):
+    id: int
+    status: SeedPlantingStatus
+    count_germinated: int | None
+    germinated_first_on: datetime.date | None
+
+
+class SeedPlantingUpdate(SeedPlantingBase):
+    id: int
+    status: SeedPlantingStatus
+    count_germinated: int | None
+    germinated_first_on: datetime.date | None
 
 
 class FlorescenceBase(BaseSchema):
@@ -216,6 +245,10 @@ class FRequestPollenContainers(RequestContainer):
 
 class SettingsRead(BaseSchema):
     colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#000000']
+
+
+class BResultsActiveSeedPlantings(ResponseContainer):
+    active_seed_planting_collection: list[SeedPlantingRead]
 
 
 class BResultsActiveFlorescences(ResponseContainer):

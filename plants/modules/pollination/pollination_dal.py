@@ -18,6 +18,7 @@ class PollinationDAL(BaseDAL):
     async def by_id(self, pollination_id: int) -> Pollination:
         # noinspection PyTypeChecker
         query = select(Pollination).where(Pollination.id == pollination_id)
+        query = query.options(selectinload(Pollination.seed_plantings))
         pollination: Pollination | None = (await self.session.scalars(query)).first()
         if not pollination:
             raise PollinationNotFoundError(pollination_id)

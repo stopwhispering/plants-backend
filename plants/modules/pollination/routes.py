@@ -9,8 +9,10 @@ from plants.dependencies import (
     get_florescence_dal,
     get_plant_dal,
     get_pollination_dal,
+    get_seed_planting_dal,
     valid_florescence,
     valid_pollination,
+    valid_seed_planting,
 )
 
 # if TYPE_CHECKING:
@@ -28,7 +30,7 @@ from plants.modules.pollination.flower_history_services import generate_flower_h
 from plants.modules.pollination.ml_model import (
     train_model_for_probability_of_seed_production,
 )
-from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
     read_ongoing_pollinations,
@@ -42,6 +44,7 @@ from plants.modules.pollination.pollination_services import (
 )
 from plants.modules.pollination.schemas import (
     BResultsActiveFlorescences,
+    BResultsActiveSeedPlantings,
     BResultsFlowerHistory,
     BResultsOngoingPollinations,
     BResultsPlantsForNewFlorescence,
@@ -53,7 +56,16 @@ from plants.modules.pollination.schemas import (
     FRequestPollenContainers,
     PollinationCreate,
     PollinationUpdate,
+    SeedPlantingCreate,
+    SeedPlantingUpdate,
     SettingsRead,
+)
+from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
+from plants.modules.pollination.seed_planting_services import (
+    read_active_seed_plantings,
+    remove_seed_planting,
+    save_new_seed_planting,
+    update_seed_planting,
 )
 from plants.shared.message_services import get_message
 
@@ -160,6 +172,59 @@ async def delete_pollination(
 async def retrain_probability_pollination_to_seed_model() -> dict[str, str | float]:
     """Retrain the probability_pollination_to_seed ml model."""
     return await train_model_for_probability_of_seed_production()
+
+
+@router.get("/active_seed_plantings", response_model=BResultsActiveSeedPlantings)
+async def get_active_seed_plantings(
+    seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+) -> Any:
+    """Read active florescences, either after inflorescence appeared or flowering."""
+    seed_plantings = await read_active_seed_plantings(
+        seed_planting_dal=seed_planting_dal,
+    )
+    return {
+        "action": "Get active seed plantings",
+        "message": get_message(f"Provided {len(seed_plantings)} active seed plantings."),
+        "active_seed_planting_collection": seed_plantings,
+    }
+
+
+@router.post("/seed_plantings")
+async def post_seed_planting(
+    new_seed_planting_data: SeedPlantingCreate,
+    seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+) -> Any:
+    await save_new_seed_planting(
+        new_seed_planting_data=new_seed_planting_data,
+        seed_planting_dal=seed_planting_dal,
+    )
+
+
+@router.delete("/seed_plantings/{seed_planting_id}")
+async def delete_seed_planting(
+    seed_planting: SeedPlanting = Depends(valid_seed_planting),
+    seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+) -> Any:
+    await remove_seed_planting(seed_planting, seed_planting_dal=seed_planting_dal)
+
+
+@router.put("/seed_plantings/{seed_planting_id}")  # no response required (full reload after post)
+async def put_seed_planting(
+    edited_seed_planting_data: SeedPlantingUpdate,
+    seed_planting: SeedPlanting = Depends(valid_seed_planting),
+    seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+) -> Any:
+    if not seed_planting.id == edited_seed_planting_data.id:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Seed Planting ID {seed_planting.id} does not match "
+            f"ID {edited_seed_planting_data.id} in request body.",
+        )
+    await update_seed_planting(
+        seed_planting,
+        edited_seed_planting_data=edited_seed_planting_data,
+        seed_planting_dal=seed_planting_dal,
+    )
 
 
 @router.get("/active_florescences", response_model=BResultsActiveFlorescences)

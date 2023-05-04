@@ -14,8 +14,9 @@ from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
-from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
+from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.history_dal import HistoryDAL
@@ -44,6 +45,10 @@ def get_pollination_dal(db: AsyncSession = Depends(get_db)) -> PollinationDAL:
 
 def get_florescence_dal(db: AsyncSession = Depends(get_db)) -> FlorescenceDAL:
     return FlorescenceDAL(db)
+
+
+def get_seed_planting_dal(db: AsyncSession = Depends(get_db)) -> SeedPlantingDAL:
+    return SeedPlantingDAL(db)
 
 
 def get_history_dal(db: AsyncSession = Depends(get_db)) -> HistoryDAL:
@@ -88,6 +93,13 @@ async def valid_florescence(
 ) -> Florescence:
     """Injects a florescence orm object into the route function if florescence_id is valid."""
     return await florescence_dal.by_id(florescence_id)
+
+
+async def valid_seed_planting(
+    seed_planting_id: int, seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal)
+) -> SeedPlanting:
+    """Injects a seed planting orm object into the route function if seed_planting_id is valid."""
+    return await seed_planting_dal.by_id(seed_planting_id)
 
 
 async def valid_taxon(taxon_id: int, taxon_dal: TaxonDAL = Depends(get_taxon_dal)) -> Taxon:

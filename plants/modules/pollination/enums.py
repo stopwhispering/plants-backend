@@ -68,6 +68,12 @@ class FlorescenceStatus(str, enum.Enum):
     ABORTED = "aborted"  # not made it to flowering
 
 
+class SeedPlantingStatus(str, enum.Enum):
+    PLANTED = "planted"
+    GERMINATED = "germinated"
+    ABANDONED = "abandoned"
+
+
 class FlowerColorDifferentiation(str, enum.Enum):
     TOP_BOTTOM = "top_bottom"
     OVARY_MOUTH = "ovary_mouth"

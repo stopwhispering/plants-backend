@@ -112,6 +112,16 @@ class PollinationNotFoundError(BaseError):
         )
 
 
+class SeedPlantingNotFoundError(BaseError):
+    """Raised when seed planting not found in database."""
+
+    def __init__(self, seed_planting_id: int):
+        super().__init__(
+            detail=f"Seed Planting ID not found in database: {seed_planting_id}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+
 class TagNotFoundError(BaseError):
     """Raised when tag not found in database."""
 
