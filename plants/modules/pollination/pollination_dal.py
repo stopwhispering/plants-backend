@@ -69,14 +69,6 @@ class PollinationDAL(BaseDAL):
             pollination.seed_capsule_description = updates["seed_capsule_description"]
         if "seed_description" in updates:
             pollination.seed_description = updates["seed_description"]
-        # if "days_until_first_germination" in updates:
-        #     pollination.days_until_first_germination = updates["days_until_first_germination"]
-        # if "first_seeds_sown" in updates:
-        #     pollination.first_seeds_sown = updates["first_seeds_sown"]
-        # if "first_seeds_germinated" in updates:
-        #     pollination.first_seeds_germinated = updates["first_seeds_germinated"]
-        # if "germination_rate" in updates:
-        #     pollination.germination_rate = updates["germination_rate"]
         if "last_update_context" in updates:
             pollination.last_update_context = updates["last_update_context"]
 
