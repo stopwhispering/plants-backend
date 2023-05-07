@@ -168,13 +168,6 @@ class Pollination(Base):
     seed_count = Column(INTEGER)
     seed_capsule_description = Column(TEXT)
     seed_description = Column(TEXT)
-    # first_germination_date = Column(DATE)
-    days_until_first_germination = Column(  # todo remove
-        INTEGER
-    )  # days from sowing seeds to first seed germinated
-    first_seeds_sown = Column(INTEGER)  # todo remove
-    first_seeds_germinated = Column(INTEGER)  # todo remove
-    germination_rate: float | None = Column(FLOAT)  # type: ignore[misc]  # todo remove
 
     comment = Column(TEXT)
 
