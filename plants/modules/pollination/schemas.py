@@ -54,8 +54,8 @@ class SeedPlantingRead(SeedPlantingBase):
     plants: list[PlantEssentials]
 
     @validator("count_germinated", pre=True)
-    def count_germinated_return_zero_if_none(cls, v: int | None) -> int:
-        return v if v is not None else 0
+    def count_germinated_return_zero_if_none(cls, value: int | None) -> int:
+        return value if value is not None else 0
 
 
 class SeedPlantingUpdate(SeedPlantingBase):

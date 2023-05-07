@@ -110,10 +110,10 @@ async def remove_seed_planting(
 async def create_new_plant_for_seed_planting(
     seed_planting: SeedPlanting, plant_name: str, plant_dal: PlantDAL, taxon_dal: TaxonDAL
 ) -> None:
+    """Create a new plant for a seed planting."""
     if seed_planting.status != SeedPlantingStatus.GERMINATED:
         raise ValidationError("Seed planting must be germinated to create a new plant.")
 
-    """Create a new plant for a seed planting."""
     plant_create = PlantCreate(
         plant_name=plant_name,
         field_number="-",

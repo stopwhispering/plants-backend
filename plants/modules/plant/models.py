@@ -209,7 +209,7 @@ class Tag(Base):
     )
     text: str = Column(VARCHAR(20), nullable=False)
     # Error, Information, None, Success, Warning
-    state: str = Column(sa.Enum(TagState), nullable=False)
+    state: TagState = Column(sa.Enum(TagState), nullable=False)
     # tag to plant: n:1
     plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     plant: Mapped[Plant | None] = relationship(

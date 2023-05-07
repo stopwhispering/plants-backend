@@ -96,11 +96,11 @@ class PlantRenameRequest(BaseSchema):
     new_plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
 
 
-class BResultsPlants(ResponseContainer):
+class ResultsPlantsList(ResponseContainer):
     PlantsCollection: list[PlantRead]
 
 
-class BResultsPlantsUpdate(MajorResponseContainer):
+class ResultsPlantsUpdate(MajorResponseContainer):
     plants: list[PlantRead]
 
 
@@ -108,7 +108,7 @@ class ResultsPlantCreated(MajorResponseContainer):
     plant: PlantRead
 
 
-class BResultsPlantCloned(ResponseContainer):
+class ResultsPlantCloned(ResponseContainer):
     plant: PlantRead
 
 

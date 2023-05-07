@@ -26,7 +26,7 @@ from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Event, Observation, Pot, Soil
 from plants.modules.image.image_dal import ImageDAL
-from plants.modules.plant.enums import FBPropagationType
+from plants.modules.plant.enums import FBPropagationType, TagState
 from plants.modules.plant.models import Plant, Tag
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.enums import (
@@ -151,10 +151,9 @@ async def plant_valid() -> Plant:
         deleted=False,
         nursery_source="Worldwide Cactus",
         propagation_type=FBPropagationType.LEAF_CUTTING,
-        # filename_previewimage="somefile.jpg",
         tags=[
-            Tag(text="new", state="Information"),
-            Tag(text="wow", state="Information"),
+            Tag(text="new", state=TagState.INFORMATION),
+            Tag(text="wow", state=TagState.INFORMATION),
         ],
         count_stored_pollen_containers=3,
     )
@@ -246,7 +245,7 @@ async def plant_valid_with_active_florescence() -> Plant:
         plant_name="Gasteria obtusa",
         active=True,
         deleted=False,
-        tags=[Tag(text="thirsty", state="Information")],
+        tags=[Tag(text="thirsty", state=TagState.INFORMATION)],
         florescences=[
             Florescence(
                 inflorescence_appeared_at=date(2023, 1, 1),  # '2023-01-01',

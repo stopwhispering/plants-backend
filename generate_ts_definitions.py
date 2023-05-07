@@ -28,11 +28,11 @@ models = [
     #     r"./ts_api_interfaces/apiTypes_event.ts",
     #     exclude,
     # ),
-    PydanticModel(
-        r".\plants\modules\image\schemas.py",
-        r"./ts_api_interfaces/apiTypes_image.ts",
-        exclude,
-    ),
+    # PydanticModel(
+    #     r".\plants\modules\image\schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_image.ts",
+    #     exclude,
+    # ),
     # PydanticModel(
     #     r".\plants\modules\taxon\schemas.py",
     #     r"./ts_api_interfaces/apiTypes_taxon.ts",
@@ -48,11 +48,11 @@ models = [
     #     r"./ts_api_interfaces/apiTypes_message.ts",
     #     (),
     # ),
-    PydanticModel(
-        r".\plants\modules\pollination\schemas.py",
-        r"./ts_api_interfaces/apiTypes_pollination.ts",
-        (),
-    ),
+    # PydanticModel(
+    #     r".\plants\modules\pollination\schemas.py",
+    #     r"./ts_api_interfaces/apiTypes_pollination.ts",
+    #     (),
+    # ),
 ]
 
 

@@ -16,22 +16,20 @@ from plants.dependencies import (
     valid_plant,
 )
 from plants.exceptions import PlantAlreadyExistsError
-
-# if TYPE_CHECKING:
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import (
-    BResultsPlantCloned,
-    BResultsPlants,
-    BResultsPlantsUpdate,
     BResultsProposeSubsequentPlantName,
     PlantCreate,
     PlantRenameRequest,
     PlantsUpdateRequest,
+    ResultsPlantCloned,
     ResultsPlantCreated,
+    ResultsPlantsList,
+    ResultsPlantsUpdate,
 )
 from plants.modules.plant.services import (
     create_new_plant,
@@ -59,7 +57,7 @@ router = APIRouter(
 
 @router.post(
     "/{plant_id}/clone",
-    response_model=BResultsPlantCloned,
+    response_model=ResultsPlantCloned,
     status_code=starlette_status.HTTP_201_CREATED,
 )
 async def clone_plant(
@@ -123,7 +121,7 @@ async def create_plant(
     }
 
 
-@router.put("/", response_model=BResultsPlantsUpdate)
+@router.put("/", response_model=ResultsPlantsUpdate)
 async def update_plants(
     data: PlantsUpdateRequest,
     plant_dal: PlantDAL = Depends(get_plant_dal),
@@ -193,7 +191,7 @@ async def rename_plant(
     }
 
 
-@router.get("/", response_model=BResultsPlants)
+@router.get("/", response_model=ResultsPlantsList)
 async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
     """Read (almost unfiltered) plants information from db."""
     plants = await fetch_plants(plant_dal=plant_dal)

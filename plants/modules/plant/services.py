@@ -170,6 +170,6 @@ async def generate_plant_name_proposal_for_seed_planting(
     seed_capsule_plant: Plant = seed_planting.pollination.seed_capsule_plant
     pollen_donor_plant: Plant = seed_planting.pollination.pollen_donor_plant
     plant_name = f"{seed_capsule_plant.plant_name} × {pollen_donor_plant.plant_name}"
-    while await plant_dal.exists(plant_name):
+    while await plant_dal.exists(plant_name):  # pylint: disable=W0149
         plant_name = generate_subsequent_plant_name(plant_name)
     return plant_name
