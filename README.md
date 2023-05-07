@@ -69,6 +69,10 @@ with other databases.
 Database migration is handled by [Alembic](https://alembic.sqlalchemy.org/en/latest/). The migration scripts are located in the ./alembic/versions folder. The
 official FastAPI Docker image contains a hook that automatically runs the migration scripts on startup (see `./prestart.sh`).
 
+### Data Model
+![Data Model](static/er.png?raw=true "ER Diagram")
+
+
 ## Execution Mode
 The majority of path functions are asynchronous, and the application is therefore designed to run in an asynchronous mode. It requires an
 asynchronous db driver like [asyncpg](https://magicstack.github.io/asyncpg/current/) which is mentioned in the project requirements file.
