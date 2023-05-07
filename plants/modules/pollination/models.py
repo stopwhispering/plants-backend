@@ -234,4 +234,4 @@ class SeedPlanting(Base):
 
     @property
     def soil_name(self) -> str:
-        return self.soil.soil_name
+        return self.soil.soil_name if self.soil is not None else ""  # type: ignore[union-attr]

@@ -20,7 +20,7 @@ from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
 from plants.modules.image.models import Image
-from plants.modules.taxon.enums import FBRank
+from plants.modules.taxon.enums import Establishment, FBRank
 
 if TYPE_CHECKING:
     from plants.modules.plant.models import Plant
@@ -38,7 +38,7 @@ class Distribution(Base):
         nullable=False,
     )
     name: str = Column(VARCHAR(40), nullable=False)
-    establishment: str = Column(VARCHAR(15), nullable=False)
+    establishment: Establishment = Column(sa.Enum(Establishment), nullable=False)
     feature_id: str = Column(VARCHAR(5), nullable=False)
     tdwg_code: str = Column(VARCHAR(10), nullable=False)
     tdwg_level: int = Column(INTEGER, nullable=False)
@@ -51,9 +51,8 @@ class Distribution(Base):
 
 
 class Taxon(Base):
-    """botanical details non-technical key is name (unique constraint) lsid is unique,
-    too, amont those taxa with is_custom == False (no constraint, asserted
-    programmatically)"""
+    """botanical details non-technical key is name (unique constraint) lsid is unique, too, amont
+    those taxa with is_custom == False (no constraint, asserted programmatically)"""
 
     __tablename__ = "taxon"
 

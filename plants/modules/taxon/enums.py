@@ -15,3 +15,12 @@ class FBRank(str, Enum):
     SUBSPECIES = "subsp."
     VARIETY = "var."
     FORMA = "forma"
+
+
+class Establishment(str, Enum):
+    NATIVE = "Native"
+    INTRODUCED = "Introduced"
+
+    @classmethod
+    def get_names(cls) -> list[str]:
+        return [name for name, value in vars(cls).items() if type(value) is cls]

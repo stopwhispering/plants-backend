@@ -76,7 +76,7 @@ async def _read_pollination_attempts(
             "harvest_at": pollination.harvest_date.strftime(FORMAT_YYYY_MM_DD)
             if pollination.harvest_date
             else None,
-            "germination_rate": pollination.germination_rate,
+            # "germination_rate": pollination.germination_rate,
             "ongoing": pollination.ongoing,
         }
         attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
@@ -317,30 +317,10 @@ async def update_pollination(
     # transform rgb color to color name
     label_color = COLORS_MAP[pollination_data.label_color_rgb]
 
-    # calculate and round germination rate (if applicable)
-    if pollination_data.first_seeds_sown == 0:
-        raise HTTPException(
-            500,
-            detail={"message": '0 not allowed for "first seeds sown". Set empty instead.'},
-        )
-    if (
-        pollination_data.first_seeds_sown is not None
-        and pollination_data.first_seeds_germinated is not None
-    ):
-        germination_rate = round(
-            float(
-                pollination_data.first_seeds_germinated * 100 / pollination_data.first_seeds_sown
-            ),
-            0,
-        )
-    else:
-        germination_rate = None
-
     updates = pollination_data.dict(exclude={})
     updates["pollinated_at"] = parse_api_datetime(pollination_data.pollinated_at)
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
-    updates["germination_rate"] = germination_rate
     updates["last_update_context"] = Context.API
     await pollination_dal.update(pollination, updates)
 

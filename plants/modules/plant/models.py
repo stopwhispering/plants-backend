@@ -210,9 +210,9 @@ class Tag(Base):
     text: str | None = Column(VARCHAR(20))
     # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
     # Error, Information, None, Success, Warning
-    state: str | None = Column(VARCHAR(12))
+    state: str | None = Column(VARCHAR(12))  # todo enum
     # tag to plant: n:1
-    plant_id: int | None = Column(INTEGER, ForeignKey("plants.id"))
+    plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     plant: Mapped[Plant | None] = relationship(
         "Plant", back_populates="tags", foreign_keys=[plant_id]
     )
