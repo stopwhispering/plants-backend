@@ -21,7 +21,7 @@ from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
 from plants.modules.event.models import Event
-from plants.modules.plant.enums import FBCancellationReason, FBPropagationType
+from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
 from plants.modules.pollination.models import Florescence, SeedPlanting
 from plants.modules.taxon.models import Taxon
 
@@ -207,10 +207,9 @@ class Tag(Base):
         primary_key=True,
         nullable=False,
     )
-    text: str | None = Column(VARCHAR(20))
-    # icon = Column(VARCHAR(30))  # full uri, e.g. 'sap-icon://hint'
+    text: str = Column(VARCHAR(20), nullable=False)
     # Error, Information, None, Success, Warning
-    state: str | None = Column(VARCHAR(12))  # todo enum
+    state: str = Column(sa.Enum(TagState), nullable=False)
     # tag to plant: n:1
     plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
     plant: Mapped[Plant | None] = relationship(

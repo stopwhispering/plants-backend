@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import Extra, networks, types, validator
 
-from plants.modules.taxon.enums import FBRank
+from plants.modules.taxon.enums import Establishment, FBRank
 from plants.shared.api_utils import format_api_datetime
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
@@ -204,9 +204,9 @@ class TaxonRead(TaxonBase):
         # distribution codes according to WGSRPD (level 3)
         results: dict[str, list[str]] = {"native": [], "introduced": []}
         for dist in distribution:
-            if dist.establishment == "Native":
+            if dist.establishment == Establishment.NATIVE:
                 results["native"].append(dist.tdwg_code)
-            elif dist.establishment == "Introduced":
+            elif dist.establishment == Establishment.INTRODUCED:
                 results["introduced"].append(dist.tdwg_code)
         return DistributionRead.parse_obj(results)
 

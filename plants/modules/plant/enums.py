@@ -11,6 +11,10 @@ class TagState(str, Enum):
     ERROR = "Error"
     WARNING = "Warning"
 
+    @classmethod
+    def get_names(cls) -> list[str]:
+        return [name for name, value in vars(cls).items() if type(value) is cls]
+
 
 class FBPropagationType(str, Enum):
     SEED_COLLECTED = "seed (collected)"
