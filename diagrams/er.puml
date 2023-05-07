@@ -1,0 +1,72 @@
+@startuml plants-entity-relationships
+skinparam linetype ortho
+
+entity "Florescence" as florescence {
+  * id : number <<generated>>
+  --
+  * plant_id : number <<FK>>
+  * florescence_status : <<Enum>>
+  inflorescence_appeared_at : date
+  flowers_count : number
+  ...
+}
+
+entity "Pollination" as pollination {
+  *id : number <<generated>>
+  --
+  * florescence_id : number <<FK>>
+  * pollen_donor_plant_id : number <<FK>>
+  * pollen_type : <<Enum>>
+  * pollen_quality : <<Enum>>
+  * location : <<Enum>>
+  * pollination_status : <<Enum>>
+  count_attempted : number
+  count_pollinated : number
+  count_capsules : number
+  ...
+}
+
+entity "SeedPlanting" as seed_planting {
+  * id : number <<generated>>
+  --
+  * pollination_id : number <<FK>>
+  * status : <<Enum>>
+  * sterilized : boolean
+  * planted_on : date
+  * soil_id : number <<FK>>
+  comment : text
+  count_germinated : number
+  ...
+}
+
+entity "Soil" as soil {
+  * id : number <<generated>>
+  --
+  * soil_name : string
+  * mix : text
+  ...
+}
+
+entity "Plant" as plant {
+  * id : number <<generated>>
+  --
+  * plant_name : string
+  * active : boolean
+  field_number : string
+  geographic_origin : string
+  parent_plant_id : number <<FK>>
+  parent_plant_pollen_id : number <<FK>>
+  preview_image_id : number <<FK>>
+  taxon_id : number <<FK>>
+  count_stored_pollen_containers : number
+  ...
+}
+
+florescence "1" -down- "0..*" pollination
+pollination "1" -right- "0..*" seed_planting
+seed_planting "0..1" -down- "0..*" plant
+seed_planting "0..*" -left- "1" soil
+plant "0..*" - "0..1" plant : "as parent_plant"
+plant "0..*" - "0..1" plant : "as parent_plant_pollen"
+florescence "0..*"--"1" plant
+@enduml

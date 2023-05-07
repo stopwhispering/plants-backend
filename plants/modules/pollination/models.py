@@ -119,6 +119,7 @@ class Pollination(Base):
         nullable=False,
     )
 
+    # optional only for imported data
     florescence_id: int | None = Column(INTEGER, ForeignKey("florescence.id"))
     # noinspection PyTypeChecker
     florescence: Mapped[Florescence | None] = relationship(
@@ -183,6 +184,9 @@ class Pollination(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
     creation_at_context = Column(sa.Enum(Context), nullable=False)
 
+    def __repr__(self) -> str:
+        return f"<Pollination {self.id} ({self.pollination_status}, harvested {self.harvest_date})>"
+
 
 class SeedPlanting(Base):
     """Planting attempt of a seed, possibly from Pollination."""
@@ -203,18 +207,18 @@ class SeedPlanting(Base):
     # seed_name: str | None = Column(VARCHAR(60))  # free text, only filled if no pollination linked
     comment = Column(TEXT)
 
-    sterilized = Column(BOOLEAN, nullable=False)  # e.g. treated with Chinosol
-    soaked = Column(BOOLEAN, nullable=False)  # in water
-    covered = Column(BOOLEAN, nullable=False)  # covered with plastic foil for greenhouse effect
+    sterilized = Column(BOOLEAN)  # e.g. treated with Chinosol, null only for imported data
+    soaked = Column(BOOLEAN)  # in water, null only for imported data
+    covered = Column(BOOLEAN)  # covered for greenhouse effect, null only for imported data
 
     planted_on = Column(DATE, nullable=False)
     germinated_first_on = Column(DATE)
 
-    count_planted = Column(INTEGER, nullable=False)  # number of seeds planted
+    count_planted = Column(INTEGER)  # number of seeds planted, null only for imported data
     count_germinated = Column(INTEGER)  # number of seeds germinated
 
-    soil_id: int = Column(INTEGER, ForeignKey("soil.id"), nullable=False)
-    soil: Mapped[Soil] = relationship(
+    soil_id = Column(INTEGER, ForeignKey("soil.id"))  # null only for imported data
+    soil: Mapped[Soil | None] = relationship(
         "Soil", back_populates="seed_plantings", foreign_keys=[soil_id]
     )
 

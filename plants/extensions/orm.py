@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Base is the the base class for ORM models
@@ -23,7 +23,7 @@ class SessionFactory:
     session_factory: sessionmaker[Any] | None = None
 
     @classmethod
-    def create_sessionmaker(cls, engine: AsyncEngine) -> None:
+    def create_sessionmaker(cls, engine: AsyncEngine | AsyncConnection) -> None:
         """Create a sessionmaker for a given db engine."""
         cls.session_factory = sessionmaker(  # type: ignore[call-overload]
             engine,
@@ -41,5 +41,5 @@ class SessionFactory:
         return session
 
 
-async def init_orm(engine: AsyncEngine) -> None:
+async def init_orm(engine: AsyncEngine | AsyncConnection) -> None:
     SessionFactory.create_sessionmaker(engine=engine)
