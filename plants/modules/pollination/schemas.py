@@ -111,10 +111,10 @@ class PollinationRead(PollinationBase):
     seed_count: int | None
     seed_capsule_description: str | None
     seed_description: str | None
-    days_until_first_germination: int | None
-    first_seeds_sown: int | None
-    first_seeds_germinated: int | None
-    germination_rate: float | None
+    # days_until_first_germination: int | None
+    # first_seeds_sown: int | None
+    # first_seeds_germinated: int | None
+    # germination_rate: float | None
     pollen_quality: PollenQuality
 
     seed_plantings: list[SeedPlantingRead]
@@ -139,9 +139,9 @@ class PollinationUpdate(PollinationBase):
     seed_count: int | None
     seed_capsule_description: str | None
     seed_description: str | None
-    days_until_first_germination: int | None
-    first_seeds_sown: int | None
-    first_seeds_germinated: int | None
+    # days_until_first_germination: int | None
+    # first_seeds_sown: int | None
+    # first_seeds_germinated: int | None
 
     class Config:
         extra = Extra.ignore

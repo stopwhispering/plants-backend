@@ -383,10 +383,10 @@ async def read_ongoing_pollinations(
             "seed_count": ongoing_pollination.seed_count,
             "seed_capsule_description": ongoing_pollination.seed_capsule_description,
             "seed_description": ongoing_pollination.seed_description,
-            "days_until_first_germination": ongoing_pollination.days_until_first_germination,
-            "first_seeds_sown": ongoing_pollination.first_seeds_sown,
-            "first_seeds_germinated": ongoing_pollination.first_seeds_germinated,
-            "germination_rate": ongoing_pollination.germination_rate,
+            # "days_until_first_germination": ongoing_pollination.days_until_first_germination,
+            # "first_seeds_sown": ongoing_pollination.first_seeds_sown,
+            # "first_seeds_germinated": ongoing_pollination.first_seeds_germinated,
+            # "germination_rate": ongoing_pollination.germination_rate,
             "seed_plantings": ongoing_pollination.seed_plantings,
         }
         ongoing_pollinations.append(ongoing_pollination_dict)
