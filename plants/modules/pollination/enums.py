@@ -19,8 +19,8 @@ class PollinationStatus(str, enum.Enum):
     SEED_CAPSULE = "seed_capsule"
     SEED = "seed"
     GERMINATED = "germinated"
-    UNKNOWN = "unknown"
-    SELF_POLLINATED = "self_pollinated"
+    UNKNOWN = "unknown"  # todo remove?
+    SELF_POLLINATED = "self_pollinated"  # todo remove?
 
 
 class PollenType(str, enum.Enum):

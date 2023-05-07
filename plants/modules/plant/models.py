@@ -22,7 +22,7 @@ from sqlalchemy.types import DateTime
 from plants.extensions.orm import Base
 from plants.modules.event.models import Event
 from plants.modules.plant.enums import FBCancellationReason, FBPropagationType
-from plants.modules.pollination.models import Florescence
+from plants.modules.pollination.models import Florescence, SeedPlanting
 from plants.modules.taxon.models import Taxon
 
 if TYPE_CHECKING:
@@ -156,6 +156,11 @@ class Plant(Base):
         foreign_keys="Plant.taxon_id",
         viewonly=True,
         uselist=True,
+    )
+
+    seed_planting_id: int | None = Column(INTEGER, ForeignKey("seed_planting.id"))
+    seed_planting: Mapped[SeedPlanting | None] = relationship(
+        "SeedPlanting", back_populates="plants", foreign_keys=[seed_planting_id]
     )
 
     @property

@@ -520,6 +520,7 @@ async def seed_plantings_in_db(
     test_db: AsyncSession,
     pollination_in_db: Pollination,
     pollination_dal: PollinationDAL,
+    soil_in_db: Soil,
 ) -> list[SeedPlanting]:
     """Create seed plantings in the db and return them."""
     # have seed plantings loaded
@@ -532,34 +533,42 @@ async def seed_plantings_in_db(
             comment="Active with known linked Pollination",
             sterilized=True,
             soaked=True,
+            covered=True,
             planted_on=one_week_ago,
             count_planted=10,
+            soil=soil_in_db,
         ),
         SeedPlanting(
             status=SeedPlantingStatus.ABANDONED,
             comment="Abandoned with known linked Pollination",
             sterilized=True,
             soaked=True,
+            covered=True,
             planted_on=one_week_ago,
             count_planted=10,
+            soil=soil_in_db,
         ),
         SeedPlanting(
             status=SeedPlantingStatus.GERMINATED,
             comment="Germinated not long ago",
             sterilized=True,
             soaked=True,
+            covered=True,
             planted_on=one_year_ago,
             germinated_first_on=one_week_ago,
             count_planted=10,
+            soil=soil_in_db,
         ),
         SeedPlanting(
             status=SeedPlantingStatus.GERMINATED,
             comment="Germinated long ago",
             sterilized=True,
             soaked=True,
+            covered=True,
             planted_on=one_year_ago,
             germinated_first_on=one_year_ago,
             count_planted=10,
+            soil=soil_in_db,
         ),
     ]
 

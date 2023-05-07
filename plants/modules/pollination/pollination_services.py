@@ -387,6 +387,7 @@ async def read_ongoing_pollinations(
             "first_seeds_sown": ongoing_pollination.first_seeds_sown,
             "first_seeds_germinated": ongoing_pollination.first_seeds_germinated,
             "germination_rate": ongoing_pollination.germination_rate,
+            "seed_plantings": ongoing_pollination.seed_plantings,
         }
         ongoing_pollinations.append(ongoing_pollination_dict)
     return ongoing_pollinations

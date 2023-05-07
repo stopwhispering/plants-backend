@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.plant.schemas import FBPlantTag, PlantCreate, PlantUpdate
+    from plants.modules.pollination.models import SeedPlanting
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
@@ -77,9 +78,9 @@ async def deep_clone_plant(
     plant_dal: PlantDAL,
     event_dal: EventDAL,
 ) -> None:
-    """clone supplied plant includes duplication of events, photo_file-to-event
-    assignments, tags excludes descendant plants assignments to same instances of parent
-    plants, parent plants pollen (nothing to do here)"""
+    """clone supplied plant includes duplication of events, photo_file-to-event assignments, tags
+    excludes descendant plants assignments to same instances of parent plants, parent plants pollen
+    (nothing to do here)"""
     plant_clone: Plant = clone_orm_instance(
         plant_original,
         {
@@ -114,8 +115,8 @@ async def deep_clone_plant(
 
 
 async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL) -> None:
-    """Update modified tags; returns list of new tags (not yet added or committed);
-    removes deleted tags."""
+    """Update modified tags; returns list of new tags (not yet added or committed); removes deleted
+    tags."""
     # create new tags
     new_tags = []
     for tag in [t for t in tags if t.id is None]:
@@ -151,8 +152,8 @@ async def fetch_plants(plant_dal: PlantDAL) -> list[Plant]:
 
 
 def generate_subsequent_plant_name(original_plant_name: str) -> str:
-    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe
-    depressa V"."""
+    """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa
+    V"."""
     if has_roman_plant_index(original_plant_name):
         plant_name, roman_plant_index = parse_roman_plant_index(original_plant_name)
         plant_index = roman_to_int(roman_plant_index)
@@ -160,3 +161,15 @@ def generate_subsequent_plant_name(original_plant_name: str) -> str:
         plant_name, plant_index = original_plant_name, 1
 
     return f"{plant_name} {int_to_roman(plant_index + 1)}"
+
+
+async def generate_plant_name_proposal_for_seed_planting(
+    seed_planting: SeedPlanting, plant_dal: PlantDAL
+) -> str:
+    """Generate a plant name proposal for a seed planting."""
+    seed_capsule_plant: Plant = seed_planting.pollination.seed_capsule_plant
+    pollen_donor_plant: Plant = seed_planting.pollination.pollen_donor_plant
+    plant_name = f"{seed_capsule_plant.plant_name} × {pollen_donor_plant.plant_name}"
+    while await plant_dal.exists(plant_name):
+        plant_name = generate_subsequent_plant_name(plant_name)
+    return plant_name

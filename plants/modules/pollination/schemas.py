@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from decimal import Decimal
 
-from pydantic import Extra, types
+from pydantic import Extra, types, validator
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -20,6 +20,50 @@ from plants.modules.pollination.enums import (
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 
+class PlantEssentials(BaseSchema):
+    id: int
+    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    full_botanical_html_name: str | None
+
+
+class SeedPlantingBase(BaseSchema):
+    status: SeedPlantingStatus
+    pollination_id: int
+    comment: str | None  # optional free text
+    sterilized: bool
+    soaked: bool
+    covered: bool
+    planted_on: datetime.date
+    count_planted: int
+    soil_id: int
+
+
+class SeedPlantingCreate(SeedPlantingBase):
+    pass
+
+
+class SeedPlantingRead(SeedPlantingBase):
+    id: int
+    count_germinated: int | None
+    germinated_first_on: datetime.date | None
+
+    seed_capsule_plant_name: str  # orm property
+    pollen_donor_plant_name: str  # orm property
+    soil_name: str  # orm property
+
+    plants: list[PlantEssentials]
+
+    @validator("count_germinated", pre=True)
+    def count_germinated_return_zero_if_none(cls, v: int | None) -> int:
+        return v if v is not None else 0
+
+
+class SeedPlantingUpdate(SeedPlantingBase):
+    id: int
+    count_germinated: int | None
+    germinated_first_on: datetime.date | None
+
+
 class PollenContainerBase(BaseSchema):
     plant_id: int
     count_stored_pollen_containers: int  # mandatory in this case
@@ -28,6 +72,7 @@ class PollenContainerBase(BaseSchema):
 class PollenContainerRead(PollenContainerBase):
     plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     genus: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
+    # plants: list[PlantEssentials]
 
 
 class PollenContainerCreateUpdate(PollenContainerBase):
@@ -72,6 +117,8 @@ class PollinationRead(PollinationBase):
     germination_rate: float | None
     pollen_quality: PollenQuality
 
+    seed_plantings: list[SeedPlantingRead]
+
 
 class PollinationUpdate(PollinationBase):
     id: int
@@ -106,33 +153,6 @@ class PollinationCreate(PollinationBase):
 
     class Config:
         extra = Extra.ignore  # some names and texts not to be inserted into DB
-
-
-class SeedPlantingBase(BaseSchema):
-    pollination_id: int | None
-    comment: str | None  # optional free text
-    sterilized: bool
-    soaked: bool
-    planted_on: datetime.date
-    count_planted: int
-
-
-class SeedPlantingCreate(SeedPlantingBase):
-    pass
-
-
-class SeedPlantingRead(SeedPlantingBase):
-    id: int
-    status: SeedPlantingStatus
-    count_germinated: int | None
-    germinated_first_on: datetime.date | None
-
-
-class SeedPlantingUpdate(SeedPlantingBase):
-    id: int
-    status: SeedPlantingStatus
-    count_germinated: int | None
-    germinated_first_on: datetime.date | None
 
 
 class FlorescenceBase(BaseSchema):
@@ -247,8 +267,8 @@ class SettingsRead(BaseSchema):
     colors: list[str]  # e.g. ['#FFFF00', '#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#000000']
 
 
-class BResultsActiveSeedPlantings(ResponseContainer):
-    active_seed_planting_collection: list[SeedPlantingRead]
+# class ActiveSeedPlantingsResult(ResponseContainer):
+#     active_seed_planting_collection: list[SeedPlantingRead]
 
 
 class BResultsActiveFlorescences(ResponseContainer):
@@ -301,3 +321,11 @@ class BPlantFlowerHistory(BaseSchema):
 class BResultsFlowerHistory(ResponseContainer):
     plants: list[BPlantFlowerHistory]
     months: list[str]
+
+
+class SeedPlantingPlantNameProposal(BaseSchema):
+    plant_name_proposal: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+
+
+class NewPlantFromSeedPlantingRequest(BaseSchema):
+    plant_name: str

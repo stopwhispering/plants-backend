@@ -21,6 +21,11 @@ class BaseError(HTTPException):
         super().__init__(status_code=status_code, detail=detail)
 
 
+class ValidationError(BaseError):
+    def __init__(self, detail: str):
+        super().__init__(detail=detail)
+
+
 class UnknownColorError(BaseError):
     def __init__(self, color: str):
         super().__init__(detail=f"Unknown Color: {color}")

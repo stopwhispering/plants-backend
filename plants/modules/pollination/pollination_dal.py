@@ -6,8 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
-from plants.modules.pollination.enums import COLORS_MAP_TO_RGB
-from plants.modules.pollination.models import Pollination
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, PollinationStatus
+from plants.modules.pollination.models import Pollination, SeedPlanting
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
@@ -90,6 +90,14 @@ class PollinationDAL(BaseDAL):
             .options(
                 selectinload(Pollination.seed_capsule_plant),
                 selectinload(Pollination.pollen_donor_plant),
+                selectinload(Pollination.seed_plantings)
+                .selectinload(SeedPlanting.pollination)
+                .selectinload(Pollination.seed_capsule_plant),
+                selectinload(Pollination.seed_plantings)
+                .selectinload(SeedPlanting.pollination)
+                .selectinload(Pollination.pollen_donor_plant),
+                selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.plants),
+                selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),
             )
         )
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
@@ -148,3 +156,7 @@ class PollinationDAL(BaseDAL):
 
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
+
+    async def set_status(self, pollination: Pollination, status: PollinationStatus) -> None:
+        pollination.pollination_status = status
+        await self.session.flush()

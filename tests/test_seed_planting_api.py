@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from plants.modules.event.models import Soil
     from plants.modules.pollination.models import Pollination, SeedPlanting
     from plants.modules.pollination.pollination_dal import PollinationDAL
     from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
@@ -25,17 +26,21 @@ if TYPE_CHECKING:
 @pytest.mark.asyncio()
 async def test_list_seed_plantings(
     ac: AsyncClient,
+    pollination_in_db: Pollination,
 ) -> None:
-    response = await ac.get("/api/active_seed_plantings")
+    response = await ac.get("/api/ongoing_pollinations")
     assert response.status_code == 200
     resp = response.json()
+    pollinations = resp["ongoing_pollination_collection"]
 
-    # seed_plantings_in_db has four entries; we expect exactly the first two to be returned:
+    pollination = next(p for p in pollinations if p["id"] == pollination_in_db.id)
+    seed_plantings = pollination["seed_plantings"]
+
+    # seed_plantings has four entries:
     # one active,
     # one germinated one week ago,
     # one abandoned,
     # one germinated one year ago
-    seed_plantings = resp["active_seed_planting_collection"]
 
     one_year_ago = (
         (datetime.now(tz=pytz.utc) - relativedelta(years=1)).date().strftime(FORMAT_YYYY_MM_DD)
@@ -51,10 +56,10 @@ async def test_list_seed_plantings(
         if s["status"] == SeedPlantingStatus.GERMINATED.value
         and s["germinated_first_on"] == one_week_ago
     )
-    assert not next(
+    assert next(
         (s for s in seed_plantings if s["status"] == SeedPlantingStatus.ABANDONED.value), None
     )
-    assert not next(
+    assert next(
         (
             s
             for s in seed_plantings
@@ -63,7 +68,7 @@ async def test_list_seed_plantings(
         ),
         None,
     )
-    assert len(seed_plantings) == 2
+    assert len(seed_plantings) == 4
 
 
 @pytest.mark.asyncio()
@@ -109,8 +114,10 @@ async def test_update_seed_planting(
         comment="Updated seed planting",
         sterilized=not seed_planting_in_db.sterilized,
         soaked=not seed_planting_in_db.soaked,
+        covered=not seed_planting_in_db.covered,
         planted_on=yesterday,
         count_planted=100,
+        soil_id=seed_planting_in_db.soil_id,
     )
     response = await ac.put(
         f"/api/seed_plantings/{seed_planting_in_db.id}",
@@ -132,6 +139,7 @@ async def test_update_seed_planting(
     assert seed_planting_in_db.comment == payload.comment
     assert seed_planting_in_db.sterilized == payload.sterilized
     assert seed_planting_in_db.soaked == payload.soaked
+    assert seed_planting_in_db.covered == payload.covered
     assert seed_planting_in_db.planted_on == yesterday
     assert seed_planting_in_db.count_planted == payload.count_planted
 
@@ -141,15 +149,19 @@ async def test_create_seed_planting(
     ac: AsyncClient,
     pollination_in_db: Pollination,
     pollination_dal: PollinationDAL,
+    soil_in_db: Soil,
 ) -> None:
     today = datetime.now(tz=pytz.utc).date().strftime(FORMAT_YYYY_MM_DD)
     payload = SeedPlantingCreate(
+        status=SeedPlantingStatus.PLANTED,
         pollination_id=pollination_in_db.id,
         comment="new seed planting from pollination",
         sterilized=False,
         soaked=False,
+        covered=True,
         planted_on=today,
         count_planted=5,
+        soil_id=soil_in_db.id,
     )
     response = await ac.post("/api/seed_plantings", json=payload.dict() | {"planted_on": today})
     assert response.status_code == 200
@@ -163,4 +175,6 @@ async def test_create_seed_planting(
     assert seed_planting_in_db.comment == payload.comment
     assert seed_planting_in_db.sterilized == payload.sterilized
     assert seed_planting_in_db.soaked == payload.soaked
+    assert seed_planting_in_db.covered == payload.covered
     assert seed_planting_in_db.count_planted == payload.count_planted
+    assert seed_planting_in_db.soil_id == payload.soil_id

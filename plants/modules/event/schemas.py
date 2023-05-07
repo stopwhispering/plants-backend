@@ -34,7 +34,6 @@ class SoilRead(SoilBase):
 
 
 class SoilWithCountRead(SoilBase):
-    id: int
     plants_count: int
 
 

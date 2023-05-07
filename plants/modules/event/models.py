@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, relationship
 
 from plants.extensions.orm import Base
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
+from plants.modules.pollination.models import SeedPlanting
 
 if TYPE_CHECKING:
     from decimal import Decimal
@@ -46,6 +47,10 @@ class Soil(Base):
 
     # 1:n relationship to events (no need for bidirectional relationship)
     events: Mapped[list[Event]] = relationship("Event", back_populates="soil", uselist=True)
+
+    seed_plantings: Mapped[list[SeedPlanting]] = relationship(
+        "SeedPlanting", back_populates="soil", uselist=True
+    )
 
 
 class Pot(Base):

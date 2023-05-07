@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from plants.exceptions import SeedPlantingNotFoundError
-from plants.modules.pollination.models import SeedPlanting
+from plants.modules.pollination.models import Pollination, SeedPlanting
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
@@ -17,21 +18,42 @@ if TYPE_CHECKING:
 class SeedPlantingDAL(BaseDAL):
     async def by_id(self, seed_planting_id: int) -> SeedPlanting:
         # noinspection PyTypeChecker
-        query = select(SeedPlanting).where(SeedPlanting.id == seed_planting_id)
+        query = (
+            select(SeedPlanting)
+            .where(SeedPlanting.id == seed_planting_id)
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.seed_capsule_plant)
+            )
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.pollen_donor_plant)
+            )
+        )
         seed_planting: SeedPlanting | None = (await self.session.scalars(query)).first()
         if not seed_planting:
             raise SeedPlantingNotFoundError(seed_planting_id)
         return seed_planting
 
     async def by_status(self, status: Collection[SeedPlantingStatus]) -> list[SeedPlanting]:
-        query = select(SeedPlanting).where(SeedPlanting.status.in_(status))
+        query = (
+            select(SeedPlanting)
+            .where(SeedPlanting.status.in_(status))
+            .options(selectinload(SeedPlanting.soil))
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.seed_capsule_plant)
+            )
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.pollen_donor_plant)
+            )
+        )
         return list((await self.session.scalars(query)).all())
 
     async def create(self, seed_planting: SeedPlanting) -> None:
         self.session.add(seed_planting)
         await self.session.flush()
 
-    async def update(self, seed_planting: SeedPlanting, updates: dict[str, Any]) -> None:
+    async def update(  # noqa: C901
+        self, seed_planting: SeedPlanting, updates: dict[str, Any]
+    ) -> None:
         if "status" in updates:
             seed_planting.status = updates["status"]
         if "pollination_id" in updates:
@@ -42,6 +64,8 @@ class SeedPlantingDAL(BaseDAL):
             seed_planting.sterilized = updates["sterilized"]
         if "soaked" in updates:
             seed_planting.soaked = updates["soaked"]
+        if "covered" in updates:
+            seed_planting.covered = updates["covered"]
         if "planted_on" in updates:
             seed_planting.planted_on = updates["planted_on"]
         if "germinated_first_on" in updates:
@@ -50,6 +74,8 @@ class SeedPlantingDAL(BaseDAL):
             seed_planting.count_planted = updates["count_planted"]
         if "count_germinated" in updates:
             seed_planting.count_germinated = updates["count_germinated"]
+        if "soil_id" in updates:
+            seed_planting.soil_id = updates["soil_id"]
 
         await self.session.flush()
 

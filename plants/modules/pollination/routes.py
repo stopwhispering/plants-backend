@@ -10,6 +10,7 @@ from plants.dependencies import (
     get_plant_dal,
     get_pollination_dal,
     get_seed_planting_dal,
+    get_taxon_dal,
     valid_florescence,
     valid_pollination,
     valid_seed_planting,
@@ -17,6 +18,7 @@ from plants.dependencies import (
 
 # if TYPE_CHECKING:
 from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.plant.services import generate_plant_name_proposal_for_seed_planting
 from plants.modules.pollination.enums import COLORS_MAP
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.florescence_services import (
@@ -43,8 +45,8 @@ from plants.modules.pollination.pollination_services import (
     update_pollination,
 )
 from plants.modules.pollination.schemas import (
+    # ActiveSeedPlantingsResult,
     BResultsActiveFlorescences,
-    BResultsActiveSeedPlantings,
     BResultsFlowerHistory,
     BResultsOngoingPollinations,
     BResultsPlantsForNewFlorescence,
@@ -54,19 +56,22 @@ from plants.modules.pollination.schemas import (
     FlorescenceCreate,
     FlorescenceUpdate,
     FRequestPollenContainers,
+    NewPlantFromSeedPlantingRequest,
     PollinationCreate,
     PollinationUpdate,
     SeedPlantingCreate,
+    SeedPlantingPlantNameProposal,
     SeedPlantingUpdate,
     SettingsRead,
 )
 from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.pollination.seed_planting_services import (
-    read_active_seed_plantings,
+    create_new_plant_for_seed_planting,
     remove_seed_planting,
     save_new_seed_planting,
     update_seed_planting,
 )
+from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -174,19 +179,50 @@ async def retrain_probability_pollination_to_seed_model() -> dict[str, str | flo
     return await train_model_for_probability_of_seed_production()
 
 
-@router.get("/active_seed_plantings", response_model=BResultsActiveSeedPlantings)
-async def get_active_seed_plantings(
-    seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+# @router.get("/active_seed_plantings", response_model=ActiveSeedPlantingsResult)
+# async def get_active_seed_plantings(
+#     seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+# ) -> Any:
+#     """Read active florescences, either after inflorescence appeared or flowering."""
+#     seed_plantings = await read_active_seed_plantings(
+#         seed_planting_dal=seed_planting_dal,
+#     )
+#     return {
+#         "action": "Get active seed plantings",
+#         "message": get_message(f"Provided {len(seed_plantings)} active seed plantings."),
+#         "active_seed_planting_collection": seed_plantings,
+#     }
+
+
+@router.get(
+    "/seed_plantings/{seed_planting_id}/plant_name_proposal",
+    response_model=SeedPlantingPlantNameProposal,
+)
+async def propose_plant_name_for_seed_planting(
+    seed_planting: SeedPlanting = Depends(valid_seed_planting),
+    plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
     """Read active florescences, either after inflorescence appeared or flowering."""
-    seed_plantings = await read_active_seed_plantings(
-        seed_planting_dal=seed_planting_dal,
+    plant_name = await generate_plant_name_proposal_for_seed_planting(
+        seed_planting=seed_planting, plant_dal=plant_dal
     )
-    return {
-        "action": "Get active seed plantings",
-        "message": get_message(f"Provided {len(seed_plantings)} active seed plantings."),
-        "active_seed_planting_collection": seed_plantings,
-    }
+    return {"plant_name_proposal": plant_name}
+
+
+@router.post("/seed_plantings/{seed_planting_id}/plants")
+async def post_new_plant_for_seed_planting(
+    new_plant_info: NewPlantFromSeedPlantingRequest,
+    seed_planting: SeedPlanting = Depends(valid_seed_planting),
+    plant_dal: PlantDAL = Depends(get_plant_dal),
+    taxon_dal: TaxonDAL = Depends(get_taxon_dal),
+) -> Any:
+    """Read active florescences, either after inflorescence appeared or flowering."""
+    await create_new_plant_for_seed_planting(
+        seed_planting=seed_planting,
+        plant_name=new_plant_info.plant_name,
+        plant_dal=plant_dal,
+        taxon_dal=taxon_dal,
+    )
 
 
 @router.post("/seed_plantings")
@@ -213,6 +249,7 @@ async def put_seed_planting(
     edited_seed_planting_data: SeedPlantingUpdate,
     seed_planting: SeedPlanting = Depends(valid_seed_planting),
     seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
+    pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ) -> Any:
     if not seed_planting.id == edited_seed_planting_data.id:
         raise HTTPException(
@@ -224,6 +261,7 @@ async def put_seed_planting(
         seed_planting,
         edited_seed_planting_data=edited_seed_planting_data,
         seed_planting_dal=seed_planting_dal,
+        pollination_dal=pollination_dal,
     )
 
 

@@ -59,6 +59,8 @@ class PlantBase(BaseSchema):
 
     tags: list[FBPlantTag]
 
+    seed_planting_id: int | None
+
 
 class PlantRead(PlantBase):
     id: int

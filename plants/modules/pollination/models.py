@@ -38,6 +38,7 @@ from plants.modules.pollination.enums import (
 if TYPE_CHECKING:
     from decimal import Decimal
 
+    from plants.modules.event.models import Soil
     from plants.modules.plant.models import Plant
 
 logger = logging.getLogger(__name__)
@@ -167,12 +168,12 @@ class Pollination(Base):
     seed_capsule_description = Column(TEXT)
     seed_description = Column(TEXT)
     # first_germination_date = Column(DATE)
-    days_until_first_germination = Column(
+    days_until_first_germination = Column(  # todo remove
         INTEGER
     )  # days from sowing seeds to first seed germinated
-    first_seeds_sown = Column(INTEGER)
-    first_seeds_germinated = Column(INTEGER)
-    germination_rate: float | None = Column(FLOAT)  # type: ignore[misc]
+    first_seeds_sown = Column(INTEGER)  # todo remove
+    first_seeds_germinated = Column(INTEGER)  # todo remove
+    germination_rate: float | None = Column(FLOAT)  # type: ignore[misc]  # todo remove
 
     comment = Column(TEXT)
 
@@ -194,9 +195,9 @@ class SeedPlanting(Base):
         nullable=False,
     )
     status: SeedPlantingStatus = Column(sa.Enum(SeedPlantingStatus), nullable=False)
-    pollination_id: int | None = Column(INTEGER, ForeignKey("pollination.id"))
+    pollination_id: int = Column(INTEGER, ForeignKey("pollination.id"), nullable=False)
     # noinspection PyTypeChecker
-    pollination: Mapped[Pollination | None] = relationship(
+    pollination: Mapped[Pollination] = relationship(
         "Pollination", back_populates="seed_plantings", foreign_keys=[pollination_id]
     )
     # seed_name: str | None = Column(VARCHAR(60))  # free text, only filled if no pollination linked
@@ -204,6 +205,7 @@ class SeedPlanting(Base):
 
     sterilized = Column(BOOLEAN, nullable=False)  # e.g. treated with Chinosol
     soaked = Column(BOOLEAN, nullable=False)  # in water
+    covered = Column(BOOLEAN, nullable=False)  # covered with plastic foil for greenhouse effect
 
     planted_on = Column(DATE, nullable=False)
     germinated_first_on = Column(DATE)
@@ -211,8 +213,28 @@ class SeedPlanting(Base):
     count_planted = Column(INTEGER, nullable=False)  # number of seeds planted
     count_germinated = Column(INTEGER)  # number of seeds germinated
 
-    # todo resulting plants (0..n)
-    # todo soil
+    soil_id: int = Column(INTEGER, ForeignKey("soil.id"), nullable=False)
+    soil: Mapped[Soil] = relationship(
+        "Soil", back_populates="seed_plantings", foreign_keys=[soil_id]
+    )
+
+    plants: Mapped[list[Plant]] = relationship(
+        "Plant",
+        back_populates="seed_planting",
+        foreign_keys="Plant.seed_planting_id",
+    )
 
     last_update_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     creation_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+
+    @property
+    def seed_capsule_plant_name(self) -> str:
+        return self.pollination.seed_capsule_plant.plant_name  # if self.pollination else ""
+
+    @property
+    def pollen_donor_plant_name(self) -> str:
+        return self.pollination.pollen_donor_plant.plant_name  # if self.pollination else ""
+
+    @property
+    def soil_name(self) -> str:
+        return self.soil.soil_name
