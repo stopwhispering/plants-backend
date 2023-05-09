@@ -7,13 +7,16 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 from plants.exceptions import ValidationError
+from plants.modules.event.models import Event
 from plants.modules.plant.enums import FBPropagationType
 from plants.modules.plant.schemas import PlantCreate, ShortPlant
 from plants.modules.plant.services import create_new_plant
 from plants.modules.pollination.enums import PollinationStatus, SeedPlantingStatus
 from plants.modules.pollination.models import SeedPlanting
+from plants.shared.api_constants import FORMAT_YYYY_MM_DD
 
 if TYPE_CHECKING:
+    from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.pollination.pollination_dal import PollinationDAL
     from plants.modules.pollination.schemas import SeedPlantingCreate, SeedPlantingUpdate
@@ -108,11 +111,18 @@ async def remove_seed_planting(
 
 
 async def create_new_plant_for_seed_planting(
-    seed_planting: SeedPlanting, plant_name: str, plant_dal: PlantDAL, taxon_dal: TaxonDAL
+    seed_planting: SeedPlanting,
+    plant_name: str,
+    plant_dal: PlantDAL,
+    taxon_dal: TaxonDAL,
+    event_dal: EventDAL,
 ) -> None:
     """Create a new plant for a seed planting."""
     if seed_planting.status != SeedPlantingStatus.GERMINATED:
         raise ValidationError("Seed planting must be germinated to create a new plant.")
+
+    if seed_planting.germinated_first_on is None:
+        raise ValidationError("Seed planting must have a germinated first on date.")
 
     plant_create = PlantCreate(
         plant_name=plant_name,
@@ -121,7 +131,7 @@ async def create_new_plant_for_seed_planting(
         nursery_source="-",
         propagation_type=FBPropagationType.SEED_COLLECTED,
         active=True,
-        # generation_notes=,
+        generation_notes=f"auto-generated from Seed Planting ID {seed_planting.id}",
         # taxon_id=,
         parent_plant=ShortPlant.from_orm(seed_planting.pollination.seed_capsule_plant),
         parent_plant_pollen=ShortPlant.from_orm(seed_planting.pollination.pollen_donor_plant),
@@ -130,4 +140,28 @@ async def create_new_plant_for_seed_planting(
         tags=[],
         seed_planting_id=seed_planting.id,
     )
-    _ = await create_new_plant(new_plant=plant_create, plant_dal=plant_dal, taxon_dal=taxon_dal)
+
+    plant = await create_new_plant(new_plant=plant_create, plant_dal=plant_dal, taxon_dal=taxon_dal)
+
+    notes = "Samen gesät"
+    if seed_planting.sterilized:
+        notes += "\nSamen zuvor gebeizt"
+    if seed_planting.soaked:
+        notes += "\nSamen zuvor eingeweicht"
+    if seed_planting.covered:
+        notes += "\nSamen abgedeckt"
+
+    event_planted = Event(
+        plant=plant,
+        date=seed_planting.planted_on.strftime(FORMAT_YYYY_MM_DD),
+        event_notes=notes,
+        soil=seed_planting.soil,
+    )
+
+    event_germinated = Event(
+        plant=plant,
+        date=seed_planting.germinated_first_on.strftime(FORMAT_YYYY_MM_DD),
+        event_notes="gekeimt",
+        soil=seed_planting.soil,
+    )
+    await event_dal.create_events([event_planted, event_germinated])

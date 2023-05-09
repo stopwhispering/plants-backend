@@ -128,7 +128,7 @@ async def update_plants(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
     """Update existing plants."""
-    plants_saved = await update_plants_from_list_of_dicts(
+    _ = await update_plants_from_list_of_dicts(
         data.PlantsCollection, plant_dal=plant_dal, taxon_dal=taxon_dal
     )
 
@@ -137,7 +137,7 @@ async def update_plants(
         "action": "Saved Plants",
         "resource": MajorResource.PLANT,
         "message": get_message(message),
-        "plants": plants_saved,
+        # "plants": [],  # plants_saved,
     }
 
 

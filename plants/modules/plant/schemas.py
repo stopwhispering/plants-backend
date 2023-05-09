@@ -101,7 +101,8 @@ class ResultsPlantsList(ResponseContainer):
 
 
 class ResultsPlantsUpdate(MajorResponseContainer):
-    plants: list[PlantRead]
+    pass
+    # plants: list[PlantRead]
 
 
 class ResultsPlantCreated(MajorResponseContainer):

@@ -27,6 +27,7 @@ class SeedPlantingDAL(BaseDAL):
             .options(
                 selectinload(SeedPlanting.pollination).selectinload(Pollination.pollen_donor_plant)
             )
+            .options(selectinload(SeedPlanting.soil))
         )
         seed_planting: SeedPlanting | None = (await self.session.scalars(query)).first()
         if not seed_planting:

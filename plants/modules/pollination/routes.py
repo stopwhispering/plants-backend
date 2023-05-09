@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from plants.dependencies import (
+    get_event_dal,
     get_florescence_dal,
     get_plant_dal,
     get_pollination_dal,
@@ -15,6 +16,7 @@ from plants.dependencies import (
     valid_pollination,
     valid_seed_planting,
 )
+from plants.modules.event.event_dal import EventDAL
 
 # if TYPE_CHECKING:
 from plants.modules.plant.plant_dal import PlantDAL
@@ -215,6 +217,7 @@ async def post_new_plant_for_seed_planting(
     seed_planting: SeedPlanting = Depends(valid_seed_planting),
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
+    event_dal: EventDAL = Depends(get_event_dal),
 ) -> Any:
     """Read active florescences, either after inflorescence appeared or flowering."""
     await create_new_plant_for_seed_planting(
@@ -222,6 +225,7 @@ async def post_new_plant_for_seed_planting(
         plant_name=new_plant_info.plant_name,
         plant_dal=plant_dal,
         taxon_dal=taxon_dal,
+        event_dal=event_dal,
     )
 
 

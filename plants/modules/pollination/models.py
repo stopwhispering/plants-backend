@@ -204,7 +204,7 @@ class SeedPlanting(Base):
     soaked = Column(BOOLEAN)  # in water, null only for imported data
     covered = Column(BOOLEAN)  # covered for greenhouse effect, null only for imported data
 
-    planted_on = Column(DATE, nullable=False)
+    planted_on: datetime.date = Column(DATE, nullable=False)
     germinated_first_on = Column(DATE)
 
     count_planted = Column(INTEGER)  # number of seeds planted, null only for imported data
