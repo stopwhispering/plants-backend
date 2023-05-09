@@ -239,6 +239,10 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
                 plant.taxon_id = value
             elif key == "taxon":
                 plant.taxon = value
+            elif key == "seed_planting_id":
+                plant.seed_planting_id = value
+            elif key == "seed_planting":
+                plant.seed_planting = value
             else:
                 raise UpdateNotImplementedError(key)
 
