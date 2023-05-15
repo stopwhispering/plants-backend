@@ -255,7 +255,8 @@ async def save_new_pollination(
     label_color = COLORS_MAP[new_pollination_data.label_color_rgb]
     same_color_pollination = await pollination_dal.get_pollinations_with_filter(
         {
-            "seed_capsule_plant_id": new_pollination_data.seed_capsule_plant_id,
+            # "seed_capsule_plant_id": new_pollination_data.seed_capsule_plant_id,
+            "florescence_id": new_pollination_data.florescence_id,
             "label_color": label_color,
         }
     )
@@ -364,6 +365,8 @@ async def read_ongoing_pollinations(
             "seed_capsule_description": ongoing_pollination.seed_capsule_description,
             "seed_description": ongoing_pollination.seed_description,
             "seed_plantings": ongoing_pollination.seed_plantings,
+            "florescence_id": ongoing_pollination.florescence_id,
+            "florescence_comment": ongoing_pollination.florescence.comment,
         }
         ongoing_pollinations.append(ongoing_pollination_dict)
     return ongoing_pollinations

@@ -90,6 +90,7 @@ class PollinationDAL(BaseDAL):
                 .selectinload(Pollination.pollen_donor_plant),
                 selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.plants),
                 selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),
+                selectinload(Pollination.florescence),
             )
         )
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
@@ -119,6 +120,8 @@ class PollinationDAL(BaseDAL):
                 query = query.where(Pollination.seed_capsule_plant_id == value)
             elif key == "label_color":
                 query = query.where(Pollination.label_color == value)
+            elif key == "florescence_id":
+                query = query.where(Pollination.florescence_id == value)
             else:
                 raise CriterionNotImplementedError(key)
 

@@ -96,6 +96,9 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
+    florescence_id: int
+    florescence_comment: types.constr(max_length=40) | None  # type: ignore[valid-type]
+
     # allow None for old data
     count_attempted: types.conint(ge=1) | None  # type: ignore[valid-type]
     count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
