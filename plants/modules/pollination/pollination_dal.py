@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
 from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, PollinationStatus
-from plants.modules.pollination.models import Pollination, SeedPlanting
+from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
@@ -96,10 +96,11 @@ class PollinationDAL(BaseDAL):
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
 
-    async def get_available_colors_for_plant(self, plant: Plant) -> list[str]:
+    async def get_available_colors_for_florescence(self, florescence: Florescence) -> list[str]:
         # noinspection PyTypeChecker
         used_colors_query = select(Pollination.label_color).where(
-            Pollination.seed_capsule_plant_id == plant.id,
+            # Pollination.seed_capsule_plant_id == plant.id,
+            Pollination.florescence_id == florescence.id,
             Pollination.ongoing,
         )
         used_colors = (await self.session.scalars(used_colors_query)).all()

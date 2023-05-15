@@ -1,5 +1,4 @@
-"""Services for florescence and pollination-related operations; mostly for pollination
-frontend."""
+"""Services for florescence and pollination-related operations; mostly for pollination frontend."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -77,7 +76,7 @@ async def read_active_florescences(
             "first_flower_opened_at": format_api_date(flor.first_flower_opened_at),
             "last_flower_closed_at": format_api_date(flor.last_flower_closed_at),
             "available_colors_rgb": (
-                await pollination_dal.get_available_colors_for_plant(plant=flor.plant)
+                await pollination_dal.get_available_colors_for_florescence(florescence=flor)
             ),
         }
         florescences.append(FlorescenceRead.parse_obj(f_dict))
