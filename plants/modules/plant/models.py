@@ -121,6 +121,7 @@ class Plant(Base):
     florescences: Mapped[list[Florescence]] = relationship("Florescence", back_populates="plant")
 
     count_stored_pollen_containers = Column(INTEGER)
+    # self_pollinates = Column(BOOLEAN)
 
     def __repr__(self) -> str:
         return f"<Plant [{self.id}] {self.plant_name}>"
@@ -128,6 +129,13 @@ class Plant(Base):
     @property
     def descendant_plants_all(self) -> list[Plant]:
         return self.descendant_plants + self.descendant_plants_pollen
+
+    @property
+    def self_pollinates(self) -> bool | None:
+        # return either True or None
+        if any(f for f in self.florescences if f.self_pollinated is True):
+            return True
+        return None
 
     sibling_plants: Mapped[list[Plant]] = relationship(
         "Plant",

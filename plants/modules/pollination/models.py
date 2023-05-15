@@ -64,6 +64,8 @@ class Florescence(Base):
     branches_count = Column(INTEGER)
     flowers_count = Column(INTEGER)
 
+    self_pollinated = Column(BOOLEAN)
+
     # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
     perianth_length: Decimal | None = Column(Numeric(3, 1))  # type: ignore[misc]
     # cm; 2 digits, 1 decimal --> 0.1 .. 9.9

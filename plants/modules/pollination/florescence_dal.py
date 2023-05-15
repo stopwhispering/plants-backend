@@ -80,4 +80,7 @@ class FlorescenceDAL(BaseDAL):
         if "last_update_context" in updates:
             florescence.last_update_context = updates["last_update_context"]
 
+        if "self_pollinated" in updates:
+            florescence.self_pollinated = updates["self_pollinated"]
+
         await self.session.flush()

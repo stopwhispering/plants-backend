@@ -166,6 +166,8 @@ class FlorescenceUpdate(FlorescenceBase):
     id: int
     branches_count: int | None
     flowers_count: int | None
+    # plant_self_pollinates: bool | None
+    self_pollinated: bool | None
 
     perianth_length: types.condecimal(  # type: ignore[valid-type]
         ge=Decimal(0.1), le=Decimal(99.9)
@@ -194,6 +196,8 @@ class FlorescenceRead(FlorescenceBase):
     id: int
     plant_name: str
     plant_preview_image_id: int | None
+    plant_self_pollinates: bool | None
+    self_pollinated: bool | None
     available_colors_rgb: list[str]  # e.g. ['#FF0000', '#FF00FF']
     branches_count: int | None
     flowers_count: int | None

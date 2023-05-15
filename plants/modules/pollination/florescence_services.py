@@ -61,6 +61,8 @@ async def read_active_florescences(
             "id": flor.id,
             "plant_id": flor.plant_id,
             "plant_name": flor.plant.plant_name if flor.plant else None,
+            "self_pollinated": flor.self_pollinated,
+            "plant_self_pollinates": flor.plant.self_pollinates if flor.plant else None,
             "plant_preview_image_id": flor.plant.preview_image_id,
             "florescence_status": flor.florescence_status,
             "inflorescence_appeared_at": format_api_date(flor.inflorescence_appeared_at),
@@ -139,6 +141,11 @@ async def update_active_florescence(
     updates["last_update_context"] = Context.API
 
     await florescence_dal.update_florescence(florescence, updates=updates)
+
+    # if edited_florescence_data.plant_self_pollinates is not florescence.plant.self_pollinates:
+    #     await plant_dal.set_self_pollinates(
+    #         plant=florescence.plant,
+    #         self_pollinates=edited_florescence_data.plant_self_pollinates)
 
 
 async def create_new_florescence(
