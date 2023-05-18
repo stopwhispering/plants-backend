@@ -160,6 +160,7 @@ async def read_potential_pollen_donors(
         potential_pollen_donor_flowering = {
             "plant_id": florescence_pollen_donor.plant_id,
             "plant_name": florescence_pollen_donor.plant.plant_name,
+            "plant_preview_image_id": florescence_pollen_donor.plant.preview_image_id,
             "pollen_type": PollenType.FRESH.value,
             "count_stored_pollen_containers": None,
             "already_ongoing_attempt": already_ongoing_attempt,
@@ -201,6 +202,7 @@ async def read_potential_pollen_donors(
         potential_pollen_donor_frozen = {
             "plant_id": frozen_pollen_plant.id,
             "plant_name": frozen_pollen_plant.plant_name,
+            "plant_preview_image_id": frozen_pollen_plant.preview_image_id,
             "pollen_type": PollenType.FROZEN.value,
             "count_stored_pollen_containers": (frozen_pollen_plant.count_stored_pollen_containers),
             "already_ongoing_attempt": already_ongoing_attempt,
