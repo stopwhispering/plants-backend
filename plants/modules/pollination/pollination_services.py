@@ -260,6 +260,7 @@ async def save_new_pollination(
             # "seed_capsule_plant_id": new_pollination_data.seed_capsule_plant_id,
             "florescence_id": new_pollination_data.florescence_id,
             "label_color": label_color,
+            "ongoing": True,
         }
     )
     if same_color_pollination:
