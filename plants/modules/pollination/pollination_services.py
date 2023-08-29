@@ -249,9 +249,16 @@ async def save_new_pollination(
         raise UnknownColorError(new_pollination_data.label_color_rgb)
 
     # apply transformations
-    pollinated_at = datetime.strptime(
+    # we have datetime as a string, we can assume it relates to Europe/Berlin timezone
+    # to get a DateTime object with UTC timezone attached, we need to...
+    # 1. parse the string to a timezone-naive datetime object
+    # 2. attach the timezone with pytz localize
+    # 3. convert to UTC with astimezone
+    pollinated_at_naive = datetime.strptime(  # noqa: DTZ007
         new_pollination_data.pollinated_at, FORMAT_API_YYYY_MM_DD_HH_MM
-    ).astimezone(pytz.timezone("Europe/Berlin"))
+    )
+    pollinated_at_localized = pytz.timezone("Europe/Berlin").localize(pollinated_at_naive)
+    pollinated_at = pollinated_at_localized.astimezone(pytz.utc)
 
     # make sure there's no ongoing pollination for that plant with the same thread color
     label_color = COLORS_MAP[new_pollination_data.label_color_rgb]
