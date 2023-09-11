@@ -16,5 +16,10 @@ def create_db_engine(connection_string: URL) -> AsyncEngine:
     rollback if required.
     """
     if "sqlite" in connection_string:  # pragma: no cover
-        return create_async_engine(connection_string, connect_args={"check_same_thread": False})
+        return create_async_engine(
+            connection_string,
+            connect_args={"check_same_thread": False},
+            pool_size=5,
+            max_overflow=3,
+        )
     return create_async_engine(connection_string)
