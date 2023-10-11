@@ -34,6 +34,14 @@ class FlorescenceDAL(BaseDAL):
         )
         return list((await self.session.scalars(query)).all())
 
+    async def get_all_florescences(self) -> list[Florescence]:
+        query = (
+            select(Florescence)
+            .options(selectinload(Florescence.plant).selectinload(Plant.taxon))
+            .options(selectinload(Florescence.plant).selectinload(Plant.florescences))
+        )
+        return list((await self.session.scalars(query)).all())
+
     async def by_id(self, florescence_id: int) -> Florescence:
         # noinspection PyTypeChecker
         query = (

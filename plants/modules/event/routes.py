@@ -6,7 +6,13 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from plants.dependencies import get_event_dal, get_image_dal, get_plant_dal, valid_plant
+from plants.dependencies import (
+    get_event_dal,
+    get_florescence_dal,
+    get_image_dal,
+    get_plant_dal,
+    valid_plant,
+)
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Soil
 from plants.modules.event.schemas import (
@@ -27,6 +33,11 @@ from plants.modules.event.services import (
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.pollination.florescence_dal import FlorescenceDAL
+from plants.modules.pollination.flower_history_services import (
+    convert_flower_history_for_plant_details,
+    generate_flower_history,
+)
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BSaveConfirmation
 from plants.shared.message_services import get_message
@@ -73,14 +84,26 @@ async def update_existing_soil(
 
 @router.get("/events/{plant_id}", response_model=BResultsEventResource)
 async def get_events(
-    plant: Plant = Depends(valid_plant), event_dal: EventDAL = Depends(get_event_dal)
+    plant: Plant = Depends(valid_plant),
+    event_dal: EventDAL = Depends(get_event_dal),
+    florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
 ) -> Any:
     """Returns events from event database table."""
     events = await read_events_for_plant(plant, event_dal=event_dal)
 
+    # get flowering periods
+    months, flower_history = await generate_flower_history(
+        florescence_dal=florescence_dal, plant=plant
+    )
+
+    # for the plant detail page, we convert the flower history so as to have a list of
+    # years with monthly flowering states
+    flower_history = convert_flower_history_for_plant_details(flower_history)
+
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {
         "events": events,
+        "flower_history": flower_history,
         "action": "read events for plant",
         "message": get_message(msg, message_type=MessageType.DEBUG),
     }

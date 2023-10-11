@@ -6,6 +6,7 @@ from pydantic import types
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
+from plants.modules.pollination.enums import BFloweringState
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 
@@ -104,8 +105,29 @@ class BResultsSoilsResource(BaseSchema):
     SoilsCollection: list[SoilWithCountRead]
 
 
+class PlantFlowerMonthRead(BaseSchema):
+    flowering_state: BFloweringState
+
+
+class PlantFlowerYearRead(BaseSchema):
+    year: int
+    month_01: PlantFlowerMonthRead
+    month_02: PlantFlowerMonthRead
+    month_03: PlantFlowerMonthRead
+    month_04: PlantFlowerMonthRead
+    month_05: PlantFlowerMonthRead
+    month_06: PlantFlowerMonthRead
+    month_07: PlantFlowerMonthRead
+    month_08: PlantFlowerMonthRead
+    month_09: PlantFlowerMonthRead
+    month_10: PlantFlowerMonthRead
+    month_11: PlantFlowerMonthRead
+    month_12: PlantFlowerMonthRead
+
+
 class BResultsEventResource(ResponseContainer):
     events: list[EventRead]
+    flower_history: list[PlantFlowerYearRead]
 
 
 class BPResultsUpdateCreateSoil(ResponseContainer):

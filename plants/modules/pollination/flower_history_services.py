@@ -9,10 +9,10 @@ import pytz
 from dateutil import rrule
 
 from plants.modules.pollination.enums import BFloweringState, FlorescenceStatus
-from plants.modules.pollination.schemas import BPlantFlowerHistory
 from plants.shared.api_constants import FORMAT_YYYY_MM
 
 if TYPE_CHECKING:
+    from plants.modules.event.schemas import PlantFlowerYearRead
     from plants.modules.plant.models import Plant
     from plants.modules.pollination.florescence_dal import FlorescenceDAL
     from plants.modules.pollination.models import Florescence
@@ -136,8 +136,25 @@ class FloweringPlant:
             return FloweringPeriod(
                 start=florescence.first_flower_opened_at,
                 start_verified=True,
-                end=florescence.last_flower_closed_at - timedelta(days=1),
+                # florescence.last_flower_closed_at - timedelta(days=1),
+                end=florescence.last_flower_closed_at,
                 end_verified=True,
+                flowering_state=BFloweringState.FLOWERING,
+            )
+
+        # start is known, end is not but flower is still ongoing
+        # in that case we'll set the end date to current date
+        if (
+            florescence.first_flower_opened_at
+            and not florescence.last_flower_closed_at
+            and florescence.florescence_status == FlorescenceStatus.FLOWERING
+        ):
+            return FloweringPeriod(
+                start=florescence.first_flower_opened_at,
+                start_verified=True,
+                end=datetime.now(tz=pytz.timezone("Europe/Berlin")).date(),
+                # end=date.today(),
+                end_verified=False,
                 flowering_state=BFloweringState.FLOWERING,
             )
 
@@ -177,6 +194,9 @@ class FloweringPlant:
                 end_verified=True,
                 flowering_state=BFloweringState.FLOWERING,
             )
+
+        return None
+        # todo raise?
         raise ValueError(
             f"Can't determine flowering period - Unknown dates for "
             f"{florescence.plant.plant_name}. "
@@ -265,12 +285,50 @@ class PlantFlowerHistory(TypedDict):
     periods: list[PlantFlowerHistoryPeriod]
 
 
+def convert_flower_history_for_plant_details(
+    flower_history: list[PlantFlowerHistory],
+) -> list[dict]:  # must match PlantFlowerYearRead
+    """Convert flower history so as to have a list of years with monthly flowering states."""
+    if not flower_history:
+        return []
+    assert len(flower_history) == 1, "Only one plant is expected"  # noqa: S101
+
+    # sort periods by month ascending
+    periods = flower_history[0]["periods"]
+    periods.sort(key=lambda p: p["month"])
+
+    # distinct years in periods
+    distinct_years = {int(period["month"].split("-")[0]) for period in periods}
+
+    years: list[PlantFlowerYearRead] = []
+    for distinct_year in distinct_years:
+        year_flowers = {"year": distinct_year}
+        for month in range(1, 13):
+            period_month = f"{distinct_year}-{month:02}"
+            period = next((p for p in periods if p["month"] == period_month), None)
+            status = period["flowering_state"] if period else BFloweringState.NOT_FLOWERING
+            year_flowers[f"month_{month:02}"] = {"flowering_state": status}
+        years.append(year_flowers)
+
+    return years
+
+
 async def generate_flower_history(
-    florescence_dal: FlorescenceDAL,
+    florescence_dal: FlorescenceDAL, plant: Plant | None = None
 ) -> tuple[list[str], list[PlantFlowerHistory]]:
-    florescences = await florescence_dal.by_status([FlorescenceStatus.FINISHED])
-    distinct_plants = {f.plant for f in florescences}
+    """If plant is supplied, the flower history is generated only for that plant, otherwise for all
+    plants."""
+    if plant:
+        distinct_plants = {plant}
+
+    else:
+        # florescences = await florescence_dal.by_status([FlorescenceStatus.FINISHED])
+        florescences = await florescence_dal.get_all_florescences()
+        distinct_plants = {f.plant for f in florescences} if not plant else {plant}
+
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
+    if not flowering_plants:
+        return [], []
 
     # sort by first period start ascending
     flowering_plants.sort(key=lambda fp: fp.get_earliest_period_start())
@@ -300,7 +358,7 @@ async def generate_flower_history(
                     "flowering_state": flowering_plant.get_state_at_date(dt.date()),
                 }
             )
-        BPlantFlowerHistory.validate(plant_flower_history)
+        # BPlantFlowerHistory.validate(plant_flower_history)
         flower_history.append(plant_flower_history)
 
     return months, flower_history
