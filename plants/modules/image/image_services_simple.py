@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from PIL import Image
+if TYPE_CHECKING:
+    from PIL import Image as PilImage
 
 from plants import settings
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +19,12 @@ def remove_image_from_filesystem(filename: str) -> None:
     settings.paths.path_original_photos_uploaded.joinpath(filename).unlink()
 
 
-def resizing_required(path: str | Path, size: tuple[int, int]) -> bool:
-    """Checks size of photo_file at supplied path and compares to supplied maximum size."""
-    with Image.open(path) as image:  # only works with path, not file object
-        x, y = image.size
+async def is_resizing_required(pil_image: PilImage, size: tuple[int, int] | None) -> bool:
+    """Checks size of PIL Image and compares to supplied maximum size."""
+    if not size:
+        return False
+
+    x, y = pil_image.size
     if x > size[0]:
         y = int(max(y * size[0] / x, 1))
         x = int(size[0])
@@ -32,4 +32,4 @@ def resizing_required(path: str | Path, size: tuple[int, int]) -> bool:
         x = int(max(x * size[1] / y, 1))
         y = int(size[1])
     size = x, y
-    return bool(size != image.size)
+    return bool(size != pil_image.size)

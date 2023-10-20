@@ -14,7 +14,7 @@ from plants.shared.path_utils import create_if_not_exists
 class ImageSettings(pydantic.BaseModel):
     size_thumbnail_image_taxon: tuple[int, int]  # e.g.[220, 220]
     sizes: tuple[tuple[int, int], ...]  # required lower-resolution sizes for images
-    resizing_size: tuple[int, int]  # e.g.[3440, 1440]
+    resizing_size: tuple[int, int] | None  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
 
 

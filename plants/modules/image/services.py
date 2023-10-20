@@ -1,27 +1,31 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import aiofiles
 from fastapi import BackgroundTasks, HTTPException, UploadFile
+from PIL import Image as PilImage
 from starlette.concurrency import run_in_threadpool
 
 from plants import constants, local_config, settings
 from plants.modules.image.exif_utils import read_record_datetime_from_exif_tags
 from plants.modules.image.image_services_simple import (
+    is_resizing_required,
     original_image_file_exists,
     remove_image_from_filesystem,
-    resizing_required,
 )
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.util import (
     generate_thumbnail,
+    generate_thumbnail_for_pil_image,
     generate_timestamp_filename,
     get_thumbnail_name,
-    resize_image,
+    resize_and_save,
 )
 from plants.shared.message_services import throw_exception
 from plants.shared.path_utils import get_generated_filename, with_suffix
@@ -85,38 +89,30 @@ async def save_image_to_db(
     return image
 
 
-async def save_image_file(
-    file: UploadFile, plant_names: list[str], keywords: Sequence[str] | None = None
+async def save_upload_image(
+    upload_image: UploadImage, plant_names: list[str], keywords: Sequence[str] | None = None
 ) -> Path:
     """Save the files supplied as starlette uploadfiles on os; assign plants and keywords."""
-    # save to file system
-    filename_ = file.filename if file.filename else generate_timestamp_filename()
-    path = settings.paths.path_original_photos_uploaded.joinpath(filename_)
-    logger.info(f"Saving {path}.")
 
-    async with aiofiles.open(path, "wb") as out_file:
-        content = await file.read()  # async read
-        await out_file.write(content)  # async write
+    # resize by lowering resolution if required
+    if not upload_image.resizing_required:
+        logger.info(f"Saving {upload_image.path}. No resizing required.")
+        async with aiofiles.open(upload_image.path, "wb") as out_file:
+            await out_file.write(upload_image.file_content)  # async write
 
-    # resize file by lowering resolution if required
-    if not settings.images.resizing_size:
-        pass
-    elif not resizing_required(path, settings.images.resizing_size):
-        logger.info("No resizing required.")
     else:
-        logger.info(f"Saving and resizing {path}.")
-        resize_image(
-            path=path,
-            save_to_path=with_suffix(path, constants.RESIZE_SUFFIX),
+        logger.info(f"Resizing and Saving to {upload_image.path}.")
+        await resize_and_save(
+            upload_image=upload_image,
             size=settings.images.resizing_size,
             quality=settings.images.jpg_quality,
         )
-        path = with_suffix(path, constants.RESIZE_SUFFIX)
 
     # generate thumbnails for frontend display
     for size in settings.images.sizes:
-        generate_thumbnail(
-            image=path,
+        generate_thumbnail_for_pil_image(
+            pil_image=upload_image.pil_image,
+            filename=upload_image.path.name,
             size=size,
             path_thumbnail=settings.paths.path_generated_thumbnails,
             ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
@@ -124,13 +120,13 @@ async def save_image_file(
 
     # save metadata in jpg exif tags
     await PhotoMetadataAccessExifTags().save_photo_metadata(
-        image_absolute_path=path,
+        image_absolute_path=upload_image.path,
         plant_names=plant_names,
         keywords=list(keywords) if keywords else [],
         description="",
     )
 
-    return path
+    return upload_image.path
 
 
 async def delete_image_file_and_db_entries(image: Image, image_dal: ImageDAL) -> None:
@@ -261,6 +257,14 @@ async def fetch_untagged_images(image_dal: ImageDAL) -> list[Image]:
     return await image_dal.get_untagged_images()
 
 
+@dataclass
+class UploadImage:
+    pil_image: PilImage
+    file_content: bytes
+    path: Path
+    resizing_required: bool
+
+
 async def handle_image_uploads(
     files: list[UploadFile],
     plants: list[Plant],
@@ -268,9 +272,31 @@ async def handle_image_uploads(
     plant_dal: PlantDAL,
     image_dal: ImageDAL,
 ) -> tuple[list[Image], list[str], list[str], list[UploadFile]]:
+    # for image that need a resize, we will add a suffix to the filename
+
+    upload_images: list[UploadImage] = []
+    for file in files:
+        file_content: bytes = await file.read()
+        pil_image: PilImage = PilImage.open(io.BytesIO(file_content))
+
+        filename = file.filename or generate_timestamp_filename()
+        resizing_required = await is_resizing_required(pil_image, settings.images.resizing_size)
+        if resizing_required:
+            filename = with_suffix(filename, constants.RESIZE_SUFFIX)
+        path = settings.paths.path_original_photos_uploaded.joinpath(filename)
+
+        upload_images.append(
+            UploadImage(
+                pil_image=pil_image,
+                file_content=file_content,
+                path=path,
+                resizing_required=resizing_required,
+            )
+        )
+
     # remove duplicates (filename already exists in file system)
-    duplicate_filenames, warnings, files = await remove_files_already_existing(
-        files, image_dal=image_dal
+    duplicate_filenames, warnings, upload_images = await remove_images_already_existing(
+        all_upload_images=upload_images, image_dal=image_dal
     )
 
     # schedule and run tasks to save images concurrently
@@ -281,13 +307,13 @@ async def handle_image_uploads(
     async with asyncio.TaskGroup() as task_group:
         tasks = [
             task_group.create_task(
-                save_image_file(
-                    file=file,
+                save_upload_image(
+                    upload_image=upload_image,
                     plant_names=[plant.plant_name for plant in plants],
                     keywords=keywords,
                 )
             )
-            for file in files
+            for upload_image in upload_images
         ]
     paths: list[Path] = [task.result() for task in tasks]
 
@@ -305,29 +331,26 @@ async def handle_image_uploads(
     return images, duplicate_filenames, warnings, files
 
 
-async def remove_files_already_existing(
-    all_files: list[UploadFile], image_dal: ImageDAL
-) -> tuple[list[str], list[str], list[UploadFile]]:
-    """Iterates over file objects, checks whether a file with that name already exists in filesystem
-    and/or in database.
+async def remove_images_already_existing(
+    all_upload_images: list[UploadImage], image_dal: ImageDAL
+) -> tuple[list[str], list[str], list[UploadImage]]:
+    """Iterates over upload images, checks whether a file with that name already exists in
+    filesystem and/or in database.
 
     - if we have an orphaned file in filesystem, missing in database, it will be
-    deleted with a messasge
+    deleted with a message
     - if we have have an orphaned entry in database, missing in filesystem, it will
     be deleted with a messasge
     - if existent in both filesystem and db, remove it from  files list with a message
     """
     duplicate_filenames = []
     warnings = []
-    files = all_files[:]
-    for photo_upload in files[:]:  # need to loop on copy if we want to delete within loop
-        if photo_upload.filename is None:
-            continue
-
-        exists_in_filesystem = original_image_file_exists(filename=photo_upload.filename)
-        exists_in_db = await image_dal.image_exists(filename=photo_upload.filename)
+    upload_images = all_upload_images[:]
+    for photo_upload in upload_images[:]:  # need to loop on copy if we want to delete within loop
+        exists_in_filesystem = original_image_file_exists(filename=photo_upload.path.name)
+        exists_in_db = await image_dal.image_exists(filename=photo_upload.path.name)
         if exists_in_filesystem and not exists_in_db:
-            remove_image_from_filesystem(filename=photo_upload.filename)
+            remove_image_from_filesystem(filename=photo_upload.path.name)
             logger.warning(
                 warning := "Found orphaned image {photo_upload.filename} in "
                 "filesystem, "
@@ -335,16 +358,16 @@ async def remove_files_already_existing(
             )
             warnings.append(warning)
         elif exists_in_db and not exists_in_filesystem:
-            await image_dal.delete_image_by_filename(filename=photo_upload.filename)
+            await image_dal.delete_image_by_filename(filename=photo_upload.path.name)
             logger.warning(
                 warning := f"Found orphaned db entry for uploaded image  "
-                f"{photo_upload.filename} with no "
+                f"{photo_upload.path.name} with no "
                 f"corresponsing file. Removed db entry."
             )
             warnings.append(warning)
         # if path.is_file() or with_suffix(path, suffix).is_file():
         elif exists_in_filesystem and exists_in_db:
-            files.remove(photo_upload)
-            duplicate_filenames.append(photo_upload.filename)
-            logger.warning(f"Skipping file upload (duplicate) for: {photo_upload.filename}")
-    return duplicate_filenames, warnings, files
+            upload_images.remove(photo_upload)
+            duplicate_filenames.append(photo_upload.path.name)
+            logger.warning(f"Skipping file upload (duplicate) for: {photo_upload.path.name}")
+    return duplicate_filenames, warnings, upload_images

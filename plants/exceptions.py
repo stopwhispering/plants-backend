@@ -204,3 +204,10 @@ class ImageFileNotFoundError(BaseError):
             detail=f"Image file {filename} not found.",
             status_code=status.HTTP_404_NOT_FOUND,
         )
+
+
+class ImageDbRecordExistsError(BaseError):
+    def __init__(self, filename: str):
+        super().__init__(
+            detail=f"Image already exists in db: {filename}.", status_code=status.HTTP_409_CONFLICT
+        )

@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
 
 
-def with_suffix(path: Path, suffix: str) -> Path:
-    """Return filename or path with a suffix added."""
-    filename_new = path.stem + suffix + path.suffix
-    return path.with_name(filename_new)
+def with_suffix(filename: str, suffix: str) -> str:
+    """Return filename with a suffix added."""
+    path = Path(filename)
+    return path.stem + suffix + path.suffix
+
+
+# def with_suffix(path: Path, suffix: str) -> Path:
+#     """Return filename or path with a suffix added."""
+#     filename_new = path.stem + suffix + path.suffix
+#     return path.with_name(filename_new)
 
 
 def get_generated_filename(filename_original: str, size: tuple[int, int] | None = None) -> str:

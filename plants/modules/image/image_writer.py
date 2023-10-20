@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from plants.exceptions import ImageDbRecordExistsError
 from plants.modules.image.models import Image, ImageKeyword
 
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ class ImageWriter:
         # events and taxa are saved elsewhere
     ) -> Image:
         if await self.image_dal.image_exists(filename):
-            raise ValueError(f"Image already exists in db: {filename}")
+            raise ImageDbRecordExistsError(filename=filename)
 
         image = Image(
             filename=filename,
