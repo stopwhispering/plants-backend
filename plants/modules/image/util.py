@@ -97,7 +97,7 @@ def generate_thumbnail(
         filename=image.name,
         path_thumbnail=path_thumbnail,
         size=size,
-        filename_thumb=filename_thumb,  # todo used?
+        filename_thumb=filename_thumb,
         ignore_missing_image_files=ignore_missing_image_files,
     )
     #
