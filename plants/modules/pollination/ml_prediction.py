@@ -8,9 +8,9 @@ import pandas as pd
 from plants.extensions.ml_models import get_probability_of_seed_production_model
 
 if TYPE_CHECKING:
-    from ml_helpers.preprocessing.features import FeatureContainer
     from plants.modules.plant.models import Plant
     from plants.modules.pollination.enums import PollenType
+    from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer
     from plants.modules.pollination.models import Florescence
 
 

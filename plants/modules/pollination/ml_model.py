@@ -18,10 +18,14 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._testing import ignore_warnings
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
 from plants import local_config
 from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.plant.models import Plant
+from plants.modules.pollination.ml_helpers.preprocessing.features import (
+    Feature,
+    FeatureContainer,
+    Scale,
+)
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
 

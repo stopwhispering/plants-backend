@@ -1,7 +1,7 @@
 import pandas as pd
 import sqlalchemy
 
-from ml_helpers.preprocessing.features import FeatureContainer
+from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer
 from plants import local_config
 from plants.dependencies import get_db
 from plants.extensions.db import create_db_engine

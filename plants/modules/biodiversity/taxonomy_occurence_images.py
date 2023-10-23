@@ -190,8 +190,8 @@ class TaxonOccurencesLoader:
             path_thumbnail = generate_thumbnail(
                 image=image_bytes_io,
                 size=settings.images.size_thumbnail_image_taxon,
-                path_thumbnail=settings.paths.path_generated_thumbnails_taxon,
-                filename_thumb=info.filename_thumbnail,
+                thumbnail_folder=settings.paths.path_generated_thumbnails_taxon,
+                thumbnail_filename=info.filename_thumbnail,
                 ignore_missing_image_files=(local_config.log_settings.ignore_missing_image_files),
             )
         except OSError as err:

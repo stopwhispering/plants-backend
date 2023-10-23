@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import piexif
@@ -33,10 +33,9 @@ def get_thumbnail_name(filename: str, size: tuple[int, int]) -> str:
 
 def generate_thumbnail_for_pil_image(
     pil_image: PilImage,
-    filename: str,
-    path_thumbnail: Path,
+    thumbnail_folder: Path,
+    thumbnail_filename: str,
     size: tuple[int, int] = (100, 100),
-    filename_thumb: PurePath | str | None = None,
     *,
     ignore_missing_image_files: bool = False,
 ) -> Path | None:
@@ -57,10 +56,7 @@ def generate_thumbnail_for_pil_image(
 
     thumbnail.thumbnail(size)
 
-    if not filename_thumb:
-        filename_thumb = get_thumbnail_name(filename, size)
-
-    path_save = path_thumbnail.joinpath(filename_thumb)
+    path_save = thumbnail_folder.joinpath(thumbnail_filename)
     thumbnail.save(path_save, "JPEG")
 
     return path_save
@@ -68,9 +64,9 @@ def generate_thumbnail_for_pil_image(
 
 def generate_thumbnail(
     image: Path | BytesIO,
-    path_thumbnail: Path,
+    thumbnail_folder: Path,
+    thumbnail_filename: str,
     size: tuple[int, int] = (100, 100),
-    filename_thumb: PurePath | str | None = None,
     *,
     ignore_missing_image_files: bool = False,
 ) -> Path | None:
@@ -79,9 +75,6 @@ def generate_thumbnail(
 
     <<must>> be supplied.
     """
-    # if not ignore_missing_image_files:
-    #     logger.debug(f"Generating resized photo_file of {image} in size {size}.")
-    # suffix = f'{size[0]}_{size[1]}'
 
     if isinstance(image, Path) and not image.is_file():
         if not ignore_missing_image_files:
@@ -90,14 +83,14 @@ def generate_thumbnail(
                 f"thumbnail. {image}"
             )
         return None
+    # works with both Path to JPEG flie and BytesIO object
     pil_image = PilImage.open(image)
 
     return generate_thumbnail_for_pil_image(
         pil_image=pil_image,
-        filename=image.name,
-        path_thumbnail=path_thumbnail,
+        thumbnail_folder=thumbnail_folder,
         size=size,
-        filename_thumb=filename_thumb,
+        thumbnail_filename=thumbnail_filename,
         ignore_missing_image_files=ignore_missing_image_files,
     )
     #

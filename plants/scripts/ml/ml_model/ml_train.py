@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV, GroupKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.utils._testing import ignore_warnings  # noqa
 
-from ml_helpers.preprocessing.features import FeatureContainer
+from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer
 from plants.scripts.ml.ml_model.ml_pipeline import create_pipeline
 
 

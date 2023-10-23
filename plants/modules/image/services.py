@@ -110,11 +110,12 @@ async def save_upload_image(
 
     # generate thumbnails for frontend display
     for size in settings.images.sizes:
+        filename_thumb = get_thumbnail_name(upload_image.path.name, size)
         generate_thumbnail_for_pil_image(
             pil_image=upload_image.pil_image,
-            filename=upload_image.path.name,
+            thumbnail_folder=settings.paths.path_generated_thumbnails,
             size=size,
-            path_thumbnail=settings.paths.path_generated_thumbnails,
+            thumbnail_filename=filename_thumb,
             ignore_missing_image_files=local_config.log_settings.ignore_missing_image_files,
         )
 
@@ -220,10 +221,12 @@ def _generate_missing_thumbnails(images: list[Image]) -> None:
             if path_thumbnail.is_file():
                 count_already_existed += 1
             else:
+                filename_thumb = get_thumbnail_name(image.filename, size)
                 generate_thumbnail(
                     image=image.absolute_path,
+                    thumbnail_folder=settings.paths.path_generated_thumbnails,
                     size=size,
-                    path_thumbnail=settings.paths.path_generated_thumbnails,
+                    thumbnail_filename=filename_thumb,
                     ignore_missing_image_files=(
                         local_config.log_settings.ignore_missing_image_files
                     ),

@@ -11,7 +11,7 @@ from plants.shared.message_services import throw_exception
 if TYPE_CHECKING:
     from sklearn.pipeline import Pipeline
 
-    from ml_helpers.preprocessing.features import FeatureContainer
+    from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer
 
 
 logger = logging.getLogger(__name__)

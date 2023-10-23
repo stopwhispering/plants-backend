@@ -1,6 +1,10 @@
 from enum import Enum
 
-from ml_helpers.preprocessing.features import Feature, FeatureContainer, Scale
+from plants.modules.pollination.ml_helpers.preprocessing.features import (
+    Feature,
+    FeatureContainer,
+    Scale,
+)
 
 
 class ModelType(Enum):
