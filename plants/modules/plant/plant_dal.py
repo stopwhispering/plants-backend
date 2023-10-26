@@ -45,12 +45,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
 
     async def by_id(self, plant_id: int, *, eager_load: bool = True) -> Plant:
         # noinspection PyTypeChecker
-        query = (
-            select(Plant)
-            .where(Plant.id == plant_id)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-            .limit(1)
-        )
+        query = select(Plant).where(Plant.id == plant_id).where(Plant.deleted.is_(False)).limit(1)
 
         if eager_load:
             query = self._add_eager_load_options(query)
@@ -72,7 +67,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         query = (
             select(Plant)
             .where(Plant.plant_name == plant_name)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .limit(1)
         )
 
@@ -94,7 +89,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         query = (
             select(Plant.id)
             .where(Plant.taxon_id.is_(None))
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .where(Plant.active)
         )
         plant_ids: list[int] = list((await self.session.scalars(query)).all())
@@ -118,11 +113,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return await self.by_id(new_plant_id)
 
     async def get_all_plants_with_taxon(self) -> list[Plant]:
-        query = (
-            select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
-            .options(selectinload(Plant.taxon))
-        )
+        query = select(Plant).where(Plant.deleted.is_(False)).options(selectinload(Plant.taxon))
         return list((await self.session.scalars(query)).all())
 
     async def set_count_stored_pollen_containers(self, plant: Plant, count: int) -> None:
@@ -133,13 +124,13 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         # noinspection PyTypeChecker
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .where(Plant.active)
             .where(
                 (Plant.count_stored_pollen_containers == 0)
                 | Plant.count_stored_pollen_containers.is_(None)
             )
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .options(selectinload(Plant.taxon))
         )
         plants: list[Plant] = list((await self.session.scalars(query)).all())
@@ -148,7 +139,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
     async def get_plants_with_pollen_containers(self) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .where(Plant.count_stored_pollen_containers >= 1)
             .options(selectinload(Plant.taxon))
         )
@@ -160,7 +151,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
     ) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .where(
                 Plant.parent_plant_id == seed_capsule_plant.id,
                 Plant.parent_plant_pollen_id == pollen_donor_plant.id,
@@ -175,7 +166,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
     ) -> list[Plant]:
         query = (
             select(Plant)
-            .where(Plant.deleted.is_(False))  # noqa: FBT003
+            .where(Plant.deleted.is_(False))
             .where(
                 Plant.parent_plant_id == seed_capsule_plant_id,
                 Plant.parent_plant_pollen_id == pollen_donor_plant_id,
@@ -280,7 +271,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         # plants
         if not include_deleted:
             # sqlite does not like "is None" and pylint doesn't like "== None"
-            query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
+            query = query.where(Plant.deleted.is_(False))
 
         # early-load all relationship tables for Plant model relevant for
         # PResultsPlants to save around 90% (postgres) of the time in comparison to
@@ -313,7 +304,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         # plants
         query = select(Plant).options(selectinload(Plant.events).selectinload(Event.soil))
         if not include_deleted:
-            query = query.where(Plant.deleted.is_(False))  # noqa: FBT003
+            query = query.where(Plant.deleted.is_(False))
 
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants

@@ -110,7 +110,7 @@ class PhotoMetadataAccessExifTags:
                 exif_bytes = piexif.dump(exif_dict)
             except ValueError as err:
                 logger.warning(
-                    f"Catched exception when modifying exif: {str(err)}. Trying again "
+                    f"Catched exception when modifying exif: {err!s}. Trying again "
                     "after deleting embedded thumbnail."
                 )
                 del exif_dict["thumbnail"]

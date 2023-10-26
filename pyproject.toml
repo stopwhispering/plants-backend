@@ -33,9 +33,9 @@ pytest = "^7.2.1"
 pytest-asyncio = "^0.20.3"
 httpx = "^0.23.3"
 pre-commit = "^3.1.0"
-black = "^23.1.0"
+#black = "^23.1.0"
 pylint = "^2.16.2"
-ruff = "^0.0.252"
+ruff = "^0.1.2"
 pytest-cov = "^4.0.0"
 uvicorn = "^0.20.0"
 pydantic-to-typescript = "^1.0.10"
@@ -52,10 +52,10 @@ types-pillow = "^9.4.0.17"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-# https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file
-[tool.black]
-line-length = 100
-target-version = ["py311"]
+## https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file
+#[tool.black]
+#line-length = 100
+#target-version = ["py311"]
 
 #[tool.isort]
 [tool.ruff.isort]
@@ -140,12 +140,15 @@ ignore = [
     "PLW2901",  # Outer for loop variable overwritten by inner assignment target
     "TRY003",  # Avoid specifying long messages outside the exception class
     "B905",  # `zip()` without an explicit `strict=` parameter
-    "ISC001",  # Implicitly concatenated string literals (conflicts with black)
+#    "ISC001",  # Implicitly concatenated string literals (conflicts with black)
     "PLR2004",  # magic numbers, i.e. literals
 
     # to be checked every once and then
     "ERA001",  # commented-out code
     "UP007",  #  X | None instead of Optional[x] --> wait for Pydantic 2
+
+    # not compatible with ruff format
+    'COM819', 'E501', 'Q000', 'Q001', 'Q002', 'Q003', 'ISC001'
 ]
 #fixable = ["E", "F"]
 #unfixable = [

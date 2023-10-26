@@ -157,7 +157,7 @@ async def save_new_taxon(
         # URLs
         loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
 
-        logger.info(f"Starting background task to load occurences for gbif_id " f"{str(gbif_id)}")
+        logger.info(f"Starting background task to load occurences for gbif_id " f"{gbif_id!s}")
         background_tasks.add_task(loader.scrape_occurrences_for_taxon, gbif_id)
 
     return taxon

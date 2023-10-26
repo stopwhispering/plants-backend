@@ -13,7 +13,7 @@ from plants.shared.api_constants import FORMAT_API_YYYY_MM_DD_HH_MM, FORMAT_YYYY
 
 def treat_non_serializable(x: Any) -> Any:
     """Tries to convert a supplied item into something that is json serializable."""
-    if isinstance(x, (datetime, date)):
+    if isinstance(x, datetime | date):
         return x.isoformat()
     if isinstance(x, timedelta):
         return str(x)

@@ -169,18 +169,30 @@ class FlorescenceUpdate(FlorescenceBase):
     # plant_self_pollinates: bool | None
     self_pollinated: bool | None
 
-    perianth_length: types.condecimal(  # type: ignore[valid-type]
-        ge=Decimal(0.1), le=Decimal(99.9)
-    ) | None
-    perianth_diameter: types.condecimal(  # type: ignore[valid-type]
-        ge=Decimal(0.1), le=Decimal(9.9)
-    ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: types.constr(  # type: ignore[valid-type]
-        min_length=7, max_length=7, to_lower=True
-    ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: types.constr(  # type: ignore[valid-type]
-        min_length=7, max_length=7, to_lower=True
-    ) | None  # hex color code, e.g. #f2f600
+    perianth_length: (
+        types.condecimal(  # type: ignore[valid-type]
+            ge=Decimal(0.1), le=Decimal(99.9)
+        )
+        | None
+    )
+    perianth_diameter: (
+        types.condecimal(  # type: ignore[valid-type]
+            ge=Decimal(0.1), le=Decimal(9.9)
+        )
+        | None
+    )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: (
+        types.constr(  # type: ignore[valid-type]
+            min_length=7, max_length=7, to_lower=True
+        )
+        | None
+    )  # hex color code, e.g. #f2f600
+    flower_color_second: (
+        types.constr(  # type: ignore[valid-type]
+            min_length=7, max_length=7, to_lower=True
+        )
+        | None
+    )  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None
@@ -202,18 +214,30 @@ class FlorescenceRead(FlorescenceBase):
     branches_count: int | None
     flowers_count: int | None
 
-    perianth_length: types.condecimal(  # type: ignore[valid-type]
-        ge=Decimal(0.1), le=Decimal(99.9)
-    ) | None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: types.condecimal(  # type: ignore[valid-type]
-        ge=Decimal(0.1), le=Decimal(9.9)
-    ) | None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: types.constr(  # type: ignore[valid-type]
-        min_length=7, max_length=7, to_lower=True
-    ) | None  # hex color code, e.g. #f2f600
-    flower_color_second: types.constr(  # type: ignore[valid-type]
-        min_length=7, max_length=7, to_lower=True
-    ) | None  # hex color code, e.g. #f2f600
+    perianth_length: (
+        types.condecimal(  # type: ignore[valid-type]
+            ge=Decimal(0.1), le=Decimal(99.9)
+        )
+        | None
+    )  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: (
+        types.condecimal(  # type: ignore[valid-type]
+            ge=Decimal(0.1), le=Decimal(9.9)
+        )
+        | None
+    )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: (
+        types.constr(  # type: ignore[valid-type]
+            min_length=7, max_length=7, to_lower=True
+        )
+        | None
+    )  # hex color code, e.g. #f2f600
+    flower_color_second: (
+        types.constr(  # type: ignore[valid-type]
+            min_length=7, max_length=7, to_lower=True
+        )
+        | None
+    )  # hex color code, e.g. #f2f600
     # if flower_color_second set
     flower_colors_differentiation: FlowerColorDifferentiation | None
     stigma_position: StigmaPosition | None

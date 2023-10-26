@@ -156,7 +156,7 @@ async def test_train_pollination_ml_model(
     assert "metric_name" in resp
     assert "model" in resp
     assert "metric_value" in resp
-    assert type(resp["metric_value"]) is float
+    assert isinstance(resp["metric_value"], float)
     assert 0.0 < resp["metric_value"] <= 1.0
 
     # test pickled model exists

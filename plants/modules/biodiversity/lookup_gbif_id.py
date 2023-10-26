@@ -34,12 +34,11 @@ class GBIFIdentifierLookup:
     async def _gbif_id_from_rest_api(nub_key: int, lsid: str) -> int | None:
         url = GBIF_REST_API_RELATED_NAME_USAGES.format(nubKey=nub_key, datasetKey=IPNI_DATASET_KEY)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    logger.error("Error at GET request for GBIF REST API: " f"{response.status}")
-                    return None
-                response_json = await response.json()
+        async with aiohttp.ClientSession() as session, session.get(url) as response:
+            if response.status != 200:
+                logger.error("Error at GET request for GBIF REST API: " f"{response.status}")
+                return None
+            response_json = await response.json()
 
         if response_json.get("results"):
             # find our plant's record in ipni dataset at gbif
@@ -94,9 +93,8 @@ class WikidataGbifLookup:
         logger.debug(f"Beginning search for {lsid_number_quoted}")
         lsid_number_encoded = urllib.parse.quote(lsid_number_quoted)
         search_url = URL_PATTERN_WIKIDATA_SEARCH.format(lsid_number_encoded)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(search_url) as response:
-                page = await response.text()
+        async with aiohttp.ClientSession() as session, session.get(search_url) as response:
+            page = await response.text()
         return BeautifulSoup(page, "html.parser")
 
     @staticmethod

@@ -52,17 +52,17 @@ async def test_florescence_history_without_pollination(
     flowering_plant = FloweringPlant(plant)
 
     # inflorescence
-    inflorescence_period = [
+    inflorescence_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 3, 1)
-    ][0]
+    )
     assert inflorescence_period.flowering_state == BFloweringState.INFLORESCENCE_GROWING
     # end must be one day before next period start
     assert inflorescence_period.end == datetime.date(2021, 4, 30)
 
     # florescence
-    florescence_period = [
+    florescence_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 5, 1)
-    ][0]
+    )
     assert florescence_period.flowering_state == BFloweringState.FLOWERING
     # end must be the day the last flower closed
     assert florescence_period.end == datetime.date(2021, 6, 1)
@@ -97,9 +97,9 @@ async def test_florescence_history_still_active(
     flowering_plant = FloweringPlant(plant)
 
     # florescence still ongoing
-    florescence_period = [
+    florescence_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 5, 1)
-    ][0]
+    )
     assert florescence_period.flowering_state == BFloweringState.FLOWERING
     # end must be the current date
     assert florescence_period.end == datetime.datetime.now(tz=pytz.timezone("Europe/Berlin")).date()
@@ -146,24 +146,27 @@ async def test_florescence_history_with_pollination(
     flowering_plant = FloweringPlant(plant)
 
     # inflorescence
-    inflorescence_period = [
+    inflorescence_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 3, 1)
-    ][0]
+    )
     assert inflorescence_period.flowering_state == BFloweringState.INFLORESCENCE_GROWING
     # end must be one day before next period start
     assert inflorescence_period.end == datetime.date(2021, 4, 30)
 
     # florescence
-    florescence_period = [
+    florescence_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 5, 1)
-    ][0]
+    )
     assert florescence_period.flowering_state == BFloweringState.FLOWERING
     # end must be the day the last flower closed
     assert florescence_period.end == datetime.date(2021, 6, 1)
 
     # pollination start date must be calculated as the middle of the florescence
-    pollination_period = [
+    pollination_period = next(
         p for p in flowering_plant.periods if p.start == datetime.date(2021, 5, 16)
-    ][0]
+    )
+    # pollination_period = [
+    #     p for p in flowering_plant.periods if p.start == datetime.date(2021, 5, 16)
+    # ][0]
     assert pollination_period.flowering_state == BFloweringState.SEEDS_RIPENING
     assert pollination_period.end == datetime.date(2021, 7, 1)

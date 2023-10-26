@@ -1,16 +1,23 @@
 default_language_version:
     python: python3.11
 repos:
--   repo: https://github.com/psf/black
-    rev: 23.1.0
-    hooks:
-    -   id: black
+#-   repo: https://github.com/psf/black
+#    rev: 23.1.0
+#    hooks:
+#    -   id: black
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.253
+    rev: v0.1.2
     hooks:
     -   id: ruff
         args:
         - --fix
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.2
+    hooks:
+    # fixes files, replaces black
+    -   id: ruff-format
+
 #-   repo: https://github.com/pycqa/isort
 ##   (included in ruff)
 #    rev: 5.12.0

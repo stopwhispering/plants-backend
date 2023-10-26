@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from sqlalchemy import INTEGER, TEXT, VARCHAR, Column, DateTime, ForeignKey, Identity
 from sqlalchemy.orm import Mapped, relationship
@@ -34,7 +34,7 @@ class ImageToPlantAssociation(Base):
     """Plants tagged at images."""
 
     __tablename__ = "image_to_plant_association"
-    __mapper_args__ = {"confirm_deleted_rows": False}
+    __mapper_args__: ClassVar = {"confirm_deleted_rows": False}
 
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True, nullable=False)
     plant_id: int = Column(INTEGER, ForeignKey("plants.id"), primary_key=True, nullable=False)
@@ -104,7 +104,7 @@ class Image(Base):
 
 class ImageToEventAssociation(Base):
     __tablename__ = "image_to_event_association"
-    __mapper_args__ = {"confirm_deleted_rows": False}
+    __mapper_args__: ClassVar = {"confirm_deleted_rows": False}
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
     event_id: int = Column(INTEGER, ForeignKey("event.id"), primary_key=True)
 
@@ -114,7 +114,7 @@ class ImageToEventAssociation(Base):
 
 class ImageToTaxonAssociation(Base):
     __tablename__ = "image_to_taxon_association"
-    __mapper_args__ = {"confirm_deleted_rows": False}
+    __mapper_args__: ClassVar = {"confirm_deleted_rows": False}
     image_id: int = Column(INTEGER, ForeignKey("image.id"), primary_key=True)
     taxon_id: int = Column(INTEGER, ForeignKey("taxon.id"), primary_key=True)
 

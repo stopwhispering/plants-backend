@@ -177,13 +177,12 @@ class TaxonOccurencesLoader:
             logger.debug(f"File already downloaded. Skipping download - {info.href}")
             return True
 
-        logger.debug(f"Downloading... {str(info.href)}")
-        async with aiohttp.ClientSession() as session:
-            async with session.get(info.href) as response:
-                if response.status >= 300:
-                    logger.warning(f"Download failed: {info.href}")
-                    return False
-                payload = await response.read()
+        logger.debug(f"Downloading... {info.href!s}")
+        async with aiohttp.ClientSession() as session, session.get(info.href) as response:
+            if response.status >= 300:
+                logger.warning(f"Download failed: {info.href}")
+                return False
+            payload = await response.read()
         image_bytes_io = BytesIO(payload)
 
         try:
@@ -195,7 +194,7 @@ class TaxonOccurencesLoader:
                 ignore_missing_image_files=(local_config.log_settings.ignore_missing_image_files),
             )
         except OSError as err:
-            logger.warning(f"Could not load as image: {info.href} ({str(err)}")
+            logger.warning(f"Could not load as image: {info.href} ({err!s}")
             return False
 
         info.filename_thumbnail = info.filename_thumbnail
@@ -298,7 +297,7 @@ class TaxonOccurencesLoader:
             logger.info(f"nothing found for {gbif_id}")
             return []
 
-        logger.info(f'gbif_id: {str(gbif_id)} --> {occ_search["results"][0]["scientificName"]} ')
+        logger.info(f'gbif_id: {gbif_id!s} --> {occ_search["results"][0]["scientificName"]} ')
         occurrences = [
             o
             for o in occ_search["results"]

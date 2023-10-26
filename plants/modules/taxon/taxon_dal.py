@@ -100,7 +100,7 @@ class TaxonDAL(BaseDAL):
     async def fetch_taxa_with_plant_ids(
         self,
     ) -> TaxaWithPlantIds:
-        plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)  # noqa: FBT003
+        plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)
         has_any_plant_filter = Taxon.plants.any(
             plant_exists_filter  # type:ignore[arg-type]
         )

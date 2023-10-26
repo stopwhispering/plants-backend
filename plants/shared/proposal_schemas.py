@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 from plants.shared.message_schemas import BMessage
 
@@ -21,8 +23,8 @@ class BTaxonTreeNode(BaseSchema):
     key: str
     level: int
     count: int
-    nodes: list[BTaxonTreeNode] = []  # missing on lowest level
-    plant_ids: list[int] = []  # plants themselves on lowest level
+    nodes: ClassVar[list[BTaxonTreeNode]] = []  # missing on lowest level
+    plant_ids: ClassVar[list[int]] = []  # plants themselves on lowest level
 
 
 # this is required (plus importing annotations) to allow for self-references

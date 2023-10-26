@@ -89,7 +89,7 @@ def auto_rotate_jpeg(path_image: Path, exif_dict: dict[str, Any]) -> None:
     except ValueError as err:
         # treat error "Given thumbnail is too large. max 64kB"
         logger.warning(
-            f"Catched exception when auto-rotating image file: {str(err)}. Trying again "
+            f"Catched exception when auto-rotating image file: {err!s}. Trying again "
             f"after deleting embedded thumbnail."
         )
         del exif_dict["thumbnail"]
