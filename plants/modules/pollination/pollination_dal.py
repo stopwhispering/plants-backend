@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
+from plants.modules.plant.models import Plant
 from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, PollinationStatus
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.shared.base_dal import BaseDAL
-
-if TYPE_CHECKING:
-    from plants.modules.plant.models import Plant
 
 
 class PollinationDAL(BaseDAL):
@@ -80,8 +78,8 @@ class PollinationDAL(BaseDAL):
             select(Pollination)
             .where(Pollination.ongoing)
             .options(
-                selectinload(Pollination.seed_capsule_plant),
-                selectinload(Pollination.pollen_donor_plant),
+                selectinload(Pollination.seed_capsule_plant).selectinload(Plant.taxon),
+                selectinload(Pollination.pollen_donor_plant).selectinload(Plant.taxon),
                 selectinload(Pollination.seed_plantings)
                 .selectinload(SeedPlanting.pollination)
                 .selectinload(Pollination.seed_capsule_plant),

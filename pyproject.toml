@@ -148,7 +148,11 @@ ignore = [
     "UP007",  #  X | None instead of Optional[x] --> wait for Pydantic 2
 
     # not compatible with ruff format
-    'COM819', 'E501', 'Q000', 'Q001', 'Q002', 'Q003', 'ISC001'
+    'COM819', 'E501', 'Q000', 'Q001', 'Q002', 'Q003', 'ISC001',
+
+    'PD901',  # allow 'df' as variable name
+
+    'W191', # conflicts with ruff check
 ]
 #fixable = ["E", "F"]
 #unfixable = [

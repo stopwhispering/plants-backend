@@ -10,8 +10,10 @@ from plants.extensions.ml_models import get_probability_of_seed_production_model
 if TYPE_CHECKING:
     from plants.modules.plant.models import Plant
     from plants.modules.pollination.enums import PollenType
-    from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer
     from plants.modules.pollination.models import Florescence
+    from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
+        FeatureContainer,
+    )
 
 
 @dataclass
@@ -40,7 +42,7 @@ def get_data(
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
 
-    traing_data = TrainingData(
+    training_data = TrainingData(
         pollen_type=pollen_type.value,
         flowers_count=florescence.flowers_count,
         branches_count=florescence.branches_count,
@@ -55,7 +57,7 @@ def get_data(
         same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
         same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
     )
-    df_all = pd.Series(traing_data.__dict__).to_frame().T
+    df_all = pd.Series(training_data.__dict__).to_frame().T
 
     if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")

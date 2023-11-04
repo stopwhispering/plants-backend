@@ -91,3 +91,8 @@ class PollenQuality(str, Enum):
     GOOD = "good"
     BAD = "bad"
     UNKNOWN = "unknown"
+
+
+class PredictionModel(str, Enum):
+    POLLINATION_PROBABILITY = "pollination_probability"
+    RIPENING_DAYS = "ripening_days"

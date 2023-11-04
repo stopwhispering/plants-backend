@@ -31,9 +31,6 @@ from plants.modules.pollination.florescence_services import (
     update_active_florescence,
 )
 from plants.modules.pollination.flower_history_services import generate_flower_history
-from plants.modules.pollination.ml_model import (
-    train_model_for_probability_of_seed_production,
-)
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
@@ -46,6 +43,10 @@ from plants.modules.pollination.pollination_services import (
     update_pollen_containers,
     update_pollination,
 )
+from plants.modules.pollination.prediction.predict_pollination import (
+    train_model_for_probability_of_seed_production,
+)
+from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
     # ActiveSeedPlantingsResult,
     BResultsActiveFlorescences,
@@ -55,6 +56,7 @@ from plants.modules.pollination.schemas import (
     BResultsPollenContainers,
     BResultsPotentialPollenDonors,
     BResultsRetrainingPollinationToSeedsModel,
+    BResultsRetrainingRipeningDays,
     FlorescenceCreate,
     FlorescenceUpdate,
     FRequestPollenContainers,
@@ -181,19 +183,13 @@ async def retrain_probability_pollination_to_seed_model() -> dict[str, str | flo
     return await train_model_for_probability_of_seed_production()
 
 
-# @router.get("/active_seed_plantings", response_model=ActiveSeedPlantingsResult)
-# async def get_active_seed_plantings(
-#     seed_planting_dal: SeedPlantingDAL = Depends(get_seed_planting_dal),
-# ) -> Any:
-#     """Read active florescences, either after inflorescence appeared or flowering."""
-#     seed_plantings = await read_active_seed_plantings(
-#         seed_planting_dal=seed_planting_dal,
-#     )
-#     return {
-#         "action": "Get active seed plantings",
-#         "message": get_message(f"Provided {len(seed_plantings)} active seed plantings."),
-#         "active_seed_planting_collection": seed_plantings,
-#     }
+@router.post(
+    "/retrain_ripening_days",
+    response_model=BResultsRetrainingRipeningDays,
+)
+async def retrain_ripening_days_model() -> dict[str, str | float]:
+    """Retrain the ripening_days ml model."""
+    return await train_model_for_ripening_days()
 
 
 @router.get(

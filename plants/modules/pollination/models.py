@@ -4,6 +4,8 @@ import datetime
 import logging
 from typing import TYPE_CHECKING
 
+import pytz
+
 # import sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy import (
@@ -181,6 +183,17 @@ class Pollination(Base):
 
     def __repr__(self) -> str:
         return f"<Pollination {self.id} ({self.pollination_status}, harvested {self.harvest_date})>"
+
+    @property
+    def current_ripening_days(self) -> int:
+        if not self.pollinated_at:
+            return 0
+
+        delta = (
+            datetime.datetime.now(tz=pytz.timezone("Europe/Berlin")).date()
+            - self.pollinated_at.date()
+        )
+        return delta.days
 
 
 class SeedPlanting(Base):

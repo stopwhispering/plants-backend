@@ -16,10 +16,11 @@ from plants.modules.pollination.enums import (
     PollenType,
     PollinationStatus,
 )
-from plants.modules.pollination.ml_prediction import (
+from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.prediction.ml_prediction import (
     predict_probability_of_seed_production,
 )
-from plants.modules.pollination.models import Florescence, Pollination
+from plants.modules.pollination.prediction.predict_ripening import predict_ripening_days
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
     BPollinationAttempt,
@@ -336,6 +337,11 @@ async def update_pollination(
     await pollination_dal.update(pollination, updates)
 
 
+def get_predicted_ripening_days(pollination: Pollination) -> int | None:
+    """Predict the ripening days of a pollination attempt."""
+    return predict_ripening_days(pollination=pollination)
+
+
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
 ) -> list[dict[str, object]]:
@@ -359,6 +365,10 @@ async def read_ongoing_pollinations(
             "count_attempted": ongoing_pollination.count_attempted,
             "count_pollinated": ongoing_pollination.count_pollinated,
             "count_capsules": ongoing_pollination.count_capsules,
+            "predicted_ripening_days": get_predicted_ripening_days(ongoing_pollination)
+            if ongoing_pollination.pollination_status == PollinationStatus.SEED_CAPSULE
+            else None,
+            "current_ripening_days": ongoing_pollination.current_ripening_days,
             "pollen_quality": ongoing_pollination.pollen_quality,
             "location": ongoing_pollination.location,
             "location_text": LOCATION_TEXTS[ongoing_pollination.location],

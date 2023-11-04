@@ -4,7 +4,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from plants.modules.pollination.ml_helpers.preprocessing.features import FeatureContainer, Scale
+from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import FeatureContainer, Scale
 
 
 def create_pipeline(feature_container: FeatureContainer, model: BaseEstimator):

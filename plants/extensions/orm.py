@@ -29,7 +29,7 @@ class SessionFactory:
             engine,
             autocommit=False,
             autoflush=False,
-            expire_on_commit=False,
+            expire_on_commit=False,  # don't expire objects after transaction commit
             class_=AsyncSession,
         )
 

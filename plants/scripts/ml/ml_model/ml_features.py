@@ -1,6 +1,6 @@
 from enum import Enum
 
-from plants.modules.pollination.ml_helpers.preprocessing.features import (
+from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
     Feature,
     FeatureContainer,
     Scale,

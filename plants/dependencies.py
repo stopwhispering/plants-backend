@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from fastapi import Depends
@@ -24,6 +25,8 @@ from plants.shared.history_dal import HistoryDAL
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+logger = logging.getLogger(__name__)
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Generator for db sessions."""
@@ -31,11 +34,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     db = orm.SessionFactory.create_session()
     # noinspection PyBroadException
     try:
+        # logger.info('yielding db')
         yield db
-    except:  # noqa: E722
+    except Exception:
         await db.rollback()
     finally:
         await db.commit()
+        # logger.info('closing db')
+        # await asyncio.shield(db.close())
         await db.close()
 
 

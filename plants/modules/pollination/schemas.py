@@ -104,6 +104,9 @@ class PollinationRead(PollinationBase):
     count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
     count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
 
+    predicted_ripening_days: types.conint(ge=1) | None  # type: ignore[valid-type]
+    current_ripening_days: types.conint(ge=1) | None  # type: ignore[valid-type]
+
     pollination_status: str
     ongoing: bool
     harvest_date: str | None  # e.g. '2022-11-16'
@@ -325,10 +328,18 @@ class BResultsPollenContainers(BaseSchema):
     plants_without_pollen_container_collection: list[BPlantWoPollenContainer]
 
 
-class BResultsRetrainingPollinationToSeedsModel(BaseSchema):
+class BResultsRetraining(BaseSchema):
     metric_name: str
     metric_value: float
     model: str
+
+
+class BResultsRetrainingPollinationToSeedsModel(BResultsRetraining):
+    pass
+
+
+class BResultsRetrainingRipeningDays(BResultsRetraining):
+    pass
 
 
 class BFloweringPeriodState(BaseSchema):

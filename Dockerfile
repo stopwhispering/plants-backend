@@ -17,6 +17,6 @@ ENV APP_MODULE="plants.main:app"
 COPY ./prestart.sh ./alembic.ini /app/
 COPY alembic /app/alembic
 COPY config.toml /app/config.toml
-COPY plants/modules/pollination/ml_helpers /app/ml_helpers
+COPY plants/modules/pollination/prediction/ml_helpers /app/ml_helpers
 COPY plants /app/plants
 COPY scripts /app/scripts
