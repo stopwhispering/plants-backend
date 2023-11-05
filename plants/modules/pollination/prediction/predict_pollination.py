@@ -1,150 +1,92 @@
 from __future__ import annotations
 
-import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import numpy as np
-from sklearn import neighbors
-from sklearn.compose import ColumnTransformer
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.impute import SimpleImputer
-from sklearn.model_selection import GroupKFold, cross_val_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+import pandas as pd
 
-# noinspection PyProtectedMember
-from sklearn.utils._testing import ignore_warnings
-
-from plants.extensions.ml_models import pickle_pipeline
-from plants.modules.pollination.enums import PredictionModel
-from plants.modules.pollination.prediction.ml_common import assemble_data
-from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
-    Feature,
-    FeatureContainer,
-    Scale,
-)
+from plants.modules.pollination.enums import PollenType, PredictionModel
+from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
 
 if TYPE_CHECKING:
-    import pandas as pd
-    from sklearn.base import BaseEstimator
+    from sklearn.pipeline import Pipeline
 
-logger = logging.getLogger(__name__)
-
-
-def _create_pipeline(feature_container: FeatureContainer, model: BaseEstimator) -> Pipeline:
-    nominal_features = feature_container.get_columns(scale=Scale.NOMINAL)
-    nominal_bivalue_features = feature_container.get_columns(scale=Scale.NOMINAL_BIVALUE)
-    boolean_features = feature_container.get_columns(scale=Scale.BOOLEAN)
-    ordinal_features = feature_container.get_columns(scale=Scale.ORDINAL)
-    if ordinal_features:
-        raise NotImplementedError("Ordinal features are not supported yet.")
-    metric_features = feature_container.get_columns(scale=Scale.METRIC)
-
-    one_hot_encoder = OneHotEncoder(handle_unknown="ignore")
-    one_hot_encoder_bivalue = OneHotEncoder(handle_unknown="ignore", drop="if_binary")
-    imputer_metric = SimpleImputer(strategy="mean")
-
-    # create a pipeline to first impute, then scale our metric features
-    metric_pipeline = Pipeline(
-        steps=[
-            ("imputer", imputer_metric),
-            ("scaler", StandardScaler()),
-        ]
+    from plants.modules.plant.models import Plant
+    from plants.modules.pollination.models import Florescence
+    from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
+        FeatureContainer,
     )
 
-    # encode / scale / impute
-    preprocessor = ColumnTransformer(
-        sparse_threshold=0,  # generate np array, not sparse matrix
-        remainder="drop",
-        transformers=[
-            ("impute_and_scale_metric", metric_pipeline, metric_features),
-            ("one_hot", one_hot_encoder, nominal_features),
-            ("one_hot_bivalue", one_hot_encoder_bivalue, nominal_bivalue_features),
-            ("passthrough", "passthrough", boolean_features),
-        ],
+pollination_pipeline, feature_container = None, None
+
+
+def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContainer]:
+    global pollination_pipeline
+    global feature_container
+    if pollination_pipeline is None:
+        pollination_pipeline, feature_container = unpickle_pipeline(
+            prediction_model=PredictionModel.POLLINATION_PROBABILITY
+        )
+    return pollination_pipeline, feature_container
+
+
+@dataclass
+class FeaturesPollination:  # pylint: disable=too-many-instance-attributes
+    # location: str
+    genus_seed_capsule: str | None
+    species_seed_capsule: str | None
+    genus_pollen_donor: str | None
+    species_pollen_donor: str | None
+    pollen_type: str
+
+    hybrid_seed_capsule: bool
+    hybridgenus_seed_capsule: bool
+    hybrid_pollen_donor: bool
+    hybridgenus_pollen_donor: bool
+    same_genus: bool
+    same_species: bool
+
+
+def get_data(
+    florescence: Florescence,
+    pollen_donor: Plant,
+    pollen_type: PollenType,
+    feature_container: FeatureContainer,
+) -> pd.DataFrame:
+    if not florescence.plant.taxon or not pollen_donor.taxon:
+        raise ValueError("Plant must have a taxon")
+
+    training_data = FeaturesPollination(
+        # location=poll.location,
+        genus_seed_capsule=florescence.plant.taxon.genus,
+        species_seed_capsule=florescence.plant.taxon.species,
+        genus_pollen_donor=pollen_donor.taxon.genus,
+        species_pollen_donor=pollen_donor.taxon.species,
+        pollen_type=pollen_type.value,
+        hybrid_seed_capsule=florescence.plant.taxon.hybrid,
+        hybrid_pollen_donor=pollen_donor.taxon.hybrid,
+        hybridgenus_seed_capsule=florescence.plant.taxon.hybridgenus,
+        hybridgenus_pollen_donor=pollen_donor.taxon.hybridgenus,
+        same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
+        same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
     )
+    df_all = pd.Series(training_data.__dict__).to_frame().T
 
-    return Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("estimator", model),
-        ]
-    )
+    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
+        raise ValueError(f"Feature(s) not in dataframe: {missing}")
+    return df_all
 
 
-def _create_features() -> FeatureContainer:
-    """Create a features container for a specific model to be trained."""
-    features = [
-        Feature(column="pollen_type", scale=Scale.NOMINAL_BIVALUE),
-        Feature(column="species_seed_capsule", scale=Scale.NOMINAL),
-        Feature(column="species_pollen_donor", scale=Scale.NOMINAL),
-        Feature(column="genus_seed_capsule", scale=Scale.NOMINAL),
-        Feature(column="genus_pollen_donor", scale=Scale.NOMINAL),
-        Feature(column="same_genus", scale=Scale.BOOLEAN),
-        # Feature(column='seed_capsule_length', scale=Scale.METRIC),
-        # Feature(column='seed_capsule_width', scale=Scale.METRIC),
-        # Feature(column='seed_length', scale=Scale.METRIC),
-        # Feature(column='seed_width', scale=Scale.METRIC),
-        # Feature(column='seed_count', scale=Scale.METRIC),
-        # Feature(column='avg_ripening_time', scale=Scale.METRIC),
-    ]
-    # todo: pollination_timestamp (morning, evening, etc.) once enough data is available
-    return FeatureContainer(features=features)
-
-
-def _cv_classifier(x: pd.DataFrame, y: pd.Series, pipeline: Pipeline) -> tuple[str, float]:
-    n_groups = 3  # test part will be 1/n
-    n_splits = 3  # k-fold will score n times; must be <= n_groups
-    rng = np.random.default_rng(42)
-    kfold_groups = rng.integers(n_groups, size=len(x))
-    group_kfold = GroupKFold(n_splits=n_splits)
-    with ignore_warnings(category=(ConvergenceWarning, UserWarning)):
-        scores = cross_val_score(pipeline, x, y, cv=group_kfold, groups=kfold_groups, scoring="f1")
-    logger.info(f"Scores: {scores}")
-    logger.info(f"Mean score: {np.mean(scores)}")
-    return "mean_f1_score", round(float(np.mean(scores)), 2)
-
-
-async def train_model_for_probability_of_seed_production() -> dict[str, str | float]:
-    """Predict whether a pollination attempt is goint to reach SEED status."""
-    feature_container = _create_features()
-    df_all = await assemble_data(feature_container=feature_container, include_ongoing=False)
-    # make sure we have only the labels we want (not each must be existent, though)
-    if set(df_all.pollination_status.unique()) - {
-        "seed_capsule",
-        "germinated",
-        "seed",
-        "attempt",
-    }:
-        raise ValueError("Unexpected pollination status in dataset.")
-    y: pd.Series = df_all["pollination_status"].apply(  # type: ignore[assignment]
-        lambda s: 1 if s in {"seed_capsule", "seed", "germinated"} else 0
-    )
-    x: pd.DataFrame = df_all[feature_container.get_columns()]  # type: ignore[assignment]
-
-    # train directly on full dataset with optimized hyperparams
-    params_knn = {
-        "algorithm": "ball_tree",
-        "leaf_size": 20,
-        "n_neighbors": 10,
-        "p": 2,
-        "weights": "distance",
-    }
-    model = neighbors.KNeighborsClassifier(**params_knn)
-    pipeline = _create_pipeline(feature_container=feature_container, model=model)
-
-    # show f1 cv score
-    metric_name, metric_value = _cv_classifier(x, y, pipeline)
-
-    # fit with full dataset
-    pipeline.fit(x, y)
-    pickle_pipeline(
-        pipeline=pipeline,
+def predict_probability_of_seed_production(
+    florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
+) -> int:
+    model, feature_container = get_probability_of_seed_production_model()
+    df_all = get_data(
+        florescence=florescence,
+        pollen_donor=pollen_donor,
+        pollen_type=pollen_type,
         feature_container=feature_container,
-        prediction_model=PredictionModel.POLLINATION_PROBABILITY,
     )
-    return {
-        "model": str(model),
-        "metric_name": metric_name,
-        "metric_value": metric_value,
-    }
+    pred_proba = model.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
+    probability = pred_proba[0][1]
+    return int(probability * 100)

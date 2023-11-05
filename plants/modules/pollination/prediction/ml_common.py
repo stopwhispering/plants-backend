@@ -1,18 +1,27 @@
 from __future__ import annotations
 
 import logging
+import pickle
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from plants import local_config
+from plants import local_config, settings
+from plants.constants import (
+    FILENAME_PICKLED_POLLINATION_ESTIMATOR,
+    FILENAME_RIPENING_DAYS_ESTIMATOR,
+)
 from plants.modules.plant.models import Plant
+from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.taxon.models import Taxon
+from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
+    from sklearn.ensemble import VotingClassifier, VotingRegressor
+    from sklearn.pipeline import Pipeline
     from sqlalchemy.orm import Session
 
     from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
@@ -22,7 +31,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-async def _read_db_and_join(*, include_ongoing: bool) -> pd.DataFrame:
+async def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe
     # i feel more comfortable with joining dataframes than with sqlalchemy...
     # todo rework data access completely!!!
@@ -32,24 +41,14 @@ async def _read_db_and_join(*, include_ongoing: bool) -> pd.DataFrame:
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         conn = session.connection()
 
-        if include_ongoing:
-            # noinspection PyTypeChecker
-            df_pollination = pd.read_sql_query(
-                sql=sqlalchemy.select(Pollination).filter(
-                    # ~Pollination.ongoing,
-                    Pollination.pollination_status != "self_pollinated",
-                ),
-                con=conn,
-            )
-        else:
-            # noinspection PyTypeChecker
-            df_pollination = pd.read_sql_query(
-                sql=sqlalchemy.select(Pollination).filter(
-                    ~Pollination.ongoing,
-                    Pollination.pollination_status != "self_pollinated",
-                ),
-                con=conn,
-            )
+        # noinspection PyTypeChecker
+        df_pollination = pd.read_sql_query(
+            sql=sqlalchemy.select(Pollination).filter(
+                # ~Pollination.ongoing,
+                Pollination.pollination_status != "self_pollinated",
+            ),
+            con=conn,
+        )
 
         df_florescence = pd.read_sql_query(sql=sqlalchemy.select(Florescence), con=conn)
         df_plant = pd.read_sql_query(sql=sqlalchemy.select(Plant), con=conn)
@@ -135,10 +134,8 @@ async def _read_db_and_join(*, include_ongoing: bool) -> pd.DataFrame:
     )
 
 
-async def assemble_data(
-    feature_container: FeatureContainer, *, include_ongoing: bool
-) -> pd.DataFrame:
-    df_all = await _read_db_and_join(include_ongoing=include_ongoing)
+async def assemble_data(feature_container: FeatureContainer) -> pd.DataFrame:
+    df_all = await _read_db_and_join()
 
     # add some custom features
     df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
@@ -148,3 +145,42 @@ async def assemble_data(
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
 
     return df_all
+
+
+def unpickle_pipeline(prediction_model: PredictionModel) -> tuple[Pipeline, FeatureContainer]:
+    if prediction_model == PredictionModel.POLLINATION_PROBABILITY:
+        path = settings.paths.path_pickled_ml_models.joinpath(
+            FILENAME_PICKLED_POLLINATION_ESTIMATOR
+        )
+    elif prediction_model == PredictionModel.RIPENING_DAYS:
+        path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_RIPENING_DAYS_ESTIMATOR)
+    else:
+        raise ValueError(f"Unknown prediction model {prediction_model}")
+
+    if not path.is_file():
+        throw_exception(f"Pipeline not found at {path.as_posix()}")
+    logger.info(f"Unpickling pipeline from {path.as_posix()}.")
+    with path.open("rb") as file:
+        dump = pickle.load(file)  # noqa: S301
+    return dump["pipeline"], dump["feature_container"]
+
+
+def pickle_pipeline(
+    pipeline: Pipeline | VotingRegressor | VotingClassifier,
+    feature_container: FeatureContainer,
+    prediction_model: PredictionModel,
+) -> None:
+    """Called from manually executed script, not used in application/frontend/automatically."""
+    if prediction_model == PredictionModel.POLLINATION_PROBABILITY:
+        path = settings.paths.path_pickled_ml_models.joinpath(
+            FILENAME_PICKLED_POLLINATION_ESTIMATOR
+        )
+    elif prediction_model == PredictionModel.RIPENING_DAYS:
+        path = settings.paths.path_pickled_ml_models.joinpath(FILENAME_RIPENING_DAYS_ESTIMATOR)
+    else:
+        raise ValueError(f"Unknown prediction model {prediction_model}")
+
+    logger.info(f"Pickling pipeline to {path.as_posix()}.")
+    dump = {"pipeline": pipeline, "feature_container": feature_container}
+    with path.open("wb") as file:
+        pickle.dump(dump, file)

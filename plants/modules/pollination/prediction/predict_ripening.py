@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from plants.extensions.ml_models import _unpickle_pipeline
 from plants.modules.pollination.enums import PredictionModel
+from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
 
 if TYPE_CHECKING:
     from sklearn.ensemble import VotingRegressor
@@ -36,7 +36,7 @@ def _get_ripening_days_model() -> tuple[VotingRegressor, FeatureContainer]:
     global ripening_days_regressor
     global feature_container
     if ripening_days_regressor is None:
-        ripening_days_regressor, feature_container = _unpickle_pipeline(
+        ripening_days_regressor, feature_container = unpickle_pipeline(
             prediction_model=PredictionModel.RIPENING_DAYS
         )
     return ripening_days_regressor, feature_container

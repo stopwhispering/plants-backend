@@ -9,9 +9,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from plants.extensions.ml_models import pickle_pipeline
 from plants.modules.pollination.enums import PredictionModel
-from plants.modules.pollination.prediction.ml_common import assemble_data
+from plants.modules.pollination.prediction.ml_common import assemble_data, pickle_pipeline
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
     Feature,
     FeatureContainer,
@@ -133,7 +132,7 @@ def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingRegressor:
 async def train_model_for_ripening_days() -> dict[str, str | float]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
-    df_all = await assemble_data(feature_container=feature_container, include_ongoing=True)
+    df_all = await assemble_data(feature_container=feature_container)
 
     df = preprocess_data(df_all)
 
@@ -157,7 +156,8 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
     )
 
     return {
-        "model": "ensemble",
+        "model": PredictionModel.RIPENING_DAYS,
+        "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
     }

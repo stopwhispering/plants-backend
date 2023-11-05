@@ -17,7 +17,7 @@ from plants.modules.pollination.enums import (
     PollinationStatus,
 )
 from plants.modules.pollination.models import Florescence, Pollination
-from plants.modules.pollination.prediction.ml_prediction import (
+from plants.modules.pollination.prediction.predict_pollination import (
     predict_probability_of_seed_production,
 )
 from plants.modules.pollination.prediction.predict_ripening import predict_ripening_days

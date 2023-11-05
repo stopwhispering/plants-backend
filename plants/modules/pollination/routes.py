@@ -43,7 +43,7 @@ from plants.modules.pollination.pollination_services import (
     update_pollen_containers,
     update_pollination,
 )
-from plants.modules.pollination.prediction.predict_pollination import (
+from plants.modules.pollination.prediction.train_pollination import (
     train_model_for_probability_of_seed_production,
 )
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days

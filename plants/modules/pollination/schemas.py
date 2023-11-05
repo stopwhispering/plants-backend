@@ -14,6 +14,7 @@ from plants.modules.pollination.enums import (
     PollenQuality,
     PollenType,
     PollinationStatus,
+    PredictionModel,
     SeedPlantingStatus,
     StigmaPosition,
 )
@@ -329,9 +330,10 @@ class BResultsPollenContainers(BaseSchema):
 
 
 class BResultsRetraining(BaseSchema):
+    model: PredictionModel
+    estimator: str
     metric_name: str
     metric_value: float
-    model: str
 
 
 class BResultsRetrainingPollinationToSeedsModel(BResultsRetraining):
