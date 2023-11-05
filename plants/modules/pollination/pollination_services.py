@@ -132,16 +132,13 @@ async def read_potential_pollen_donors(
 ) -> list[BPotentialPollenDonor]:
     """Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen."""
-    plant = await plant_dal.by_id(florescence.plant_id, eager_load=False)
+    plant = await plant_dal.by_id(florescence.plant_id, eager_load=True)
     potential_pollen_donors: list[BPotentialPollenDonor] = []
 
     # 1. flowering plants
-    # import time
-    # start_time = time.time()
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status(
         [FlorescenceStatus.FLOWERING]
     )
-    # print("Elapsed time: ", time.time() - start_time)
 
     for florescence_pollen_donor in fresh_pollen_donors:
         if florescence_pollen_donor is florescence:
@@ -349,7 +346,10 @@ def get_predicted_ripening_days(pollination: Pollination) -> int | None:
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
 ) -> list[dict[str, object]]:
+    # import time
+    # start_time = time.time()
     ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations()
+    # print("Elapsed time: ", time.time() - start_time)
     ongoing_pollinations: list[dict[str, object]] = []
     ongoing_pollination: Pollination
     for ongoing_pollination in ongoing_pollinations_orm:
