@@ -19,7 +19,7 @@ def create_db_engine(connection_string: URL) -> AsyncEngine:
         return create_async_engine(
             connection_string,
             connect_args={"check_same_thread": False},
-            pool_size=5,
+            pool_size=15,
             max_overflow=3,
         )
     return create_async_engine(connection_string)

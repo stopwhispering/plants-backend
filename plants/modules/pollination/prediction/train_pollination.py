@@ -170,9 +170,9 @@ def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingClassifier:
 def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     # we only need pollination attempts that have been finished (i.e. have a final
     # status) or are in seed_capsule or later stage
-    SUCCESFUL_STATUS = ["seed_capsule", "seed", "germinated"]  # noqa: N806
+    succesful_status = ["seed_capsule", "seed", "germinated"]
     finished = ~df["ongoing"]
-    pollinated_successfully = df["pollination_status"].isin(SUCCESFUL_STATUS)
+    pollinated_successfully = df["pollination_status"].isin(succesful_status)
     relevant = finished | pollinated_successfully
     df = df[relevant]
 
@@ -189,7 +189,7 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     for index, row in df.iterrows():
         if math.isnan(row["count_attempted"]):
             row["count_attempted"] = 1
-            row["count_pollinated"] = 1 if row["pollination_status"] in SUCCESFUL_STATUS else 0
+            row["count_pollinated"] = 1 if row["pollination_status"] in succesful_status else 0
         df.loc[index, :] = row
 
     # if we don't have count_pollinated...
@@ -201,7 +201,7 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 
     for index, row in df.iterrows():
         if math.isnan(row["count_pollinated"]):
-            if row["pollination_status"] not in SUCCESFUL_STATUS:
+            if row["pollination_status"] not in succesful_status:
                 row["count_pollinated"] = 0
             elif (
                 not math.isnan(row["count_capsules"])
