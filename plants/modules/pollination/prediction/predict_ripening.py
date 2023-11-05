@@ -23,7 +23,7 @@ ripening_days_regressor, feature_container = None, None
 
 
 def predict_ripening_days(pollination: Pollination) -> int:
-    ensemble, feature_container = _get_ripening_days_model()
+    ensemble, feature_container = get_ripening_days_model()
     df_all = get_feature_data(
         pollination=pollination,
         feature_container=feature_container,
@@ -32,7 +32,7 @@ def predict_ripening_days(pollination: Pollination) -> int:
     return round(pred[0])
 
 
-def _get_ripening_days_model() -> tuple[VotingRegressor, FeatureContainer]:
+def get_ripening_days_model() -> tuple[VotingRegressor, FeatureContainer]:
     global ripening_days_regressor
     global feature_container
     if ripening_days_regressor is None:

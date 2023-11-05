@@ -36,10 +36,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     try:
         # logger.info('yielding db')
         yield db
+        await db.commit()
     except Exception:
         await db.rollback()
     finally:
-        await db.commit()
+        # await db.commit()
         # logger.info('closing db')
         # await asyncio.shield(db.close())
         await db.close()

@@ -147,7 +147,10 @@ async def assemble_data(feature_container: FeatureContainer) -> pd.DataFrame:
     return df_all
 
 
-def unpickle_pipeline(prediction_model: PredictionModel) -> tuple[Pipeline, FeatureContainer]:
+def unpickle_pipeline(
+    prediction_model: PredictionModel
+) -> tuple[Pipeline | VotingRegressor | VotingClassifier, FeatureContainer]:
+    # todo async
     if prediction_model == PredictionModel.POLLINATION_PROBABILITY:
         path = settings.paths.path_pickled_ml_models.joinpath(
             FILENAME_PICKLED_POLLINATION_ESTIMATOR
