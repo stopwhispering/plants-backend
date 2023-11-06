@@ -106,7 +106,7 @@ class PollinationRead(PollinationBase):
     count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
 
     predicted_ripening_days: types.conint(ge=1) | None  # type: ignore[valid-type]
-    current_ripening_days: types.conint(ge=1) | None  # type: ignore[valid-type]
+    current_ripening_days: types.conint(ge=0) | None  # type: ignore[valid-type]
 
     pollination_status: str
     ongoing: bool
