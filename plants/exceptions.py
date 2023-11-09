@@ -211,3 +211,10 @@ class ImageDbRecordExistsError(BaseError):
         super().__init__(
             detail=f"Image already exists in db: {filename}.", status_code=status.HTTP_409_CONFLICT
         )
+
+
+class TrainingError(BaseError):
+    def __init__(self, msg: str):
+        super().__init__(
+            detail=f"Model training failed: {msg}.", status_code=status.HTTP_409_CONFLICT
+        )

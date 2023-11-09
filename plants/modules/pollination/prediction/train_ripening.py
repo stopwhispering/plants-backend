@@ -9,6 +9,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
+from plants.exceptions import TrainingError
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import assemble_data, pickle_pipeline
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
@@ -80,6 +81,13 @@ def preprocess_data(df: pd.DataFrame):
         lambda timedelta: timedelta.days
     )
 
+    # in some cases, we don't have info about the  hybrid status of one of the plants
+    # we set them to false as a default
+    df.loc[df["hybrid_seed_capsule"].isna(), "hybrid_seed_capsule"] = False
+    df.loc[df["hybridgenus_seed_capsule"].isna(), "hybridgenus_seed_capsule"] = False
+    df.loc[df["hybrid_pollen_donor"].isna(), "hybrid_pollen_donor"] = False
+    df.loc[df["hybridgenus_pollen_donor"].isna(), "hybridgenus_pollen_donor"] = False
+
     return df
 
 
@@ -147,7 +155,10 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
     metric_value = round(float(scores.mean()), 2)
 
     # train with whole dataset
-    ensemble.fit(X=df, y=df["ripening_days"])
+    try:
+        ensemble.fit(X=df, y=df["ripening_days"])
+    except ValueError as e:  # raised if NaN in input data
+        raise TrainingError(msg=str(e)) from e
 
     pickle_pipeline(
         pipeline=ensemble,
