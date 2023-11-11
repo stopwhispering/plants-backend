@@ -52,6 +52,10 @@ class SeedPlantingRead(SeedPlantingBase):
     pollen_donor_plant_name: str  # orm property
     soil_name: str  # orm property
 
+    current_germination_days: int  # model property (not in DB)
+    predicted_germination_probability: int  # model property (not in DB)
+    predicted_germination_days: int  # model property (not in DB)
+
     plants: list[PlantEssentials]
 
     @validator("count_germinated", pre=True)

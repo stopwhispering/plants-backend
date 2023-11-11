@@ -36,6 +36,10 @@ from plants.modules.pollination.enums import (
     SeedPlantingStatus,
     StigmaPosition,
 )
+from plants.modules.pollination.prediction.predict_germination import (
+    predict_germination_days,
+    predict_germination_probability,
+)
 
 if TYPE_CHECKING:
     from decimal import Decimal
@@ -250,3 +254,18 @@ class SeedPlanting(Base):
     @property
     def soil_name(self) -> str:
         return self.soil.soil_name if self.soil is not None else ""  # type: ignore[union-attr]
+
+    @property
+    def predicted_germination_probability(self) -> int:
+        return predict_germination_probability(self)
+        # if self.count_planted is None or self.count_germinated is None:
+        #     return None
+        # return self.count_germinated / self.count_planted
+
+    @property
+    def predicted_germination_days(self) -> int:
+        return predict_germination_days(self)
+
+    @property
+    def current_germination_days(self) -> int:
+        return (datetime.datetime.now(tz=pytz.timezone("CET")).date() - self.planted_on).days

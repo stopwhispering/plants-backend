@@ -11,12 +11,13 @@ from sklearn.preprocessing import OneHotEncoder
 
 from plants.exceptions import TrainingError
 from plants.modules.pollination.enums import PredictionModel
-from plants.modules.pollination.prediction.ml_common import assemble_data, pickle_pipeline
+from plants.modules.pollination.prediction.ml_common import pickle_pipeline
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
     Feature,
     FeatureContainer,
     Scale,
 )
+from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 from plants.modules.pollination.prediction.predict_ripening import logger
 
 
@@ -140,7 +141,7 @@ def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingRegressor:
 async def train_model_for_ripening_days() -> dict[str, str | float]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
-    df_all = await assemble_data(feature_container=feature_container)
+    df_all = await assemble_pollination_data(feature_container=feature_container)
 
     df = preprocess_data(df_all)
 

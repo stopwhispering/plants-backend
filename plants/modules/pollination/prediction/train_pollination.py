@@ -21,7 +21,6 @@ from sklearn.utils._testing import ignore_warnings
 
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import (
-    assemble_data,
     pickle_pipeline,
 )
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
@@ -29,6 +28,7 @@ from plants.modules.pollination.prediction.ml_helpers.preprocessing.features imp
     FeatureContainer,
     Scale,
 )
+from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 
 if TYPE_CHECKING:
     from sklearn.base import BaseEstimator
@@ -247,7 +247,7 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 async def train_model_for_probability_of_seed_production() -> dict[str, str | float]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
-    df_all = await assemble_data(feature_container=feature_container)
+    df_all = await assemble_pollination_data(feature_container=feature_container)
     # make sure we have only the labels we want (not each must be existent, though)
     if set(df_all.pollination_status.unique()) - {
         "seed_capsule",
