@@ -256,15 +256,16 @@ class SeedPlanting(Base):
         return self.soil.soil_name if self.soil is not None else ""  # type: ignore[union-attr]
 
     @property
-    def predicted_germination_probability(self) -> int:
-        return predict_germination_probability(self)
-        # if self.count_planted is None or self.count_germinated is None:
-        #     return None
-        # return self.count_germinated / self.count_planted
+    def predicted_germination_probability(self) -> int | None:
+        if self.status == SeedPlantingStatus.PLANTED:
+            return predict_germination_probability(self)
+        return None
 
     @property
-    def predicted_germination_days(self) -> int:
-        return predict_germination_days(self)
+    def predicted_germination_days(self) -> int | None:
+        if self.status == SeedPlantingStatus.PLANTED:
+            return predict_germination_days(self)
+        return None
 
     @property
     def current_germination_days(self) -> int:
