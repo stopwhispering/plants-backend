@@ -82,6 +82,12 @@ async def update_seed_planting(
     ):  # either zero or None
         raise ValidationError("Count germinated must be set.")
 
+    if (
+        edited_seed_planting_data.status == SeedPlantingStatus.ABANDONED
+        and seed_planting.status != SeedPlantingStatus.ABANDONED
+    ):
+        edited_seed_planting_data.abandoned_on = datetime.now(tz=pytz.utc).date()
+
     if edited_seed_planting_data.status == SeedPlantingStatus.ABANDONED and (
         edited_seed_planting_data.germinated_first_on or edited_seed_planting_data.count_germinated
     ):

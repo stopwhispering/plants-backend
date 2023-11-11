@@ -52,7 +52,8 @@ class SeedPlantingRead(SeedPlantingBase):
     pollen_donor_plant_name: str  # orm property
     soil_name: str  # orm property
 
-    current_germination_days: int  # model property (not in DB)
+    current_germination_days: int | None  # model property (not in DB)
+    germination_days: int | None  # model property (not in DB)
     predicted_germination_probability: int | None  # model property (not in DB)
     predicted_germination_days: int | None  # model property (not in DB)
 
@@ -67,6 +68,7 @@ class SeedPlantingUpdate(SeedPlantingBase):
     id: int
     count_germinated: int | None
     germinated_first_on: datetime.date | None
+    abandoned_on: datetime.date | None
 
 
 class PollenContainerBase(BaseSchema):

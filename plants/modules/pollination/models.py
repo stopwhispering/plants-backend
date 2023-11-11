@@ -225,6 +225,7 @@ class SeedPlanting(Base):
 
     planted_on: datetime.date = Column(DATE, nullable=False)
     germinated_first_on = Column(DATE)
+    abandoned_on = Column(DATE)
 
     count_planted = Column(INTEGER)  # number of seeds planted, null only for imported data
     count_germinated = Column(INTEGER)  # number of seeds germinated
@@ -268,5 +269,15 @@ class SeedPlanting(Base):
         return None
 
     @property
-    def current_germination_days(self) -> int:
-        return (datetime.datetime.now(tz=pytz.timezone("CET")).date() - self.planted_on).days
+    def current_germination_days(self) -> int | None:
+        if self.status == SeedPlantingStatus.PLANTED:
+            return (datetime.datetime.now(tz=pytz.timezone("CET")).date() - self.planted_on).days
+        return None
+
+    @property
+    def germination_days(self) -> int | None:
+        if self.status == SeedPlantingStatus.GERMINATED:
+            return (self.germinated_first_on - self.planted_on).days
+        if self.status == SeedPlantingStatus.ABANDONED:
+            return (self.abandoned_on - self.planted_on).days
+        return None

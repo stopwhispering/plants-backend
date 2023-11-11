@@ -69,6 +69,8 @@ class SeedPlantingDAL(BaseDAL):
             seed_planting.covered = updates["covered"]
         if "planted_on" in updates:
             seed_planting.planted_on = updates["planted_on"]
+        if "abandoned_on" in updates:
+            seed_planting.abandoned_on = updates["abandoned_on"]
         if "germinated_first_on" in updates:
             seed_planting.germinated_first_on = updates["germinated_first_on"]
         if "count_planted" in updates:
