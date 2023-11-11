@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sklearn.compose import ColumnTransformer
+from sklearn.decomposition import PCA
 from sklearn.ensemble import (
     RandomForestClassifier,
     RandomForestRegressor,
@@ -254,7 +255,7 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
     # - Imputation
     # - Standardizing (for linear models)
     metric_pipeline = Pipeline(
-        [("imputation", KNNImputer(n_neighbors=2)), ("standardization", StandardScaler())]
+        [("imputation", KNNImputer(n_neighbors=2)), ("scaling", StandardScaler())]
     )
 
     one_hot_encoder = OneHotEncoder(
@@ -276,7 +277,9 @@ def create_germination_probability_ensemble_model(
     preprocessor: ColumnTransformer
 ) -> VotingClassifier:
     def make_pipe(regressor) -> Pipeline:
-        return Pipeline([("preprocessor", preprocessor), ("regressor", regressor)])
+        return Pipeline(
+            [("preprocessor", preprocessor), ("pca", PCA(n_components=9)), ("regressor", regressor)]
+        )
 
     pipe_linear = make_pipe(LogisticRegression())
     pipe_rfr = make_pipe(RandomForestClassifier())
