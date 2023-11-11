@@ -43,6 +43,10 @@ from plants.modules.pollination.pollination_services import (
     update_pollen_containers,
     update_pollination,
 )
+from plants.modules.pollination.prediction.train_germination import (
+    train_model_for_germination_days,
+    train_model_for_germination_probability,
+)
 from plants.modules.pollination.prediction.train_pollination import (
     train_model_for_probability_of_seed_production,
 )
@@ -55,6 +59,8 @@ from plants.modules.pollination.schemas import (
     BResultsPlantsForNewFlorescence,
     BResultsPollenContainers,
     BResultsPotentialPollenDonors,
+    BResultsRetrainingGerminationDays,
+    BResultsRetrainingGerminationProbability,
     BResultsRetrainingPollinationToSeedsModel,
     BResultsRetrainingRipeningDays,
     FlorescenceCreate,
@@ -190,6 +196,24 @@ async def retrain_probability_pollination_to_seed_model() -> dict[str, str | flo
 async def retrain_ripening_days_model() -> dict[str, str | float]:
     """Retrain the ripening_days ml model."""
     return await train_model_for_ripening_days()
+
+
+@router.post(
+    "/retrain_germination_days_model",
+    response_model=BResultsRetrainingGerminationDays,
+)
+async def retrain_germination_days_model() -> dict[str, str | float]:
+    """Retrain the ripening_days ml model."""
+    return await train_model_for_germination_days()
+
+
+@router.post(
+    "/retrain_germination_probability_model",
+    response_model=BResultsRetrainingGerminationProbability,
+)
+async def retrain_germination_probability_model() -> dict[str, str | float]:
+    """Retrain the ripening_days ml model."""
+    return await train_model_for_germination_probability()
 
 
 @router.get(

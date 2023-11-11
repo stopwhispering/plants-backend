@@ -348,6 +348,14 @@ class BResultsRetrainingRipeningDays(BResultsRetraining):
     pass
 
 
+class BResultsRetrainingGerminationDays(BResultsRetraining):
+    pass
+
+
+class BResultsRetrainingGerminationProbability(BResultsRetraining):
+    pass
+
+
 class BFloweringPeriodState(BaseSchema):
     month: str  # e.g. '2021-01'
     flowering_state: BFloweringState
