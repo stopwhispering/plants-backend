@@ -92,19 +92,23 @@ async def get_events(
     events = await read_events_for_plant(plant, event_dal=event_dal)
 
     # get flowering periods
-    months, flower_history = await generate_flower_history(
+    # months, flower_history = await generate_flower_history(
+    #     florescence_dal=florescence_dal, plant=plant
+    # )
+    flower_history_plants = await generate_flower_history(
         florescence_dal=florescence_dal, plant=plant
     )
 
     # for the plant detail page, we convert the flower history so as to have a list of
     # years with monthly flowering states
-    flower_history = convert_flower_history_for_plant_details(flower_history)
+    if flower_history_plants:
+        flower_history = convert_flower_history_for_plant_details(flower_history_plants[0])
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {
         "events": events,
         "flower_history": flower_history,
-        "action": "read events for plant",
+        "action": "Read events for plant",
         "message": get_message(msg, message_type=MessageType.DEBUG),
     }
 

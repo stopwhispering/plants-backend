@@ -30,7 +30,9 @@ from plants.modules.pollination.florescence_services import (
     remove_florescence,
     update_active_florescence,
 )
-from plants.modules.pollination.flower_history_services import generate_flower_history
+from plants.modules.pollination.flower_history_services import (
+    generate_flower_history,
+)
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
@@ -52,9 +54,7 @@ from plants.modules.pollination.prediction.train_pollination import (
 )
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
-    # ActiveSeedPlantingsResult,
     BResultsActiveFlorescences,
-    BResultsFlowerHistory,
     BResultsOngoingPollinations,
     BResultsPlantsForNewFlorescence,
     BResultsPollenContainers,
@@ -65,6 +65,7 @@ from plants.modules.pollination.schemas import (
     BResultsRetrainingRipeningDays,
     FlorescenceCreate,
     FlorescenceUpdate,
+    FlowerHistory,
     FRequestPollenContainers,
     NewPlantFromSeedPlantingRequest,
     PollinationCreate,
@@ -381,14 +382,15 @@ async def get_potential_pollen_donors(
     }
 
 
-@router.get("/flower_history", response_model=BResultsFlowerHistory)
+@router.get("/flower_history", response_model=FlowerHistory)
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
 ) -> Any:
-    months, flower_history = await generate_flower_history(florescence_dal=florescence_dal)
+    flower_history_plants = await generate_flower_history(florescence_dal=florescence_dal)
     return {
         "action": "Generate flower history",
-        "message": get_message(f"Generated flower history for {len(months)} months."),
-        "plants": flower_history,
-        "months": months,
+        "message": get_message(
+            f"Generated flower history for {len(flower_history_plants)} " f"plants."
+        ),
+        "plants": flower_history_plants,
     }

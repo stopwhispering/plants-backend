@@ -358,21 +358,24 @@ class BResultsRetrainingGerminationProbability(BResultsRetraining):
     pass
 
 
-class BFloweringPeriodState(BaseSchema):
-    month: str  # e.g. '2021-01'
+class FlowerHistoryMonth(BaseSchema):
+    month: str  # e.g. '01'
     flowering_state: BFloweringState
 
 
-class BPlantFlowerHistory(BaseSchema):
+class FlowerHistoryYear(BaseSchema):
+    year: str
+    months: list[FlowerHistoryMonth]
+
+
+class FlowerHistoryPlant(BaseSchema):
     plant_id: int
     plant_name: str
+    years: list[FlowerHistoryYear]
 
-    periods: list[BFloweringPeriodState]
 
-
-class BResultsFlowerHistory(ResponseContainer):
-    plants: list[BPlantFlowerHistory]
-    months: list[str]
+class FlowerHistory(ResponseContainer):
+    plants: list[FlowerHistoryPlant]
 
 
 class SeedPlantingPlantNameProposal(BaseSchema):
