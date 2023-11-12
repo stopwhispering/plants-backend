@@ -386,11 +386,9 @@ async def get_potential_pollen_donors(
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
 ) -> Any:
-    flower_history_plants = await generate_flower_history(florescence_dal=florescence_dal)
+    flower_history_rows = await generate_flower_history(florescence_dal=florescence_dal)
     return {
         "action": "Generate flower history",
-        "message": get_message(
-            f"Generated flower history for {len(flower_history_plants)} " f"plants."
-        ),
-        "plants": flower_history_plants,
+        "message": get_message(f"Generated flower history with {len(flower_history_rows)} rows."),
+        "rows": flower_history_rows,
     }

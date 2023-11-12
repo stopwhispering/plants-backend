@@ -374,8 +374,26 @@ class FlowerHistoryPlant(BaseSchema):
     years: list[FlowerHistoryYear]
 
 
+class FlowerHistoryRow(BaseSchema):
+    plant_id: int
+    plant_name: str
+    year: str
+    month_01: BFloweringState
+    month_02: BFloweringState
+    month_03: BFloweringState
+    month_04: BFloweringState
+    month_05: BFloweringState
+    month_06: BFloweringState
+    month_07: BFloweringState
+    month_08: BFloweringState
+    month_09: BFloweringState
+    month_10: BFloweringState
+    month_11: BFloweringState
+    month_12: BFloweringState
+
+
 class FlowerHistory(ResponseContainer):
-    plants: list[FlowerHistoryPlant]
+    rows: list[FlowerHistoryRow]
 
 
 class SeedPlantingPlantNameProposal(BaseSchema):

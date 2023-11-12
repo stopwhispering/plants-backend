@@ -20,6 +20,8 @@ from plants.modules.event.schemas import (
     BResultsEventResource,
     BResultsSoilsResource,
     FRequestCreateOrUpdateEvent,
+    PlantFlowerMonthRead,
+    PlantFlowerYearRead,
     SoilCreate,
     SoilUpdate,
 )
@@ -35,7 +37,6 @@ from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.flower_history_services import (
-    convert_flower_history_for_plant_details,
     generate_flower_history,
 )
 from plants.shared.enums import MajorResource, MessageType
@@ -90,19 +91,29 @@ async def get_events(
 ) -> Any:
     """Returns events from event database table."""
     events = await read_events_for_plant(plant, event_dal=event_dal)
-
-    # get flowering periods
-    # months, flower_history = await generate_flower_history(
-    #     florescence_dal=florescence_dal, plant=plant
-    # )
-    flower_history_plants = await generate_flower_history(
+    flower_history_rows = await generate_flower_history(
         florescence_dal=florescence_dal, plant=plant
     )
 
-    # for the plant detail page, we convert the flower history so as to have a list of
-    # years with monthly flowering states
-    if flower_history_plants:
-        flower_history = convert_flower_history_for_plant_details(flower_history_plants[0])
+    # for the plant detail page, we need to convert the flower history yearly rows
+    flower_history = []
+    for row in flower_history_rows:
+        converted_row = PlantFlowerYearRead(
+            year=row.year,
+            month_01=PlantFlowerMonthRead(flowering_state=row.month_01),
+            month_02=PlantFlowerMonthRead(flowering_state=row.month_02),
+            month_03=PlantFlowerMonthRead(flowering_state=row.month_03),
+            month_04=PlantFlowerMonthRead(flowering_state=row.month_04),
+            month_05=PlantFlowerMonthRead(flowering_state=row.month_05),
+            month_06=PlantFlowerMonthRead(flowering_state=row.month_06),
+            month_07=PlantFlowerMonthRead(flowering_state=row.month_07),
+            month_08=PlantFlowerMonthRead(flowering_state=row.month_08),
+            month_09=PlantFlowerMonthRead(flowering_state=row.month_09),
+            month_10=PlantFlowerMonthRead(flowering_state=row.month_10),
+            month_11=PlantFlowerMonthRead(flowering_state=row.month_11),
+            month_12=PlantFlowerMonthRead(flowering_state=row.month_12),
+        )
+        flower_history.append(converted_row)
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {

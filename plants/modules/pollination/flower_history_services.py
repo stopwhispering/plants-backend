@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pytz
 
 from plants.modules.pollination.enums import BFloweringState, FlorescenceStatus
+from plants.modules.pollination.schemas import FlowerHistoryRow
 
 if TYPE_CHECKING:
     from plants.modules.plant.models import Plant
@@ -94,7 +95,7 @@ class FloweringPlant:
                     days=AVG_DURATION_FIRST_FLOWER_TO_LAST_SEED
                 )
             else:
-                logger.warning(
+                logger.debug(
                     f"Abandoned inflorescence {florescence.id} for plant "
                     f"{self.plant.plant_name}"
                 )
@@ -271,44 +272,9 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
     return flowering_plants
 
 
-def convert_flower_history_for_plant_details(
-    flower_history_plant: FlowerHistoryPlant,
-) -> list[dict]:  # must match PlantFlowerYearRead
-    """Convert flower history so as to have a list of years with monthly flowering states."""
-    years: list[dict] = []
-    for flower_history_year in flower_history_plant.years:
-        year_flowers = {"year": flower_history_year.year}
-        for flower_history_month in flower_history_year.months:
-            year_flowers[f"month_{flower_history_month.month}"] = {
-                "flowering_state": flower_history_month.flowering_state
-            }
-        years.append(year_flowers)
-
-    return years
-
-
-@dataclass
-class FlowerHistoryMonth:
-    month: str  # '01'...
-    flowering_state: BFloweringState
-
-
-@dataclass
-class FlowerHistoryYear:
-    year: int
-    months: list[FlowerHistoryMonth]
-
-
-@dataclass
-class FlowerHistoryPlant:
-    plant_id: int
-    plant_name: str
-    years: list[FlowerHistoryYear]
-
-
 async def generate_flower_history(
     florescence_dal: FlorescenceDAL, plant: Plant | None = None
-) -> list[FlowerHistoryPlant]:
+) -> list[FlowerHistoryRow]:
     """If plant is supplied, the flower history is generated only for that plant, otherwise for all
     plants."""
     if plant:
@@ -324,11 +290,9 @@ async def generate_flower_history(
 
     flowering_plants.sort(key=lambda fp: fp.plant.plant_name)
 
-    flower_history_plants = []
+    flower_history_rows: list[FlowerHistoryRow] = []
     flowering_plant: FloweringPlant
     for flowering_plant in flowering_plants:
-        flower_history_years: list[FlowerHistoryYear] = []
-
         # consider years from first flower to current year
         years = list(
             range(
@@ -338,22 +302,24 @@ async def generate_flower_history(
         )
 
         for year in years:
-            flower_history_months: list[FlowerHistoryMonth] = []
-
-            for month in range(1, 13):
-                flower_history_month = FlowerHistoryMonth(
-                    month=f"{month:02d}",  # pad with leading zero
-                    flowering_state=flowering_plant.get_state_at_date(date(year, month, 15)),
+            flower_history_rows.append(
+                FlowerHistoryRow(
+                    plant_id=flowering_plant.plant.id,
+                    plant_name=flowering_plant.plant.plant_name,
+                    year=str(year),
+                    month_01=flowering_plant.get_state_at_date(date(year, 1, 15)),
+                    month_02=flowering_plant.get_state_at_date(date(year, 2, 15)),
+                    month_03=flowering_plant.get_state_at_date(date(year, 3, 15)),
+                    month_04=flowering_plant.get_state_at_date(date(year, 4, 15)),
+                    month_05=flowering_plant.get_state_at_date(date(year, 5, 15)),
+                    month_06=flowering_plant.get_state_at_date(date(year, 6, 15)),
+                    month_07=flowering_plant.get_state_at_date(date(year, 7, 15)),
+                    month_08=flowering_plant.get_state_at_date(date(year, 8, 15)),
+                    month_09=flowering_plant.get_state_at_date(date(year, 9, 15)),
+                    month_10=flowering_plant.get_state_at_date(date(year, 10, 15)),
+                    month_11=flowering_plant.get_state_at_date(date(year, 11, 15)),
+                    month_12=flowering_plant.get_state_at_date(date(year, 12, 15)),
                 )
-                flower_history_months.append(flower_history_month)
-            flower_history_years.append(FlowerHistoryYear(year=year, months=flower_history_months))
-
-        flower_history_plants.append(
-            FlowerHistoryPlant(
-                plant_id=flowering_plant.plant.id,
-                plant_name=flowering_plant.plant.plant_name,
-                years=flower_history_years,
             )
-        )
 
-    return flower_history_plants
+    return flower_history_rows
