@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 
 from plants.exceptions import CriterionNotImplementedError, PollinationNotFoundError
 from plants.modules.plant.models import Plant
-from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, PollinationStatus
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, FlorescenceStatus, PollinationStatus
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.shared.base_dal import BaseDAL
 
@@ -76,7 +76,13 @@ class PollinationDAL(BaseDAL):
         # noinspection PyTypeChecker
         query = (
             select(Pollination)
-            .where(Pollination.ongoing)
+            .join(Pollination.florescence)  # can't filter on Florescence attr otherwise
+            .where(
+                or_(
+                    Pollination.ongoing,
+                    Florescence.florescence_status == FlorescenceStatus.FLOWERING,
+                )
+            )
             .options(
                 selectinload(Pollination.seed_capsule_plant).selectinload(Plant.taxon),
                 selectinload(Pollination.pollen_donor_plant).selectinload(Plant.taxon),
