@@ -197,7 +197,7 @@ class Pollination(Base):
             datetime.datetime.now(tz=pytz.timezone("Europe/Berlin")).date()
             - self.pollinated_at.date()
         )
-        return delta.days
+        return delta.days if delta.days > 0 else 0
 
 
 class SeedPlanting(Base):

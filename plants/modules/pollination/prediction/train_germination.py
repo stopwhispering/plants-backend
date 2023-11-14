@@ -330,6 +330,13 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
         prediction_model=PredictionModel.GERMINATION_PROBABILITY,
     )
 
+    from plants.modules.pollination.prediction import predict_germination
+
+    (
+        predict_germination.germination_probability_model,
+        predict_germination.germination_feature_container,
+    ) = None, None
+
     return {
         "model": PredictionModel.GERMINATION_PROBABILITY,
         "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
@@ -364,6 +371,13 @@ async def train_model_for_germination_days() -> dict[str, str | float]:
         pipeline=ensemble,
         feature_container=feature_container,
         prediction_model=PredictionModel.GERMINATION_DAYS,
+    )
+
+    from plants.modules.pollination.prediction import predict_germination
+
+    predict_germination.germination_days_model, predict_germination.germination_days_container = (
+        None,
+        None,
     )
 
     return {

@@ -167,6 +167,10 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
         prediction_model=PredictionModel.RIPENING_DAYS,
     )
 
+    from plants.modules.pollination.prediction import predict_ripening
+
+    predict_ripening.ripening_days_regressor, predict_ripening.feature_container = None, None
+
     return {
         "model": PredictionModel.RIPENING_DAYS,
         "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),

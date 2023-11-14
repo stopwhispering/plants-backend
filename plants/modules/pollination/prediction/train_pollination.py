@@ -278,6 +278,10 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         prediction_model=PredictionModel.POLLINATION_PROBABILITY,
     )
 
+    from plants.modules.pollination.prediction import predict_pollination
+
+    predict_pollination.pollination_pipeline, predict_pollination.feature_container = None, None
+
     return {
         "model": PredictionModel.POLLINATION_PROBABILITY,
         "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
