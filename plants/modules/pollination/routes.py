@@ -131,8 +131,16 @@ async def put_pollination(
 @router.get("/ongoing_pollinations", response_model=BResultsOngoingPollinations)
 async def get_ongoing_pollinations(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
+    *,
+    include_ongoing_pollinations: bool = True,
+    include_finished_pollinations: bool = False,
 ) -> Any:
-    ongoing_pollinations = await read_ongoing_pollinations(pollination_dal=pollination_dal)
+    ongoing_pollinations = await read_ongoing_pollinations(
+        pollination_dal=pollination_dal,
+        include_ongoing_pollinations=include_ongoing_pollinations,
+        include_finished_pollinations=include_finished_pollinations,
+    )
+
     return {
         "action": "Get ongoing pollinations",
         "message": get_message(f"Provided {len(ongoing_pollinations)} ongoing pollinations."),

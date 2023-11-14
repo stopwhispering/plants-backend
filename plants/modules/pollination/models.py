@@ -276,8 +276,12 @@ class SeedPlanting(Base):
 
     @property
     def germination_days(self) -> int | None:
-        if self.status == SeedPlantingStatus.GERMINATED:
+        if (
+            self.status == SeedPlantingStatus.GERMINATED
+            and self.germinated_first_on
+            and self.planted_on
+        ):
             return (self.germinated_first_on - self.planted_on).days
-        if self.status == SeedPlantingStatus.ABANDONED:
+        if self.status == SeedPlantingStatus.ABANDONED and self.planted_on and self.abandoned_on:
             return (self.abandoned_on - self.planted_on).days
         return None

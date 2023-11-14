@@ -72,17 +72,16 @@ class PollinationDAL(BaseDAL):
 
         await self.session.flush()
 
-    async def get_ongoing_pollinations(self) -> list[Pollination]:
+    async def get_ongoing_pollinations(
+        self,
+        *,
+        include_ongoing_pollinations: bool,
+        include_finished_pollinations: bool,
+    ) -> list[Pollination]:
         # noinspection PyTypeChecker
         query = (
             select(Pollination)
             .join(Pollination.florescence)  # can't filter on Florescence attr otherwise
-            .where(
-                or_(
-                    Pollination.ongoing,
-                    Florescence.florescence_status == FlorescenceStatus.FLOWERING,
-                )
-            )
             .options(
                 selectinload(Pollination.seed_capsule_plant).selectinload(Plant.taxon),
                 selectinload(Pollination.pollen_donor_plant).selectinload(Plant.taxon),
@@ -97,6 +96,20 @@ class PollinationDAL(BaseDAL):
                 selectinload(Pollination.florescence),
             )
         )
+
+        if not include_ongoing_pollinations and not include_finished_pollinations:
+            return []
+        if include_ongoing_pollinations and not include_finished_pollinations:
+            query = query.where(
+                or_(
+                    Pollination.ongoing,
+                    Florescence.florescence_status == FlorescenceStatus.FLOWERING,
+                ),
+            )
+        elif include_finished_pollinations and not include_ongoing_pollinations:
+            query = query.where(Pollination.ongoing.is_(False))
+        # else: no filter
+
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
         return pollinations
 

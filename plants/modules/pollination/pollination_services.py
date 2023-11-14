@@ -345,10 +345,16 @@ def get_predicted_ripening_days(pollination: Pollination) -> int | None:
 
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
+    *,
+    include_ongoing_pollinations: bool,
+    include_finished_pollinations: bool,
 ) -> list[dict[str, object]]:
     # import time
     # start_time = time.time()
-    ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations()
+    ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations(
+        include_ongoing_pollinations=include_ongoing_pollinations,
+        include_finished_pollinations=include_finished_pollinations,
+    )
     # print("Elapsed time: ", time.time() - start_time)
     ongoing_pollinations: list[dict[str, object]] = []
     ongoing_pollination: Pollination

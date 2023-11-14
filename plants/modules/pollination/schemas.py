@@ -31,12 +31,12 @@ class SeedPlantingBase(BaseSchema):
     status: SeedPlantingStatus
     pollination_id: int
     comment: str | None  # optional free text
-    sterilized: bool
-    soaked: bool
-    covered: bool
+    sterilized: bool | None  # historical data may be None here and below
+    soaked: bool | None
+    covered: bool | None
     planted_on: datetime.date
-    count_planted: int
-    soil_id: int
+    count_planted: int | None
+    soil_id: int | None
 
 
 class SeedPlantingCreate(SeedPlantingBase):
@@ -90,8 +90,8 @@ class PollinationBase(BaseSchema):
     seed_capsule_plant_id: int
     pollen_donor_plant_id: int
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
-    pollinated_at: str  # e.g. '2022-11-16 12:06'
-    label_color_rgb: str  # e.g. '#FFFF00'  # must be existent in COLORS_MAP
+    pollinated_at: str | None  # e.g. '2022-11-16 12:06'  None for old data
+    label_color_rgb: str | None  # e.g. '#FFFF00'  # must be existent in COLORS_MAP None for old
     location: Location
     count_attempted: types.conint(ge=1)  # type: ignore[valid-type]
 
