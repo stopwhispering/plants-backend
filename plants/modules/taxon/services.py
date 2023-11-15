@@ -152,7 +152,7 @@ async def save_new_taxon(
 
     await taxon_dal.create(taxon)
 
-    if gbif_id is not None:
+    if gbif_id is not None and taxon.rank != "gen.":
         # lookup ocurrences & image URLs at GBIF and generate thumbnails for found image
         # URLs
         loader = TaxonOccurencesLoader(taxon_dal=taxon_dal)
