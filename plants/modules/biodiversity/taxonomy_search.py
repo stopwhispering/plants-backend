@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
 from pykew import ipni, powo
-from pykew.ipni_terms import Name
+from pykew.ipni_terms import Filters
 
 from plants import settings
 from plants.exceptions import TooManyResultsError
@@ -18,8 +18,6 @@ from plants.modules.taxon.enums import FBRank
 from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
-    from pykew.core import SearchResult as IpniSearchResult
-
     from plants.modules.biodiversity.api_typedefs import IpniSearchResultTaxonDict
     from plants.modules.taxon.models import Taxon
     from plants.modules.taxon.taxon_dal import TaxonDAL
@@ -216,10 +214,11 @@ class ApiSearcher:
         results: list[_ParsedIpniSearchResult] = []
 
         if not self.search_for_genus_not_species:
-            ipni_search: IpniSearchResult = ipni.search(plant_name_pattern)
+            filters = [Filters.specific, Filters.infraspecific]
         else:
-            ipni_query = {Name.genus: plant_name_pattern, Name.rank: "gen."}
-            ipni_search = ipni.search(ipni_query)
+            filters = [Filters.generic, Filters.infrageneric]
+        ipni_search = ipni.search(plant_name_pattern, filters=filters)
+
         if ipni_search.size() > settings.plants.taxon_search_max_results:
             raise TooManyResultsError(plant_name_pattern, ipni_search.size())
 
