@@ -162,6 +162,6 @@ def create_formatted_botanical_name(
     name_parts: list[PartOfBotanicalName] = _disassemble_taxon_name(botanical_name_input)
     publication_parts: list[PartOfBotanicalName] = _create_publication_parts(botanical_name_input)
 
-    if include_publication:
+    if include_publication and not botanical_name_input.cultivar:
         return _create_formatted_name(parts=name_parts + publication_parts, html=html)
     return _create_formatted_name(parts=name_parts, html=html)
