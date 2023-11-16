@@ -129,6 +129,10 @@ class PollinationRead(PollinationBase):
     seed_plantings: list[SeedPlantingRead]
 
 
+class HistoricalPollinationRead(PollinationRead):
+    reverse: bool
+
+
 class PollinationUpdate(PollinationBase):
     id: int
 
@@ -256,15 +260,6 @@ class FlorescenceRead(FlorescenceBase):
     last_flower_closed_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
 
 
-class BPollinationAttempt(BaseSchema):
-    reverse: bool
-    pollination_status: str  # PollinationStatus
-    pollination_at: str | None
-    harvest_at: str | None
-    germination_rate: float | None
-    ongoing: bool
-
-
 class BPollinationResultingPlant(BaseSchema):
     plant_id: int
     plant_name: str
@@ -281,7 +276,8 @@ class BPotentialPollenDonor(BaseSchema):
     # pollen_harvest_month: str | None  # only relevant for frozen
     probability_pollination_to_seed: int | None  # None only in error case
 
-    pollination_attempts: list[BPollinationAttempt]
+    # pollination_attempts: list[BPollinationAttempt]
+    pollination_attempts: list[HistoricalPollinationRead]
     resulting_plants: list[BPollinationResultingPlant]
 
 

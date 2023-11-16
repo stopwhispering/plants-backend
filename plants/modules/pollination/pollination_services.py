@@ -23,9 +23,9 @@ from plants.modules.pollination.prediction.predict_pollination import (
 from plants.modules.pollination.prediction.predict_ripening import predict_ripening_days
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
-    BPollinationAttempt,
     BPollinationResultingPlant,
     BPotentialPollenDonor,
+    HistoricalPollinationRead,
     PollenContainerCreateUpdate,
     PollenContainerRead,
     PollinationCreate,
@@ -33,8 +33,6 @@ from plants.modules.pollination.schemas import (
 )
 from plants.shared.api_constants import (
     FORMAT_API_YYYY_MM_DD_HH_MM,
-    FORMAT_FULL_DATETIME,
-    FORMAT_YYYY_MM_DD,
 )
 from plants.shared.api_utils import (
     format_api_date,
@@ -61,26 +59,30 @@ logger = logging.getLogger(__name__)
 
 async def _read_pollination_attempts(
     plant: Plant, pollen_donor: Plant, pollination_dal: PollinationDAL
-) -> list[BPollinationAttempt]:
+) -> list[HistoricalPollinationRead]:
     """Read all pollination attempts for a plant and a pollen donor plus the other way around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
     attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(pollen_donor, plant)
     attempts = []
     pollination: Pollination
     for pollination in attempts_orm + attempts_orm_reverse:
-        attempt_dict = {
-            "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
-            "pollination_status": pollination.pollination_status,
-            "pollination_at": pollination.pollinated_at.strftime(FORMAT_FULL_DATETIME)
-            if pollination.pollinated_at
-            else None,
-            "harvest_at": pollination.harvest_date.strftime(FORMAT_YYYY_MM_DD)
-            if pollination.harvest_date
-            else None,
-            # "germination_rate": pollination.germination_rate,
-            "ongoing": pollination.ongoing,
-        }
-        attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
+        attempt_dict = _get_pollination_dict(pollination)
+        attempt_dict["reverse"] = pollination.seed_capsule_plant_id == pollen_donor.id
+
+        # attempt_dict = {
+        #     "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
+        #     "pollination_status": pollination.pollination_status,
+        #     "pollination_at": pollination.pollinated_at.strftime(FORMAT_FULL_DATETIME)
+        #     if pollination.pollinated_at
+        #     else None,
+        #     "harvest_at": pollination.harvest_date.strftime(FORMAT_YYYY_MM_DD)
+        #     if pollination.harvest_date
+        #     else None,
+        #     # "germination_rate": pollination.germination_rate,
+        #     "ongoing": pollination.ongoing,
+        # }
+        attempts.append(HistoricalPollinationRead.parse_obj(attempt_dict))
+        # attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
     return attempts
 
 
@@ -343,6 +345,48 @@ def get_predicted_ripening_days(pollination: Pollination) -> int | None:
     return predict_ripening_days(pollination=pollination)
 
 
+def _get_pollination_dict(pollination: Pollination) -> dict:
+    label_color_rgb = (
+        COLORS_MAP_TO_RGB.get(pollination.label_color, "transparent")
+        if pollination.label_color
+        else None
+    )
+    return {
+        "seed_capsule_plant_id": pollination.seed_capsule_plant_id,
+        "seed_capsule_plant_name": pollination.seed_capsule_plant.plant_name,
+        "pollen_donor_plant_id": pollination.pollen_donor_plant_id,
+        "pollen_donor_plant_name": pollination.pollen_donor_plant.plant_name,
+        # e.g. '2022-11-16 12:06'
+        "pollinated_at": format_api_datetime(pollination.pollinated_at),
+        "pollen_type": pollination.pollen_type,
+        "count_attempted": pollination.count_attempted,
+        "count_pollinated": pollination.count_pollinated,
+        "count_capsules": pollination.count_capsules,
+        "predicted_ripening_days": get_predicted_ripening_days(pollination)
+        if pollination.pollination_status == PollinationStatus.SEED_CAPSULE
+        else None,
+        "current_ripening_days": pollination.current_ripening_days,
+        "pollen_quality": pollination.pollen_quality,
+        "location": pollination.location,
+        "location_text": LOCATION_TEXTS[pollination.location],
+        "label_color_rgb": label_color_rgb,
+        "id": pollination.id,
+        "pollination_status": pollination.pollination_status,
+        "ongoing": pollination.ongoing,
+        "harvest_date": format_api_date(pollination.harvest_date),  # e.g. '2022-11-16'
+        "seed_capsule_length": pollination.seed_capsule_length,
+        "seed_capsule_width": pollination.seed_capsule_width,
+        "seed_length": pollination.seed_length,
+        "seed_width": pollination.seed_width,
+        "seed_count": pollination.seed_count,
+        "seed_capsule_description": pollination.seed_capsule_description,
+        "seed_description": pollination.seed_description,
+        "seed_plantings": pollination.seed_plantings,
+        "florescence_id": pollination.florescence_id,
+        "florescence_comment": pollination.florescence.comment,
+    }
+
+
 async def read_ongoing_pollinations(
     pollination_dal: PollinationDAL,
     *,
@@ -356,50 +400,7 @@ async def read_ongoing_pollinations(
         include_finished_pollinations=include_finished_pollinations,
     )
     # print("Elapsed time: ", time.time() - start_time)
-    ongoing_pollinations: list[dict[str, object]] = []
-    ongoing_pollination: Pollination
-    for ongoing_pollination in ongoing_pollinations_orm:
-        label_color_rgb = (
-            COLORS_MAP_TO_RGB.get(ongoing_pollination.label_color, "transparent")
-            if ongoing_pollination.label_color
-            else None
-        )
-        ongoing_pollination_dict = {
-            "seed_capsule_plant_id": ongoing_pollination.seed_capsule_plant_id,
-            "seed_capsule_plant_name": ongoing_pollination.seed_capsule_plant.plant_name,
-            "pollen_donor_plant_id": ongoing_pollination.pollen_donor_plant_id,
-            "pollen_donor_plant_name": ongoing_pollination.pollen_donor_plant.plant_name,
-            # e.g. '2022-11-16 12:06'
-            "pollinated_at": format_api_datetime(ongoing_pollination.pollinated_at),
-            "pollen_type": ongoing_pollination.pollen_type,
-            "count_attempted": ongoing_pollination.count_attempted,
-            "count_pollinated": ongoing_pollination.count_pollinated,
-            "count_capsules": ongoing_pollination.count_capsules,
-            "predicted_ripening_days": get_predicted_ripening_days(ongoing_pollination)
-            if ongoing_pollination.pollination_status == PollinationStatus.SEED_CAPSULE
-            else None,
-            "current_ripening_days": ongoing_pollination.current_ripening_days,
-            "pollen_quality": ongoing_pollination.pollen_quality,
-            "location": ongoing_pollination.location,
-            "location_text": LOCATION_TEXTS[ongoing_pollination.location],
-            "label_color_rgb": label_color_rgb,
-            "id": ongoing_pollination.id,
-            "pollination_status": ongoing_pollination.pollination_status,
-            "ongoing": ongoing_pollination.ongoing,
-            "harvest_date": format_api_date(ongoing_pollination.harvest_date),  # e.g. '2022-11-16'
-            "seed_capsule_length": ongoing_pollination.seed_capsule_length,
-            "seed_capsule_width": ongoing_pollination.seed_capsule_width,
-            "seed_length": ongoing_pollination.seed_length,
-            "seed_width": ongoing_pollination.seed_width,
-            "seed_count": ongoing_pollination.seed_count,
-            "seed_capsule_description": ongoing_pollination.seed_capsule_description,
-            "seed_description": ongoing_pollination.seed_description,
-            "seed_plantings": ongoing_pollination.seed_plantings,
-            "florescence_id": ongoing_pollination.florescence_id,
-            "florescence_comment": ongoing_pollination.florescence.comment,
-        }
-        ongoing_pollinations.append(ongoing_pollination_dict)
-    return ongoing_pollinations
+    return [_get_pollination_dict(p) for p in ongoing_pollinations_orm]
 
 
 async def read_pollen_containers(plant_dal: PlantDAL) -> list[PollenContainerRead]:

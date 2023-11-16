@@ -150,9 +150,15 @@ class PollinationDAL(BaseDAL):
         self, seed_capsule_plant: Plant, pollen_donor_plant: Plant
     ) -> list[Pollination]:
         # noinspection PyTypeChecker
-        query = select(Pollination).where(
-            Pollination.seed_capsule_plant_id == seed_capsule_plant.id,
-            Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
+        query = (
+            select(Pollination)
+            .where(
+                Pollination.seed_capsule_plant_id == seed_capsule_plant.id,
+                Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
+            )
+            .options(
+                selectinload(Pollination.seed_plantings), selectinload(Pollination.florescence)
+            )
         )
 
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
