@@ -157,7 +157,9 @@ class PollinationDAL(BaseDAL):
                 Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
             )
             .options(
-                selectinload(Pollination.seed_plantings), selectinload(Pollination.florescence)
+                selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),
+                selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.plants),
+                selectinload(Pollination.florescence),
             )
         )
 

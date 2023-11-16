@@ -23,7 +23,6 @@ from plants.modules.pollination.prediction.predict_pollination import (
 from plants.modules.pollination.prediction.predict_ripening import predict_ripening_days
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
-    BPollinationResultingPlant,
     BPotentialPollenDonor,
     HistoricalPollinationRead,
     PollenContainerCreateUpdate,
@@ -69,37 +68,25 @@ async def _read_pollination_attempts(
         attempt_dict = _get_pollination_dict(pollination)
         attempt_dict["reverse"] = pollination.seed_capsule_plant_id == pollen_donor.id
 
-        # attempt_dict = {
-        #     "reverse": pollination.seed_capsule_plant_id == pollen_donor.id,
-        #     "pollination_status": pollination.pollination_status,
-        #     "pollination_at": pollination.pollinated_at.strftime(FORMAT_FULL_DATETIME)
-        #     if pollination.pollinated_at
-        #     else None,
-        #     "harvest_at": pollination.harvest_date.strftime(FORMAT_YYYY_MM_DD)
-        #     if pollination.harvest_date
-        #     else None,
-        #     # "germination_rate": pollination.germination_rate,
-        #     "ongoing": pollination.ongoing,
-        # }
         attempts.append(HistoricalPollinationRead.parse_obj(attempt_dict))
         # attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
     return attempts
 
 
-async def _read_resulting_plants(
-    plant: Plant, pollen_donor: Plant, plant_dal: PlantDAL
-) -> list[BPollinationResultingPlant]:
-    resulting_plants_orm: list[Plant] = await plant_dal.get_children(plant, pollen_donor)
-    resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
-    resulting_plants = []
-    for resulting_plant in resulting_plants_orm + resulting_plants_orm_reverse:
-        resulting_plant_dict = {
-            "reverse": resulting_plant.parent_plant_id == pollen_donor.id,
-            "plant_id": resulting_plant.id,
-            "plant_name": resulting_plant.plant_name,
-        }
-        resulting_plants.append(BPollinationResultingPlant.parse_obj(resulting_plant_dict))
-    return resulting_plants
+# async def _read_resulting_plants(
+#     plant: Plant, pollen_donor: Plant, plant_dal: PlantDAL
+# ) -> list[BPollinationResultingPlant]:
+#     resulting_plants_orm: list[Plant] = await plant_dal.get_children(plant, pollen_donor)
+#     resulting_plants_orm_reverse = await plant_dal.get_children(pollen_donor, plant)
+#     resulting_plants = []
+#     for resulting_plant in resulting_plants_orm + resulting_plants_orm_reverse:
+#         resulting_plant_dict = {
+#             "reverse": resulting_plant.parent_plant_id == pollen_donor.id,
+#             "plant_id": resulting_plant.id,
+#             "plant_name": resulting_plant.plant_name,
+#         }
+#         resulting_plants.append(BPollinationResultingPlant.parse_obj(resulting_plant_dict))
+#     return resulting_plants
 
 
 def get_probability_pollination_to_seed(
@@ -180,9 +167,9 @@ async def read_potential_pollen_donors(
                 pollen_donor=florescence_pollen_donor.plant,
                 pollination_dal=pollination_dal,
             ),
-            "resulting_plants": await _read_resulting_plants(
-                plant=plant, pollen_donor=florescence_pollen_donor.plant, plant_dal=plant_dal
-            ),
+            # "resulting_plants": await _read_resulting_plants(
+            #     plant=plant, pollen_donor=florescence_pollen_donor.plant, plant_dal=plant_dal
+            # ),
         }
         potential_pollen_donors.append(
             BPotentialPollenDonor.parse_obj(potential_pollen_donor_flowering)
@@ -222,9 +209,9 @@ async def read_potential_pollen_donors(
                 pollen_donor=frozen_pollen_plant,
                 pollination_dal=pollination_dal,
             ),
-            "resulting_plants": await _read_resulting_plants(
-                plant=plant, pollen_donor=frozen_pollen_plant, plant_dal=plant_dal
-            ),
+            # "resulting_plants": await _read_resulting_plants(
+            #     plant=plant, pollen_donor=frozen_pollen_plant, plant_dal=plant_dal
+            # ),
         }
         #     Pollination.pollen_donor_plant == frozen_pollen_plant).count() > 0
         potential_pollen_donors.append(

@@ -278,7 +278,7 @@ class BPotentialPollenDonor(BaseSchema):
 
     # pollination_attempts: list[BPollinationAttempt]
     pollination_attempts: list[HistoricalPollinationRead]
-    resulting_plants: list[BPollinationResultingPlant]
+    # resulting_plants: list[BPollinationResultingPlant]
 
 
 class BResultsOngoingPollinations(ResponseContainer):
