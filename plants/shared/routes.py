@@ -60,7 +60,7 @@ async def get_proposals(
     return results
 
 
-@router.get("/selection_data/", response_model=BResultsSelection)
+@router.get("/selection_data", response_model=BResultsSelection)
 async def get_selection_data(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
