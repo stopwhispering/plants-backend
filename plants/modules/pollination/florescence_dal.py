@@ -34,12 +34,14 @@ class FlorescenceDAL(BaseDAL):
         )
         return list((await self.session.scalars(query)).all())
 
-    async def get_all_florescences(self) -> list[Florescence]:
+    async def get_all_florescences(self, *, include_inactive_plants: bool) -> list[Florescence]:
         query = (
             select(Florescence)
             .options(selectinload(Florescence.plant).selectinload(Plant.taxon))
             .options(selectinload(Florescence.plant).selectinload(Plant.florescences))
         )
+        if not include_inactive_plants:
+            query = query.join(Plant).where(Plant.active.is_(True))
         return list((await self.session.scalars(query)).all())
 
     async def by_id(self, florescence_id: int) -> Florescence:

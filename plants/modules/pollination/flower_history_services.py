@@ -273,7 +273,7 @@ def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPla
 
 
 async def generate_flower_history(
-    florescence_dal: FlorescenceDAL, plant: Plant | None = None
+    florescence_dal: FlorescenceDAL, plant: Plant | None = None, *, include_inactive_plants: bool
 ) -> list[FlowerHistoryRow]:
     """If plant is supplied, the flower history is generated only for that plant, otherwise for all
     plants."""
@@ -281,7 +281,9 @@ async def generate_flower_history(
         distinct_plants = {plant}
 
     else:
-        florescences = await florescence_dal.get_all_florescences()
+        florescences = await florescence_dal.get_all_florescences(
+            include_inactive_plants=include_inactive_plants
+        )
         distinct_plants = {f.plant for f in florescences} if not plant else {plant}
 
     flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)

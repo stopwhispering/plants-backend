@@ -393,8 +393,12 @@ async def get_potential_pollen_donors(
 @router.get("/flower_history", response_model=FlowerHistory)
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+    *,
+    include_inactive_plants: bool = True,
 ) -> Any:
-    flower_history_rows = await generate_flower_history(florescence_dal=florescence_dal)
+    flower_history_rows = await generate_flower_history(
+        florescence_dal=florescence_dal, include_inactive_plants=include_inactive_plants
+    )
     return {
         "action": "Generate flower history",
         "message": get_message(f"Generated flower history with {len(flower_history_rows)} rows."),
