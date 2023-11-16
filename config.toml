@@ -6,7 +6,7 @@ jpg_quality = 82
 
 [plants]
 filter_hidden = true
-taxon_search_max_results = 30
+taxon_search_max_results = 50
 
 [frontend.restrictions]
 length_shortened_plant_name_for_tag = 25  # # keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
