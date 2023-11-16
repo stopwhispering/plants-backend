@@ -92,7 +92,7 @@ async def get_events(
     """Returns events from event database table."""
     events = await read_events_for_plant(plant, event_dal=event_dal)
     flower_history_rows = await generate_flower_history(
-        florescence_dal=florescence_dal, plant=plant
+        florescence_dal=florescence_dal, plant=plant, include_inactive_plants=True
     )
 
     # for the plant detail page, we need to convert the flower history yearly rows

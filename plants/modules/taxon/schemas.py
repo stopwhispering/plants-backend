@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Any
 
-from pydantic import Extra, networks, types, validator
+from pydantic import Extra, networks, root_validator, types, validator
 
 from plants.modules.taxon.enums import Establishment, FBRank
 from plants.shared.api_utils import format_api_datetime
@@ -220,6 +220,13 @@ class TaxonCreate(TaxonBase):
     custom_rank: FBRank | None
     custom_infraspecies: str | None
     custom_suffix: str | None
+
+    @root_validator(pre=True)
+    def len_truncator(cls, values: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
+        """Truncate to max length in db."""
+        if len(values["distribution_concat"]) > 200:
+            values["distribution_concat"] = values["distribution_concat"][:197] + "..."
+        return values
 
 
 class ResultsTaxonInfoRequest(ResponseContainer):

@@ -394,7 +394,7 @@ async def get_potential_pollen_donors(
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
     *,
-    include_inactive_plants: bool = True,
+    include_inactive_plants: bool,
 ) -> Any:
     flower_history_rows = await generate_flower_history(
         florescence_dal=florescence_dal, include_inactive_plants=include_inactive_plants
