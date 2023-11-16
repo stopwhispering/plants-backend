@@ -160,7 +160,9 @@ class PollinationDAL(BaseDAL):
             )
             .options(
                 selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),
-                selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.plants),
+                selectinload(Pollination.seed_plantings)
+                .selectinload(SeedPlanting.plants)
+                .selectinload(Plant.taxon),
                 selectinload(Pollination.florescence),
             )
         )
