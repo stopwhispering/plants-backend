@@ -79,7 +79,7 @@ class Taxon(Base):
 
     rank: str = Column(VARCHAR(30), nullable=False)
     taxonomic_status: str = Column(VARCHAR(100), nullable=False)
-    name_published_in_year: int = Column(INTEGER, nullable=False)
+    name_published_in_year: int | None = Column(INTEGER)  #
     synonym: bool = Column(BOOLEAN, nullable=False)
     lsid: str = Column(VARCHAR(50), nullable=False)
     authors: str = Column(VARCHAR(100), nullable=False)

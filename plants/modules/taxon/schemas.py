@@ -123,7 +123,7 @@ class BKewSearchResultEntry(BaseSchema):
     hybrid: bool
     hybridgenus: bool
 
-    name_published_in_year: int
+    name_published_in_year: int | None  # rarely None
     basionym: str | None
     # phylum: str
     synonyms_concat: str | None
@@ -142,7 +142,7 @@ class TaxonBase(BaseSchema):
     taxonomic_status: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     synonym: bool
     authors: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    name_published_in_year: int
+    name_published_in_year: int | None  # rarely None
     basionym: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
     hybrid: bool
     hybridgenus: bool
@@ -224,7 +224,7 @@ class TaxonCreate(TaxonBase):
     @root_validator(pre=True)
     def len_truncator(cls, values: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
         """Truncate to max length in db."""
-        if len(values["distribution_concat"]) > 200:
+        if values["distribution_concat"] is not None and len(values["distribution_concat"]) > 200:
             values["distribution_concat"] = values["distribution_concat"][:197] + "..."
         return values
 

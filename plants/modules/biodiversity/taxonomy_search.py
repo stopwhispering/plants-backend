@@ -245,7 +245,7 @@ class ApiSearcher:
             result = _ParsedIpniSearchResult(
                 # IPNI Life Sciences Identifier (used by POWO and IPNI)
                 lsid=ipni_result["fqId"],
-                name_published_in_year=ipni_result["publicationYear"],
+                name_published_in_year=ipni_result.get("publicationYear"),
                 name=ipni_result["name"],
                 rank=rank,
                 family=ipni_result["family"],
@@ -273,10 +273,14 @@ class ApiSearcher:
         elif rank == FBRank.SPECIES.value:
             species = ipni_result["species"]
             infraspecies = None
-        elif rank in (
-            FBRank.SUBSPECIES.value,
-            FBRank.VARIETY.value,
-            FBRank.FORMA.value,
+        elif (
+            rank
+            in (
+                FBRank.SUBSPECIES.value,
+                FBRank.VARIETY.value,
+                FBRank.FORMA.value,
+            )
+            or rank == "nothovar."
         ):
             species = ipni_result["species"]
             infraspecies = ipni_result["infraspecies"]
