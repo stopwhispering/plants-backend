@@ -380,13 +380,10 @@ async def read_ongoing_pollinations(
     include_ongoing_pollinations: bool,
     include_finished_pollinations: bool,
 ) -> list[dict[str, object]]:
-    # import time
-    # start_time = time.time()
     ongoing_pollinations_orm: list[Pollination] = await pollination_dal.get_ongoing_pollinations(
         include_ongoing_pollinations=include_ongoing_pollinations,
         include_finished_pollinations=include_finished_pollinations,
     )
-    # print("Elapsed time: ", time.time() - start_time)
     return [_get_pollination_dict(p) for p in ongoing_pollinations_orm]
 
 
