@@ -194,12 +194,6 @@ class FloweringPlant:
             )
 
         return None
-        # # todo raise?
-        # raise ValueError(
-        #     f"Can't determine flowering period - Unknown dates for "
-        #     f"{florescence.plant.plant_name}. "
-        #     f"Comment: {florescence.comment}"
-        # )
 
     def _get_seed_ripening_period(self, florescence: Florescence) -> FloweringPeriod | None:
         # beginning is estimated to be inbetween first and last flower

@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 def unpickle_pipeline(
     prediction_model: PredictionModel
 ) -> tuple[Pipeline | VotingRegressor | VotingClassifier, FeatureContainer]:
-    # todo async
     if prediction_model == PredictionModel.POLLINATION_PROBABILITY:
         path = settings.paths.path_pickled_ml_models.joinpath(
             FILENAME_PICKLED_POLLINATION_ESTIMATOR

@@ -44,7 +44,7 @@ def create_features(model_type: ModelType) -> FeatureContainer:
                 Feature(column="seed_length", scale=Scale.METRIC),
                 Feature(column="seed_width", scale=Scale.METRIC),
                 Feature(column="seed_count", scale=Scale.METRIC),
-                Feature(column="avg_ripening_time", scale=Scale.METRIC),
+                # Feature(column="avg_ripening_time", scale=Scale.METRIC),
                 # todo harvest_date quarter
                 # todo days_between_harvest_and_sowing
             ]

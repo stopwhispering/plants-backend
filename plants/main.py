@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from threading import Thread
 from typing import Final
 
 from fastapi import FastAPI
@@ -15,6 +16,10 @@ from plants.modules.biodiversity.routes import router as biodiversity_router
 from plants.modules.event.routes import router as event_router
 from plants.modules.image.routes import router as image_router
 from plants.modules.plant import routes as plant_router
+from plants.modules.pollination.prediction.predict_germination import (
+    get_germination_days_model,
+    get_germination_probability_model,
+)
 from plants.modules.pollination.prediction.predict_pollination import (
     get_probability_of_seed_production_model,
 )
@@ -80,6 +85,8 @@ async def startup_event() -> None:
     engine = create_db_engine(local_config.connection_string)
     await init_orm(engine=engine)
 
-    # load pickled models  # todo async in bg task, don't wait for it
-    _ = get_probability_of_seed_production_model()
-    _ = get_ripening_days_model()
+    # load pickled models in bg tasks
+    Thread(target=get_probability_of_seed_production_model).start()
+    Thread(target=get_ripening_days_model).start()
+    Thread(target=get_germination_probability_model).start()
+    Thread(target=get_germination_days_model).start()

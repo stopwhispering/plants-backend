@@ -93,8 +93,6 @@ class Florescence(Base):
     # some redundancy! might be re-calculated from pollinations
     first_seed_ripening_date: datetime.date | None = Column(DATE)
     last_seed_ripening_date: datetime.date | None = Column(DATE)
-    # in days
-    avg_ripening_time: float | None = Column(FLOAT)  # type:ignore[misc]  # todo remove?
 
     # limited to max 40 chars in frontend, longer only for imported data
     comment: str | None = Column(TEXT)
