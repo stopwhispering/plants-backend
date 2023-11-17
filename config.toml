@@ -2,8 +2,13 @@
 size_thumbnail_image_taxon = [220, 220]  # constant width on details site for occurrence images from inat.
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
 sizes = [
-    [1200, 800], [120, 120], [80, 80],  [32, 32],
-    # master view avatar/preview image: 48x48 + 1.5 + 2.0
+    # todo where used?
+    [1200, 800],
+#    # pollination left table with Avatar Size XS: 32x32 + 1.5 + 2.0  obsolete
+#    [32, 32], [64, 64],  # [48, 48],
+    # detail view top bar with Avatar Size L (5rem): 80x80 + 1.5 + 2.0
+    [80, 80], [120, 120], [160, 160],
+    # master view avatar size s (3 rem) / preview image: 48x48 + 1.5 + 2.0
     [48, 48], [72, 72], [96, 96],
     # detail view image list: 288x288 + 1.5 + 2.0
     [288, 288], [432, 432], [566, 566]
