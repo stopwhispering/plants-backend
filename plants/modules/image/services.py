@@ -222,7 +222,7 @@ def _generate_missing_thumbnails(images: list[Image]) -> None:
                 count_already_existed += 1
             else:
                 filename_thumb = get_thumbnail_name(image.filename, size)
-                generate_thumbnail(
+                path_saved = generate_thumbnail(
                     image=image.absolute_path,
                     thumbnail_folder=settings.paths.path_generated_thumbnails,
                     size=size,
@@ -231,8 +231,9 @@ def _generate_missing_thumbnails(images: list[Image]) -> None:
                         local_config.log_settings.ignore_missing_image_files
                     ),
                 )
-                count_generated += 1
-                logger.info(f"Generated thumbnail in size {size} for {image.absolute_path}")
+                if path_saved:
+                    count_generated += 1
+                    logger.info(f"Generated thumbnail {path_saved}.")
 
     logger.info(f"Thumbnail Generation - Count already existed: {count_already_existed}")
     logger.info(f"Thumbnail Generation - Count generated: {count_generated}")
