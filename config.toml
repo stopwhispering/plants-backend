@@ -1,8 +1,13 @@
 [images]
 size_thumbnail_image_taxon = [220, 220]  # constant width on details site for occurrence images from inat.
 resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
-sizes = [[1200, 800], [288, 288], [120, 120], [80, 80], [48, 48], [32, 32], [72, 72],
-    [96, 96], [432, 432], [566, 566]]
+sizes = [
+    [1200, 800], [120, 120], [80, 80],  [32, 32],
+    # master view avatar/preview image: 48x48 + 1.5 + 2.0
+    [48, 48], [72, 72], [96, 96],
+    # detail view image list: 288x288 + 1.5 + 2.0
+    [288, 288], [432, 432], [566, 566]
+]
 jpg_quality = 82
 
 [plants]

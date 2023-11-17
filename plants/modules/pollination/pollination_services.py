@@ -57,16 +57,20 @@ logger = logging.getLogger(__name__)
 
 
 async def _read_pollination_attempts(
-    plant: Plant, pollen_donor: Plant, pollination_dal: PollinationDAL
+    plant_id: int, pollen_donor_id: int, pollination_dal: PollinationDAL
 ) -> list[HistoricalPollinationRead]:
     """Read all pollination attempts for a plant and a pollen donor plus the other way around."""
-    attempts_orm = await pollination_dal.get_pollinations_by_plants(plant, pollen_donor)
-    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(pollen_donor, plant)
+    attempts_orm = await pollination_dal.get_pollinations_by_plants(
+        seed_capsule_plant_id=plant_id, pollen_donor_plant_id=pollen_donor_id
+    )
+    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(
+        seed_capsule_plant_id=pollen_donor_id, pollen_donor_plant_id=plant_id
+    )
     attempts = []
     pollination: Pollination
     for pollination in attempts_orm + attempts_orm_reverse:
         attempt_dict = _get_pollination_dict(pollination)
-        attempt_dict["reverse"] = pollination.seed_capsule_plant_id == pollen_donor.id
+        attempt_dict["reverse"] = pollination.seed_capsule_plant_id == pollen_donor_id
 
         attempts.append(HistoricalPollinationRead.parse_obj(attempt_dict))
         # attempts.append(BPollinationAttempt.parse_obj(attempt_dict))
@@ -99,15 +103,15 @@ def get_probability_pollination_to_seed(
 
 
 async def _plants_have_ongoing_pollination(
-    seed_capsule_plant: Plant,
-    pollen_donor_plant: Plant,
+    seed_capsule_plant_id: int,
+    pollen_donor_plant_id: int,
     pollination_dal: PollinationDAL,
 ) -> bool:
     ongoing_pollination = await pollination_dal.get_pollinations_with_filter(
         {
             "ongoing": True,
-            "seed_capsule_plant": seed_capsule_plant,
-            "pollen_donor_plant": pollen_donor_plant,
+            "seed_capsule_plant_id": seed_capsule_plant_id,
+            "pollen_donor_plant_id": pollen_donor_plant_id,
         }
     )
     return len(ongoing_pollination) > 0
@@ -121,7 +125,7 @@ async def read_potential_pollen_donors(
 ) -> list[BPotentialPollenDonor]:
     """Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen."""
-    plant = await plant_dal.by_id(florescence.plant_id, eager_load=True)
+
     potential_pollen_donors: list[BPotentialPollenDonor] = []
 
     # 1. flowering plants
@@ -146,7 +150,9 @@ async def read_potential_pollen_donors(
             continue
 
         already_ongoing_attempt = await _plants_have_ongoing_pollination(
-            plant, florescence_pollen_donor.plant, pollination_dal=pollination_dal
+            seed_capsule_plant_id=florescence.plant_id,
+            pollen_donor_plant_id=florescence_pollen_donor.plant_id,
+            pollination_dal=pollination_dal,
         )
         potential_pollen_donor_flowering = {
             "plant_id": florescence_pollen_donor.plant_id,
@@ -163,13 +169,10 @@ async def read_potential_pollen_donors(
             if florescence_pollen_donor.plant.taxon and florescence.plant.taxon
             else None,
             "pollination_attempts": await _read_pollination_attempts(
-                plant=plant,
-                pollen_donor=florescence_pollen_donor.plant,
+                plant_id=florescence.plant_id,
+                pollen_donor_id=florescence_pollen_donor.plant.id,
                 pollination_dal=pollination_dal,
             ),
-            # "resulting_plants": await _read_resulting_plants(
-            #     plant=plant, pollen_donor=florescence_pollen_donor.plant, plant_dal=plant_dal
-            # ),
         }
         potential_pollen_donors.append(
             BPotentialPollenDonor.parse_obj(potential_pollen_donor_flowering)
@@ -177,9 +180,7 @@ async def read_potential_pollen_donors(
 
     # 2. frozen pollen
     frozen_pollen_plants_ = await plant_dal.get_plants_with_pollen_containers()
-    frozen_pollen_plants = [
-        plant for plant in frozen_pollen_plants_ if plant.id != florescence.plant_id
-    ]
+    frozen_pollen_plants = [p for p in frozen_pollen_plants_ if p.id != florescence.plant_id]
 
     frozen_pollen_plant: Plant
     for frozen_pollen_plant in frozen_pollen_plants:
@@ -187,7 +188,9 @@ async def read_potential_pollen_donors(
             continue
 
         already_ongoing_attempt = await _plants_have_ongoing_pollination(
-            plant, frozen_pollen_plant, pollination_dal=pollination_dal
+            seed_capsule_plant_id=florescence.plant_id,
+            pollen_donor_plant_id=frozen_pollen_plant.id,
+            pollination_dal=pollination_dal,
         )
 
         potential_pollen_donor_frozen = {
@@ -195,7 +198,7 @@ async def read_potential_pollen_donors(
             "plant_name": frozen_pollen_plant.plant_name,
             "plant_preview_image_id": frozen_pollen_plant.preview_image_id,
             "pollen_type": PollenType.FROZEN.value,
-            "count_stored_pollen_containers": (frozen_pollen_plant.count_stored_pollen_containers),
+            "count_stored_pollen_containers": frozen_pollen_plant.count_stored_pollen_containers,
             "already_ongoing_attempt": already_ongoing_attempt,
             "probability_pollination_to_seed": get_probability_pollination_to_seed(
                 florescence=florescence,
@@ -205,15 +208,11 @@ async def read_potential_pollen_donors(
             if frozen_pollen_plant.taxon and florescence.plant.taxon
             else None,
             "pollination_attempts": await _read_pollination_attempts(
-                plant=plant,
-                pollen_donor=frozen_pollen_plant,
+                plant_id=florescence.plant_id,
+                pollen_donor_id=frozen_pollen_plant.id,
                 pollination_dal=pollination_dal,
             ),
-            # "resulting_plants": await _read_resulting_plants(
-            #     plant=plant, pollen_donor=frozen_pollen_plant, plant_dal=plant_dal
-            # ),
         }
-        #     Pollination.pollen_donor_plant == frozen_pollen_plant).count() > 0
         potential_pollen_donors.append(
             BPotentialPollenDonor.parse_obj(potential_pollen_donor_frozen)
         )

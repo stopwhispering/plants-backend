@@ -48,7 +48,7 @@ class FlorescenceDAL(BaseDAL):
         # noinspection PyTypeChecker
         query = (
             select(Florescence)
-            .options(selectinload(Florescence.plant))
+            .options(selectinload(Florescence.plant).selectinload(Plant.taxon))
             .options(selectinload(Florescence.pollinations))
             .where(Florescence.id == florescence_id)
         )

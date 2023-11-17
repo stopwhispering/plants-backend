@@ -134,10 +134,12 @@ class PollinationDAL(BaseDAL):
                 query = query.where(Pollination.ongoing == value)
             elif key == "seed_capsule_plant":
                 query = query.where(Pollination.seed_capsule_plant == value)
-            elif key == "pollen_donor_plant":
-                query = query.where(Pollination.pollen_donor_plant == value)
             elif key == "seed_capsule_plant_id":
                 query = query.where(Pollination.seed_capsule_plant_id == value)
+            elif key == "pollen_donor_plant":
+                query = query.where(Pollination.pollen_donor_plant == value)
+            elif key == "pollen_donor_plant_id":
+                query = query.where(Pollination.pollen_donor_plant_id == value)
             elif key == "label_color":
                 query = query.where(Pollination.label_color == value)
             elif key == "florescence_id":
@@ -149,14 +151,14 @@ class PollinationDAL(BaseDAL):
         return pollinations
 
     async def get_pollinations_by_plants(
-        self, seed_capsule_plant: Plant, pollen_donor_plant: Plant
+        self, seed_capsule_plant_id: int, pollen_donor_plant_id: int
     ) -> list[Pollination]:
         # noinspection PyTypeChecker
         query = (
             select(Pollination)
             .where(
-                Pollination.seed_capsule_plant_id == seed_capsule_plant.id,
-                Pollination.pollen_donor_plant_id == pollen_donor_plant.id,
+                Pollination.seed_capsule_plant_id == seed_capsule_plant_id,
+                Pollination.pollen_donor_plant_id == pollen_donor_plant_id,
             )
             .options(
                 selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),

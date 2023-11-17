@@ -22,4 +22,7 @@ def create_db_engine(connection_string: URL) -> AsyncEngine:
             pool_size=15,
             max_overflow=3,
         )
-    return create_async_engine(connection_string)
+    return create_async_engine(
+        connection_string,
+        # echo=True,
+    )
