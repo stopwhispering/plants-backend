@@ -55,8 +55,8 @@ class PotRead(PotBase):
 
 class ObservationBase(BaseSchema):
     diseases: str | None
-    stem_max_diameter: Decimal | None
-    height: Decimal | None
+    # stem_max_diameter: Decimal | None
+    # height: Decimal | None
     observation_notes: str | None
 
 

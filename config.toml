@@ -6,8 +6,10 @@ sizes = [
     [1200, 800],
 #    # pollination left table with Avatar Size XS: 32x32 + 1.5 + 2.0  obsolete
 #    [32, 32], [64, 64],  # [48, 48],
+    # events list images: 120x120 + 1.5 + 2.0
+    [120, 120], [180, 180], [240, 240],
     # detail view top bar with Avatar Size L (5rem): 80x80 + 1.5 + 2.0
-    [80, 80], [120, 120], [160, 160],
+    [80, 80], [160, 160],  # , [120, 120]
     # master view avatar size s (3 rem) / preview image: 48x48 + 1.5 + 2.0
     [48, 48], [72, 72], [96, 96],
     # detail view image list: 288x288 + 1.5 + 2.0

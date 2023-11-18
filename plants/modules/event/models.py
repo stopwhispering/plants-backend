@@ -103,8 +103,8 @@ class Observation(Base):
     event_id = Column(INTEGER, ForeignKey("event.id"), nullable=False)
     diseases: str | None = Column(TEXT)
     # 5 digits, 1 decimal --> max 9999.9  # stem or caudex (max)
-    stem_max_diameter: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
-    height: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
+    # stem_max_diameter: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
+    # height: Decimal | None = Column(Numeric(5, 1))  # type: ignore[valid-type]
     observation_notes: str | None = Column(TEXT)
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.utcnow)

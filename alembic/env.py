@@ -1,10 +1,15 @@
 import asyncio
 from logging.config import fileConfig
 
+import sys
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from plants import LocalConfig
+
+# required to make psycopg3 async work on windows
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 local_config = LocalConfig()
 
@@ -72,8 +77,7 @@ def do_run_migrations(connection):
 async def run_migrations_online():
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine and associate a connection with the
-    context.
+    In this scenario we need to create an Engine and associate a connection with the context.
     """
 
     connectable = create_async_engine(local_config.connection_string)

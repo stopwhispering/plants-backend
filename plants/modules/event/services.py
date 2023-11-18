@@ -216,8 +216,8 @@ class EventWriter:
         if event.observation and event_obj.observation:
             event_obj.observation.diseases = event.observation.diseases
             event_obj.observation.observation_notes = event.observation.observation_notes
-            event_obj.observation.height = event.observation.height
-            event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter
+            # event_obj.observation.height = event.observation.height
+            # event_obj.observation.stem_max_diameter = event.observation.stem_max_diameter
 
     async def _create_or_update_event_images(
         self,
