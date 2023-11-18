@@ -340,8 +340,10 @@ def _get_pollination_dict(pollination: Pollination) -> dict:
     return {
         "seed_capsule_plant_id": pollination.seed_capsule_plant_id,
         "seed_capsule_plant_name": pollination.seed_capsule_plant.plant_name,
+        "seed_capsule_plant_preview_image_id": pollination.seed_capsule_plant.preview_image_id,
         "pollen_donor_plant_id": pollination.pollen_donor_plant_id,
         "pollen_donor_plant_name": pollination.pollen_donor_plant.plant_name,
+        "pollen_donor_plant_preview_image_id": pollination.pollen_donor_plant.preview_image_id,
         # e.g. '2022-11-16 12:06'
         "pollinated_at": format_api_datetime(pollination.pollinated_at),
         "pollen_type": pollination.pollen_type,

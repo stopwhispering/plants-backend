@@ -103,6 +103,9 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
+    seed_capsule_plant_preview_image_id: int | None
+    pollen_donor_plant_preview_image_id: int | None
+
     florescence_id: int
     florescence_comment: str | None
 
