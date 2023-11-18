@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, HTMLResponse
 
 from plants.dependencies import (
     get_image_dal,
@@ -275,3 +275,47 @@ async def trigger_generate_missing_thumbnails(
         "action": "Triggering generation of missing thumbnails",
         "message": get_message(msg),
     }
+
+
+@router.get("/simple_upload/")
+async def get_simple_upload_form():
+    """Very simple upload template for mobile upload."""
+    content = """
+        <body>
+        <form action="/api/simple_upload/" enctype="multipart/form-data" method="post">
+        <input name="files" type="file" accept=".jpg, .jpeg" multiple>
+        <input type="submit">
+        </form>
+        </body>
+            """
+    return HTMLResponse(content=content)
+
+
+@router.post("/simple_upload/")
+async def simple_upload(
+    files: list[UploadFile],
+    image_dal: ImageDAL = Depends(get_image_dal),
+    plant_dal: PlantDAL = Depends(get_plant_dal),
+) -> Any:
+    """upload new photo_file(s)"""
+
+    images, duplicate_filenames, warnings, files = await handle_image_uploads(
+        files=files,
+        plants=[],
+        keywords=[],
+        plant_dal=plant_dal,
+        image_dal=image_dal,
+    )
+
+    desc = f"Saved: {[p.filename for p in files]}." f"\nSkipped Duplicates: {duplicate_filenames}."
+    if warnings:
+        warnings_s = "\n".join(warnings)
+        desc += f"\n{warnings_s}"
+
+    msg = f"Saved {len(files)} images." + (" Duplicates found." if duplicate_filenames else "")
+    logger.info(msg)
+
+    resp = msg
+    resp += f"\n<br>\nSaved: {[p.filename for p in files]}."
+    resp += f"\n<br>\nSkipped Duplicates: {duplicate_filenames}."
+    return HTMLResponse(content=resp)
