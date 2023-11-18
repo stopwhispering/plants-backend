@@ -94,9 +94,7 @@ async def upload_images_plant(
         warnings_s = "\n".join(warnings)
         desc += f"\n{warnings_s}"
     message = get_message(
-        msg := (
-            (f"Saved {len(files)} images. " "Duplicates found.") if duplicate_filenames else ""
-        ),
+        msg := (f"Saved {len(files)} images. " "Duplicates found." if duplicate_filenames else ""),
         message_type=MessageType.WARNING if duplicate_filenames else MessageType.INFORMATION,
         description=desc,
     )
