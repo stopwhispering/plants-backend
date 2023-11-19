@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import field_validator, types
+from pydantic import Field, field_validator
 
 from plants import settings
 from plants.modules.image.models import ImageKeyword
@@ -14,23 +15,26 @@ from plants.shared.message_schemas import BMessage
 
 class FBImagePlantTag(BaseSchema):
     plant_id: int
-    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    plant_name_short: types.constr(  # type: ignore[valid-type]
-        min_length=1,
-        max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag,
-    )
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    plant_name_short: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=settings.frontend.restrictions.length_shortened_plant_name_for_tag,
+        ),
+    ]
 
 
 class FBKeyword(BaseSchema):
-    keyword: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    keyword: Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class ImageBase(BaseSchema):
     id: int
-    filename: types.constr(min_length=1, max_length=150)  # type: ignore[valid-type]
+    filename: Annotated[str, Field(min_length=1, max_length=150)]
     keywords: list[FBKeyword]
     plants: list[FBImagePlantTag]
-    description: types.constr(max_length=500) | None = None  # type: ignore[valid-type]
+    description: Annotated[str, Field(max_length=500)] | None = None
     record_date_time: datetime | None = None  # 2019-11-21T11:51:13
 
 
@@ -40,13 +44,13 @@ class ImageCreateUpdate(ImageBase):
 
 class ImageRead(ImageBase):
     # noinspection PyMethodParameters
-    @field_validator("keywords", mode="before")
+    @field_validator("keywords", mode="before")  # noqa
     @classmethod
     def _transform_keywords(cls, keywords: list[ImageKeyword]) -> list[dict[str, object]]:
         return [{"keyword": k.keyword} for k in keywords]
 
     # noinspection PyMethodParameters
-    @field_validator("plants", mode="before")
+    @field_validator("plants", mode="before")  # noqa
     @classmethod
     def _transform_plants(cls, plants: list[Plant]) -> list[dict[str, object]]:
         return [
@@ -84,4 +88,4 @@ class BResultsImageDeleted(ResponseContainer):
 
 class FImageUploadedMetadata(BaseSchema):
     plants: list[int]
-    keywords: list[types.constr(min_length=1, max_length=100)]  # type: ignore[valid-type]
+    keywords: list[Annotated[str, Field(min_length=1, max_length=100)]]

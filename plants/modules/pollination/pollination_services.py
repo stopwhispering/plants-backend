@@ -335,7 +335,7 @@ def get_predicted_ripening_days(pollination: Pollination) -> int | None:
 
 def _get_pollination_dict(pollination: Pollination) -> dict[str, Any]:
     label_color_rgb = (
-        COLORS_MAP_TO_RGB.get(pollination.label_color, "transparent")
+        COLORS_MAP_TO_RGB.get(pollination.label_color.lower(), "transparent")
         if pollination.label_color
         else None
     )
@@ -400,7 +400,9 @@ async def read_pollen_containers(plant_dal: PlantDAL) -> list[PollenContainerRea
                 plant_id=plant.id,
                 plant_name=plant.plant_name,
                 genus=plant.taxon.genus if plant.taxon else None,
-                count_stored_pollen_containers=plant.count_stored_pollen_containers,
+                count_stored_pollen_containers=plant.count_stored_pollen_containers
+                if plant.count_stored_pollen_containers
+                else 0,
             )
         )
 

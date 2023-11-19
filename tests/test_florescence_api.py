@@ -48,7 +48,7 @@ async def test_florescence_create_valid(
         "florescence_status": "flowering",
         "perianth_length": 1.3,
         "perianth_diameter": 0.8,
-        "flower_color": "#F2F600",  # will be lower-cased
+        "flower_color": "#F2F600",
         "flower_color_second": "#dddd00",
         "flower_colors_differentiation": "ovary_mouth",  # ["ovary_mouth", "top_bottom"]
         "stigma_position": "deeply_inserted",
@@ -65,7 +65,7 @@ async def test_florescence_create_valid(
     active_florescence = response.json().get("active_florescence_collection")[0]
     assert active_florescence.get("perianth_length") == 1.3
     assert active_florescence.get("perianth_diameter") == 0.8
-    assert active_florescence.get("flower_color") == "#f2f600"  # lower-case
+    assert active_florescence.get("flower_color") == "#F2F600"
     assert active_florescence.get("flower_color_second") == "#dddd00"
     assert active_florescence.get("flower_colors_differentiation") == "ovary_mouth"
     assert active_florescence.get("stigma_position") == "deeply_inserted"
@@ -141,7 +141,9 @@ async def test_create_and_abort_florescence(
     response = await ac.put(f"/api/active_florescences/{florescence_in_db.id}", json=payload)
     assert response.status_code == 200
     await test_db.refresh(florescence_in_db)
-    assert florescence_in_db.florescence_status == FlorescenceStatus.ABORTED
+    assert (
+        florescence_in_db.florescence_status.value == FlorescenceStatus.ABORTED.ABORTED
+    )  # mypy...
 
 
 @pytest.mark.asyncio()

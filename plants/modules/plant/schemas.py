@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Annotated
 
-from pydantic import ConfigDict, types
+from pydantic import ConfigDict, Field
 
 from plants.modules.plant.enums import FBCancellationReason, FBPropagationType, TagState
 from plants.shared.base_schema import (
@@ -16,19 +17,19 @@ from plants.shared.base_schema import (
 class FBPlantTag(BaseSchema):
     id: int | None = None
     state: TagState
-    text: types.constr(min_length=1, max_length=20)  # type: ignore[valid-type]
+    text: Annotated[str, Field(min_length=1, max_length=20)]
     last_update: datetime | None = None
     plant_id: int
 
 
 class ShortPlant(BaseSchema):
     id: int
-    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
     active: bool
 
 
 class PlantCurrentSoil(BaseSchema):
-    soil_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    soil_name: Annotated[str, Field(min_length=1, max_length=100)]
     date: date
 
 
@@ -40,15 +41,15 @@ class PlantLatestImage(BaseSchema):
 
 
 class PlantBase(BaseSchema):
-    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    field_number: types.constr(min_length=1, max_length=20) | None = None  # type: ignore[valid-type]
-    geographic_origin: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
-    nursery_source: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    field_number: Annotated[str, Field(min_length=1, max_length=20)] | None = None
+    geographic_origin: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    nursery_source: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     propagation_type: FBPropagationType | None = None
     active: bool
     cancellation_reason: FBCancellationReason | None = None
     cancellation_date: date | None = None
-    generation_notes: types.constr(max_length=250) | None = None  # type: ignore[valid-type]
+    generation_notes: Annotated[str, Field(max_length=250)] | None = None
     taxon_id: int | None = None
 
     parent_plant: ShortPlant | None = None
@@ -92,7 +93,7 @@ class PlantsUpdateRequest(RequestContainer):
 
 
 class PlantRenameRequest(BaseSchema):
-    new_plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    new_plant_name: Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class ResultsPlantsList(ResponseContainer):
@@ -114,4 +115,4 @@ class ResultsPlantCloned(ResponseContainer):
 
 class BResultsProposeSubsequentPlantName(BaseSchema):
     original_plant_name: str
-    subsequent_plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    subsequent_plant_name: Annotated[str, Field(min_length=1, max_length=100)]

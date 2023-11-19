@@ -117,7 +117,7 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
     # Remove irrelevant Rows
     # Rows with status 'planted' are still ongoing, we remove them
     mask_ongoing: pd.Series = df["status"] == "planted"
-    df = df[~mask_ongoing]
+    df = df[~mask_ongoing]  # type: ignore[assignment]
 
     # As long as we have a vast or almost majority of legacy data with no
     # sterilized/soaked/covered/soil_id/count_germinated/count_planted
@@ -150,7 +150,7 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
     target: pd.Series = df["status"].map({"germinated": 1, "abandoned": 0})
     if target.isna().sum():
         raise ValueError(f"NaN in target: {target.isna().sum()}")
-    df: pd.DataFrame = df.drop(["status"], axis=1)
+    df = df.drop(["status"], axis=1)
 
     return df, target
 
@@ -195,7 +195,7 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
     # Remove irrelevant Rows
     # Rows with status 'planted' are still ongoing, we remove them
     mask_ongoing: pd.Series = df["status"] == "planted"
-    df = df[~mask_ongoing]  # type: ignore[no-redef]
+    df = df[~mask_ongoing]  # type: ignore[assignment]
 
     # As long as we have a vast or almost majority of legacy data with no
     # sterilized/soaked/covered/soil_id/count_germinated/count_planted
@@ -210,14 +210,14 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
             "count_planted",
         ],
         axis=1,
-    )  # type: ignore[no-redef]
+    )
 
     # target labels
     # we only care about successful seed plantings
-    df = df[df["status"] == "germinated"]  # type: ignore[no-redef]
+    df = df[df["status"] == "germinated"]  # type: ignore[assignment]
 
     # the target label is the number of days, computed as germination day - planted day; discard rows with one of them missing
-    df = df[~df["germinated_first_on"].isna()]  # type: ignore[no-redef]
+    df = df[~df["germinated_first_on"].isna()]  # type: ignore[assignment]
 
     # # both columns are string-formatted; convert them to date objects
     # ser_germinated = df['germinated_first_on'].apply(
@@ -225,7 +225,7 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
     # ser_planted = df['planted_on'].apply(lambda dstr: datetime.datetime.strptime(dstr, "%Y-%m-%d"))
 
     # compute germination period in days
-    target: pd.Series = (df["germinated_first_on"] - df["planted_on"]).apply(
+    target: pd.Series = (df["germinated_first_on"] - df["planted_on"]).apply(  # type: ignore[assignment]
         lambda timedelta: timedelta.days
     )
 

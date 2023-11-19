@@ -10,7 +10,7 @@ from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Sequence
 
     from sklearn.ensemble import VotingClassifier, VotingRegressor
 
@@ -45,7 +45,7 @@ def predict_germination_days(seed_planting: SeedPlanting) -> int:
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
-    pred: Iterable[float] = ensemble.predict(df_all)  # e.g. array([13.9683266])
+    pred: Sequence[float] = ensemble.predict(df_all)  # e.g. array([13.9683266])
     return round(pred[0])
 
 
@@ -131,9 +131,11 @@ def get_feature_data(
         )
         if pollination.seed_capsule_plant.taxon and pollination.pollen_donor_plant.taxon
         else False,
-        seed_capsule_length=pollination.seed_capsule_length,
-        seed_length=pollination.seed_length,
-        seed_width=pollination.seed_width,
+        seed_capsule_length=float(pollination.seed_capsule_length)
+        if pollination.seed_capsule_length
+        else None,
+        seed_length=float(pollination.seed_length) if pollination.seed_length else None,
+        seed_width=float(pollination.seed_width) if pollination.seed_width else None,
     )
     df_all = pd.Series(features.__dict__).to_frame().T
 

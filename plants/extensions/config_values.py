@@ -3,9 +3,10 @@ from __future__ import annotations
 import tomllib
 from enum import Enum
 from pathlib import Path
+from typing import Annotated
 
 import pydantic
-from pydantic import types
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from plants.extensions.logging import LogLevel
@@ -97,7 +98,8 @@ class LocalConfig(BaseSettings):
     """
 
     environment: Environment
-    connection_string: types.constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    connection_string: Annotated[str, Field(min_length=1, strip_whitespace=True)]
+    # connection_string: URL
     max_images_per_taxon: int = 20
     allow_cors: bool = False
     log_settings: LogSettings

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+import sys
 from asyncio import AbstractEventLoop
 from datetime import date, datetime
 from decimal import Decimal
@@ -18,7 +19,12 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
 import plants as plants_package
-from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
+from plants.constants import (
+    FILENAME_GERMINATION_DAYS_ESTIMATOR,
+    FILENAME_GERMINATION_PROBABILITY_ESTIMATOR,
+    FILENAME_PICKLED_POLLINATION_ESTIMATOR,
+    FILENAME_RIPENING_DAYS_ESTIMATOR,
+)
 from plants.extensions import orm
 from plants.extensions.logging import LogLevel
 from plants.extensions.orm import Base, init_orm
@@ -55,6 +61,10 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
 
 TEST_DB_NAME = "test_plants"
+
+# required to make psycopg3 async work on windows
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 # redefine the event_loop fixture to have a session scope,
@@ -278,7 +288,7 @@ def set_test_paths() -> None:
     """To avoid the regular database being initialized, we override the database url with a test
     database url we also override the get_db dependency called by most api endpoints to return a
     test database session."""
-    plants_package.local_config.connection_string = generate_db_url(TEST_DB_NAME)
+    plants_package.local_config.connection_string = str(generate_db_url(TEST_DB_NAME))
     plants_package.local_config.max_images_per_taxon = 2
 
     plants_package.local_config.log_settings.log_level_console = LogLevel.WARNING
@@ -412,12 +422,62 @@ async def taxa_in_db(test_db: AsyncSession) -> list[Taxon]:
 @pytest_asyncio.fixture(scope="function")
 async def trained_pollination_ml_model() -> None:
     path_pickled_demo_pipeline = (
-        Path(__file__).resolve().parent.joinpath("./static/demo_pollination_estimator.pkl")
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/")
+        .joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
     )
     target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
         FILENAME_PICKLED_POLLINATION_ESTIMATOR
     )
 
+    target_path.write_bytes(path_pickled_demo_pipeline.read_bytes())
+
+
+@pytest_asyncio.fixture(scope="function")
+async def trained_models() -> None:
+    path_demo = (
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/")
+        .joinpath(FILENAME_PICKLED_POLLINATION_ESTIMATOR)
+    )
+    target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_PICKLED_POLLINATION_ESTIMATOR
+    )
+    target_path.write_bytes(path_demo.read_bytes())
+
+    path_pickled_demo_pipeline = (
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/")
+        .joinpath(FILENAME_RIPENING_DAYS_ESTIMATOR)
+    )
+    target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_RIPENING_DAYS_ESTIMATOR
+    )
+    target_path.write_bytes(path_pickled_demo_pipeline.read_bytes())
+
+    path_pickled_demo_pipeline = (
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/")
+        .joinpath(FILENAME_GERMINATION_PROBABILITY_ESTIMATOR)
+    )
+    target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_GERMINATION_PROBABILITY_ESTIMATOR
+    )
+    target_path.write_bytes(path_pickled_demo_pipeline.read_bytes())
+
+    path_pickled_demo_pipeline = (
+        Path(__file__)
+        .resolve()
+        .parent.joinpath("./static/")
+        .joinpath(FILENAME_GERMINATION_DAYS_ESTIMATOR)
+    )
+    target_path = plants_package.settings.paths.path_pickled_ml_models.joinpath(
+        FILENAME_GERMINATION_DAYS_ESTIMATOR
+    )
     target_path.write_bytes(path_pickled_demo_pipeline.read_bytes())
 
 

@@ -31,7 +31,7 @@ from plants.modules.pollination.prediction.ml_helpers.preprocessing.features imp
 from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 
 if TYPE_CHECKING:
-    from sklearn.base import BaseEstimator
+    from sklearn.base import BaseEstimator, ClassifierMixin
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,7 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
 
 
 def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingClassifier:
-    def make_pipe(classifier) -> Pipeline:
+    def make_pipe(classifier: ClassifierMixin) -> Pipeline:
         return Pipeline([("preprocessor", preprocessor), ("classifier", classifier)])
 
     pipe_lr = make_pipe(LogisticRegression())
@@ -174,7 +174,7 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     finished = ~df["ongoing"]
     pollinated_successfully = df["pollination_status"].isin(succesful_status)
     relevant = finished | pollinated_successfully
-    df: pd.DataFrame = df[relevant]
+    df = df[relevant]  # type: ignore[assignment]
 
     # the boolean columns need a True or False, otherwise training fails
     df.loc[df["hybrid_seed_capsule"].isna(), "hybrid_seed_capsule"] = False

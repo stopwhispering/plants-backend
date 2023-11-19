@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import datetime
 from decimal import Decimal
+from typing import Annotated
 
-from pydantic import ConfigDict, field_validator, types
+from pydantic import ConfigDict, Field, field_validator, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -23,7 +24,7 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 
 class PlantEssentials(BaseSchema):
     id: int
-    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
     full_botanical_html_name: str | None = None
 
 
@@ -59,7 +60,7 @@ class SeedPlantingRead(SeedPlantingBase):
 
     plants: list[PlantEssentials]
 
-    @field_validator("count_germinated", mode="before")
+    @field_validator("count_germinated", mode="before")  # noqa
     @classmethod
     def count_germinated_return_zero_if_none(cls, value: int | None) -> int:
         return value if value is not None else 0
@@ -68,8 +69,8 @@ class SeedPlantingRead(SeedPlantingBase):
 class SeedPlantingUpdate(SeedPlantingBase):
     id: int
     count_germinated: int | None = None
-    germinated_first_on: datetime.date | None
-    abandoned_on: datetime.date | None
+    germinated_first_on: datetime.date | None = None
+    abandoned_on: datetime.date | None = None
 
 
 class PollenContainerBase(BaseSchema):
@@ -78,8 +79,8 @@ class PollenContainerBase(BaseSchema):
 
 
 class PollenContainerRead(PollenContainerBase):
-    plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    genus: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    genus: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     # plants: list[PlantEssentials]
 
 
@@ -150,7 +151,7 @@ class PollinationUpdate(PollinationBase):
     count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
     count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]
 
-    harvest_date: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    harvest_date: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
     seed_capsule_length: float | None = None
     seed_capsule_width: float | None = None
     seed_length: float | None = None
@@ -172,20 +173,12 @@ class PollinationCreate(PollinationBase):
 class FlorescenceBase(BaseSchema):
     plant_id: int
     florescence_status: FlorescenceStatus
-    inflorescence_appeared_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    inflorescence_appeared_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
     comment: str | None = None  # e.g. location if multiple plants in one container
 
 
 class FlorescenceCreate(FlorescenceBase):
     pass
-
-
-PerianthLength = (
-    types.condecimal(  # type: ignore[valid-type]
-        ge=Decimal(0.1), le=Decimal(99.9)
-    )
-    | None
-)
 
 
 class FlorescenceUpdate(FlorescenceBase):
@@ -194,31 +187,16 @@ class FlorescenceUpdate(FlorescenceBase):
     flowers_count: int | None = None
     self_pollinated: bool | None = None
 
-    perianth_length: PerianthLength
-    perianth_diameter: (
-        types.condecimal(  # type: ignore[valid-type]
-            ge=Decimal(0.1), le=Decimal(9.9)
-        )
-        | None
-    ) = None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: (
-        types.constr(  # type: ignore[valid-type]
-            min_length=7, max_length=7, to_lower=True
-        )
-        | None
-    ) = None  # hex color code, e.g. #f2f600
-    flower_color_second: (
-        types.constr(  # type: ignore[valid-type]
-            min_length=7, max_length=7, to_lower=True
-        )
-        | None
-    ) = None  # hex color code, e.g. #f2f600
-    # if flower_color_second set
+    perianth_length: Annotated[float, Field(le=99.9)] | None = None
+    perianth_diameter: Annotated[float, Field(le=9.9)] | None = None
+    # ) = None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    flower_color: Annotated[str, Field(min_length=7, max_length=7)] | None = None
+    flower_color_second: Annotated[str, Field(min_length=7, max_length=7)] | None = None
     flower_colors_differentiation: FlowerColorDifferentiation | None = None
     stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
-    last_flower_closed_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    first_flower_opened_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
+    last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
 
     model_config = ConfigDict(extra="ignore")
 
@@ -237,33 +215,33 @@ class FlorescenceRead(FlorescenceBase):
     flowers_count: int | None = None
 
     perianth_length: (
-        types.condecimal(  # type: ignore[valid-type]
-            ge=Decimal(0.1), le=Decimal(99.9)
-        )
+        Annotated[
+            float,
+            Field(
+                le=99.9,
+            ),
+        ]
         | None
-    ) = None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: PerianthDiameter  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    # perianth_diameter: (
-    #     types.condecimal(
-    #         ge=Decimal(0.1), le=Decimal(9.9)
-    #     )
-    #     | None
-    # )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
-    flower_color: (
-        types.constr(  # type: ignore[valid-type]
-            min_length=7, max_length=7, to_lower=True
-        )
+    )
+
+    # ) = None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: (
+        Annotated[
+            float,
+            Field(
+                le=9.9,
+            ),
+        ]
         | None
-    ) = None  # hex color code, e.g. #f2f600
-    flower_color_second: (
-        types.constr(min_length=7, max_length=7, to_lower=True) | None
-    ) = None  # hex color code, e.g. #f2f600
-    # if flower_color_second set
+    )
+
+    flower_color: Annotated[str, Field(min_length=7, max_length=7)] | None = None
+    flower_color_second: Annotated[str, Field(min_length=7, max_length=7)] | None = None
     flower_colors_differentiation: FlowerColorDifferentiation | None = None
     stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
-    last_flower_closed_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    first_flower_opened_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
+    last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
 
 
 class BPollinationResultingPlant(BaseSchema):
@@ -399,7 +377,7 @@ class FlowerHistory(ResponseContainer):
 
 
 class SeedPlantingPlantNameProposal(BaseSchema):
-    plant_name_proposal: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    plant_name_proposal: Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class NewPlantFromSeedPlantingRequest(BaseSchema):

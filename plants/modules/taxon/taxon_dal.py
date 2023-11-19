@@ -153,7 +153,7 @@ class TaxonDAL(BaseDAL):
     ) -> ImageToTaxonAssociation | None:
         query = select(ImageToTaxonAssociation)
         query = query.where(
-            and_(  # type:ignore[arg-type]
+            and_(
                 ImageToTaxonAssociation.image_id == image_id,
                 ImageToTaxonAssociation.taxon_id == taxon_id,
             )

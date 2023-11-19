@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from pydantic import ConfigDict, field_validator, model_validator, networks, types
+from pydantic import ConfigDict, Field, field_validator, model_validator, networks
+from pydantic_core.core_schema import ValidationInfo
 
 from plants.modules.taxon.enums import Establishment, FBRank
 from plants.shared.api_utils import format_api_datetime
@@ -15,8 +16,8 @@ if TYPE_CHECKING:
 
 
 class DistributionBase(BaseSchema):
-    native: list[types.constr(min_length=1, max_length=40)]  # type: ignore[valid-type]
-    introduced: list[types.constr(min_length=1, max_length=40)]  # type: ignore[valid-type]
+    native: list[Annotated[str, Field(min_length=1, max_length=40)]]
+    introduced: list[Annotated[str, Field(min_length=1, max_length=40)]]
 
 
 class DistributionRead(DistributionBase):
@@ -31,12 +32,12 @@ class TaxonOccurrenceImageBase(BaseSchema):
     occurrence_id: int
     img_no: int
     gbif_id: int
-    scientific_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    basis_of_record: types.constr(min_length=1, max_length=25)  # type: ignore[valid-type]
-    verbatim_locality: types.constr(min_length=1, max_length=125) | None = None  # type: ignore[valid-type]
+    scientific_name: Annotated[str, Field(min_length=1, max_length=100)]
+    basis_of_record: Annotated[str, Field(min_length=1, max_length=25)]
+    verbatim_locality: Annotated[str, Field(min_length=1, max_length=125)] | None = None
     photographed_at: datetime.datetime
-    creator_identifier: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    publisher_dataset: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
+    creator_identifier: Annotated[str, Field(min_length=1, max_length=100)]
+    publisher_dataset: Annotated[str, Field(min_length=1, max_length=100)] | None = None
 
     references: networks.HttpUrl | None = None
     href: networks.HttpUrl  # link to iamge at inaturalist etc.
@@ -130,22 +131,22 @@ class BKewSearchResultEntry(BaseSchema):
 
 
 class TaxonBase(BaseSchema):
-    rank: types.constr(min_length=1, max_length=30)  # type: ignore[valid-type]
-    family: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    genus: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    species: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
-    infraspecies: types.constr(min_length=1, max_length=40) | None = None  # type: ignore[valid-type]
+    rank: Annotated[str, Field(min_length=1, max_length=30)]
+    family: Annotated[str, Field(min_length=1, max_length=100)]
+    genus: Annotated[str, Field(min_length=1, max_length=100)]
+    species: Annotated[str, Field(min_length=1, max_length=100)]
+    infraspecies: Annotated[str, Field(min_length=1, max_length=40)] | None = None
 
     # IPNI/POWO Life Sciences Identifier
-    lsid: types.constr(min_length=1, max_length=50)  # type: ignore[valid-type]
-    taxonomic_status: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    lsid: Annotated[str, Field(min_length=1, max_length=50)]
+    taxonomic_status: Annotated[str, Field(min_length=1, max_length=100)]
     synonym: bool
-    authors: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    authors: Annotated[str, Field(min_length=1, max_length=100)]
     name_published_in_year: int | None = None  # rarely None
-    basionym: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
+    basionym: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     hybrid: bool
     hybridgenus: bool
-    synonyms_concat: types.constr(min_length=1, max_length=500) | None = None  # type: ignore[valid-type]
+    synonyms_concat: Annotated[str, Field(min_length=1, max_length=500)] | None = None
     distribution_concat: str | None = None
 
     is_custom: bool
@@ -156,11 +157,8 @@ class TaxonBase(BaseSchema):
 # class TaxonUpdate(TaxonBase):
 class TaxonUpdate(BaseSchema):
     id: int
-    # name: types.constr(min_length=1, max_length=100)
 
-    # gbif_id: Optional[int]
     custom_notes: str | None = None
-    # distribution: Optional[DistributionUpdate]  # not filled for each request
     images: list[TaxonImageUpdate] | None = None  # not filled for each request
 
     model_config = ConfigDict(extra="ignore")
@@ -176,12 +174,15 @@ class TaxonRead(TaxonBase):
     occurrence_images: list[TaxonOccurrenceImageRead]
 
     # noinspection PyMethodParameters
-    @field_validator("images", mode="before")
+    @field_validator("images", mode="before")  # noqa
     @classmethod
-    def _transform_images(cls, images: list[Image], values: dict[str, Any]) -> list[TaxonImageRead]:
+    def _transform_images(
+        cls, images: list[Image], validation_info: ValidationInfo
+    ) -> list[TaxonImageRead]:
         """Extract major information from Image model; and read the description from taxon-to-image
         link table, not from image itself."""
         results = []
+        values = validation_info.data
         taxon_id = values["id"]
         for image in images:
             image_to_taxon_assignment = next(

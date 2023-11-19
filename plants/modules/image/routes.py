@@ -237,21 +237,23 @@ async def get_occurrence_thumbnail(
 async def get_image(
     image: Image = Depends(valid_image),
     width: int | None = None,
-    height: int | str | None = None,
+    height: str | None = None,
     # height: int | None = None,
 ) -> Any:
     # ui5 might send the requested image density as a suffix to the query string,
     # e.g. "...@1.5". as the last parameter, we thus get it as part of height,
     # e.g. "48@1.5". we need to separate height and density.
     size: tuple[int, int] | None
-    if isinstance(height, str) and isinstance(width, int):
-        height, density = height.split("@")
-        height, density = int(height), float(density)
+    if height is None:
+        size = None
+    elif not height.isnumeric() and isinstance(width, int):
+        height_, density_ = height.split("@")
+        height__, density__ = int(height_), float(density_)
 
         # apply the requested densite to the size
-        size = (int(width * density), int(height * density))
+        size = (int(width * density__), int(height__ * density__))
     else:
-        size = (width, height) if width and height else None
+        size = (width, int(height)) if isinstance(width, int) and height.isnumeric() else None
 
     image_path = await get_image_path_by_size(image=image, size=size)
 

@@ -11,12 +11,12 @@ import sqlalchemy as sa
 from sqlalchemy import (
     BOOLEAN,
     DATE,
+    FLOAT,
     INTEGER,
     TEXT,
     VARCHAR,
     Column,
     Enum,
-    Float,
     ForeignKey,
     Identity,
     Numeric,
@@ -169,10 +169,10 @@ class Pollination(Base):
 
     # first harvest in case of multiple harvests
     harvest_date = Column(DATE)
-    seed_capsule_length = Column(Float)  # mm
-    seed_capsule_width = Column(Float)  # mm
-    seed_length: float | None = Column(Float)  # mm
-    seed_width: float | None = Column(Float)  # mm
+    seed_capsule_length = Column(FLOAT)  # mm
+    seed_capsule_width = Column(FLOAT)  # mm
+    seed_length = Column(FLOAT)  # mm
+    seed_width = Column(FLOAT)  # mm
     seed_count = Column(INTEGER)
     seed_capsule_description = Column(TEXT)
     seed_description = Column(TEXT)

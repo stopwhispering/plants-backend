@@ -168,7 +168,7 @@ async def test_delete_image(
         images=[
             FImageDelete(
                 id=image_id,
-                filename=valid_plant_in_db_with_image.images[0].filename,
+                # filename=valid_plant_in_db_with_image.images[0].filename,
             )
         ]
     )
@@ -233,8 +233,8 @@ async def test_delete_image_with_event(  # noqa: PLR0913
     image_dal: ImageDAL,
     test_db: AsyncSession,
 ) -> None:
-    """Test deleting an image via api including cascade delete of related relations
-    (image to plants, image to events)."""
+    """Test deleting an image via api including cascade delete of related relations (image to
+    plants, image to events)."""
     plant_id = plant_in_db_with_image_and_events.id
     event = plant_in_db_with_image_and_events.events[0]
     event_id = plant_in_db_with_image_and_events.events[0].id

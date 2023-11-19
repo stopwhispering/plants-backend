@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 
 
-@pytest.mark.usefixtures("seed_plantings_in_db")
+@pytest.mark.usefixtures("seed_plantings_in_db", "trained_models")
 @pytest.mark.asyncio()
 async def test_list_seed_plantings(
     ac: AsyncClient,
@@ -118,6 +118,7 @@ async def test_update_seed_planting(
         planted_on=yesterday,
         count_planted=100,
         soil_id=seed_planting_in_db.soil_id,
+        abandoned_on=None,
     )
     response = await ac.put(
         f"/api/seed_plantings/{seed_planting_in_db.id}",
@@ -159,7 +160,7 @@ async def test_create_seed_planting(
         sterilized=False,
         soaked=False,
         covered=True,
-        planted_on=today,
+        planted_on=today,  # type: ignore[arg-type]
         count_planted=5,
         soil_id=soil_in_db.id,
     )

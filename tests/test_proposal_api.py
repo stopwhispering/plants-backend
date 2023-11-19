@@ -41,7 +41,7 @@ async def test_get_taxon_tree(
     taxa_in_db: list[Taxon],
     plant_valid_in_db: Plant,
 ) -> None:
-    response = await ac.get("/api/selection_data/")
+    response = await ac.get("/api/selection_data")
     assert response.status_code == 200
     resp = response.json()
     assert "Selection" in resp

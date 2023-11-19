@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from pydantic_settings import BaseSettings
+from pydantic import Field  # noqa: TCH002
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
 from plants.extensions.orm import Base
 
 if TYPE_CHECKING:
-    from pydantic import constr
     from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 
@@ -19,19 +19,27 @@ class ConfigTest(BaseSettings):
     .env file) they are case-insensitive by default.
     """
 
-    test_db_drivername: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
-    test_db_username: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
-    test_db_password: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
-    test_db_host: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    # test_db_drivername: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    test_db_drivername: Annotated[str, Field(min_length=1, strip_whitespace=True)]
+    # test_db_username: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    test_db_username: Annotated[str, Field(min_length=1, strip_whitespace=True)]
+    # test_db_password: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    test_db_password: Annotated[str, Field(min_length=1, strip_whitespace=True)]
+    # test_db_host: constr(min_length=1, strip_whitespace=True)  # type: ignore[valid-type]
+    test_db_host: Annotated[str, Field(min_length=1, strip_whitespace=True)]
 
     test_db_port: int
 
-    class Config:
-        env_file = Path(__file__).resolve().parent.parent.joinpath(".test.env")
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    # class Config:
+    #     env_file = Path(__file__).resolve().parent.parent.joinpath(".test.env")
+    #     env_file_encoding = "utf-8"
 
 
-test_config = ConfigTest()
+test_config = ConfigTest(
+    _env_file=Path(__file__).resolve().parent.parent.joinpath(".test.env"),
+    _env_file_encoding="utf-8",
+)
 
 
 def generate_db_url(database: str = "postgres") -> URL:

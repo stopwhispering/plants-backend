@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Annotated
 
-from pydantic import types
+from pydantic import Field
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
@@ -12,12 +13,11 @@ from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 class ImageAssignedToEvent(BaseSchema):
     id: int
-    # filename: types.constr(min_length=1, max_length=150)  # type: ignore[valid-type]
 
 
 class SoilBase(BaseSchema):
     id: int
-    soil_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
+    soil_name: Annotated[str, Field(min_length=1, max_length=100)]
     mix: str
     description: str | None = None
 
@@ -70,7 +70,7 @@ class ObservationCreateUpdate(ObservationBase):
 
 class EventBase(BaseSchema):
     plant_id: int
-    date: types.constr(pattern=REGEX_DATE)  # type: ignore[valid-type]
+    date: Annotated[str, Field(pattern=REGEX_DATE)]
     event_notes: str | None = None
     images: list[ImageAssignedToEvent] | None = None
 

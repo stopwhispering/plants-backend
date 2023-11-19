@@ -17,3 +17,5 @@ ts_api_interfaces
 /.mypy_cache/
 /.venv
 *.csv
+*.pkl
+log.txt

@@ -3,11 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 
 # if TYPE_CHECKING:
-from starlette.background import BackgroundTasks
-
 from plants.dependencies import get_image_dal, get_taxon_dal, valid_taxon
 from plants.modules.biodiversity.taxonomy_name_formatter import (
     BotanicalNameInput,
