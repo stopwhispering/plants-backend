@@ -28,7 +28,7 @@ def predict_ripening_days(pollination: Pollination) -> int:
         pollination=pollination,
         feature_container=feature_container,
     )
-    pred = ensemble.predict(df_all)  # e.g. [[0.09839491 0.90160509]]
+    pred: tuple[float, float] = ensemble.predict(df_all)  # e.g. [[0.09839491 0.90160509]]
     return round(pred[0])
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor, VotingRegressor
@@ -19,6 +21,9 @@ from plants.modules.pollination.prediction.ml_helpers.preprocessing.features imp
 )
 from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 from plants.modules.pollination.prediction.predict_ripening import logger
+
+if TYPE_CHECKING:
+    from sklearn.base import RegressorMixin
 
 
 def _create_features() -> FeatureContainer:
@@ -50,16 +55,16 @@ def multiply_rows_by_capsule_count(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(rows, axis=1, ignore_index=True).T
 
 
-def preprocess_data(df: pd.DataFrame):
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     # we only need successful pollination attempts that made it to the seed or germinated status
-    df = df[df["pollination_status"].isin(["seed", "germinated"])]
+    df: pd.DataFrame = df[df["pollination_status"].isin(["seed", "germinated"])]  # type: ignore[no-redef]
 
     # Since harvest_date is basically what we want to predict, and there is no way to derive
     # that feature from any other feature, we can remove
     # all rows with missing harvest_date
     # the same applies to pollinated_at
-    df = df[~df["harvest_date"].isna()]
-    df = df[~df["pollinated_at"].isna()]
+    df: pd.DataFrame = df[~df["harvest_date"].isna()]  # type: ignore[no-redef]
+    df: pd.DataFrame = df[~df["pollinated_at"].isna()]  # type: ignore[no-redef]
 
     # we can use count_pollinated to infer count_capsules (more or less)
     df.loc[df["count_capsules"].isna(), "count_capsules"] = df.loc[
@@ -71,7 +76,7 @@ def preprocess_data(df: pd.DataFrame):
     df.loc[df["count_capsules"].isna(), "count_capsules"] = 1
 
     # multiply rows, i.e. apply count_capsules
-    df = multiply_rows_by_capsule_count(df)
+    df: pd.DataFrame = multiply_rows_by_capsule_count(df)  # type: ignore[no-redef]
 
     # compute Target (number of days)
     # not relevant for notebook
@@ -127,7 +132,7 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
 
 
 def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingRegressor:
-    def make_pipe(regressor) -> Pipeline:
+    def make_pipe(regressor: RegressorMixin) -> Pipeline:
         return Pipeline([("preprocessor", preprocessor), ("regressor", regressor)])
 
     pipe_linear = make_pipe(LinearRegression())

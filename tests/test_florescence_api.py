@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from plants.modules.plant.models import Plant
     from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.pollination.florescence_dal import FlorescenceDAL
+    from plants.modules.pollination.models import Florescence
 
 
 @pytest.mark.asyncio()
@@ -120,7 +121,7 @@ async def test_create_and_abort_florescence(
     test_db.expire(plant_valid_in_db)
     plant_valid_in_db = await plant_dal.by_id(plant_id)
     assert len(plant_valid_in_db.florescences) == 1
-    florescence_in_db = plant_valid_in_db.florescences[0]
+    florescence_in_db: Florescence = plant_valid_in_db.florescences[0]
     assert florescence_in_db.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED
 
     # FRequestEditedFlorescence

@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import piexif
 import pytz
@@ -13,6 +13,8 @@ from plants.shared.api_constants import FORMAT_FILENAME_TIMESTAMP
 
 if TYPE_CHECKING:
     from io import BytesIO
+
+    from PIL.Image import Exif
 
     from plants.modules.image.services import UploadImage
 
@@ -32,7 +34,7 @@ def get_thumbnail_name(filename: str, size: tuple[int, int]) -> str:
 
 
 def generate_thumbnail_for_pil_image(
-    pil_image: PilImage,
+    pil_image: PilImage.Image,
     thumbnail_folder: Path,
     thumbnail_filename: str,
     size: tuple[int, int] = (100, 100),
@@ -50,7 +52,8 @@ def generate_thumbnail_for_pil_image(
     # opened in chrome)
     # therefore hard-rotate thumbnail according to that exif tag
     # noinspection PyProtectedMember
-    exif_obj: dict[str, Any] = pil_image._getexif()  # type: ignore[attr-defined]  # noqa: SLF001
+    exif_obj: Exif = pil_image.getexif()  # _getexif()
+    # exif_obj: dict[str, Any] = pil_image._getexif()
     if exif_obj:
         thumbnail = _rotate_if_required(thumbnail, exif_obj)
 
@@ -93,28 +96,9 @@ def generate_thumbnail(
         thumbnail_filename=thumbnail_filename,
         ignore_missing_image_files=ignore_missing_image_files,
     )
-    #
-    #
-    # # there's a bug in chrome: it's not respecting the orientation exif (unless directly
-    # # opened in chrome)
-    # # therefore hard-rotate thumbnail according to that exif tag
-    # # noinspection PyProtectedMember
-    # exif_obj: dict[str, Any] = pil_image._getexif()  # type: ignore[attr-defined]
-    # if exif_obj:
-    #     pil_image = _rotate_if_required(pil_image, exif_obj)
-    #
-    # pil_image.thumbnail(size)
-    #
-    # if not filename_thumb:
-    #     filename_thumb = get_thumbnail_name(image.name, size)
-    #
-    # path_save = path_thumbnail.joinpath(filename_thumb)
-    # pil_image.save(path_save, "JPEG")
-    #
-    # return path_save
 
 
-def _rotate_if_required(image: PilImage.Image, exif_obj: dict[str, Any]) -> PilImage.Image:
+def _rotate_if_required(image: PilImage.Image, exif_obj: Exif) -> PilImage.Image:
     """Rotate photo_file if exif file has a rotate directive (solves chrome bug not respecting
     orientation exif tag) no exif tag manipulation required as this is not saved to thumbnails
     anyway."""

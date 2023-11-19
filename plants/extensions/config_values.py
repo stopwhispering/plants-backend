@@ -5,7 +5,8 @@ from enum import Enum
 from pathlib import Path
 
 import pydantic
-from pydantic import BaseSettings, types
+from pydantic import types
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from plants.extensions.logging import LogLevel
 from plants.shared.path_utils import create_if_not_exists
@@ -14,7 +15,7 @@ from plants.shared.path_utils import create_if_not_exists
 class ImageSettings(pydantic.BaseModel):
     size_thumbnail_image_taxon: tuple[int, int]  # e.g.[220, 220]
     sizes: tuple[tuple[int, int], ...]  # required lower-resolution sizes for images
-    resizing_size: tuple[int, int] | None  # e.g.[3440, 1440]
+    resizing_size: tuple[int, int]  # e.g.[3440, 1440]
     jpg_quality: int  # e.g. 82
 
 
@@ -102,7 +103,12 @@ class LocalConfig(BaseSettings):
     log_settings: LogSettings
     hostname: str
 
-    class Config:
-        env_file = Path(__file__).resolve().parent.parent.parent.joinpath(".env")
-        env_file_encoding = "utf-8"
-        env_nested_delimiter = "__"
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parent.parent.parent.joinpath(".env"),
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+    )
+    # class Config:
+    #     env_file = Path(__file__).resolve().parent.parent.parent.joinpath(".env")
+    #     env_file_encoding = "utf-8"
+    #     env_nested_delimiter = "__"

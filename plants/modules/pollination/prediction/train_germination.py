@@ -30,6 +30,7 @@ from plants.modules.pollination.prediction.seed_planting_data import assemble_se
 
 if TYPE_CHECKING:
     import pandas as pd
+    from sklearn.base import RegressorMixin
 
 
 def create_germination_features() -> FeatureContainer:
@@ -194,7 +195,7 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
     # Remove irrelevant Rows
     # Rows with status 'planted' are still ongoing, we remove them
     mask_ongoing: pd.Series = df["status"] == "planted"
-    df = df[~mask_ongoing]
+    df = df[~mask_ongoing]  # type: ignore[no-redef]
 
     # As long as we have a vast or almost majority of legacy data with no
     # sterilized/soaked/covered/soil_id/count_germinated/count_planted
@@ -209,14 +210,14 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
             "count_planted",
         ],
         axis=1,
-    )
+    )  # type: ignore[no-redef]
 
     # target labels
     # we only care about successful seed plantings
-    df = df[df["status"] == "germinated"]
+    df = df[df["status"] == "germinated"]  # type: ignore[no-redef]
 
     # the target label is the number of days, computed as germination day - planted day; discard rows with one of them missing
-    df = df[~df["germinated_first_on"].isna()]
+    df = df[~df["germinated_first_on"].isna()]  # type: ignore[no-redef]
 
     # # both columns are string-formatted; convert them to date objects
     # ser_germinated = df['germinated_first_on'].apply(
@@ -224,7 +225,9 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
     # ser_planted = df['planted_on'].apply(lambda dstr: datetime.datetime.strptime(dstr, "%Y-%m-%d"))
 
     # compute germination period in days
-    target = (df["germinated_first_on"] - df["planted_on"]).apply(lambda timedelta: timedelta.days)
+    target: pd.Series = (df["germinated_first_on"] - df["planted_on"]).apply(
+        lambda timedelta: timedelta.days
+    )
 
     return df, target
 
@@ -276,7 +279,7 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
 def create_germination_probability_ensemble_model(
     preprocessor: ColumnTransformer
 ) -> VotingClassifier:
-    def make_pipe(regressor) -> Pipeline:
+    def make_pipe(regressor: RegressorMixin) -> Pipeline:
         return Pipeline(
             [("preprocessor", preprocessor), ("pca", PCA(n_components=9)), ("regressor", regressor)]
         )
@@ -291,7 +294,7 @@ def create_germination_probability_ensemble_model(
 
 
 def create_germination_days_ensemble_model(preprocessor: ColumnTransformer) -> VotingRegressor:
-    def make_pipe(regressor) -> Pipeline:
+    def make_pipe(regressor: RegressorMixin) -> Pipeline:
         return Pipeline([("preprocessor", preprocessor), ("regressor", regressor)])
 
     pipe_linear = make_pipe(Lasso())  # Linear Regression with L1 Regularization

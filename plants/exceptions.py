@@ -27,7 +27,7 @@ class ValidationError(BaseError):
 
 
 class UnknownColorError(BaseError):
-    def __init__(self, color: str):
+    def __init__(self, color: str | None):
         super().__init__(detail=f"Unknown Color: {color}")
 
 

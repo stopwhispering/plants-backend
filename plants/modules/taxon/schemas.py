@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Any
 
-from pydantic import Extra, networks, root_validator, types, validator
+from pydantic import ConfigDict, field_validator, model_validator, networks, types
 
 from plants.modules.taxon.enums import Establishment, FBRank
 from plants.shared.api_utils import format_api_datetime
@@ -33,22 +33,22 @@ class TaxonOccurrenceImageBase(BaseSchema):
     gbif_id: int
     scientific_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     basis_of_record: types.constr(min_length=1, max_length=25)  # type: ignore[valid-type]
-    verbatim_locality: types.constr(min_length=1, max_length=125) | None  # type: ignore[valid-type]
+    verbatim_locality: types.constr(min_length=1, max_length=125) | None = None  # type: ignore[valid-type]
     photographed_at: datetime.datetime
     creator_identifier: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    publisher_dataset: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
+    publisher_dataset: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
 
-    references: networks.HttpUrl | None
+    references: networks.HttpUrl | None = None
     href: networks.HttpUrl  # link to iamge at inaturalist etc.
 
 
 class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
-    class Config:
-        extra = Extra.ignore
+    model_config = ConfigDict(extra="ignore")
 
     # noinspection PyMethodParameters
     # @validator("created_on")
-    @validator("photographed_at")
+    @field_validator("photographed_at")
+    @classmethod
     def datetime_to_string(cls, dt: datetime.datetime) -> str:
         """Validator decorator makes this a class method and enforces cls param."""
         return format_api_datetime(dt)
@@ -56,12 +56,11 @@ class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
 
 class TaxonImageBase(BaseSchema):
     id: int
-    description: str | None
+    description: str | None = None
 
 
 class TaxonImageUpdate(TaxonImageBase):
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaxonImageRead(TaxonImageBase):
@@ -77,19 +76,19 @@ class FTaxonInfoRequest(RequestContainer):
 class FBotanicalAttributes(BaseSchema):
     rank: str
     genus: str
-    species: str | None
-    infraspecies: str | None
+    species: str | None = None
+    infraspecies: str | None = None
     hybrid: bool
     hybridgenus: bool
-    authors: str | None
-    name_published_in_year: int | None
+    authors: str | None = None
+    name_published_in_year: int | None = None
 
     is_custom: bool
-    cultivar: str | None
-    affinis: str | None
-    custom_rank: FBRank | None
-    custom_infraspecies: str | None
-    custom_suffix: str | None
+    cultivar: str | None = None
+    affinis: str | None = None
+    custom_rank: FBRank | None = None
+    custom_infraspecies: str | None = None
+    custom_suffix: str | None = None
 
 
 class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
@@ -98,7 +97,7 @@ class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
 
 class BKewSearchResultEntry(BaseSchema):
     # source: BSearchResultSource  # determined upon saving by database
-    id: int | None  # filled only for those already in db
+    id: int | None = None  # filled only for those already in db
     in_db: bool
     count: int
     count_inactive: int
@@ -110,48 +109,48 @@ class BKewSearchResultEntry(BaseSchema):
     taxonomic_status: str
     lsid: str  # IPNI/POWO Life Sciences Identifier
     genus: str
-    species: str | None  # None for genus search
-    infraspecies: str | None
+    species: str | None = None  # None for genus search
+    infraspecies: str | None = None
 
     is_custom: bool
-    custom_rank: FBRank | None
-    custom_infraspecies: str | None
-    cultivar: str | None
-    affinis: str | None
-    custom_suffix: str | None
+    custom_rank: FBRank | None = None
+    custom_infraspecies: str | None = None
+    cultivar: str | None = None
+    affinis: str | None = None
+    custom_suffix: str | None = None
 
     hybrid: bool
     hybridgenus: bool
 
-    name_published_in_year: int | None  # rarely None
-    basionym: str | None
+    name_published_in_year: int | None = None  # rarely None
+    basionym: str | None = None
     # phylum: str
-    synonyms_concat: str | None
-    distribution_concat: str | None
+    synonyms_concat: str | None = None
+    distribution_concat: str | None = None
 
 
 class TaxonBase(BaseSchema):
     rank: types.constr(min_length=1, max_length=30)  # type: ignore[valid-type]
     family: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     genus: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    species: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
-    infraspecies: types.constr(min_length=1, max_length=40) | None  # type: ignore[valid-type]
+    species: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
+    infraspecies: types.constr(min_length=1, max_length=40) | None = None  # type: ignore[valid-type]
 
     # IPNI/POWO Life Sciences Identifier
     lsid: types.constr(min_length=1, max_length=50)  # type: ignore[valid-type]
     taxonomic_status: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     synonym: bool
     authors: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    name_published_in_year: int | None  # rarely None
-    basionym: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
+    name_published_in_year: int | None = None  # rarely None
+    basionym: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
     hybrid: bool
     hybridgenus: bool
-    synonyms_concat: types.constr(min_length=1, max_length=500) | None  # type: ignore[valid-type]
-    distribution_concat: str | None
+    synonyms_concat: types.constr(min_length=1, max_length=500) | None = None  # type: ignore[valid-type]
+    distribution_concat: str | None = None
 
     is_custom: bool
-    cultivar: str | None
-    affinis: str | None
+    cultivar: str | None = None
+    affinis: str | None = None
 
 
 # class TaxonUpdate(TaxonBase):
@@ -160,25 +159,25 @@ class TaxonUpdate(BaseSchema):
     # name: types.constr(min_length=1, max_length=100)
 
     # gbif_id: Optional[int]
-    custom_notes: str | None
+    custom_notes: str | None = None
     # distribution: Optional[DistributionUpdate]  # not filled for each request
-    images: list[TaxonImageUpdate] | None  # not filled for each request
+    images: list[TaxonImageUpdate] | None = None  # not filled for each request
 
-    class Config:
-        extra = Extra.ignore
+    model_config = ConfigDict(extra="ignore")
 
 
 class TaxonRead(TaxonBase):
     id: int
     name: str
-    gbif_id: int | None
-    custom_notes: str | None
+    gbif_id: int | None = None
+    custom_notes: str | None = None
     distribution: DistributionRead  # not filled for each request
     images: list[TaxonImageRead]
     occurrence_images: list[TaxonOccurrenceImageRead]
 
     # noinspection PyMethodParameters
-    @validator("images", pre=True)
+    @field_validator("images", mode="before")
+    @classmethod
     def _transform_images(cls, images: list[Image], values: dict[str, Any]) -> list[TaxonImageRead]:
         """Extract major information from Image model; and read the description from taxon-to-image
         link table, not from image itself."""
@@ -199,7 +198,8 @@ class TaxonRead(TaxonBase):
         return results
 
     # noinspection PyMethodParameters
-    @validator("distribution", pre=True)
+    @field_validator("distribution", mode="before")
+    @classmethod
     def _transform_distribution(cls, distribution: list[Distribution]) -> DistributionRead:
         # distribution codes according to WGSRPD (level 3)
         results: dict[str, list[str]] = {"native": [], "introduced": []}
@@ -210,19 +210,18 @@ class TaxonRead(TaxonBase):
                 results["introduced"].append(dist.tdwg_code)
         return DistributionRead.parse_obj(results)
 
-    class Config:
-        extra = Extra.forbid
-        orm_mode = True
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
 class TaxonCreate(TaxonBase):
     id: int | None  # filled if taxon is already in db
     custom_rank: FBRank | None
-    custom_infraspecies: str | None
-    custom_suffix: str | None
+    custom_infraspecies: str | None = None
+    custom_suffix: str | None = None
 
-    @root_validator(pre=True)
-    def len_truncator(cls, values: dict[str, Any]) -> dict[str, Any]:  # noqa: N805
+    @model_validator(mode="before")
+    @classmethod
+    def len_truncator(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Truncate to max length in db."""
         if values["distribution_concat"] is not None and len(values["distribution_concat"]) > 200:
             values["distribution_concat"] = values["distribution_concat"][:197] + "..."

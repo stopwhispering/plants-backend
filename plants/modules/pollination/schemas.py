@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from decimal import Decimal
 
-from pydantic import Extra, types, validator
+from pydantic import ConfigDict, field_validator, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -24,19 +24,19 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 class PlantEssentials(BaseSchema):
     id: int
     plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    full_botanical_html_name: str | None
+    full_botanical_html_name: str | None = None
 
 
 class SeedPlantingBase(BaseSchema):
     status: SeedPlantingStatus
     pollination_id: int
-    comment: str | None  # optional free text
-    sterilized: bool | None  # historical data may be None here and below
-    soaked: bool | None
-    covered: bool | None
+    comment: str | None = None  # optional free text
+    sterilized: bool | None = None  # historical data may be None here and below
+    soaked: bool | None = None
+    covered: bool | None = None
     planted_on: datetime.date
-    count_planted: int | None
-    soil_id: int | None
+    count_planted: int | None = None
+    soil_id: int | None = None
 
 
 class SeedPlantingCreate(SeedPlantingBase):
@@ -45,28 +45,29 @@ class SeedPlantingCreate(SeedPlantingBase):
 
 class SeedPlantingRead(SeedPlantingBase):
     id: int
-    count_germinated: int | None
+    count_germinated: int | None = None
     germinated_first_on: datetime.date | None
 
     seed_capsule_plant_name: str  # orm property
     pollen_donor_plant_name: str  # orm property
     soil_name: str  # orm property
 
-    current_germination_days: int | None  # model property (not in DB)
-    germination_days: int | None  # model property (not in DB)
-    predicted_germination_probability: int | None  # model property (not in DB)
-    predicted_germination_days: int | None  # model property (not in DB)
+    current_germination_days: int | None = None  # model property (not in DB)
+    germination_days: int | None = None  # model property (not in DB)
+    predicted_germination_probability: int | None = None  # model property (not in DB)
+    predicted_germination_days: int | None = None  # model property (not in DB)
 
     plants: list[PlantEssentials]
 
-    @validator("count_germinated", pre=True)
+    @field_validator("count_germinated", mode="before")
+    @classmethod
     def count_germinated_return_zero_if_none(cls, value: int | None) -> int:
         return value if value is not None else 0
 
 
 class SeedPlantingUpdate(SeedPlantingBase):
     id: int
-    count_germinated: int | None
+    count_germinated: int | None = None
     germinated_first_on: datetime.date | None
     abandoned_on: datetime.date | None
 
@@ -78,7 +79,7 @@ class PollenContainerBase(BaseSchema):
 
 class PollenContainerRead(PollenContainerBase):
     plant_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
-    genus: types.constr(min_length=1, max_length=100) | None  # type: ignore[valid-type]
+    genus: types.constr(min_length=1, max_length=100) | None = None  # type: ignore[valid-type]
     # plants: list[PlantEssentials]
 
 
@@ -90,8 +91,10 @@ class PollinationBase(BaseSchema):
     seed_capsule_plant_id: int
     pollen_donor_plant_id: int
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
-    pollinated_at: str | None  # e.g. '2022-11-16 12:06'  None for old data
-    label_color_rgb: str | None  # e.g. '#FFFF00'  # must be existent in COLORS_MAP None for old
+    pollinated_at: str | None = None  # e.g. '2022-11-16 12:06';  None for old data
+    label_color_rgb: (
+        str | None
+    ) = None  # e.g. '#FFFF00'  # must be existent in COLORS_MAP; None for old
     location: Location
     count_attempted: types.conint(ge=1)  # type: ignore[valid-type]
 
@@ -103,30 +106,30 @@ class PollinationRead(PollinationBase):
     pollen_donor_plant_name: str
     location_text: str
 
-    seed_capsule_plant_preview_image_id: int | None
-    pollen_donor_plant_preview_image_id: int | None
+    seed_capsule_plant_preview_image_id: int | None = None
+    pollen_donor_plant_preview_image_id: int | None = None
 
     florescence_id: int
-    florescence_comment: str | None
+    florescence_comment: str | None = None
 
     # allow None for old data
-    count_attempted: types.conint(ge=1) | None  # type: ignore[valid-type]
-    count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
-    count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
+    count_attempted: types.conint(ge=1) | None = None  # type: ignore[valid-type]
+    count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
+    count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]
 
-    predicted_ripening_days: types.conint(ge=1) | None  # type: ignore[valid-type]
-    current_ripening_days: types.conint(ge=0) | None  # type: ignore[valid-type]
+    predicted_ripening_days: types.conint(ge=1) | None = None  # type: ignore[valid-type]
+    current_ripening_days: types.conint(ge=0) | None = None  # type: ignore[valid-type]
 
     pollination_status: str
     ongoing: bool
-    harvest_date: str | None  # e.g. '2022-11-16'
-    seed_capsule_length: float | None
-    seed_capsule_width: float | None
-    seed_length: float | None
-    seed_width: float | None
-    seed_count: int | None
-    seed_capsule_description: str | None
-    seed_description: str | None
+    harvest_date: str | None = None  # e.g. '2022-11-16'
+    seed_capsule_length: float | None = None
+    seed_capsule_width: float | None = None
+    seed_length: float | None = None
+    seed_width: float | None = None
+    seed_count: int | None = None
+    seed_capsule_description: str | None = None
+    seed_description: str | None = None
     pollen_quality: PollenQuality
 
     seed_plantings: list[SeedPlantingRead]
@@ -144,123 +147,123 @@ class PollinationUpdate(PollinationBase):
     pollination_status: PollinationStatus
     ongoing: bool
 
-    count_pollinated: types.conint(ge=1) | None  # type: ignore[valid-type]
-    count_capsules: types.conint(ge=1) | None  # type: ignore[valid-type]
+    count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
+    count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]
 
-    harvest_date: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    seed_capsule_length: float | None
-    seed_capsule_width: float | None
-    seed_length: float | None
-    seed_width: float | None
-    seed_count: int | None
-    seed_capsule_description: str | None
-    seed_description: str | None
+    harvest_date: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    seed_capsule_length: float | None = None
+    seed_capsule_width: float | None = None
+    seed_length: float | None = None
+    seed_width: float | None = None
+    seed_count: int | None = None
+    seed_capsule_description: str | None = None
+    seed_description: str | None = None
 
-    class Config:
-        extra = Extra.ignore
+    model_config = ConfigDict(extra="ignore")
 
 
 class PollinationCreate(PollinationBase):
     florescence_id: int
     pollen_quality: PollenQuality
 
-    class Config:
-        extra = Extra.ignore  # some names and texts not to be inserted into DB
+    model_config = ConfigDict(extra="ignore")  # some names and texts not to be inserted into DB
 
 
 class FlorescenceBase(BaseSchema):
     plant_id: int
     florescence_status: FlorescenceStatus
-    inflorescence_appeared_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    comment: str | None  # e.g. location if multiple plants in one container
+    inflorescence_appeared_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    comment: str | None = None  # e.g. location if multiple plants in one container
 
 
 class FlorescenceCreate(FlorescenceBase):
     pass
 
 
+PerianthLength = (
+    types.condecimal(  # type: ignore[valid-type]
+        ge=Decimal(0.1), le=Decimal(99.9)
+    )
+    | None
+)
+
+
 class FlorescenceUpdate(FlorescenceBase):
     id: int
-    branches_count: int | None
-    flowers_count: int | None
-    # plant_self_pollinates: bool | None
-    self_pollinated: bool | None
+    branches_count: int | None = None
+    flowers_count: int | None = None
+    self_pollinated: bool | None = None
 
-    perianth_length: (
-        types.condecimal(  # type: ignore[valid-type]
-            ge=Decimal(0.1), le=Decimal(99.9)
-        )
-        | None
-    )
+    perianth_length: PerianthLength
     perianth_diameter: (
         types.condecimal(  # type: ignore[valid-type]
             ge=Decimal(0.1), le=Decimal(9.9)
         )
         | None
-    )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    ) = None  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
     flower_color: (
         types.constr(  # type: ignore[valid-type]
             min_length=7, max_length=7, to_lower=True
         )
         | None
-    )  # hex color code, e.g. #f2f600
+    ) = None  # hex color code, e.g. #f2f600
     flower_color_second: (
         types.constr(  # type: ignore[valid-type]
             min_length=7, max_length=7, to_lower=True
         )
         | None
-    )  # hex color code, e.g. #f2f600
+    ) = None  # hex color code, e.g. #f2f600
     # if flower_color_second set
-    flower_colors_differentiation: FlowerColorDifferentiation | None
-    stigma_position: StigmaPosition | None
+    flower_colors_differentiation: FlowerColorDifferentiation | None = None
+    stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    last_flower_closed_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    first_flower_opened_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    last_flower_closed_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
 
-    class Config:
-        extra = Extra.ignore
+    model_config = ConfigDict(extra="ignore")
+
+
+PerianthDiameter = types.condecimal(ge=Decimal(0.1), le=Decimal(9.9)) | None
 
 
 class FlorescenceRead(FlorescenceBase):
     id: int
     plant_name: str
-    plant_preview_image_id: int | None
-    plant_self_pollinates: bool | None
-    self_pollinated: bool | None
+    plant_preview_image_id: int | None = None
+    plant_self_pollinates: bool | None = None
+    self_pollinated: bool | None = None
     available_colors_rgb: list[str]  # e.g. ['#FF0000', '#FF00FF']
-    branches_count: int | None
-    flowers_count: int | None
+    branches_count: int | None = None
+    flowers_count: int | None = None
 
     perianth_length: (
         types.condecimal(  # type: ignore[valid-type]
             ge=Decimal(0.1), le=Decimal(99.9)
         )
         | None
-    )  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
-    perianth_diameter: (
-        types.condecimal(  # type: ignore[valid-type]
-            ge=Decimal(0.1), le=Decimal(9.9)
-        )
-        | None
-    )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    ) = None  # cm; 3 digits, 1 decimal --> 0.1 .. 99.9
+    perianth_diameter: PerianthDiameter  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
+    # perianth_diameter: (
+    #     types.condecimal(
+    #         ge=Decimal(0.1), le=Decimal(9.9)
+    #     )
+    #     | None
+    # )  # cm; 2 digits, 1 decimal --> 0.1 .. 9.9
     flower_color: (
         types.constr(  # type: ignore[valid-type]
             min_length=7, max_length=7, to_lower=True
         )
         | None
-    )  # hex color code, e.g. #f2f600
+    ) = None  # hex color code, e.g. #f2f600
     flower_color_second: (
-        types.constr(  # type: ignore[valid-type]
-            min_length=7, max_length=7, to_lower=True
-        )
-        | None
-    )  # hex color code, e.g. #f2f600
+        types.constr(min_length=7, max_length=7, to_lower=True) | None
+    ) = None  # hex color code, e.g. #f2f600
     # if flower_color_second set
-    flower_colors_differentiation: FlowerColorDifferentiation | None
-    stigma_position: StigmaPosition | None
+    flower_colors_differentiation: FlowerColorDifferentiation | None = None
+    stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
-    last_flower_closed_at: types.constr(regex=REGEX_DATE) | None  # type: ignore[valid-type]
+    first_flower_opened_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
+    last_flower_closed_at: types.constr(pattern=REGEX_DATE) | None = None  # type: ignore[valid-type]
 
 
 class BPollinationResultingPlant(BaseSchema):
@@ -272,12 +275,12 @@ class BPollinationResultingPlant(BaseSchema):
 class BPotentialPollenDonor(BaseSchema):
     plant_id: int
     plant_name: str
-    plant_preview_image_id: int | None
+    plant_preview_image_id: int | None = None
     pollen_type: str  # PollenType (fresh | frozen | unknown)
-    count_stored_pollen_containers: int | None  # only relevant for frozen
+    count_stored_pollen_containers: int | None = None  # only relevant for frozen
     already_ongoing_attempt: bool
     # pollen_harvest_month: str | None  # only relevant for frozen
-    probability_pollination_to_seed: int | None  # None only in error case
+    probability_pollination_to_seed: int | None = None  # None only in error case
 
     # pollination_attempts: list[BPollinationAttempt]
     pollination_attempts: list[HistoricalPollinationRead]
@@ -316,13 +319,13 @@ class BResultsPotentialPollenDonors(ResponseContainer):
 class BPlantWoPollenContainer(BaseSchema):
     plant_id: int
     plant_name: str
-    genus: str | None
+    genus: str | None = None
 
 
 class BPlantForNewFlorescence(BaseSchema):
     plant_id: int
     plant_name: str
-    genus: str | None
+    genus: str | None = None
 
 
 class BResultsPlantsForNewFlorescence(BaseSchema):

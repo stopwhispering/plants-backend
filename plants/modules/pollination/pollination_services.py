@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import pytz
 from fastapi import HTTPException
@@ -244,8 +244,9 @@ async def save_new_pollination(
     # 1. parse the string to a timezone-naive datetime object
     # 2. attach the timezone with pytz localize
     # 3. convert to UTC with astimezone
+    pollinated_at_ = new_pollination_data.pollinated_at or "1900-01-01"  # legacy data
     pollinated_at_naive = datetime.strptime(  # noqa: DTZ007
-        new_pollination_data.pollinated_at, FORMAT_API_YYYY_MM_DD_HH_MM
+        pollinated_at_, FORMAT_API_YYYY_MM_DD_HH_MM
     )
     pollinated_at_localized = pytz.timezone("Europe/Berlin").localize(pollinated_at_naive)
     pollinated_at = pollinated_at_localized.astimezone(pytz.utc)
@@ -319,7 +320,8 @@ async def update_pollination(
     label_color = COLORS_MAP[pollination_data.label_color_rgb]
 
     updates = pollination_data.dict(exclude={})
-    updates["pollinated_at"] = parse_api_datetime(pollination_data.pollinated_at)
+    pollinated_at_ = pollination_data.pollinated_at or "1900-01-01"  # legacy data
+    updates["pollinated_at"] = parse_api_datetime(pollinated_at_)
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["last_update_context"] = Context.API
@@ -331,7 +333,7 @@ def get_predicted_ripening_days(pollination: Pollination) -> int | None:
     return predict_ripening_days(pollination=pollination)
 
 
-def _get_pollination_dict(pollination: Pollination) -> dict:
+def _get_pollination_dict(pollination: Pollination) -> dict[str, Any]:
     label_color_rgb = (
         COLORS_MAP_TO_RGB.get(pollination.label_color, "transparent")
         if pollination.label_color
@@ -371,7 +373,7 @@ def _get_pollination_dict(pollination: Pollination) -> dict:
         "seed_description": pollination.seed_description,
         "seed_plantings": pollination.seed_plantings,
         "florescence_id": pollination.florescence_id,
-        "florescence_comment": pollination.florescence.comment,
+        "florescence_comment": pollination.florescence.comment if pollination.florescence else None,
     }
 
 

@@ -1,25 +1,20 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 
 from plants.shared.enums import MajorResource
 from plants.shared.message_schemas import BMessage
 
 
 class BaseSchema(BaseModel):
-    class Config:
-        orm_mode = True
-        anystr_strip_whitespace = True
-        extra = Extra.ignore
+    model_config = ConfigDict(from_attributes=True, str_strip_whitespace=True, extra="ignore")
 
 
 class ResponseContainer(BaseModel):
-    action: str | None
+    action: str | None = None
     message: BMessage
 
-    class Config:
-        anystr_strip_whitespace = True
-        extra = Extra.forbid
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 
 class MajorResponseContainer(ResponseContainer):
@@ -27,6 +22,4 @@ class MajorResponseContainer(ResponseContainer):
 
 
 class RequestContainer(BaseModel):
-    class Config:
-        anystr_strip_whitespace = True
-        extra = Extra.forbid
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")

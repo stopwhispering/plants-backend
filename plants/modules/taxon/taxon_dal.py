@@ -101,9 +101,7 @@ class TaxonDAL(BaseDAL):
         self,
     ) -> TaxaWithPlantIds:
         plant_exists_filter = and_(Plant.deleted.is_(False), Plant.active)
-        has_any_plant_filter = Taxon.plants.any(
-            plant_exists_filter  # type:ignore[arg-type]
-        )
+        has_any_plant_filter = Taxon.plants.any(plant_exists_filter)
 
         # array_agg seems to not work with int array, so we need to cast to string
         # this will, however, return a list of int not string

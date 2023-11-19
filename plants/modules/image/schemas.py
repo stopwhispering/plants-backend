@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import types, validator
+from pydantic import field_validator, types
 
 from plants import settings
 from plants.modules.image.models import ImageKeyword
@@ -30,8 +30,8 @@ class ImageBase(BaseSchema):
     filename: types.constr(min_length=1, max_length=150)  # type: ignore[valid-type]
     keywords: list[FBKeyword]
     plants: list[FBImagePlantTag]
-    description: types.constr(max_length=500) | None  # type: ignore[valid-type]
-    record_date_time: datetime | None  # 2019-11-21T11:51:13
+    description: types.constr(max_length=500) | None = None  # type: ignore[valid-type]
+    record_date_time: datetime | None = None  # 2019-11-21T11:51:13
 
 
 class ImageCreateUpdate(ImageBase):
@@ -40,12 +40,14 @@ class ImageCreateUpdate(ImageBase):
 
 class ImageRead(ImageBase):
     # noinspection PyMethodParameters
-    @validator("keywords", pre=True)
+    @field_validator("keywords", mode="before")
+    @classmethod
     def _transform_keywords(cls, keywords: list[ImageKeyword]) -> list[dict[str, object]]:
         return [{"keyword": k.keyword} for k in keywords]
 
     # noinspection PyMethodParameters
-    @validator("plants", pre=True)
+    @field_validator("plants", mode="before")
+    @classmethod
     def _transform_plants(cls, plants: list[Plant]) -> list[dict[str, object]]:
         return [
             {

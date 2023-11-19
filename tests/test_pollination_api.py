@@ -7,7 +7,7 @@ import pytest
 
 import plants as plants_package
 from plants.constants import FILENAME_PICKLED_POLLINATION_ESTIMATOR
-from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, Context, FlorescenceStatus
+from plants.modules.pollination.enums import COLORS_MAP_TO_RGB, Context, FlorescenceStatus, Location
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.schemas import (
     FRequestPollenContainers,
@@ -47,8 +47,8 @@ async def test_create_pollination(
         pollen_container_collection=[
             PollenContainerCreateUpdate(
                 plant_id=p["id"],
-                plant_name=p["plant_name"],
-                genus="Aloe",
+                # plant_name=p["plant_name"],
+                # genus="Aloe",
                 count_stored_pollen_containers=4,
             )
         ]
@@ -70,7 +70,7 @@ async def test_create_pollination(
         pollen_quality="good",
         pollinated_at="2022-11-16 12:06",
         label_color_rgb="#ff7c09",
-        location="indoor",
+        location=Location.INDOOR,
         count_attempted=3,
     )
     response = await ac.post("/api/pollinations", json=payload_pollination.dict())

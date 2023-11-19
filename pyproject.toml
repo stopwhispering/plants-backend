@@ -8,9 +8,9 @@ packages = [{include = "plants"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-fastapi = "^0.92.0"
-sqlalchemy = "^2.0.4"
-pydantic = {extras = ["dotenv"], version = "^1.10.5"}
+fastapi = "^0.104.1"
+sqlalchemy = {extras = ["mypy"], version = "^2.0.23"}
+pydantic = "^2.5.1"
 asyncpg = "^0.27.0"
 aiofiles = "^23.1.0"
 piexif = "^1.1.3"
@@ -27,6 +27,7 @@ pandas = "^1.5.3"
 scikit-learn = "^1.2.1"
 aiohttp = "^3.8.4"
 psycopg = {extras = ["binary"], version = "^3.1.13"}
+pydantic-settings = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
@@ -47,6 +48,7 @@ sqlalchemy = {extras = ["mypy"], version = "^2.0.4"}
 pandera = {extras = ["mypy"], version = "^0.13.4"}
 types-requests = "^2.28.11.15"
 types-pillow = "^9.4.0.17"
+bump-pydantic = "^0.7.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -232,6 +234,11 @@ exclude = ["plants/scripts/*", "backup",
     "venv*", "alembic",
     "local*", "scripts/*"]
 #mypy_path = "./stubs"
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
 module = "sklearn.*"

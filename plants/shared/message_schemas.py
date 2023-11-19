@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import Extra
+from pydantic import ConfigDict
 from pydantic.main import BaseModel
 
 from plants.shared.enums import MajorResource, MessageType
@@ -9,18 +9,16 @@ from plants.shared.enums import MajorResource, MessageType
 class BMessage(BaseModel):
     type: MessageType  # noqa: A003
     message: str
-    description: str | None
+    description: str | None = None
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
 
 class BConfirmation(BaseModel):
     action: str
     message: BMessage
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
 
 class BSaveConfirmation(BaseModel):
@@ -30,5 +28,4 @@ class BSaveConfirmation(BaseModel):
     resource: MajorResource
     message: BMessage
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")

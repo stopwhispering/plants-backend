@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass(kw_only=True)
 class _BaseSearchResult:  # pylint: disable=too-many-instance-attributes
     lsid: str
-    name_published_in_year: int
+    name_published_in_year: int | None
     name: str
     rank: str
     family: str

@@ -308,7 +308,3 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
 
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
-
-    async def set_self_pollinates(self, plant: Plant, self_pollinates: bool | None) -> None:
-        plant.self_pollinates = self_pollinates
-        await self.session.flush()

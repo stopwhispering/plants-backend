@@ -13,8 +13,8 @@ class BNurseryProposal(BaseSchema):
 
 
 class BResultsProposals(ResponseContainer):
-    NurseriesSourcesCollection: list[BNurseryProposal] | None
-    KeywordsCollection: list[BKeywordProposal] | None
+    NurseriesSourcesCollection: list[BNurseryProposal] | None = None
+    KeywordsCollection: list[BKeywordProposal] | None = None
 
 
 class BTaxonTreeNode(BaseSchema):

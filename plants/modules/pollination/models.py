@@ -11,12 +11,12 @@ import sqlalchemy as sa
 from sqlalchemy import (
     BOOLEAN,
     DATE,
-    FLOAT,
     INTEGER,
     TEXT,
     VARCHAR,
     Column,
     Enum,
+    Float,
     ForeignKey,
     Identity,
     Numeric,
@@ -128,8 +128,10 @@ class Pollination(Base):
     # optional only for imported data
     florescence_id: int | None = Column(INTEGER, ForeignKey("florescence.id"))
     # noinspection PyTypeChecker
-    florescence: Mapped[Florescence | None] = relationship(
-        "Florescence", back_populates="pollinations", foreign_keys=[florescence_id]
+    florescence: Mapped[Florescence | None] = relationship(  # None only for historical
+        "Florescence",
+        back_populates="pollinations",
+        foreign_keys=[florescence_id],
     )
 
     seed_capsule_plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
@@ -167,10 +169,10 @@ class Pollination(Base):
 
     # first harvest in case of multiple harvests
     harvest_date = Column(DATE)
-    seed_capsule_length = Column(FLOAT)  # mm
-    seed_capsule_width = Column(FLOAT)  # mm
-    seed_length = Column(FLOAT)  # mm
-    seed_width = Column(FLOAT)  # mm
+    seed_capsule_length = Column(Float)  # mm
+    seed_capsule_width = Column(Float)  # mm
+    seed_length: float | None = Column(Float)  # mm
+    seed_width: float | None = Column(Float)  # mm
     seed_count = Column(INTEGER)
     seed_capsule_description = Column(TEXT)
     seed_description = Column(TEXT)

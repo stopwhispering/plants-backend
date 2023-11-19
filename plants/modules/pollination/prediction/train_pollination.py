@@ -174,7 +174,7 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     finished = ~df["ongoing"]
     pollinated_successfully = df["pollination_status"].isin(succesful_status)
     relevant = finished | pollinated_successfully
-    df = df[relevant]
+    df: pd.DataFrame = df[relevant]
 
     # the boolean columns need a True or False, otherwise training fails
     df.loc[df["hybrid_seed_capsule"].isna(), "hybrid_seed_capsule"] = False

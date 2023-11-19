@@ -263,7 +263,7 @@ async def fetch_untagged_images(image_dal: ImageDAL) -> list[Image]:
 
 @dataclass
 class UploadImage:
-    pil_image: PilImage
+    pil_image: PilImage.Image
     file_content: bytes
     path: Path
     resizing_required: bool
@@ -281,7 +281,7 @@ async def handle_image_uploads(
     upload_images: list[UploadImage] = []
     for file in files:
         file_content: bytes = await file.read()
-        pil_image: PilImage = PilImage.open(io.BytesIO(file_content))
+        pil_image: PilImage.Image = PilImage.open(io.BytesIO(file_content))
 
         filename = file.filename or generate_timestamp_filename()
         resizing_required = await is_resizing_required(pil_image, settings.images.resizing_size)

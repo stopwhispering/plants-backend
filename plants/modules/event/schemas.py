@@ -19,7 +19,7 @@ class SoilBase(BaseSchema):
     id: int
     soil_name: types.constr(min_length=1, max_length=100)  # type: ignore[valid-type]
     mix: str
-    description: str | None
+    description: str | None = None
 
 
 class SoilUpdate(SoilBase):
@@ -46,7 +46,7 @@ class PotBase(BaseSchema):
 
 
 class PotCreateUpdate(PotBase):
-    id: int | None  # missing if new
+    id: int | None = None  # missing if new
 
 
 class PotRead(PotBase):
@@ -54,10 +54,10 @@ class PotRead(PotBase):
 
 
 class ObservationBase(BaseSchema):
-    diseases: str | None
+    diseases: str | None = None
     # stem_max_diameter: Decimal | None
     # height: Decimal | None
-    observation_notes: str | None
+    observation_notes: str | None = None
 
 
 class ObservationRead(ObservationBase):
@@ -65,28 +65,28 @@ class ObservationRead(ObservationBase):
 
 
 class ObservationCreateUpdate(ObservationBase):
-    id: int | None
+    id: int | None = None
 
 
 class EventBase(BaseSchema):
     plant_id: int
-    date: types.constr(regex=REGEX_DATE)  # type: ignore[valid-type]
-    event_notes: str | None
-    images: list[ImageAssignedToEvent] | None
+    date: types.constr(pattern=REGEX_DATE)  # type: ignore[valid-type]
+    event_notes: str | None = None
+    images: list[ImageAssignedToEvent] | None = None
 
 
 class EventCreateUpdate(EventBase):
-    id: int | None  # empty for new, filled for updated events
-    observation: ObservationCreateUpdate | None
-    soil: SoilUpdate | None
-    pot: PotCreateUpdate | None
+    id: int | None = None  # empty for new, filled for updated events
+    observation: ObservationCreateUpdate | None = None
+    soil: SoilUpdate | None = None
+    pot: PotCreateUpdate | None = None
 
 
 class EventRead(EventBase):
     id: int
-    observation: ObservationRead | None
-    soil: SoilRead | None
-    pot: PotRead | None
+    observation: ObservationRead | None = None
+    soil: SoilRead | None = None
+    pot: PotRead | None = None
 
 
 class FImageDelete(BaseSchema):

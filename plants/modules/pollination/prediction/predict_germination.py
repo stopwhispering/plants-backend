@@ -10,6 +10,8 @@ from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from sklearn.ensemble import VotingClassifier, VotingRegressor
 
     from plants.modules.pollination.models import Pollination, SeedPlanting
@@ -31,7 +33,7 @@ def predict_germination_probability(seed_planting: SeedPlanting) -> int:
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
-    proba = ensemble.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
+    proba: list[list[float]] = ensemble.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
     return round(proba[0][1] * 100)
 
 
@@ -43,7 +45,7 @@ def predict_germination_days(seed_planting: SeedPlanting) -> int:
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
-    pred = ensemble.predict(df_all)  # e.g. array([13.9683266])
+    pred: Iterable[float] = ensemble.predict(df_all)  # e.g. array([13.9683266])
     return round(pred[0])
 
 

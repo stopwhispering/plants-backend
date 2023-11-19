@@ -37,7 +37,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         # logger.info('yielding db')
         yield db
         await db.commit()
-    except Exception:
+    except Exception:  # pylint: disable=global-statement
         await db.rollback()
     finally:
         # await db.commit()

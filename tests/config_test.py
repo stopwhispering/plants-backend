@@ -3,12 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pydantic import BaseSettings, constr
+from pydantic_settings import BaseSettings
 from sqlalchemy.engine import URL
 
 from plants.extensions.orm import Base
 
 if TYPE_CHECKING:
+    from pydantic import constr
     from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 
