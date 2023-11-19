@@ -67,16 +67,6 @@ def create_germination_features() -> FeatureContainer:
     return FeatureContainer(features=features)
 
 
-#
-# def multiply_rows_by_capsule_count(df: pd.DataFrame) -> pd.DataFrame:
-#     # a row with count_capsules > 1 is multiplied
-#     # print('Shape before: ', df.shape)
-#     rows = []
-#     for _, row in df.iterrows():
-#         rows.extend([row] * int(row["count_capsules"]))
-#     return pd.concat(rows, axis=1, ignore_index=True).T
-
-
 def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     # Drop obviously irrelevant columns
     irrelevant_columns = [
@@ -216,18 +206,15 @@ def preprocess_data_for_days_model(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.S
     # we only care about successful seed plantings
     df = df[df["status"] == "germinated"]  # type: ignore[assignment]
 
-    # the target label is the number of days, computed as germination day - planted day; discard rows with one of them missing
+    # the target label is the number of days, computed as germination day - planted day
+    # discard rows with one of them missing
     df = df[~df["germinated_first_on"].isna()]  # type: ignore[assignment]
 
-    # # both columns are string-formatted; convert them to date objects
-    # ser_germinated = df['germinated_first_on'].apply(
-    #     lambda dstr: datetime.datetime.strptime(dstr, "%Y-%m-%d"))
-    # ser_planted = df['planted_on'].apply(lambda dstr: datetime.datetime.strptime(dstr, "%Y-%m-%d"))
-
     # compute germination period in days
-    target: pd.Series = (df["germinated_first_on"] - df["planted_on"]).apply(  # type: ignore[assignment]
-        lambda timedelta: timedelta.days
-    )
+    target: pd.Series = (
+        df["germinated_first_on"]  # type: ignore[assignment]
+        - df["planted_on"]
+    ).apply(lambda timedelta: timedelta.days)
 
     return df, target
 
@@ -324,8 +311,8 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
     # train with whole dataset
     try:
         ensemble.fit(X=df, y=target)
-    except ValueError as e:  # raised if NaN in input data
-        raise TrainingError(msg=str(e)) from e
+    except ValueError as exc:  # raised if NaN in input data
+        raise TrainingError(msg=str(exc)) from exc
 
     pickle_pipeline(
         pipeline=ensemble,
@@ -333,6 +320,7 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
         prediction_model=PredictionModel.GERMINATION_PROBABILITY,
     )
 
+    # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_germination
 
     (
@@ -342,7 +330,7 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
 
     return {
         "model": PredictionModel.GERMINATION_PROBABILITY,
-        "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
+        "estimator": "Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
     }
@@ -367,8 +355,8 @@ async def train_model_for_germination_days() -> dict[str, str | float]:
     # train with whole dataset
     try:
         ensemble.fit(X=df, y=target)
-    except ValueError as e:  # raised if NaN in input data
-        raise TrainingError(msg=str(e)) from e
+    except ValueError as exc:  # raised if NaN in input data
+        raise TrainingError(msg=str(exc)) from exc
 
     pickle_pipeline(
         pipeline=ensemble,
@@ -376,6 +364,7 @@ async def train_model_for_germination_days() -> dict[str, str | float]:
         prediction_model=PredictionModel.GERMINATION_DAYS,
     )
 
+    # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_germination
 
     predict_germination.germination_days_model, predict_germination.germination_days_container = (
@@ -385,7 +374,7 @@ async def train_model_for_germination_days() -> dict[str, str | float]:
 
     return {
         "model": PredictionModel.GERMINATION_DAYS,
-        "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
+        "estimator": "Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
     }

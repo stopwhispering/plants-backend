@@ -17,11 +17,9 @@ from plants.dependencies import (
     valid_seed_planting,
 )
 from plants.modules.event.event_dal import EventDAL
-
-# if TYPE_CHECKING:
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.services import generate_plant_name_proposal_for_seed_planting
-from plants.modules.pollination.enums import COLORS_MAP
+from plants.modules.pollination.enums import COLORS_MAP, PollinationStatus
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.florescence_services import (
     create_new_florescence,
@@ -36,9 +34,10 @@ from plants.modules.pollination.flower_history_services import (
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
-    read_ongoing_pollinations,
+    get_predicted_ripening_days,
     read_plants_without_pollen_containers,
     read_pollen_containers,
+    read_pollinations,
     read_potential_pollen_donors,
     remove_pollination,
     save_new_pollination,
@@ -69,6 +68,7 @@ from plants.modules.pollination.schemas import (
     FRequestPollenContainers,
     NewPlantFromSeedPlantingRequest,
     PollinationCreate,
+    PollinationRead,
     PollinationUpdate,
     SeedPlantingCreate,
     SeedPlantingPlantNameProposal,
@@ -135,16 +135,24 @@ async def get_ongoing_pollinations(
     include_ongoing_pollinations: bool = True,
     include_finished_pollinations: bool = False,
 ) -> Any:
-    ongoing_pollinations = await read_ongoing_pollinations(
+    pollinations_orm = await read_pollinations(
         pollination_dal=pollination_dal,
         include_ongoing_pollinations=include_ongoing_pollinations,
         include_finished_pollinations=include_finished_pollinations,
     )
 
+    # add predicted ripening days
+    pollinations: list[PollinationRead] = []
+    for p in pollinations_orm:
+        pollination = PollinationRead.model_validate(p)
+        if pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
+            pollination.predicted_ripening_days = get_predicted_ripening_days(p)
+        pollinations.append(pollination)
+
     return {
-        "action": "Get ongoing pollinations",
-        "message": get_message(f"Provided {len(ongoing_pollinations)} ongoing pollinations."),
-        "ongoing_pollination_collection": ongoing_pollinations,
+        "action": "Get pollinations",
+        "message": get_message(f"Provided {len(pollinations)} pollinations."),
+        "ongoing_pollination_collection": pollinations,
     }
 
 

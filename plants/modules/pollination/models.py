@@ -26,6 +26,7 @@ from sqlalchemy.types import DateTime
 
 from plants.extensions.orm import Base
 from plants.modules.pollination.enums import (
+    COLORS_MAP_TO_RGB,
     Context,
     FlorescenceStatus,
     FlowerColorDifferentiation,
@@ -36,6 +37,7 @@ from plants.modules.pollination.enums import (
     SeedPlantingStatus,
     StigmaPosition,
 )
+from plants.modules.pollination.mappings import LOCATION_TEXTS
 from plants.modules.pollination.prediction.predict_germination import (
     predict_germination_days,
     predict_germination_probability,
@@ -198,6 +200,36 @@ class Pollination(Base):
             - self.pollinated_at.date()
         )
         return delta.days if delta.days > 0 else 0
+
+    @property
+    def florescence_comment(self) -> str | None:
+        return self.florescence.comment if self.florescence else None
+
+    @property
+    def location_text(self) -> str:
+        return LOCATION_TEXTS[self.location]
+
+    @property
+    def pollen_donor_plant_preview_image_id(self) -> int | None:
+        return self.pollen_donor_plant.preview_image_id
+
+    @property
+    def pollen_donor_plant_name(self) -> str:
+        return self.pollen_donor_plant.plant_name
+
+    @property
+    def seed_capsule_plant_preview_image_id(self) -> int | None:
+        return self.seed_capsule_plant.preview_image_id
+
+    @property
+    def seed_capsule_plant_name(self) -> str:
+        return self.seed_capsule_plant.plant_name
+
+    @property
+    def label_color_rgb(self) -> str | None:
+        if self.label_color:
+            return COLORS_MAP_TO_RGB.get(self.label_color.lower(), "transparent")
+        return None
 
 
 class SeedPlanting(Base):

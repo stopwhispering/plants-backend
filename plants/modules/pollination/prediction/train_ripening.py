@@ -57,14 +57,14 @@ def multiply_rows_by_capsule_count(df: pd.DataFrame) -> pd.DataFrame:
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     # we only need successful pollination attempts that made it to the seed or germinated status
-    df: pd.DataFrame = df[df["pollination_status"].isin(["seed", "germinated"])]  # type: ignore[no-redef]
+    df = df[df["pollination_status"].isin(["seed", "germinated"])]  # type: ignore[assignment]
 
     # Since harvest_date is basically what we want to predict, and there is no way to derive
     # that feature from any other feature, we can remove
     # all rows with missing harvest_date
     # the same applies to pollinated_at
-    df: pd.DataFrame = df[~df["harvest_date"].isna()]  # type: ignore[no-redef]
-    df: pd.DataFrame = df[~df["pollinated_at"].isna()]  # type: ignore[no-redef]
+    df = df[~df["harvest_date"].isna()]  # type: ignore[assignment]
+    df = df[~df["pollinated_at"].isna()]  # type: ignore[assignment]
 
     # we can use count_pollinated to infer count_capsules (more or less)
     df.loc[df["count_capsules"].isna(), "count_capsules"] = df.loc[
@@ -76,7 +76,7 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[df["count_capsules"].isna(), "count_capsules"] = 1
 
     # multiply rows, i.e. apply count_capsules
-    df: pd.DataFrame = multiply_rows_by_capsule_count(df)  # type: ignore[no-redef]
+    df = multiply_rows_by_capsule_count(df)
 
     # compute Target (number of days)
     # not relevant for notebook
@@ -163,8 +163,8 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
     # train with whole dataset
     try:
         ensemble.fit(X=df, y=df["ripening_days"])
-    except ValueError as e:  # raised if NaN in input data
-        raise TrainingError(msg=str(e)) from e
+    except ValueError as exc:  # raised if NaN in input data
+        raise TrainingError(msg=str(exc)) from exc
 
     pickle_pipeline(
         pipeline=ensemble,
@@ -172,6 +172,7 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
         prediction_model=PredictionModel.RIPENING_DAYS,
     )
 
+    # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_ripening
 
     predict_ripening.ripening_days_regressor, predict_ripening.feature_container = None, None

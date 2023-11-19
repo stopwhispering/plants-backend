@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import datetime
-from decimal import Decimal
 from typing import Annotated
 
-from pydantic import ConfigDict, Field, field_validator, types
+from pydantic import BeforeValidator, ConfigDict, Field, field_validator, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -19,6 +18,7 @@ from plants.modules.pollination.enums import (
     SeedPlantingStatus,
     StigmaPosition,
 )
+from plants.shared.api_utils import format_api_date
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 
@@ -92,7 +92,8 @@ class PollinationBase(BaseSchema):
     seed_capsule_plant_id: int
     pollen_donor_plant_id: int
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
-    pollinated_at: str | None = None  # e.g. '2022-11-16 12:06';  None for old data
+    # None only legacy data
+    pollinated_at: Annotated[str, BeforeValidator(format_api_date)] | None = None
     label_color_rgb: (
         str | None
     ) = None  # e.g. '#FFFF00'  # must be existent in COLORS_MAP; None for old
@@ -123,7 +124,8 @@ class PollinationRead(PollinationBase):
 
     pollination_status: str
     ongoing: bool
-    harvest_date: str | None = None  # e.g. '2022-11-16'
+    # harvest_date: str | None = None  # e.g. '2022-11-16'
+    harvest_date: Annotated[str, BeforeValidator(format_api_date)] | None
     seed_capsule_length: float | None = None
     seed_capsule_width: float | None = None
     seed_length: float | None = None
@@ -137,7 +139,7 @@ class PollinationRead(PollinationBase):
 
 
 class HistoricalPollinationRead(PollinationRead):
-    reverse: bool
+    reverse: bool | None = None
 
 
 class PollinationUpdate(PollinationBase):
@@ -199,9 +201,6 @@ class FlorescenceUpdate(FlorescenceBase):
     last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
 
     model_config = ConfigDict(extra="ignore")
-
-
-PerianthDiameter = types.condecimal(ge=Decimal(0.1), le=Decimal(9.9)) | None
 
 
 class FlorescenceRead(FlorescenceBase):

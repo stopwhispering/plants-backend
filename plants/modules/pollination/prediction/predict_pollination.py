@@ -21,8 +21,8 @@ pollination_pipeline, feature_container = None, None
 
 
 def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContainer]:
-    global pollination_pipeline
-    global feature_container
+    global pollination_pipeline  # pylint: disable=global-statement
+    global feature_container  # pylint: disable=global-statement
     if pollination_pipeline is None:
         pollination_pipeline, feature_container = unpickle_pipeline(
             prediction_model=PredictionModel.POLLINATION_PROBABILITY
@@ -51,7 +51,7 @@ def get_data(
     florescence: Florescence,
     pollen_donor: Plant,
     pollen_type: PollenType,
-    feature_container: FeatureContainer,
+    feature_container_: FeatureContainer,
 ) -> pd.DataFrame:
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
@@ -72,7 +72,7 @@ def get_data(
     )
     df_all = pd.Series(training_data.__dict__).to_frame().T
 
-    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
+    if missing := [f for f in feature_container_.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
     return df_all
 
@@ -80,12 +80,12 @@ def get_data(
 def predict_probability_of_seed_production(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
-    model, feature_container = get_probability_of_seed_production_model()
+    model, feature_container_ = get_probability_of_seed_production_model()
     df_all = get_data(
         florescence=florescence,
         pollen_donor=pollen_donor,
         pollen_type=pollen_type,
-        feature_container=feature_container,
+        feature_container_=feature_container_,
     )
     pred_proba = model.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
     probability = pred_proba[0][1]

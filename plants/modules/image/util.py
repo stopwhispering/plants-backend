@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from PIL.Image import Exif
 
-    from plants.modules.image.services import UploadImage
+    from plants.modules.image.save import UploadImage
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,6 @@ async def resize_and_save(upload_image: UploadImage, size: tuple[int, int], qual
 
     # file_content: bytes = await file.read()
     # image_file: ImageFile = PilImage.open(io.BytesIO(file_content))
-    #
     # PIL's thumnail fn works inplace, so we need to clone
     thumbnail = upload_image.pil_image.copy()
     thumbnail.thumbnail(size)  # preserves aspect ratio

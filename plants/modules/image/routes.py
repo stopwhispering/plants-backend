@@ -21,6 +21,7 @@ from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.models import Image
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
+from plants.modules.image.save import handle_image_uploads
 from plants.modules.image.schemas import (
     BImageUpdated,
     BResultsImageDeleted,
@@ -35,7 +36,6 @@ from plants.modules.image.services import (
     fetch_untagged_images,
     get_image_path_by_size,
     get_occurrence_thumbnail_path,
-    handle_image_uploads,
     trigger_generation_of_missing_thumbnails,
 )
 from plants.modules.plant.models import Plant
@@ -300,7 +300,7 @@ async def simple_upload(
 ) -> Any:
     """upload new photo_file(s)"""
 
-    images, duplicate_filenames, warnings, files = await handle_image_uploads(
+    _, duplicate_filenames, warnings, files = await handle_image_uploads(
         files=files,
         plants=[],
         keywords=[],

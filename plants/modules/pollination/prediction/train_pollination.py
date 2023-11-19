@@ -278,6 +278,7 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         prediction_model=PredictionModel.POLLINATION_PROBABILITY,
     )
 
+    # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_pollination
 
     predict_pollination.pollination_pipeline, predict_pollination.feature_container = None, None

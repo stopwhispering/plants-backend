@@ -20,7 +20,7 @@ def remove_image_from_filesystem(filename: str) -> None:
     settings.paths.path_original_photos_uploaded.joinpath(filename).unlink()
 
 
-async def is_resizing_required(pil_image: PilImage.Image, size: tuple[int, int] | None) -> bool:
+def is_resizing_required(pil_image: PilImage.Image, size: tuple[int, int] | None) -> bool:
     """Checks size of PIL Image and compares to supplied maximum size."""
     if not size:
         return False

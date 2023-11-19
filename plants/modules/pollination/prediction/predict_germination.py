@@ -29,7 +29,7 @@ def predict_germination_probability(seed_planting: SeedPlanting) -> int:
     ensemble: VotingClassifier
     ensemble, feature_container = get_germination_probability_model()
     df_all = get_feature_data(
-        seed_planting=seed_planting,
+        # seed_planting=seed_planting,
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
@@ -41,7 +41,7 @@ def predict_germination_days(seed_planting: SeedPlanting) -> int:
     ensemble: VotingRegressor
     ensemble, feature_container = get_germination_days_model()
     df_all = get_feature_data(
-        seed_planting=seed_planting,
+        # seed_planting=seed_planting,
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
@@ -51,8 +51,8 @@ def predict_germination_days(seed_planting: SeedPlanting) -> int:
 
 def get_germination_probability_model() -> tuple[VotingClassifier, FeatureContainer]:
     # todo common registry and getter for all models
-    global germination_probability_model
-    global germination_feature_container
+    global germination_probability_model  # pylint: disable=global-statement
+    global germination_feature_container  # pylint: disable=global-statement
     if germination_probability_model is None:
         germination_probability_model, germination_feature_container = unpickle_pipeline(
             prediction_model=PredictionModel.GERMINATION_PROBABILITY
@@ -62,8 +62,8 @@ def get_germination_probability_model() -> tuple[VotingClassifier, FeatureContai
 
 def get_germination_days_model() -> tuple[VotingRegressor, FeatureContainer]:
     # todo common registry and getter for all models
-    global germination_days_model
-    global germination_days_container
+    global germination_days_model  # pylint: disable=global-statement
+    global germination_days_container  # pylint: disable=global-statement
     if germination_days_model is None:
         germination_days_model, germination_days_container = unpickle_pipeline(
             prediction_model=PredictionModel.GERMINATION_DAYS
@@ -91,7 +91,7 @@ class FeaturesSeedPlanting:  # pylint: disable=too-many-instance-attributes
 
 
 def get_feature_data(
-    seed_planting: SeedPlanting,  # noqa: ARG001
+    # seed_planting: SeedPlanting,  # noqa: ARG001
     pollination: Pollination,
     feature_container: FeatureContainer,
 ) -> pd.DataFrame:

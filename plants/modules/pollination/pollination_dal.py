@@ -72,7 +72,7 @@ class PollinationDAL(BaseDAL):
 
         await self.session.flush()
 
-    async def get_ongoing_pollinations(
+    async def get_pollinations(
         self,
         *,
         include_ongoing_pollinations: bool,

@@ -23,18 +23,18 @@ ripening_days_regressor, feature_container = None, None
 
 
 def predict_ripening_days(pollination: Pollination) -> int:
-    ensemble, feature_container = get_ripening_days_model()
+    ensemble, feature_container_ = get_ripening_days_model()
     df_all = get_feature_data(
         pollination=pollination,
-        feature_container=feature_container,
+        feature_container_=feature_container_,
     )
     pred: tuple[float, float] = ensemble.predict(df_all)  # e.g. [[0.09839491 0.90160509]]
     return round(pred[0])
 
 
 def get_ripening_days_model() -> tuple[VotingRegressor, FeatureContainer]:
-    global ripening_days_regressor
-    global feature_container
+    global ripening_days_regressor  # pylint: disable=global-statement
+    global feature_container  # pylint: disable=global-statement
     if ripening_days_regressor is None:
         ripening_days_regressor, feature_container = unpickle_pipeline(
             prediction_model=PredictionModel.RIPENING_DAYS
@@ -58,7 +58,9 @@ class FeaturesRipeningDays:  # pylint: disable=too-many-instance-attributes
     same_species: bool
 
 
-def get_feature_data(pollination: Pollination, feature_container: FeatureContainer) -> pd.DataFrame:
+def get_feature_data(
+    pollination: Pollination, feature_container_: FeatureContainer
+) -> pd.DataFrame:
     features = FeaturesRipeningDays(
         location=pollination.location,
         genus_seed_capsule=pollination.seed_capsule_plant.taxon.genus
@@ -99,6 +101,6 @@ def get_feature_data(pollination: Pollination, feature_container: FeatureContain
     )
     df_all = pd.Series(features.__dict__).to_frame().T
 
-    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
+    if missing := [f for f in feature_container_.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
     return df_all

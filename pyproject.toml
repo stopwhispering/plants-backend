@@ -268,7 +268,7 @@ module = "scipy.sparse.*"
 ignore_missing_imports = true
 
 [tool.pylint]
-good-names="id, db, x, y, dt, ts, err, tag"
+good-names="df, i, p, id, db, x, y, dt, ts, err, tag"
 max-line-length = 100
 disable = [
     "missing-docstring",
