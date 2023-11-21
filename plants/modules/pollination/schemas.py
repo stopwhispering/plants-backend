@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import Annotated
 
-from pydantic import BeforeValidator, ConfigDict, Field, field_validator, types
+from pydantic import BeforeValidator, ConfigDict, Field, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -60,10 +60,10 @@ class SeedPlantingRead(SeedPlantingBase):
 
     plants: list[PlantEssentials]
 
-    @field_validator("count_germinated", mode="before")  # noqa
-    @classmethod
-    def count_germinated_return_zero_if_none(cls, value: int | None) -> int:
-        return value if value is not None else 0
+    # @field_validator("count_germinated", mode="before")  # noqa
+    # @classmethod
+    # def count_germinated_return_zero_if_none(cls, value: int | None) -> int:
+    #     return value if value is not None else 0
 
 
 class SeedPlantingUpdate(SeedPlantingBase):

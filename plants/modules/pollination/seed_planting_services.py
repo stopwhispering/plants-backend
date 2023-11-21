@@ -76,11 +76,11 @@ async def update_seed_planting(
     ):
         raise ValidationError("Germinated first on date must be set.")
 
-    if (
-        edited_seed_planting_data.status == SeedPlantingStatus.GERMINATED
-        and not edited_seed_planting_data.count_germinated
-    ):  # either zero or None
-        raise ValidationError("Count germinated must be set.")
+    # if (
+    #     edited_seed_planting_data.status == SeedPlantingStatus.GERMINATED
+    #     and not edited_seed_planting_data.count_germinated
+    # ):  # either zero or None
+    #     raise ValidationError("Count germinated must be set.")
 
     if (
         edited_seed_planting_data.status == SeedPlantingStatus.ABANDONED
