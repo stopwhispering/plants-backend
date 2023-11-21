@@ -18,7 +18,7 @@ from plants.modules.pollination.enums import (
     SeedPlantingStatus,
     StigmaPosition,
 )
-from plants.shared.api_utils import format_api_date
+from plants.shared.api_utils import format_api_date, format_api_datetime
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
 
 
@@ -93,7 +93,7 @@ class PollinationBase(BaseSchema):
     pollen_donor_plant_id: int
     pollen_type: PollenType  # PollenType (fresh | frozen | unknown)
     # None only legacy data
-    pollinated_at: Annotated[str, BeforeValidator(format_api_date)] | None = None
+    # pollinated_at: //set in subclasses
     label_color_rgb: (
         str | None
     ) = None  # e.g. '#FFFF00'  # must be existent in COLORS_MAP; None for old
@@ -110,6 +110,7 @@ class PollinationRead(PollinationBase):
 
     seed_capsule_plant_preview_image_id: int | None = None
     pollen_donor_plant_preview_image_id: int | None = None
+    pollinated_at: Annotated[str, BeforeValidator(format_api_datetime)] | None = None
 
     florescence_id: int
     florescence_comment: str | None = None
@@ -150,6 +151,8 @@ class PollinationUpdate(PollinationBase):
     pollination_status: PollinationStatus
     ongoing: bool
 
+    pollinated_at: str | None = None  # e.g. '2022-11-16 13:23:00'
+
     count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
     count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]
 
@@ -168,6 +171,8 @@ class PollinationUpdate(PollinationBase):
 class PollinationCreate(PollinationBase):
     florescence_id: int
     pollen_quality: PollenQuality
+
+    pollinated_at: str | None = None  # e.g. '2022-11-16 13:23:00'
 
     model_config = ConfigDict(extra="ignore")  # some names and texts not to be inserted into DB
 
