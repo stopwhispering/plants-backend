@@ -49,6 +49,7 @@ async def test_save_taxon(
         "search_for_genus_not_species": False,
     }
     response = await ac.post("/api/search_taxa_by_name", json=payload)
+    assert response.status_code == 200
     taxon = next(
         r
         for r in response.json()["ResultsCollection"]

@@ -21,7 +21,7 @@ async def test_create_soil(ac: AsyncClient) -> None:
     )
 
     # create the soil via api
-    response = await ac.post("/api/events/soils", json=payload.dict())
+    response = await ac.post("/api/events/soils", json=payload.model_dump())
     assert response.status_code == 200
 
     # get soils via api and make sure the new soil is there
@@ -48,7 +48,7 @@ async def test_update_soil(ac: AsyncClient, soil_in_db: Soil) -> None:
     )
 
     # create the soil via api
-    response = await ac.put("/api/events/soils", json=payload.dict())
+    response = await ac.put("/api/events/soils", json=payload.model_dump())
     assert response.status_code == 200
 
     # get soils via api and make sure the new soil is there

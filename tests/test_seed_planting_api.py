@@ -122,7 +122,7 @@ async def test_update_seed_planting(
     )
     response = await ac.put(
         f"/api/seed_plantings/{seed_planting_in_db.id}",
-        json=payload.dict()
+        json=payload.model_dump()
         | {
             "planted_on": yesterday.strftime(FORMAT_YYYY_MM_DD),
             "germinated_first_on": today.strftime(FORMAT_YYYY_MM_DD),
@@ -164,7 +164,9 @@ async def test_create_seed_planting(
         count_planted=5,
         soil_id=soil_in_db.id,
     )
-    response = await ac.post("/api/seed_plantings", json=payload.dict() | {"planted_on": today})
+    response = await ac.post(
+        "/api/seed_plantings", json=payload.model_dump() | {"planted_on": today}
+    )
     assert response.status_code == 200
 
     # refetch the pollination to get the new seed planting

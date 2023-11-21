@@ -174,7 +174,7 @@ async def test_delete_image(
     )
     # unfortunately, HTTPX does not support DELETE with body, so we generate
     # the request manually
-    response = await ac.request(url="/api/images/", method="DELETE", json=payload.dict())
+    response = await ac.request(url="/api/images/", method="DELETE", json=payload.model_dump())
     assert response.status_code == 200
 
     # check that image file is deleted
@@ -253,7 +253,7 @@ async def test_delete_image_with_event(  # noqa: PLR0913
 
     # unfortunately, HTTPX does not support DELETE with body, so we generate
     # the request manually (we need a payload to enable deleting multiple at once)
-    response = await ac.request(url="/api/images/", method="DELETE", json=payload.dict())
+    response = await ac.request(url="/api/images/", method="DELETE", json=payload.model_dump())
     assert response.status_code == 200
 
     # check that image file is deleted

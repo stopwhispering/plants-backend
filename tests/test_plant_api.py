@@ -62,7 +62,9 @@ async def test_plant_rename_valid(
     payload_ = PlantRenameRequest(
         new_plant_name="Aloe ferox var. ferox 'variegata'",
     )
-    response = await ac.put(f"/api/plants/{plant_valid_in_db.id}/rename", json=payload_.dict())
+    response = await ac.put(
+        f"/api/plants/{plant_valid_in_db.id}/rename", json=payload_.model_dump()
+    )
     assert response.status_code == 200
 
     await test_db.refresh(plant_valid_in_db)
@@ -207,7 +209,7 @@ async def test_rename_plant(
     """Test renaming a plant."""
     payload = PlantRenameRequest(new_plant_name="Aloe barbadensis")
     response = await ac.put(
-        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.dict()
+        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.model_dump()
     )
     assert response.status_code == 200
 
@@ -228,7 +230,7 @@ async def test_rename_plant_invalid(
     new_name = another_valid_plant_in_db.plant_name
     payload = PlantRenameRequest(new_plant_name=new_name)
     response = await ac.put(
-        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.dict()
+        f"/api/plants/{valid_plant_in_db_with_image.id}/rename", json=payload.model_dump()
     )
     assert response.status_code == 400
     assert "already exists" in response.json()["detail"]

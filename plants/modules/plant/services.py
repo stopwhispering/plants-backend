@@ -135,7 +135,7 @@ async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL)
         if tag.id is None:
             continue
         tag_object = await plant_dal.get_tag_by_tag_id(tag.id)
-        await plant_dal.update_tag(tag_object, tag.dict())
+        await plant_dal.update_tag(tag_object, tag.model_dump())
 
     # delete tags not supplied anymore
     updated_ids = {t.id for t in tags if t.id is not None}

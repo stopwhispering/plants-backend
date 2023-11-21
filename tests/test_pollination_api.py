@@ -59,7 +59,7 @@ async def test_create_pollination(
             )
         ]
     )
-    response = await ac.post("/api/pollen_containers", json=payload_pc.dict())
+    response = await ac.post("/api/pollen_containers", json=payload_pc.model_dump())
     assert response.status_code == 200
 
     plant2: Plant | None = await plant_dal.by_name(p["plant_name"])
@@ -79,7 +79,7 @@ async def test_create_pollination(
         location=Location.INDOOR,
         count_attempted=3,
     )
-    response = await ac.post("/api/pollinations", json=payload_pollination.dict())
+    response = await ac.post("/api/pollinations", json=payload_pollination.model_dump())
     assert response.status_code == 200
     pollinations = await pollination_dal.get_pollinations_by_plant_ids(
         plant_valid_with_active_florescence_in_db.id, plant2.id

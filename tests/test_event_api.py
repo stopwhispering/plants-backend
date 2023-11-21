@@ -122,8 +122,8 @@ async def test_update_event(
     event_dal: EventDAL,
     test_db: AsyncSession,
 ):
-    """Test updating an event via api removing a hitherto existing observation, soil,
-    pot, and image assignment."""
+    """Test updating an event via api removing a hitherto existing observation, soil, pot, and image
+    assignment."""
     event: Event = plant_in_db_with_image_and_events.events[0]
     plant_id = plant_in_db_with_image_and_events.id
     event_id = plant_in_db_with_image_and_events.events[0].id
@@ -149,7 +149,7 @@ async def test_update_event(
     )
 
     # update the event via api
-    response = await ac.post("/api/events/", json=payload.dict())
+    response = await ac.post("/api/events/", json=payload.model_dump())
     assert response.status_code == 200
     assert "deleted" in response.json().get("message").get("description").lower()
 
