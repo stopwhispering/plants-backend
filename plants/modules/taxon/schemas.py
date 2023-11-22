@@ -134,7 +134,7 @@ class TaxonBase(BaseSchema):
     rank: Annotated[str, Field(min_length=1, max_length=30)]
     family: Annotated[str, Field(min_length=1, max_length=100)]
     genus: Annotated[str, Field(min_length=1, max_length=100)]
-    species: Annotated[str, Field(min_length=1, max_length=100)]
+    species: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     infraspecies: Annotated[str, Field(min_length=1, max_length=40)] | None = None
 
     # IPNI/POWO Life Sciences Identifier
