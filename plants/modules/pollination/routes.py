@@ -35,6 +35,7 @@ from plants.modules.pollination.models import Florescence, Pollination, SeedPlan
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
     get_predicted_ripening_days,
+    get_probability_pollination_to_seed,
     read_plants_without_pollen_containers,
     read_pollen_containers,
     read_pollinations,
@@ -145,8 +146,16 @@ async def get_ongoing_pollinations(
     pollinations: list[PollinationRead] = []
     for p in pollinations_orm:
         pollination = PollinationRead.model_validate(p)
-        if pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
-            pollination.predicted_ripening_days = get_predicted_ripening_days(p)
+        # if pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
+        pollination.predicted_ripening_days = get_predicted_ripening_days(p)
+
+        if pollination.pollination_status == PollinationStatus.ATTEMPT:
+            pollination.probability_pollination_to_seed = get_probability_pollination_to_seed(
+                florescence=p.florescence,
+                pollen_donor=p.pollen_donor_plant,
+                pollen_type=p.pollen_type,
+            )
+
         pollinations.append(pollination)
 
     return {

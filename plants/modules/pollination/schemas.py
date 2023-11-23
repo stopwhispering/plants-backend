@@ -120,6 +120,7 @@ class PollinationRead(PollinationBase):
     count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
     count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]
 
+    probability_pollination_to_seed: int | None = None  # only relevant for status ATTEMPT
     predicted_ripening_days: types.conint(ge=1) | None = None  # type: ignore[valid-type]
     current_ripening_days: types.conint(ge=0) | None = None  # type: ignore[valid-type]
 
