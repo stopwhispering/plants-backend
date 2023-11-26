@@ -14,10 +14,11 @@ from sqlalchemy.sql.operators import and_
 
 from plants.exceptions import (
     CriterionNotImplementedError,
+    TagNotAssignedToTaxonError,
     TaxonNotFoundError,
 )
 from plants.modules.image.models import Image, ImageToTaxonAssociation
-from plants.modules.plant.models import Plant
+from plants.modules.plant.models import Plant, Tag
 from plants.modules.taxon.models import (
     Taxon,
     TaxonOccurrenceImage,
@@ -39,6 +40,7 @@ class TaxonDAL(BaseDAL):
         query = (
             select(Taxon)
             .where(Taxon.id == taxon_id)
+            .options(selectinload(Taxon.tags))
             .options(selectinload(Taxon.occurrence_images))
             .options(
                 selectinload(Taxon.images).selectinload(Image.image_to_taxon_associations),
@@ -55,6 +57,12 @@ class TaxonDAL(BaseDAL):
 
     def expire_all(self) -> None:
         self.session.expire_all()
+
+    async def remove_tag_from_taxon(self, taxon: Taxon, tag: Tag) -> None:
+        if tag not in taxon.tags:
+            raise TagNotAssignedToTaxonError(taxon.id, tag.id)
+        taxon.tags.remove(tag)
+        await self.session.flush()
 
     async def by_gbif_id(self, gbif_id: int) -> list[Taxon]:
         # noinspection PyTypeChecker

@@ -215,8 +215,8 @@ class TaxonRead(TaxonBase):
 
 
 class TaxonCreate(TaxonBase):
-    id: int | None  # filled if taxon is already in db
-    custom_rank: FBRank | None
+    id: int | None = None  # filled if taxon is already in db
+    custom_rank: FBRank | None = None
     custom_infraspecies: str | None = None
     custom_suffix: str | None = None
 

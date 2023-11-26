@@ -23,7 +23,7 @@ from plants.modules.image.models import Image
 from plants.modules.taxon.enums import Establishment, FBRank
 
 if TYPE_CHECKING:
-    from plants.modules.plant.models import Plant
+    from plants.modules.plant.models import Plant, Tag
 
 
 class Distribution(Base):
@@ -97,6 +97,13 @@ class Taxon(Base):
     plants: Mapped[list[Plant]] = relationship("Plant", back_populates="taxon", uselist=True)
     distribution: Mapped[list[Distribution]] = relationship(
         "Distribution", back_populates="taxon", uselist=True
+    )
+
+    # taxon to tag: 1:n
+    tags: Mapped[list[Tag]] = relationship(
+        "Tag",
+        back_populates="taxon",
+        cascade="all, delete, delete-orphan",
     )
 
     # 1:n relationship to the photo_file/taxon link table

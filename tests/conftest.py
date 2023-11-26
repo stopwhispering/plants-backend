@@ -322,6 +322,7 @@ def valid_simple_plant_dict() -> dict[str, Any]:
         # 'sibling_plants': [],
         # 'same_taxon_plants': [],
         "tags": [],
+        # "taxon_tags": [],
     }
 
 

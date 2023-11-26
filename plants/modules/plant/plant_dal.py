@@ -14,6 +14,7 @@ from plants.exceptions import (
 from plants.modules.event.models import Event
 from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant, Tag
+from plants.modules.taxon.models import Taxon
 from plants.shared.base_dal import BaseDAL
 
 
@@ -30,7 +31,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             selectinload(Plant.sibling_plants),
             selectinload(Plant.descendant_plants),
             selectinload(Plant.descendant_plants_pollen),
-            selectinload(Plant.taxon),
+            selectinload(Plant.taxon).selectinload(Taxon.tags),
             selectinload(Plant.events).selectinload(Event.soil),
             selectinload(Plant.events).selectinload(Event.observation),
             selectinload(Plant.events).selectinload(Event.pot),
@@ -285,7 +286,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             selectinload(Plant.descendant_plants),
             selectinload(Plant.descendant_plants_pollen),
             # selectinload(Plant.descendant_plants_all),  # property
-            selectinload(Plant.taxon),
+            selectinload(Plant.taxon).selectinload(Taxon.tags),
             # selectinload(Plant.taxon_authors),  # property
             selectinload(Plant.events).selectinload(Event.soil),
             # selectinload(Plant.current_soil),  # property

@@ -17,8 +17,9 @@ from plants.shared.orm_util import clone_orm_instance
 if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.plant.schemas import FBPlantTag, PlantCreate, PlantUpdate
+    from plants.modules.plant.schemas import FBPlantTag, PlantCreate, PlantUpdate, TaxonTagRead
     from plants.modules.pollination.models import SeedPlanting
+    from plants.modules.taxon.models import Taxon
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
@@ -55,19 +56,26 @@ async def update_plants_from_list_of_dicts(
         record_update = await plant_dal.by_id(plant.id)
 
         # update plant
-        updates = plant.dict(exclude={"id", "tags", "parent_plant", "parent_plant_pollen"})
+        updates = plant.model_dump(
+            exclude={"id", "tags", "taxon_tags", "parent_plant", "parent_plant_pollen"}
+        )
 
         updates["parent_plant_id"] = plant.parent_plant.id if plant.parent_plant else None
         updates["parent_plant_pollen_id"] = (
             plant.parent_plant_pollen.id if plant.parent_plant_pollen else None
         )
-        updates["taxon"] = await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
+
+        taxon = await taxon_dal.by_id(plant.taxon_id) if plant.taxon_id else None
+        updates["taxon"] = taxon
 
         await plant_dal.update(record_update, updates)
 
         # create new, update existing and remove deleted tags
         await _treat_tags(record_update, plant.tags, plant_dal=plant_dal)
         plants_saved.append(record_update)
+
+        if taxon:
+            await _treat_taxon_tags(taxon=taxon, taxon_tags=plant.taxon_tags, taxon_dal=taxon_dal)
 
     return plants_saved
 
@@ -114,6 +122,32 @@ async def deep_clone_plant(
     await plant_dal.save_plant(plant_clone)
 
 
+async def _treat_taxon_tags(
+    taxon: Taxon, taxon_tags: list[TaxonTagRead], taxon_dal: TaxonDAL
+) -> None:
+    """Add/remove taxon tags."""
+    # create new tags
+    new_tags = []
+    for tag in [t for t in taxon_tags if t.id is None]:
+        new_tag: Tag = Tag(
+            text=tag.text,
+            state=tag.state,
+            # plant=,
+            taxon=taxon,
+        )
+        new_tags.append(new_tag)
+    if new_tags:
+        taxon.tags.extend(new_tags)
+
+    # # update existing tags is not implemented in frontend)
+
+    # delete tags not supplied anymore
+    created_ids = {t.id for t in new_tags}
+    deleted_tags = [t for t in taxon.tags if t.id not in created_ids]
+    for deleted_tag in deleted_tags:
+        await taxon_dal.remove_tag_from_taxon(taxon, deleted_tag)
+
+
 async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL) -> None:
     """Update modified tags; returns list of new tags (not yet added or committed); removes deleted
     tags."""
@@ -124,6 +158,7 @@ async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL)
             text=tag.text,
             state=tag.state,
             plant=plant,
+            # taxon=
         )
         new_tags.append(new_tag)
     if new_tags:

@@ -22,6 +22,11 @@ class FBPlantTag(BaseSchema):
     plant_id: int
 
 
+class TaxonTagRead(FBPlantTag):
+    plant_id: int | None = None
+    taxon_id: int
+
+
 class ShortPlant(BaseSchema):
     id: int
     plant_name: Annotated[str, Field(min_length=1, max_length=100)]
@@ -79,9 +84,13 @@ class PlantRead(PlantBase):
     current_soil: PlantCurrentSoil | None = None
     latest_image: PlantLatestImage | None = None
 
+    taxon_tags: list[TaxonTagRead]
+
 
 class PlantUpdate(PlantBase):
     id: int
+
+    taxon_tags: list[TaxonTagRead]
 
 
 class PlantCreate(PlantBase):

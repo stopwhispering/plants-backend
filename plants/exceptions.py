@@ -97,6 +97,16 @@ class TagNotAssignedToPlantError(BaseError):
         )
 
 
+class TagNotAssignedToTaxonError(BaseError):
+    """Raised when tag is unexpectedly not found in tags assigned to a taxon."""
+
+    def __init__(self, taxon_id: int, tag_id: int):
+        super().__init__(
+            detail=f"Tag {tag_id} not assigned to taxon {taxon_id}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+
 class ImageNotAssignedToTaxonError(BaseError):
     """Raised when Image is unexpectedly not found in images assigned to a taxon."""
 

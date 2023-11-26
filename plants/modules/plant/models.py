@@ -204,6 +204,10 @@ class Plant(Base):
     def taxon_authors(self) -> str | None:
         return self.taxon.authors if self.taxon and self.taxon.authors else None
 
+    @property
+    def taxon_tags(self) -> list[Tag]:
+        return self.taxon.tags if self.taxon else []
+
 
 class Tag(Base):
     """Tags displayed in master view and created/deleted in details view."""
@@ -219,9 +223,14 @@ class Tag(Base):
     # Error, Information, None, Success, Warning
     state: TagState = Column(sa.Enum(TagState), nullable=False)
     # tag to plant: n:1
-    plant_id: int = Column(INTEGER, ForeignKey("plants.id"), nullable=False)
+    plant_id: int = Column(INTEGER, ForeignKey("plants.id"))  # , nullable=False)
     plant: Mapped[Plant | None] = relationship(
         "Plant", back_populates="tags", foreign_keys=[plant_id]
+    )
+
+    taxon_id: int | None = Column(INTEGER, ForeignKey("taxon.id"))
+    taxon: Mapped[Taxon | None] = relationship(
+        "Taxon", back_populates="tags", foreign_keys=[taxon_id]
     )
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
