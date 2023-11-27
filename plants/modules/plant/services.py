@@ -32,7 +32,7 @@ async def create_new_plant(
         raise PlantAlreadyExistsError(new_plant.plant_name)
     # await plant_dal.create_empty_plant(plant_name=new_plant.plant_name)
 
-    new_plant_data = new_plant.dict(exclude={"tags", "parent_plant", "parent_plant_pollen"})
+    new_plant_data = new_plant.model_dump(exclude={"tags", "parent_plant", "parent_plant_pollen"})
     new_plant_data["parent_plant_id"] = (
         new_plant.parent_plant.id if new_plant.parent_plant else None
     )
@@ -175,7 +175,7 @@ async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL)
 
 
 async def fetch_plants(plant_dal: PlantDAL) -> list[Plant]:
-    return await plant_dal.get_all_plants_with_relationships_loaded(
+    return await plant_dal.get_all_plants_with_relationships(
         include_deleted=not settings.plants.filter_hidden
     )
 

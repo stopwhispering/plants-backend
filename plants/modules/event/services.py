@@ -249,7 +249,7 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[dict[str
     # add the number of plants that currently have a specific soil
     soil_counter: defaultdict[int, int] = defaultdict(int)
 
-    plants = await plant_dal.get_all_plants_with_events_loaded()
+    plants = await plant_dal.get_all_plants_with_events()
     for plant in plants:
         # if events := [e for e in plant.events if e.soil_id]:
         if events := [e for e in plant.events if e.soil is not None and e.soil.id is not None]:

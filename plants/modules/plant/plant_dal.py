@@ -264,9 +264,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         plant.tags.remove(tag)
         await self.session.flush()
 
-    async def get_all_plants_with_relationships_loaded(
-        self, *, include_deleted: bool = False
-    ) -> list[Plant]:
+    async def get_all_plants_with_relationships(self, *, include_deleted: bool) -> list[Plant]:
         query = select(Plant)
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants
@@ -298,9 +296,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
-    async def get_all_plants_with_events_loaded(
-        self, *, include_deleted: bool = False
-    ) -> list[Plant]:
+    async def get_all_plants_with_events(self, *, include_deleted: bool = False) -> list[Plant]:
         # filter out hidden ("deleted" in frontend but actually only flagged hidden)
         # plants
         query = select(Plant).options(selectinload(Plant.events).selectinload(Event.soil))
