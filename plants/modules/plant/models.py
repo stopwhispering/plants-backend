@@ -235,3 +235,8 @@ class Tag(Base):
 
     last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+
+    def __repr__(self) -> str:
+        if self.plant_id:
+            return f"<Tag [{self.id}] {self.text} (plant_id: {self.plant_id})>"
+        return f"<Tag [{self.id}] {self.text} (taxon_id: {self.taxon_id})>"

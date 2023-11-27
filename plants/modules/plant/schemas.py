@@ -14,16 +14,18 @@ from plants.shared.base_schema import (
 )
 
 
-class FBPlantTag(BaseSchema):
+class TagBase(BaseSchema):
     id: int | None = None
     state: TagState
     text: Annotated[str, Field(min_length=1, max_length=20)]
     last_update: datetime | None = None
+
+
+class FBPlantTag(TagBase):
     plant_id: int
 
 
-class TaxonTagRead(FBPlantTag):
-    plant_id: int | None = None
+class TaxonTagRead(TagBase):
     taxon_id: int
 
 

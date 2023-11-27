@@ -107,6 +107,16 @@ class TagNotAssignedToTaxonError(BaseError):
         )
 
 
+class TagAlreadyAssignedToTaxonError(BaseError):
+    """Raised when tag is meant to be assigned but already exists."""
+
+    def __init__(self, taxon_id: int, tag_text: str):
+        super().__init__(
+            detail=f"Tag <<{tag_text}>> already assigned to taxon {taxon_id}",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+
 class ImageNotAssignedToTaxonError(BaseError):
     """Raised when Image is unexpectedly not found in images assigned to a taxon."""
 

@@ -126,26 +126,20 @@ async def _treat_taxon_tags(
     taxon: Taxon, taxon_tags: list[TaxonTagRead], taxon_dal: TaxonDAL
 ) -> None:
     """Add/remove taxon tags."""
-    # create new tags
-    new_tags = []
-    for tag in [t for t in taxon_tags if t.id is None]:
-        new_tag: Tag = Tag(
-            text=tag.text,
-            state=tag.state,
-            # plant=,
-            taxon=taxon,
-        )
-        new_tags.append(new_tag)
-    if new_tags:
-        taxon.tags.extend(new_tags)
+    old_tag_texts = {t.text for t in taxon.tags}
 
-    # # update existing tags is not implemented in frontend)
+    # new tags with no id, yet
+    new_tags = [t for t in taxon_tags if t.text not in old_tag_texts]
+    _ = await taxon_dal.add_tags_to_taxon(taxon, new_tags) if new_tags else []
 
-    # delete tags not supplied anymore
-    created_ids = {t.id for t in new_tags}
-    deleted_tags = [t for t in taxon.tags if t.id not in created_ids]
-    for deleted_tag in deleted_tags:
-        await taxon_dal.remove_tag_from_taxon(taxon, deleted_tag)
+    # update existing tags is not implemented in frontend)
+    # todo: make it possible to change status
+
+    # deleted tags not supplied anymore
+    new_tag_texts = {t.text for t in taxon_tags}
+    deleted_tags = [t for t in taxon.tags if t.text not in new_tag_texts]
+    if deleted_tags:
+        await taxon_dal.remove_tags_from_taxon(taxon, deleted_tags)
 
 
 async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL) -> None:

@@ -14,6 +14,7 @@ from sqlalchemy.sql.operators import and_
 
 from plants.exceptions import (
     CriterionNotImplementedError,
+    TagAlreadyAssignedToTaxonError,
     TagNotAssignedToTaxonError,
     TaxonNotFoundError,
 )
@@ -27,6 +28,7 @@ from plants.modules.taxon.models import (
 from plants.shared.base_dal import BaseDAL
 
 if TYPE_CHECKING:
+    from plants.modules.plant.schemas import TagBase
     from plants.modules.taxon.enums import FBRank
 
 
@@ -58,11 +60,22 @@ class TaxonDAL(BaseDAL):
     def expire_all(self) -> None:
         self.session.expire_all()
 
-    async def remove_tag_from_taxon(self, taxon: Taxon, tag: Tag) -> None:
-        if tag not in taxon.tags:
-            raise TagNotAssignedToTaxonError(taxon.id, tag.id)
-        taxon.tags.remove(tag)
+    async def remove_tags_from_taxon(self, taxon: Taxon, tags: list[Tag]) -> None:
+        for tag in tags:
+            if tag not in taxon.tags:
+                raise TagNotAssignedToTaxonError(taxon.id, tag.id)
+            taxon.tags.remove(tag)
         await self.session.flush()
+
+    async def add_tags_to_taxon(self, taxon: Taxon, tags: list[TagBase]) -> list[Tag]:
+        taxon_tags = []
+        for tag in tags:
+            if [t for t in taxon.tags if t.text == tag.text]:
+                raise TagAlreadyAssignedToTaxonError(taxon.id, tag.text)
+            taxon_tags.append(Tag(text=tag.text, state=tag.state))
+        taxon.tags.extend(taxon_tags)
+        await self.session.flush()
+        return taxon_tags
 
     async def by_gbif_id(self, gbif_id: int) -> list[Taxon]:
         # noinspection PyTypeChecker
