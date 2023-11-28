@@ -16,12 +16,12 @@ from plants.dependencies import (
 from plants.modules.event.event_dal import EventDAL
 from plants.modules.event.models import Soil
 from plants.modules.event.schemas import (
-    BPResultsUpdateCreateSoil,
-    BResultsEventResource,
-    BResultsSoilsResource,
-    FRequestCreateOrUpdateEvent,
-    PlantFlowerMonthRead,
-    PlantFlowerYearRead,
+    CreateOrUpdateEventRequest,
+    CreateOrUpdateSoilResponse,
+    GetEventsResponse,
+    GetSoilsResponse,
+    PlantFlowerMonth,
+    PlantFlowerYear,
     SoilCreate,
     SoilUpdate,
 )
@@ -40,7 +40,7 @@ from plants.modules.pollination.flower_history_services import (
     generate_flower_history,
 )
 from plants.shared.enums import MajorResource, MessageType
-from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.message_schemas import BackendSaveConfirmation
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ router = APIRouter(
 )
 
 
-@router.get("/events/soils", response_model=BResultsSoilsResource)
+@router.get("/events/soils", response_model=GetSoilsResponse)
 async def get_soils(
     event_dal: EventDAL = Depends(get_event_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
@@ -61,7 +61,7 @@ async def get_soils(
     return {"SoilsCollection": soils}
 
 
-@router.post("/events/soils", response_model=BPResultsUpdateCreateSoil)
+@router.post("/events/soils", response_model=CreateOrUpdateSoilResponse)
 async def create_new_soil(
     new_soil: SoilCreate, event_dal: EventDAL = Depends(get_event_dal)
 ) -> Any:
@@ -72,7 +72,7 @@ async def create_new_soil(
     return {"soil": soil, "message": get_message(msg, message_type=MessageType.DEBUG)}
 
 
-@router.put("/events/soils", response_model=BPResultsUpdateCreateSoil)
+@router.put("/events/soils", response_model=CreateOrUpdateSoilResponse)
 async def update_existing_soil(
     updated_soil: SoilUpdate, event_dal: EventDAL = Depends(get_event_dal)
 ) -> Any:
@@ -83,7 +83,7 @@ async def update_existing_soil(
     return {"soil": soil, "message": get_message(msg, message_type=MessageType.DEBUG)}
 
 
-@router.get("/events/{plant_id}", response_model=BResultsEventResource)
+@router.get("/events/{plant_id}", response_model=GetEventsResponse)
 async def get_events(
     plant: Plant = Depends(valid_plant),
     event_dal: EventDAL = Depends(get_event_dal),
@@ -98,20 +98,20 @@ async def get_events(
     # for the plant detail page, we need to convert the flower history yearly rows
     flower_history = []
     for row in flower_history_rows:
-        converted_row = PlantFlowerYearRead(
+        converted_row = PlantFlowerYear(
             year=row.year,
-            month_01=PlantFlowerMonthRead(flowering_state=row.month_01),
-            month_02=PlantFlowerMonthRead(flowering_state=row.month_02),
-            month_03=PlantFlowerMonthRead(flowering_state=row.month_03),
-            month_04=PlantFlowerMonthRead(flowering_state=row.month_04),
-            month_05=PlantFlowerMonthRead(flowering_state=row.month_05),
-            month_06=PlantFlowerMonthRead(flowering_state=row.month_06),
-            month_07=PlantFlowerMonthRead(flowering_state=row.month_07),
-            month_08=PlantFlowerMonthRead(flowering_state=row.month_08),
-            month_09=PlantFlowerMonthRead(flowering_state=row.month_09),
-            month_10=PlantFlowerMonthRead(flowering_state=row.month_10),
-            month_11=PlantFlowerMonthRead(flowering_state=row.month_11),
-            month_12=PlantFlowerMonthRead(flowering_state=row.month_12),
+            month_01=PlantFlowerMonth(flowering_state=row.month_01),
+            month_02=PlantFlowerMonth(flowering_state=row.month_02),
+            month_03=PlantFlowerMonth(flowering_state=row.month_03),
+            month_04=PlantFlowerMonth(flowering_state=row.month_04),
+            month_05=PlantFlowerMonth(flowering_state=row.month_05),
+            month_06=PlantFlowerMonth(flowering_state=row.month_06),
+            month_07=PlantFlowerMonth(flowering_state=row.month_07),
+            month_08=PlantFlowerMonth(flowering_state=row.month_08),
+            month_09=PlantFlowerMonth(flowering_state=row.month_09),
+            month_10=PlantFlowerMonth(flowering_state=row.month_10),
+            month_11=PlantFlowerMonth(flowering_state=row.month_11),
+            month_12=PlantFlowerMonth(flowering_state=row.month_12),
         )
         flower_history.append(converted_row)
 
@@ -124,9 +124,9 @@ async def get_events(
     }
 
 
-@router.post("/events/", response_model=BSaveConfirmation)
+@router.post("/events/", response_model=BackendSaveConfirmation)
 async def create_or_update_events(
-    events_request: FRequestCreateOrUpdateEvent,
+    events_request: CreateOrUpdateEventRequest,
     event_dal: EventDAL = Depends(get_event_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),

@@ -4,7 +4,7 @@ import enum
 from enum import Enum
 
 
-class BFloweringState(Enum):
+class FloweringState(Enum):
     """State of flowering."""
 
     INFLORESCENCE_GROWING = "inflorescence_growing"

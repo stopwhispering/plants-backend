@@ -17,7 +17,7 @@ from plants.shared.orm_util import clone_orm_instance
 if TYPE_CHECKING:
     from plants.modules.event.event_dal import EventDAL
     from plants.modules.plant.plant_dal import PlantDAL
-    from plants.modules.plant.schemas import FBPlantTag, PlantCreate, PlantUpdate, TaxonTagRead
+    from plants.modules.plant.schemas import PlantCreate, PlantTag, PlantUpdate, TaxonTag
     from plants.modules.pollination.models import SeedPlanting
     from plants.modules.taxon.models import Taxon
     from plants.modules.taxon.taxon_dal import TaxonDAL
@@ -122,9 +122,7 @@ async def deep_clone_plant(
     await plant_dal.save_plant(plant_clone)
 
 
-async def _treat_taxon_tags(
-    taxon: Taxon, taxon_tags: list[TaxonTagRead], taxon_dal: TaxonDAL
-) -> None:
+async def _treat_taxon_tags(taxon: Taxon, taxon_tags: list[TaxonTag], taxon_dal: TaxonDAL) -> None:
     """Add/remove taxon tags."""
     old_tag_texts = {t.text for t in taxon.tags}
 
@@ -142,7 +140,7 @@ async def _treat_taxon_tags(
         await taxon_dal.remove_tags_from_taxon(taxon, deleted_tags)
 
 
-async def _treat_tags(plant: Plant, tags: list[FBPlantTag], plant_dal: PlantDAL) -> None:
+async def _treat_tags(plant: Plant, tags: list[PlantTag], plant_dal: PlantDAL) -> None:
     """Update modified tags; returns list of new tags (not yet added or committed); removes deleted
     tags."""
     # create new tags

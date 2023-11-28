@@ -22,14 +22,14 @@ from plants.modules.image.services import rename_plant_in_image_files
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.plant.schemas import (
-    BResultsProposeSubsequentPlantName,
+    ClonePlantResponse,
+    CreatePlantResponse,
+    GetPlantsResponse,
     PlantCreate,
     PlantRenameRequest,
-    PlantsUpdateRequest,
-    ResultsPlantCloned,
-    ResultsPlantCreated,
-    ResultsPlantsList,
-    ResultsPlantsUpdate,
+    ProposeSubsequentPlantNameResponse,
+    UpdatePlantsRequest,
+    UpdatePlantsResponse,
 )
 from plants.modules.plant.services import (
     create_new_plant,
@@ -41,7 +41,7 @@ from plants.modules.plant.services import (
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource
 from plants.shared.history_dal import HistoryDAL
-from plants.shared.message_schemas import BConfirmation
+from plants.shared.message_schemas import BackendConfirmation
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ router = APIRouter(
 
 @router.post(
     "/{plant_id}/clone",
-    response_model=ResultsPlantCloned,
+    response_model=ClonePlantResponse,
     status_code=starlette_status.HTTP_201_CREATED,
 )
 async def clone_plant(
@@ -102,7 +102,7 @@ async def clone_plant(
     }
 
 
-@router.post("/", response_model=ResultsPlantCreated)
+@router.post("/", response_model=CreatePlantResponse)
 async def create_plant(
     new_plant: PlantCreate,
     plant_dal: PlantDAL = Depends(get_plant_dal),
@@ -121,9 +121,9 @@ async def create_plant(
     }
 
 
-@router.put("/", response_model=ResultsPlantsUpdate)
+@router.put("/", response_model=UpdatePlantsResponse)
 async def update_plants(
-    data: PlantsUpdateRequest,
+    data: UpdatePlantsRequest,
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
@@ -141,7 +141,7 @@ async def update_plants(
     }
 
 
-@router.delete("/{plant_id}", response_model=BConfirmation)
+@router.delete("/{plant_id}", response_model=BackendConfirmation)
 async def delete_plant(
     plant: Plant = Depends(valid_plant), plant_dal: PlantDAL = Depends(get_plant_dal)
 ) -> Any:
@@ -157,7 +157,7 @@ async def delete_plant(
     }
 
 
-@router.put("/{plant_id}/rename", response_model=BConfirmation)
+@router.put("/{plant_id}/rename", response_model=BackendConfirmation)
 async def rename_plant(
     args: PlantRenameRequest,
     plant: Plant = Depends(valid_plant),
@@ -191,7 +191,7 @@ async def rename_plant(
     }
 
 
-@router.get("/", response_model=ResultsPlantsList)
+@router.get("/", response_model=GetPlantsResponse)
 async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
     """Read (almost unfiltered) plants information from db."""
     plants = await fetch_plants(plant_dal=plant_dal)
@@ -204,7 +204,7 @@ async def get_plants(plant_dal: PlantDAL = Depends(get_plant_dal)) -> Any:
 
 @router.post(
     "/propose_subsequent_plant_name/{original_plant_name}",
-    response_model=BResultsProposeSubsequentPlantName,
+    response_model=ProposeSubsequentPlantNameResponse,
 )
 async def propose_subsequent_plant_name(original_plant_name: str) -> Any:
     """Derive subsequent name for supplied plant name, e.g. "Aloe depressa VI" for "Aloe depressa

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from plants.shared.proposal_schemas import BTaxonTreeNode
+from plants.shared.proposal_schemas import TaxonTreeNode
 
 if TYPE_CHECKING:
     from plants.modules.plant.plant_dal import PlantDAL
@@ -11,13 +11,13 @@ if TYPE_CHECKING:
 
 
 def _insert_into_taxon_tree(
-    taxon_tree: list[BTaxonTreeNode], taxon: Taxon, plant_ids: list[int]
+    taxon_tree: list[TaxonTreeNode], taxon: Taxon, plant_ids: list[int]
 ) -> None:
-    family_node: BTaxonTreeNode | None = next(
+    family_node: TaxonTreeNode | None = next(
         (node for node in taxon_tree if node.key == taxon.family), None
     )
     if not family_node:
-        family_node = BTaxonTreeNode(
+        family_node = TaxonTreeNode(
             key=taxon.family,
             level=0,
             count=0,
@@ -25,11 +25,11 @@ def _insert_into_taxon_tree(
         )
         taxon_tree.append(family_node)
 
-    genus_node: BTaxonTreeNode | None = next(
+    genus_node: TaxonTreeNode | None = next(
         (node for node in family_node.nodes if node.key == taxon.genus), None
     )
     if not genus_node:
-        genus_node = BTaxonTreeNode(
+        genus_node = TaxonTreeNode(
             key=taxon.genus,
             level=1,
             count=0,
@@ -39,11 +39,11 @@ def _insert_into_taxon_tree(
 
     # custom taxa might not have a species but a name
     species_name: str = taxon.species or taxon.name
-    species_leaf: BTaxonTreeNode | None = next(
+    species_leaf: TaxonTreeNode | None = next(
         (node for node in genus_node.nodes if node.key == species_name), None
     )
     if not species_leaf:
-        species_leaf = BTaxonTreeNode(
+        species_leaf = TaxonTreeNode(
             key=species_name,
             level=2,
             count=0,
@@ -59,23 +59,23 @@ def _insert_into_taxon_tree(
     species_leaf.count += len(plant_ids)
 
 
-async def _create_node_for_plants_without_taxon(plant_dal: PlantDAL) -> BTaxonTreeNode | None:
+async def _create_node_for_plants_without_taxon(plant_dal: PlantDAL) -> TaxonTreeNode | None:
     plant_ids_empty = await plant_dal.fetch_plants_ids_without_taxon()
     count_empty = len(plant_ids_empty)
     if count_empty:
-        node_empty_species = BTaxonTreeNode(
+        node_empty_species = TaxonTreeNode(
             key="",
             level=2,
             count=count_empty,
             plant_ids=plant_ids_empty,
         )
-        node_empty_genus = BTaxonTreeNode(
+        node_empty_genus = TaxonTreeNode(
             key="",
             level=1,
             count=count_empty,
             nodes=[node_empty_species],
         )
-        return BTaxonTreeNode(
+        return TaxonTreeNode(
             key="",
             level=0,
             count=count_empty,
@@ -84,14 +84,14 @@ async def _create_node_for_plants_without_taxon(plant_dal: PlantDAL) -> BTaxonTr
     return None
 
 
-async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list[BTaxonTreeNode]:
+async def build_taxon_tree(taxon_dal: TaxonDAL, plant_dal: PlantDAL) -> list[TaxonTreeNode]:
     """Build up taxon tree from distinct families, genus, and species that are assigned at least one
     plant."""
     # get sorted distinct families, genera, and species with list of plant ids each
     taxa_with_plant_ids = await taxon_dal.fetch_taxa_with_plant_ids()
 
     # build up tree
-    tree: list[BTaxonTreeNode] = []
+    tree: list[TaxonTreeNode] = []
 
     for taxon, plant_ids in taxa_with_plant_ids:
         _insert_into_taxon_tree(tree, taxon, plant_ids)

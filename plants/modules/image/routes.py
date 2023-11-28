@@ -16,19 +16,19 @@ from plants.dependencies import (
     valid_plant,
 )
 from plants.exceptions import ImageFileNotFoundError
-from plants.modules.event.schemas import FImagesToDelete
+from plants.modules.event.schemas import DeleteImagesRequest
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.image.image_writer import ImageWriter
 from plants.modules.image.models import Image
 from plants.modules.image.photo_metadata_access_exif import PhotoMetadataAccessExifTags
 from plants.modules.image.save import handle_image_uploads
 from plants.modules.image.schemas import (
-    BImageUpdated,
-    BResultsImageDeleted,
-    BResultsImageResource,
-    BResultsImagesUploaded,
-    FImageUploadedMetadata,
+    DeleteImagesResponse,
+    GetUntaggedImagesResponse,
     ImageRead,
+    UpdateImageRequest,
+    UploadedImageMetadata,
+    UploadImagesResponse,
 )
 from plants.modules.image.services import (
     delete_image_file_and_db_entries,
@@ -42,7 +42,7 @@ from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource, MessageType
-from plants.shared.message_schemas import BConfirmation, BSaveConfirmation
+from plants.shared.message_schemas import BackendConfirmation, BackendSaveConfirmation
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ async def get_images_for_plant(
     return images
 
 
-@router.post("/plants/{plant_id}/images/", response_model=BResultsImagesUploaded)
+@router.post("/plants/{plant_id}/images/", response_model=UploadImagesResponse)
 async def upload_images_plant(
     request: Request,
     plant: Plant = Depends(valid_plant),
@@ -102,7 +102,7 @@ async def upload_images_plant(
     return {"action": "Uploaded", "message": message, "images": images}
 
 
-@router.get("/images/untagged/", response_model=BResultsImageResource)
+@router.get("/images/untagged/", response_model=GetUntaggedImagesResponse)
 async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)) -> Any:
     """Get images with no plants assigned, yet."""
     untagged_images: list[Image] = await fetch_untagged_images(image_dal=image_dal)
@@ -114,9 +114,9 @@ async def get_untagged_images(image_dal: ImageDAL = Depends(get_image_dal)) -> A
     }
 
 
-@router.put("/images/", response_model=BSaveConfirmation)
+@router.put("/images/", response_model=BackendSaveConfirmation)
 async def update_images(
-    modified_ext: BImageUpdated,
+    modified_ext: UpdateImageRequest,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
@@ -149,7 +149,7 @@ async def update_images(
     }
 
 
-@router.post("/images/", response_model=BResultsImagesUploaded)
+@router.post("/images/", response_model=UploadImagesResponse)
 async def upload_images(
     request: Request,
     image_dal: ImageDAL = Depends(get_image_dal),
@@ -166,7 +166,7 @@ async def upload_images(
     files: list[UploadFile] = form.getlist("files[]")  # type: ignore[assignment]
 
     # validate arguments manually as pydantic doesn't trigger here
-    additional_data_ = FImageUploadedMetadata(**additional_data)
+    additional_data_ = UploadedImageMetadata(**additional_data)
 
     plants = [(await plant_dal.by_id(plant_id)) for plant_id in additional_data_.plants]
     images, duplicate_filenames, warnings, files = await handle_image_uploads(
@@ -193,9 +193,9 @@ async def upload_images(
     return {"action": "Uploaded", "message": message, "images": images}
 
 
-@router.delete("/images/", response_model=BResultsImageDeleted)
+@router.delete("/images/", response_model=DeleteImagesResponse)
 async def delete_image(
-    image_container: FImagesToDelete, image_dal: ImageDAL = Depends(get_image_dal)
+    image_container: DeleteImagesRequest, image_dal: ImageDAL = Depends(get_image_dal)
 ) -> Any:
     """move the file that should be deleted to another folder (not actually deleted, currently)"""
     deleted_files: list[str] = []
@@ -264,7 +264,7 @@ async def get_image(
     return FileResponse(path=image_path, media_type="image/jpeg", filename=image_path.name)
 
 
-@router.post("/generate_missing_thumbnails", response_model=BConfirmation)
+@router.post("/generate_missing_thumbnails", response_model=BackendConfirmation)
 async def trigger_generate_missing_thumbnails(
     background_tasks: BackgroundTasks, image_dal: ImageDAL = Depends(get_image_dal)
 ) -> Any:

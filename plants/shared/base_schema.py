@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 from plants.shared.enums import MajorResource
-from plants.shared.message_schemas import BMessage
+from plants.shared.message_schemas import BackendMessage
 
 
 class BaseSchema(BaseModel):
@@ -12,7 +12,7 @@ class BaseSchema(BaseModel):
 
 class ResponseContainer(BaseModel):
     action: str | None = None
-    message: BMessage
+    message: BackendMessage
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 

@@ -5,7 +5,7 @@ from typing import NoReturn
 from fastapi import HTTPException
 
 from plants.shared.enums import MessageType
-from plants.shared.message_schemas import BMessage
+from plants.shared.message_schemas import BackendMessage
 
 
 def throw_exception(
@@ -14,9 +14,8 @@ def throw_exception(
     status_code: int = 520,
     description: str | None = None,
 ) -> NoReturn:
-    """Hands over supplied message details for ui5 frontend to be displayed as toast and
-    added to message collection; adds header info from starlette request if
-    available."""
+    """Hands over supplied message details for ui5 frontend to be displayed as toast and added to
+    message collection; adds header info from starlette request if available."""
     description_text = ""
     if description:
         description_text = description + "\n" + description_text
@@ -35,12 +34,12 @@ def get_message(
     message_type: MessageType = MessageType.INFORMATION,
     description: str | None = None,
 ) -> dict[str, str | None]:
-    """Generates a message to be userd in a ui5 frontend; uses flask request which is
-    not required as a paramter."""
+    """Generates a message to be userd in a ui5 frontend; uses flask request which is not required
+    as a paramter."""
     msg = {
         "type": message_type.value,
         "message": message,
         "description": description,
     }
-    BMessage.validate(msg)
+    BackendMessage.validate(msg)
     return msg

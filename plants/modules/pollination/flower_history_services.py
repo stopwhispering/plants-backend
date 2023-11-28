@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytz
 
-from plants.modules.pollination.enums import BFloweringState, FlorescenceStatus
+from plants.modules.pollination.enums import FlorescenceStatus, FloweringState
 from plants.modules.pollination.schemas import FlowerHistoryRow
 
 if TYPE_CHECKING:
@@ -31,12 +31,12 @@ class FloweringPeriod:
     start_verified: bool
     end: date
     end_verified: bool
-    flowering_state: BFloweringState
+    flowering_state: FloweringState
 
-    def get_state_at_date(self, date_: date) -> BFloweringState:
+    def get_state_at_date(self, date_: date) -> FloweringState:
         if self.start <= date_ <= self.end:
             return self.flowering_state
-        return BFloweringState.NOT_FLOWERING
+        return FloweringState.NOT_FLOWERING
 
 
 class FloweringPlant:
@@ -59,15 +59,15 @@ class FloweringPlant:
     def get_earliest_period_start(self) -> date:
         return min(period.start for period in self.periods)
 
-    def get_state_at_date(self, date_: date) -> BFloweringState:
+    def get_state_at_date(self, date_: date) -> FloweringState:
         states = [period.get_state_at_date(date_) for period in self.periods]
-        if BFloweringState.FLOWERING in states:
-            return BFloweringState.FLOWERING
-        if BFloweringState.SEEDS_RIPENING in states:
-            return BFloweringState.SEEDS_RIPENING
-        if BFloweringState.INFLORESCENCE_GROWING in states:
-            return BFloweringState.INFLORESCENCE_GROWING
-        return BFloweringState.NOT_FLOWERING
+        if FloweringState.FLOWERING in states:
+            return FloweringState.FLOWERING
+        if FloweringState.SEEDS_RIPENING in states:
+            return FloweringState.SEEDS_RIPENING
+        if FloweringState.INFLORESCENCE_GROWING in states:
+            return FloweringState.INFLORESCENCE_GROWING
+        return FloweringState.NOT_FLOWERING
 
     def _get_inflorescence_period(self, florescence: Florescence) -> FloweringPeriod | None:
         # simple case - inflorescence period is known
@@ -77,7 +77,7 @@ class FloweringPlant:
                 start_verified=True,
                 end=florescence.first_flower_opened_at - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
+                flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
 
         # start is known, end is not
@@ -106,7 +106,7 @@ class FloweringPlant:
                 start_verified=True,
                 end=estimated_first_flower_date - timedelta(days=1),
                 end_verified=False,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
+                flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
 
         # end date is known, start is not
@@ -119,7 +119,7 @@ class FloweringPlant:
                 start_verified=False,
                 end=florescence.first_flower_opened_at - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.INFLORESCENCE_GROWING,
+                flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
 
         logger.warning(
@@ -137,7 +137,7 @@ class FloweringPlant:
                 # florescence.last_flower_closed_at - timedelta(days=1),
                 end=florescence.last_flower_closed_at,
                 end_verified=True,
-                flowering_state=BFloweringState.FLOWERING,
+                flowering_state=FloweringState.FLOWERING,
             )
 
         # start is known, end is not but flower is still ongoing
@@ -153,7 +153,7 @@ class FloweringPlant:
                 end=datetime.now(tz=pytz.timezone("Europe/Berlin")).date(),
                 # end=date.today(),
                 end_verified=False,
-                flowering_state=BFloweringState.FLOWERING,
+                flowering_state=FloweringState.FLOWERING,
             )
 
         # start is known, end is not
@@ -177,7 +177,7 @@ class FloweringPlant:
                 start_verified=True,
                 end=estimated_last_flower_date - timedelta(days=1),
                 end_verified=False,
-                flowering_state=BFloweringState.FLOWERING,
+                flowering_state=FloweringState.FLOWERING,
             )
 
         # end date is known, start is not
@@ -190,7 +190,7 @@ class FloweringPlant:
                 start_verified=False,
                 end=florescence.last_flower_closed_at - timedelta(days=1),
                 end_verified=True,
-                flowering_state=BFloweringState.FLOWERING,
+                flowering_state=FloweringState.FLOWERING,
             )
 
         return None
@@ -213,7 +213,7 @@ class FloweringPlant:
                 start_verified=True,  # !
                 end=florescence.last_seed_ripening_date,
                 end_verified=True,
-                flowering_state=BFloweringState.SEEDS_RIPENING,
+                flowering_state=FloweringState.SEEDS_RIPENING,
             )
 
         # start is known, end is not
@@ -233,7 +233,7 @@ class FloweringPlant:
                 start_verified=True,  # !
                 end=estimated_last_seed_date,
                 end_verified=False,
-                flowering_state=BFloweringState.SEEDS_RIPENING,
+                flowering_state=FloweringState.SEEDS_RIPENING,
             )
 
         # end is known, start is not
@@ -246,7 +246,7 @@ class FloweringPlant:
                 start_verified=False,
                 end=florescence.last_seed_ripening_date,
                 end_verified=True,
-                flowering_state=BFloweringState.SEEDS_RIPENING,
+                flowering_state=FloweringState.SEEDS_RIPENING,
             )
 
         logger.debug(

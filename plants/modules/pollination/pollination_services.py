@@ -22,12 +22,12 @@ from plants.modules.pollination.prediction.predict_pollination import (
 from plants.modules.pollination.prediction.predict_ripening import predict_ripening_days
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
-    BPotentialPollenDonor,
-    HistoricalPollinationRead,
+    HistoricalPollination,
     PollenContainerCreateUpdate,
     PollenContainerRead,
     PollinationCreate,
     PollinationUpdate,
+    PotentialPollenDonor,
 )
 from plants.shared.api_constants import (
     FORMAT_API_YYYY_MM_DD_HH_MM,
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 async def _read_pollination_attempts(
     plant_id: int, pollen_donor_id: int, pollination_dal: PollinationDAL
-) -> list[HistoricalPollinationRead]:
+) -> list[HistoricalPollination]:
     """Read all pollination attempts for a plant and a pollen donor plus the other way around."""
     attempts_orm = await pollination_dal.get_pollinations_by_plants(
         seed_capsule_plant_id=plant_id, pollen_donor_plant_id=pollen_donor_id
@@ -59,7 +59,7 @@ async def _read_pollination_attempts(
 
     attempts = []
     for p in attempts_orm + attempts_orm_reverse:
-        pollination = HistoricalPollinationRead.model_validate(p, context={"reverse": True})
+        pollination = HistoricalPollination.model_validate(p, context={"reverse": True})
         pollination.reverse = pollination.seed_capsule_plant_id == pollen_donor_id
         # todo predict?
         attempts.append(pollination)
@@ -96,11 +96,11 @@ async def read_potential_pollen_donors(
     florescence_dal: FlorescenceDAL,
     pollination_dal: PollinationDAL,
     plant_dal: PlantDAL,
-) -> list[BPotentialPollenDonor]:
+) -> list[PotentialPollenDonor]:
     """Read all potential pollen donors for a flowering plant; this can bei either another flowering
     plant or frozen pollen."""
 
-    potential_pollen_donors: list[BPotentialPollenDonor] = []
+    potential_pollen_donors: list[PotentialPollenDonor] = []
 
     # 1. flowering plants
     fresh_pollen_donors: list[Florescence] = await florescence_dal.by_status(
@@ -149,7 +149,7 @@ async def read_potential_pollen_donors(
             ),
         }
         potential_pollen_donors.append(
-            BPotentialPollenDonor.model_validate(potential_pollen_donor_flowering)
+            PotentialPollenDonor.model_validate(potential_pollen_donor_flowering)
         )
 
     # 2. frozen pollen
@@ -188,7 +188,7 @@ async def read_potential_pollen_donors(
             ),
         }
         potential_pollen_donors.append(
-            BPotentialPollenDonor.model_validate(potential_pollen_donor_frozen)
+            PotentialPollenDonor.model_validate(potential_pollen_donor_frozen)
         )
 
     return potential_pollen_donors

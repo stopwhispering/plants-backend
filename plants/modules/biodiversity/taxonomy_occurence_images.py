@@ -18,7 +18,7 @@ from plants.modules.taxon.models import (
     TaxonOccurrenceImage,
     TaxonToOccurrenceAssociation,
 )
-from plants.modules.taxon.schemas import TaxonOccurrenceImageRead
+from plants.modules.taxon.schemas import TaxonOccurrenceImageSchema
 from plants.shared.message_services import throw_exception
 
 if TYPE_CHECKING:
@@ -218,7 +218,7 @@ class TaxonOccurencesLoader:
 
         # validate (don't convert as this would convert datetime to str
         try:
-            TaxonOccurrenceImageRead(**image_metadata.__dict__)
+            TaxonOccurrenceImageSchema(**image_metadata.__dict__)
         except ValidationError as err:
             throw_exception(str(err))
             return None

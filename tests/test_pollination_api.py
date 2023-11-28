@@ -15,7 +15,7 @@ from plants.modules.pollination.enums import (
 )
 from plants.modules.pollination.models import Florescence
 from plants.modules.pollination.schemas import (
-    FRequestPollenContainers,
+    CreateUpdatePollenContainersRequest,
     PollenContainerCreateUpdate,
     PollinationCreate,
 )
@@ -49,7 +49,7 @@ async def test_create_pollination(
     response = await ac.post("/api/plants/", json=valid_simple_plant_dict)
     assert response.status_code == 200
     assert (p := response.json().get("plant")) is not None
-    payload_pc = FRequestPollenContainers(
+    payload_pc = CreateUpdatePollenContainersRequest(
         pollen_container_collection=[
             PollenContainerCreateUpdate(
                 plant_id=p["id"],

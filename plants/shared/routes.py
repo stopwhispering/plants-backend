@@ -13,7 +13,7 @@ from plants.modules.plant.plant_dal import PlantDAL
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import ProposalEntity
 from plants.shared.message_services import get_message, throw_exception
-from plants.shared.proposal_schemas import BResultsProposals, BResultsSelection
+from plants.shared.proposal_schemas import GetProposalsResponse, GetSelectionDataResponse
 from plants.shared.proposal_services import build_taxon_tree
 
 logger = logging.getLogger(__name__)
@@ -24,14 +24,13 @@ router = APIRouter(
 )
 
 
-@router.get("/proposals/{entity_id}", response_model=BResultsProposals)
+@router.get("/proposals/{entity_id}", response_model=GetProposalsResponse)
 async def get_proposals(
     entity_id: ProposalEntity,
     image_dal: ImageDAL = Depends(get_image_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
     """Return proposals for selection tables."""
-    results: dict[str, Any] = {}
 
     if entity_id == ProposalEntity.NURSERY:
         # get distinct nurseries/sources, sorted by last update
@@ -60,7 +59,7 @@ async def get_proposals(
     return results
 
 
-@router.get("/selection_data", response_model=BResultsSelection)
+@router.get("/selection_data", response_model=GetSelectionDataResponse)
 async def get_selection_data(
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     plant_dal: PlantDAL = Depends(get_plant_dal),

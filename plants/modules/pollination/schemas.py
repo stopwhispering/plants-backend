@@ -7,9 +7,9 @@ from pydantic import BeforeValidator, ConfigDict, Field, types
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
-    BFloweringState,
     FlorescenceStatus,
     FlowerColorDifferentiation,
+    FloweringState,
     Location,
     PollenQuality,
     PollenType,
@@ -140,7 +140,7 @@ class PollinationRead(PollinationBase):
     seed_plantings: list[SeedPlantingRead]
 
 
-class HistoricalPollinationRead(PollinationRead):
+class HistoricalPollination(PollinationRead):
     reverse: bool | None = None
 
 
@@ -249,13 +249,7 @@ class FlorescenceRead(FlorescenceBase):
     last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
 
 
-class BPollinationResultingPlant(BaseSchema):
-    plant_id: int
-    plant_name: str
-    reverse: bool
-
-
-class BPotentialPollenDonor(BaseSchema):
+class PotentialPollenDonor(BaseSchema):
     plant_id: int
     plant_name: str
     plant_preview_image_id: int | None = None
@@ -266,20 +260,15 @@ class BPotentialPollenDonor(BaseSchema):
     probability_pollination_to_seed: int | None = None  # None only in error case
 
     # pollination_attempts: list[BPollinationAttempt]
-    pollination_attempts: list[HistoricalPollinationRead]
+    pollination_attempts: list[HistoricalPollination]
     # resulting_plants: list[BPollinationResultingPlant]
 
 
-class BResultsOngoingPollinations(ResponseContainer):
+class GetPollinationsResponse(ResponseContainer):
     ongoing_pollination_collection: list[PollinationRead]
 
 
-class BPollinationStatus(BaseSchema):
-    key: str
-    text: str
-
-
-class FRequestPollenContainers(RequestContainer):
+class CreateUpdatePollenContainersRequest(RequestContainer):
     pollen_container_collection: list[PollenContainerCreateUpdate]
 
 
@@ -296,7 +285,7 @@ class BResultsActiveFlorescences(ResponseContainer):
 
 
 class BResultsPotentialPollenDonors(ResponseContainer):
-    potential_pollen_donor_collection: list[BPotentialPollenDonor]
+    potential_pollen_donor_collection: list[PotentialPollenDonor]
 
 
 class BPlantWoPollenContainer(BaseSchema):
@@ -345,7 +334,7 @@ class BResultsRetrainingGerminationProbability(BResultsRetraining):
 
 class FlowerHistoryMonth(BaseSchema):
     month: str  # e.g. '01'
-    flowering_state: BFloweringState
+    flowering_state: FloweringState
 
 
 class FlowerHistoryYear(BaseSchema):
@@ -363,18 +352,18 @@ class FlowerHistoryRow(BaseSchema):
     plant_id: int
     plant_name: str
     year: str
-    month_01: BFloweringState
-    month_02: BFloweringState
-    month_03: BFloweringState
-    month_04: BFloweringState
-    month_05: BFloweringState
-    month_06: BFloweringState
-    month_07: BFloweringState
-    month_08: BFloweringState
-    month_09: BFloweringState
-    month_10: BFloweringState
-    month_11: BFloweringState
-    month_12: BFloweringState
+    month_01: FloweringState
+    month_02: FloweringState
+    month_03: FloweringState
+    month_04: FloweringState
+    month_05: FloweringState
+    month_06: FloweringState
+    month_07: FloweringState
+    month_08: FloweringState
+    month_09: FloweringState
+    month_10: FloweringState
+    month_11: FloweringState
+    month_12: FloweringState
 
 
 class FlowerHistory(ResponseContainer):
@@ -385,5 +374,5 @@ class SeedPlantingPlantNameProposal(BaseSchema):
     plant_name_proposal: Annotated[str, Field(min_length=1, max_length=100)]
 
 
-class NewPlantFromSeedPlantingRequest(BaseSchema):
+class CreatePlantFromSeedPlantingRequest(BaseSchema):
     plant_name: str

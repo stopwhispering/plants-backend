@@ -10,10 +10,9 @@ from plants.modules.image.models import ImageKeyword
 from plants.modules.image.util import shorten_plant_name
 from plants.modules.plant.models import Plant
 from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseContainer
-from plants.shared.message_schemas import BMessage
 
 
-class FBImagePlantTag(BaseSchema):
+class ImagePlantTag(BaseSchema):
     plant_id: int
     plant_name: Annotated[str, Field(min_length=1, max_length=100)]
     plant_name_short: Annotated[
@@ -25,15 +24,15 @@ class FBImagePlantTag(BaseSchema):
     ]
 
 
-class FBKeyword(BaseSchema):
+class Keyword(BaseSchema):
     keyword: Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class ImageBase(BaseSchema):
     id: int
     filename: Annotated[str, Field(min_length=1, max_length=150)]
-    keywords: list[FBKeyword]
-    plants: list[FBImagePlantTag]
+    keywords: list[Keyword]
+    plants: list[ImagePlantTag]
     description: Annotated[str, Field(max_length=500)] | None = None
     record_date_time: datetime | None = None  # 2019-11-21T11:51:13
 
@@ -69,23 +68,22 @@ class ImageRead(ImageBase):
         ]
 
 
-class BImageUpdated(RequestContainer):
+class UpdateImageRequest(RequestContainer):
     ImagesCollection: list[ImageCreateUpdate]
 
 
-class BResultsImageResource(ResponseContainer):
+class GetUntaggedImagesResponse(ResponseContainer):
     ImagesCollection: list[ImageRead]
 
 
-class BResultsImagesUploaded(ResponseContainer):
+class UploadImagesResponse(ResponseContainer):
     images: list[ImageRead]
 
 
-class BResultsImageDeleted(ResponseContainer):
-    action: str
-    message: BMessage
+class DeleteImagesResponse(ResponseContainer):
+    pass
 
 
-class FImageUploadedMetadata(BaseSchema):
+class UploadedImageMetadata(BaseSchema):
     plants: list[int]
     keywords: list[Annotated[str, Field(min_length=1, max_length=100)]]

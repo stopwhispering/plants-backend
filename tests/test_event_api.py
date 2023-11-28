@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from plants.modules.event.models import Event, Observation, Pot, Soil
-from plants.modules.event.schemas import EventCreateUpdate, FRequestCreateOrUpdateEvent
+from plants.modules.event.schemas import CreateOrUpdateEventRequest, EventCreateUpdate
 from plants.modules.image.models import Image, ImageToEventAssociation
 
 if TYPE_CHECKING:
@@ -131,7 +131,7 @@ async def test_update_event(
     pot_id = plant_in_db_with_image_and_events.events[0].pot.id
     observation_id = plant_in_db_with_image_and_events.events[0].observation.id
 
-    payload = FRequestCreateOrUpdateEvent(
+    payload = CreateOrUpdateEventRequest(
         plants_to_events={
             plant_id: [
                 EventCreateUpdate(

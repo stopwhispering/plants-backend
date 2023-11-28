@@ -55,7 +55,6 @@ from plants.modules.pollination.prediction.train_pollination import (
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
     BResultsActiveFlorescences,
-    BResultsOngoingPollinations,
     BResultsPlantsForNewFlorescence,
     BResultsPollenContainers,
     BResultsPotentialPollenDonors,
@@ -63,11 +62,12 @@ from plants.modules.pollination.schemas import (
     BResultsRetrainingGerminationProbability,
     BResultsRetrainingPollinationToSeedsModel,
     BResultsRetrainingRipeningDays,
+    CreatePlantFromSeedPlantingRequest,
+    CreateUpdatePollenContainersRequest,
     FlorescenceCreate,
     FlorescenceUpdate,
     FlowerHistory,
-    FRequestPollenContainers,
-    NewPlantFromSeedPlantingRequest,
+    GetPollinationsResponse,
     PollinationCreate,
     PollinationRead,
     PollinationUpdate,
@@ -129,7 +129,7 @@ async def put_pollination(
     )
 
 
-@router.get("/ongoing_pollinations", response_model=BResultsOngoingPollinations)
+@router.get("/ongoing_pollinations", response_model=GetPollinationsResponse)
 async def get_ongoing_pollinations(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
     *,
@@ -188,7 +188,7 @@ async def get_pollen_containers(plant_dal: PlantDAL = Depends(get_plant_dal)) ->
 
 @router.post("/pollen_containers")
 async def post_pollen_containers(
-    pollen_containers_data: FRequestPollenContainers,
+    pollen_containers_data: CreateUpdatePollenContainersRequest,
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
     """Update pollen containers and add new ones."""
@@ -259,7 +259,7 @@ async def propose_plant_name_for_seed_planting(
 
 @router.post("/seed_plantings/{seed_planting_id}/plants")
 async def post_new_plant_for_seed_planting(
-    new_plant_info: NewPlantFromSeedPlantingRequest,
+    new_plant_info: CreatePlantFromSeedPlantingRequest,
     seed_planting: SeedPlanting = Depends(valid_seed_planting),
     plant_dal: PlantDAL = Depends(get_plant_dal),
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),

@@ -6,7 +6,7 @@ from pydantic.main import BaseModel
 from plants.shared.enums import MajorResource, MessageType
 
 
-class BMessage(BaseModel):
+class BackendMessage(BaseModel):
     type: MessageType  # noqa: A003
     message: str
     description: str | None = None
@@ -14,18 +14,18 @@ class BMessage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class BConfirmation(BaseModel):
+class BackendConfirmation(BaseModel):
     action: str
-    message: BMessage
+    message: BackendMessage
 
     model_config = ConfigDict(extra="forbid")
 
 
-class BSaveConfirmation(BaseModel):
+class BackendSaveConfirmation(BaseModel):
     """For the major resources (plants, images, taxa, events, we need to return the updated resource
     to the frontend to enable the frontend to identify when all resources have been saved."""
 
     resource: MajorResource
-    message: BMessage
+    message: BackendMessage
 
     model_config = ConfigDict(extra="forbid")

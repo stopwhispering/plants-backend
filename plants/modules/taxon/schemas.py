@@ -12,23 +12,14 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 
 if TYPE_CHECKING:
     from plants.modules.image.models import Image
-    from plants.modules.taxon.models import Distribution
 
 
-class DistributionBase(BaseSchema):
+class DistributionRead(BaseSchema):
     native: list[Annotated[str, Field(min_length=1, max_length=40)]]
     introduced: list[Annotated[str, Field(min_length=1, max_length=40)]]
 
 
-class DistributionRead(DistributionBase):
-    pass
-
-
-class DistributionUpdate(DistributionBase):
-    pass
-
-
-class TaxonOccurrenceImageBase(BaseSchema):
+class TaxonOccurrenceImageSchema(BaseSchema):
     occurrence_id: int
     img_no: int
     gbif_id: int
@@ -40,10 +31,8 @@ class TaxonOccurrenceImageBase(BaseSchema):
     publisher_dataset: Annotated[str, Field(min_length=1, max_length=100)] | None = None
 
     references: networks.HttpUrl | None = None
-    href: networks.HttpUrl  # link to iamge at inaturalist etc.
+    href: networks.HttpUrl  # link to image at inaturalist etc.
 
-
-class TaxonOccurrenceImageRead(TaxonOccurrenceImageBase):
     model_config = ConfigDict(extra="ignore")
 
     # noinspection PyMethodParameters
@@ -68,13 +57,13 @@ class TaxonImageRead(TaxonImageBase):
     pass
 
 
-class FTaxonInfoRequest(RequestContainer):
+class SearchTaxaRequest(RequestContainer):
     include_external_apis: bool
     taxon_name_pattern: str
     search_for_genus_not_species: bool
 
 
-class FBotanicalAttributes(BaseSchema):
+class CreateBotanicalNameRequest(BaseSchema):
     rank: str
     genus: str
     species: str | None = None
@@ -92,11 +81,11 @@ class FBotanicalAttributes(BaseSchema):
     custom_suffix: str | None = None
 
 
-class FFetchTaxonOccurrenceImagesRequest(RequestContainer):
+class FetchTaxonOccurrenceImagesRequest(RequestContainer):
     gbif_id: int
 
 
-class BKewSearchResultEntry(BaseSchema):
+class KewSearchResultEntry(BaseSchema):
     # source: BSearchResultSource  # determined upon saving by database
     id: int | None = None  # filled only for those already in db
     in_db: bool
@@ -171,7 +160,7 @@ class TaxonRead(TaxonBase):
     custom_notes: str | None = None
     distribution: DistributionRead  # not filled for each request
     images: list[TaxonImageRead]
-    occurrence_images: list[TaxonOccurrenceImageRead]
+    occurrence_images: list[TaxonOccurrenceImageSchema]
 
     # noinspection PyMethodParameters
     @field_validator("images", mode="before")  # noqa
@@ -201,7 +190,7 @@ class TaxonRead(TaxonBase):
     # noinspection PyMethodParameters
     @field_validator("distribution", mode="before")
     @classmethod
-    def _transform_distribution(cls, distribution: list[Distribution]) -> DistributionRead:
+    def _transform_distribution(cls, distribution: list[DistributionRead]) -> DistributionRead:
         # distribution codes according to WGSRPD (level 3)
         results: dict[str, list[str]] = {"native": [], "introduced": []}
         for dist in distribution:
@@ -209,7 +198,7 @@ class TaxonRead(TaxonBase):
                 results["native"].append(dist.tdwg_code)
             elif dist.establishment == Establishment.INTRODUCED:
                 results["introduced"].append(dist.tdwg_code)
-        return DistributionRead.parse_obj(results)
+        return DistributionRead.model_validate(results)
 
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
@@ -229,31 +218,26 @@ class TaxonCreate(TaxonBase):
         return values
 
 
-class ResultsTaxonInfoRequest(ResponseContainer):
-    ResultsCollection: list[BKewSearchResultEntry]
+class SearchTaxaResponse(ResponseContainer):
+    ResultsCollection: list[KewSearchResultEntry]
 
 
-class BResultsRetrieveTaxonDetailsRequest(ResponseContainer):
-    botanical_name: str
-    taxon_data: TaxonRead
+class FetchTaxonOccurrenceImagesResponse(ResponseContainer):
+    occurrence_images: list[TaxonOccurrenceImageSchema]
 
 
-class BResultsFetchTaxonImages(ResponseContainer):
-    occurrence_images: list[TaxonOccurrenceImageRead]
-
-
-class BResultsGetTaxon(ResponseContainer):
+class GetTaxonResponse(ResponseContainer):
     taxon: TaxonRead
 
 
-class BResultsGetBotanicalName(BaseSchema):
+class CreateBotanicalNameResponse(BaseSchema):
     full_html_name: str
     name: str
 
 
-class BCreatedTaxonResponse(ResponseContainer):
+class CreateTaxonResponse(ResponseContainer):
     new_taxon: TaxonRead
 
 
-class FModifiedTaxa(RequestContainer):
+class UpdateTaxaRequest(RequestContainer):
     ModifiedTaxaCollection: list[TaxonUpdate]

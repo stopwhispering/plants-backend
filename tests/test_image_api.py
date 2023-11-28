@@ -12,7 +12,7 @@ from sqlalchemy import select
 import plants as plants_package
 from plants import settings
 from plants.exceptions import ImageNotFoundError
-from plants.modules.event.schemas import FImageDelete, FImagesToDelete
+from plants.modules.event.schemas import DeleteImagesRequest, ImageToDelete
 from plants.modules.image.models import ImageKeyword, ImageToEventAssociation
 
 if TYPE_CHECKING:
@@ -164,9 +164,9 @@ async def test_delete_image(
     image_id = valid_plant_in_db_with_image.images[0].id
     image_filename = valid_plant_in_db_with_image.images[0].filename
     plant_id = valid_plant_in_db_with_image.id
-    payload = FImagesToDelete(
+    payload = DeleteImagesRequest(
         images=[
-            FImageDelete(
+            ImageToDelete(
                 id=image_id,
                 # filename=valid_plant_in_db_with_image.images[0].filename,
             )
@@ -243,9 +243,9 @@ async def test_delete_image_with_event(  # noqa: PLR0913
     image_filename = image.filename
     assert image is plant_in_db_with_image_and_events.events[0].images[0]
 
-    payload = FImagesToDelete(
+    payload = DeleteImagesRequest(
         images=[
-            FImageDelete(
+            ImageToDelete(
                 id=image_id,
             )
         ]

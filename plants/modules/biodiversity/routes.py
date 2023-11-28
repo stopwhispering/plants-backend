@@ -12,10 +12,10 @@ from plants.modules.biodiversity.taxonomy_search import (
     TaxonomySearch,
 )
 from plants.modules.taxon.schemas import (
-    BResultsFetchTaxonImages,
-    FFetchTaxonOccurrenceImagesRequest,
-    FTaxonInfoRequest,
-    ResultsTaxonInfoRequest,
+    FetchTaxonOccurrenceImagesRequest,
+    FetchTaxonOccurrenceImagesResponse,
+    SearchTaxaRequest,
+    SearchTaxaResponse,
 )
 
 # if TYPE_CHECKING:
@@ -30,9 +30,9 @@ router = APIRouter(
 )
 
 
-@router.post("/search_taxa_by_name", response_model=ResultsTaxonInfoRequest)
+@router.post("/search_taxa_by_name", response_model=SearchTaxaResponse)
 async def search_taxa_by_name(
-    taxon_info_request: FTaxonInfoRequest,
+    taxon_info_request: SearchTaxaRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
     """Searches taxon pattern in (1) local database and (2) in kew databases (powo and ipni) if
@@ -61,9 +61,9 @@ async def search_taxa_by_name(
     }
 
 
-@router.post("/fetch_taxon_occurrence_images", response_model=BResultsFetchTaxonImages)
+@router.post("/fetch_taxon_occurrence_images", response_model=FetchTaxonOccurrenceImagesResponse)
 async def fetch_taxon_occurrence_images(
-    fetch_taxon_occurrence_images_request: FFetchTaxonOccurrenceImagesRequest,
+    fetch_taxon_occurrence_images_request: FetchTaxonOccurrenceImagesRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
 ) -> Any:
     """(re)fetch taxon images from gbif and create thumbnails."""

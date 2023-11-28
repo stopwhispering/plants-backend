@@ -21,11 +21,11 @@ class TagBase(BaseSchema):
     last_update: datetime | None = None
 
 
-class FBPlantTag(TagBase):
+class PlantTag(TagBase):
     plant_id: int
 
 
-class TaxonTagRead(TagBase):
+class TaxonTag(TagBase):
     taxon_id: int
 
 
@@ -64,7 +64,7 @@ class PlantBase(BaseSchema):
     plant_notes: str | None = None
     preview_image_id: int | None = None
 
-    tags: list[FBPlantTag]
+    tags: list[PlantTag]
 
     seed_planting_id: int | None = None
 
@@ -86,20 +86,20 @@ class PlantRead(PlantBase):
     current_soil: PlantCurrentSoil | None = None
     latest_image: PlantLatestImage | None = None
 
-    taxon_tags: list[TaxonTagRead]
+    taxon_tags: list[TaxonTag]
 
 
 class PlantUpdate(PlantBase):
     id: int
 
-    taxon_tags: list[TaxonTagRead]
+    taxon_tags: list[TaxonTag]
 
 
 class PlantCreate(PlantBase):
     pass
 
 
-class PlantsUpdateRequest(RequestContainer):
+class UpdatePlantsRequest(RequestContainer):
     PlantsCollection: list[PlantUpdate]
 
 
@@ -107,23 +107,22 @@ class PlantRenameRequest(BaseSchema):
     new_plant_name: Annotated[str, Field(min_length=1, max_length=100)]
 
 
-class ResultsPlantsList(ResponseContainer):
+class GetPlantsResponse(ResponseContainer):
     PlantsCollection: list[PlantRead]
 
 
-class ResultsPlantsUpdate(MajorResponseContainer):
+class UpdatePlantsResponse(MajorResponseContainer):
     pass
-    # plants: list[PlantRead]
 
 
-class ResultsPlantCreated(MajorResponseContainer):
+class CreatePlantResponse(MajorResponseContainer):
     plant: PlantRead
 
 
-class ResultsPlantCloned(ResponseContainer):
+class ClonePlantResponse(ResponseContainer):
     plant: PlantRead
 
 
-class BResultsProposeSubsequentPlantName(BaseSchema):
+class ProposeSubsequentPlantNameResponse(BaseSchema):
     original_plant_name: str
     subsequent_plant_name: Annotated[str, Field(min_length=1, max_length=100)]

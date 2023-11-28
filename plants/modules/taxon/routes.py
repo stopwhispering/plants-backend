@@ -16,17 +16,17 @@ from plants.modules.biodiversity.taxonomy_name_formatter import (
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.schemas import (
-    BCreatedTaxonResponse,
-    BResultsGetBotanicalName,
-    BResultsGetTaxon,
-    FBotanicalAttributes,
-    FModifiedTaxa,
+    CreateBotanicalNameRequest,
+    CreateBotanicalNameResponse,
+    CreateTaxonResponse,
+    GetTaxonResponse,
     TaxonCreate,
+    UpdateTaxaRequest,
 )
 from plants.modules.taxon.services import modify_taxon, save_new_taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.enums import MajorResource
-from plants.shared.message_schemas import BSaveConfirmation
+from plants.shared.message_schemas import BackendSaveConfirmation
 from plants.shared.message_services import get_message
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,8 @@ router = APIRouter(
 )
 
 
-@router.post("/botanical_name", response_model=BResultsGetBotanicalName)
-async def create_botanical_name(botanical_attributes: FBotanicalAttributes) -> Any:
+@router.post("/botanical_name", response_model=CreateBotanicalNameResponse)
+async def create_botanical_name(botanical_attributes: CreateBotanicalNameRequest) -> Any:
     """create a botanical name incl.
 
     formatting (italics) for supplied taxon attributes
@@ -72,7 +72,7 @@ async def create_botanical_name(botanical_attributes: FBotanicalAttributes) -> A
     }
 
 
-@router.get("/{taxon_id}", response_model=BResultsGetTaxon)
+@router.get("/{taxon_id}", response_model=GetTaxonResponse)
 async def get_taxon(taxon: Taxon = Depends(valid_taxon)) -> Any:
     """Returns taxon for requested taxon_id."""
     return {
@@ -82,7 +82,7 @@ async def get_taxon(taxon: Taxon = Depends(valid_taxon)) -> Any:
     }
 
 
-@router.post("/new", response_model=BCreatedTaxonResponse)
+@router.post("/new", response_model=CreateTaxonResponse)
 async def save_taxon(
     new_taxon_data: TaxonCreate,
     background_tasks: BackgroundTasks,
@@ -107,9 +107,9 @@ async def save_taxon(
     return {"action": "Save taxon", "message": msg, "new_taxon": taxon}
 
 
-@router.put("/", response_model=BSaveConfirmation)
+@router.put("/", response_model=BackendSaveConfirmation)
 async def update_taxa(
-    modified_taxa: FModifiedTaxa,
+    modified_taxa: UpdateTaxaRequest,
     taxon_dal: TaxonDAL = Depends(get_taxon_dal),
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:

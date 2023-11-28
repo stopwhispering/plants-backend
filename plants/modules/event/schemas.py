@@ -7,7 +7,7 @@ from pydantic import Field
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
-from plants.modules.pollination.enums import BFloweringState
+from plants.modules.pollination.enums import FloweringState
 from plants.shared.base_schema import BaseSchema, ResponseContainer
 
 
@@ -34,7 +34,7 @@ class SoilRead(SoilBase):
     pass
 
 
-class SoilWithCountRead(SoilBase):
+class SoilWithCount(SoilBase):
     plants_count: int
 
 
@@ -55,8 +55,6 @@ class PotRead(PotBase):
 
 class ObservationBase(BaseSchema):
     diseases: str | None = None
-    # stem_max_diameter: Decimal | None
-    # height: Decimal | None
     observation_notes: str | None = None
 
 
@@ -89,46 +87,46 @@ class EventRead(EventBase):
     pot: PotRead | None = None
 
 
-class FImageDelete(BaseSchema):
+class ImageToDelete(BaseSchema):
     id: int
 
 
-class FImagesToDelete(BaseSchema):
-    images: list[FImageDelete]
+class DeleteImagesRequest(BaseSchema):
+    images: list[ImageToDelete]
 
 
-class FRequestCreateOrUpdateEvent(BaseSchema):
+class CreateOrUpdateEventRequest(BaseSchema):
     plants_to_events: dict[int, list[EventCreateUpdate]]
 
 
-class BResultsSoilsResource(BaseSchema):
-    SoilsCollection: list[SoilWithCountRead]
+class GetSoilsResponse(BaseSchema):
+    SoilsCollection: list[SoilWithCount]
 
 
-class PlantFlowerMonthRead(BaseSchema):
-    flowering_state: BFloweringState
+class PlantFlowerMonth(BaseSchema):
+    flowering_state: FloweringState
 
 
-class PlantFlowerYearRead(BaseSchema):
+class PlantFlowerYear(BaseSchema):
     year: int
-    month_01: PlantFlowerMonthRead
-    month_02: PlantFlowerMonthRead
-    month_03: PlantFlowerMonthRead
-    month_04: PlantFlowerMonthRead
-    month_05: PlantFlowerMonthRead
-    month_06: PlantFlowerMonthRead
-    month_07: PlantFlowerMonthRead
-    month_08: PlantFlowerMonthRead
-    month_09: PlantFlowerMonthRead
-    month_10: PlantFlowerMonthRead
-    month_11: PlantFlowerMonthRead
-    month_12: PlantFlowerMonthRead
+    month_01: PlantFlowerMonth
+    month_02: PlantFlowerMonth
+    month_03: PlantFlowerMonth
+    month_04: PlantFlowerMonth
+    month_05: PlantFlowerMonth
+    month_06: PlantFlowerMonth
+    month_07: PlantFlowerMonth
+    month_08: PlantFlowerMonth
+    month_09: PlantFlowerMonth
+    month_10: PlantFlowerMonth
+    month_11: PlantFlowerMonth
+    month_12: PlantFlowerMonth
 
 
-class BResultsEventResource(ResponseContainer):
+class GetEventsResponse(ResponseContainer):
     events: list[EventRead]
-    flower_history: list[PlantFlowerYearRead]
+    flower_history: list[PlantFlowerYear]
 
 
-class BPResultsUpdateCreateSoil(ResponseContainer):
+class CreateOrUpdateSoilResponse(ResponseContainer):
     soil: SoilRead
