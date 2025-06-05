@@ -14,88 +14,87 @@ from plants.modules.pollination.prediction.florescence_data import assemble_flor
 
 
 def get_created_at_date(ser_plant: pd.Series) -> date | None:
-    if ser_plant['created_at'].year != 1900:
-        return datetime.date(ser_plant['created_at'])
+    if ser_plant["created_at"].year != 1900:
+        return datetime.date(ser_plant["created_at"])
     return None
 
 
 def get_last_updated_at(ser_plant: pd.Series) -> date | None:
-    if not pd.isna(ser_plant['last_updated_at']):
-        return datetime.date(ser_plant['last_updated_at'])
+    if not pd.isna(ser_plant["last_updated_at"]):
+        return datetime.date(ser_plant["last_updated_at"])
     return None
 
 
 def get_first_last_florescence_creation_date(
-        ser_plant: pd.Series,
-        first: bool,
-        df_florescence: pd.DataFrame,
+    ser_plant: pd.Series,
+    first: bool,
+    df_florescence: pd.DataFrame,
 ) -> date | None:
     df_florescence_plant = df_florescence[
-        (df_florescence['plant_id'] == ser_plant['id'])
-        & (df_florescence['created_at'].dt.year != 1900)
-        & ~df_florescence['created_at'].isna()
+        (df_florescence["plant_id"] == ser_plant["id"])
+        & (df_florescence["created_at"].dt.year != 1900)
+        & ~df_florescence["created_at"].isna()
     ]
     if df_florescence_plant.empty:
         return None
     if first:
-        return datetime.date(df_florescence_plant['created_at'].min())
-    return datetime.date(df_florescence_plant['created_at'].max())
+        return datetime.date(df_florescence_plant["created_at"].min())
+    return datetime.date(df_florescence_plant["created_at"].max())
 
 
 def get_first_last_florescence_flowering_date(
-        ser_plant: pd.Series,
-        first: bool,
-        df_florescence: pd.DataFrame,
+    ser_plant: pd.Series,
+    first: bool,
+    df_florescence: pd.DataFrame,
 ) -> date | None:
     df_florescence_plant = df_florescence[
-        (df_florescence['plant_id'] == ser_plant['id'])
+        (df_florescence["plant_id"] == ser_plant["id"])
         # & (df_florescence['first_flower_opened_at'].dt.year != 1900)
-        & (~df_florescence['first_flower_opened_at'].isna())
+        & (~df_florescence["first_flower_opened_at"].isna())
     ]
     if df_florescence_plant.empty:
         return None
     if first:
-        return df_florescence_plant['first_flower_opened_at'].min()
-    return df_florescence_plant['first_flower_opened_at'].max()
+        return df_florescence_plant["first_flower_opened_at"].min()
+    return df_florescence_plant["first_flower_opened_at"].max()
 
 
 def get_first_last_event_date(
-        ser_plant: pd.Series,
-        first: bool,
-        df_event: pd.DataFrame,
+    ser_plant: pd.Series,
+    first: bool,
+    df_event: pd.DataFrame,
 ) -> date | None:  # noqa: FBT001
-    df_event_plant = df_event[df_event['plant_id'] == ser_plant['id']]
+    df_event_plant = df_event[df_event["plant_id"] == ser_plant["id"]]
     # todo: seedling etc...
     if not df_event_plant.empty:
         if first:
-            return datetime.strptime(df_event_plant['date'].min(), "%Y-%m-%d").date()  # noqa
-        return datetime.strptime(df_event_plant['date'].max(), "%Y-%m-%d").date()  # noqa
+            return datetime.strptime(df_event_plant["date"].min(), "%Y-%m-%d").date()  # noqa
+        return datetime.strptime(df_event_plant["date"].max(), "%Y-%m-%d").date()  # noqa
     return None
 
 
 def get_cancellation_date(ser_plant: pd.Series) -> date | None:
-    if not pd.isna(ser_plant['cancellation_date']):
-        return ser_plant['cancellation_date']
+    if not pd.isna(ser_plant["cancellation_date"]):
+        return ser_plant["cancellation_date"]
     return None
 
 
 def get_first_last_date_per_plant(
-        df_plant: pd.DataFrame,
-        df_event: pd.DataFrame,
-        df_florescence: pd.DataFrame,
+    df_plant: pd.DataFrame,
+    df_event: pd.DataFrame,
+    df_florescence: pd.DataFrame,
 ) -> dict[int, tuple[date, date]]:
     # for each plant, we need to approximate the first and last date
     results: dict[int, tuple[date, date]] = {}
     for _, ser_plant in df_plant.iterrows():
         # todo filter plants eg by genus
-        if ser_plant['deleted']:
+        if ser_plant["deleted"]:
             continue
         plant_created_at = get_created_at_date(ser_plant)
         plant_last_updated_at = get_last_updated_at(ser_plant)
         first_florescence_created_at = get_first_last_florescence_creation_date(
-            ser_plant,
-            first=True,
-            df_florescence=df_florescence)
+            ser_plant, first=True, df_florescence=df_florescence
+        )
         first_florescence_first_flower_opened_at = get_first_last_florescence_flowering_date(
             ser_plant,
             first=True,
@@ -111,12 +110,16 @@ def get_first_last_date_per_plant(
         aquisition_date = min(
             plant_created_at if plant_created_at else pd.Timestamp.max.date(),
             plant_last_updated_at if plant_last_updated_at else pd.Timestamp.max.date(),
-            first_florescence_created_at if first_florescence_created_at else pd.Timestamp.max.date(),
-            first_florescence_first_flower_opened_at if first_florescence_first_flower_opened_at else pd.Timestamp.max.date(),
+            first_florescence_created_at
+            if first_florescence_created_at
+            else pd.Timestamp.max.date(),
+            first_florescence_first_flower_opened_at
+            if first_florescence_first_flower_opened_at
+            else pd.Timestamp.max.date(),
             first_event_date if first_event_date else pd.Timestamp.max.date(),
         )
         if aquisition_date.year < 2016 or aquisition_date.year > 2028:
-            raise ValueError('Unexpected aquisition date: ' + str(aquisition_date))
+            raise ValueError("Unexpected aquisition date: " + str(aquisition_date))
 
         plant_cancellation_date = get_cancellation_date(ser_plant)
         # plant_last_updated_at = get_last_updated_at(ser_plant)
@@ -132,7 +135,7 @@ def get_first_last_date_per_plant(
         )
         last_event_date = get_first_last_event_date(ser_plant, first=False, df_event=df_event)
 
-        if ser_plant['active']:
+        if ser_plant["active"]:
             # today
             termination_date = date.today()  # noqa
         elif plant_cancellation_date:
@@ -140,15 +143,19 @@ def get_first_last_date_per_plant(
         else:
             termination_date = max(
                 plant_last_updated_at if plant_last_updated_at else pd.Timestamp.min.date(),
-                last_florescence_created_at if last_florescence_created_at else pd.Timestamp.min.date(),
-                last_florescence_first_flower_opened_at if last_florescence_first_flower_opened_at else pd.Timestamp.min.date(),
+                last_florescence_created_at
+                if last_florescence_created_at
+                else pd.Timestamp.min.date(),
+                last_florescence_first_flower_opened_at
+                if last_florescence_first_flower_opened_at
+                else pd.Timestamp.min.date(),
                 last_event_date if last_event_date else pd.Timestamp.min.date(),
             )
 
         if termination_date.year < 2016 or termination_date.year > 2028:
-            raise ValueError('Unexpected termination_date date: ' + str(termination_date))
+            raise ValueError("Unexpected termination_date date: " + str(termination_date))
 
-        results[ser_plant['id']] = aquisition_date, termination_date
+        results[ser_plant["id"]] = aquisition_date, termination_date
 
     return results
 
@@ -158,76 +165,82 @@ def compute_mean_days_as_filler(
 ):
     # get mean days between first flower and inflorescence appeared
     df_flor_1 = df_florescence[
-        (~df_florescence['inflorescence_appeared_at'].isna())
-        & (~df_florescence['first_flower_opened_at'].isna())
-        ].copy()
-    df_flor_1['inflorescence_appeared_at'] = pd.to_datetime(df_flor_1['inflorescence_appeared_at'])
-    df_flor_1['first_flower_opened_at'] = pd.to_datetime(df_flor_1['first_flower_opened_at'])
+        (~df_florescence["inflorescence_appeared_at"].isna())
+        & (~df_florescence["first_flower_opened_at"].isna())
+    ].copy()
+    df_flor_1["inflorescence_appeared_at"] = pd.to_datetime(df_flor_1["inflorescence_appeared_at"])
+    df_flor_1["first_flower_opened_at"] = pd.to_datetime(df_flor_1["first_flower_opened_at"])
     avg_days_between_appeared_and_opened = (
-            df_flor_1['first_flower_opened_at'] - df_flor_1['inflorescence_appeared_at']
+        df_flor_1["first_flower_opened_at"] - df_flor_1["inflorescence_appeared_at"]
     ).dt.days.median()
 
     # get the mean days between last flower closed and inflorescence appeared
     df_flor_2 = df_florescence[
-        (~df_florescence['inflorescence_appeared_at'].isna())
-        & (~df_florescence['last_flower_closed_at'].isna())
-        ].copy()
-    df_flor_2['inflorescence_appeared_at'] = pd.to_datetime(df_flor_2['inflorescence_appeared_at'])
-    df_flor_2['last_flower_closed_at'] = pd.to_datetime(df_flor_2['last_flower_closed_at'])
+        (~df_florescence["inflorescence_appeared_at"].isna())
+        & (~df_florescence["last_flower_closed_at"].isna())
+    ].copy()
+    df_flor_2["inflorescence_appeared_at"] = pd.to_datetime(df_flor_2["inflorescence_appeared_at"])
+    df_flor_2["last_flower_closed_at"] = pd.to_datetime(df_flor_2["last_flower_closed_at"])
     avg_days_between_appeared_and_closed = (
-            df_flor_2['last_flower_closed_at'] - df_flor_2['inflorescence_appeared_at']
+        df_flor_2["last_flower_closed_at"] - df_flor_2["inflorescence_appeared_at"]
     ).dt.days.median()
 
     # get the mean days between first flower opened and last flower closed
     df_flor_3 = df_florescence[
-        (~df_florescence['first_flower_opened_at'].isna())
-        & (~df_florescence['last_flower_closed_at'].isna())
-        ].copy()
-    df_flor_3['first_flower_opened_at'] = pd.to_datetime(df_flor_3['first_flower_opened_at'])
-    df_flor_3['last_flower_closed_at'] = pd.to_datetime(df_flor_3['last_flower_closed_at'])
+        (~df_florescence["first_flower_opened_at"].isna())
+        & (~df_florescence["last_flower_closed_at"].isna())
+    ].copy()
+    df_flor_3["first_flower_opened_at"] = pd.to_datetime(df_flor_3["first_flower_opened_at"])
+    df_flor_3["last_flower_closed_at"] = pd.to_datetime(df_flor_3["last_flower_closed_at"])
     avg_days_between_opened_and_closed = (
-            df_flor_3['last_flower_closed_at'] - df_flor_3['first_flower_opened_at']
+        df_flor_3["last_flower_closed_at"] - df_flor_3["first_flower_opened_at"]
     ).dt.days.median()
 
-    return avg_days_between_appeared_and_opened, avg_days_between_appeared_and_closed, avg_days_between_opened_and_closed
-
-
-def flowering_months_per_plant(plant_ids: list[int],
-                               df_florescence: pd.DataFrame) -> dict[int, set[date]]:
-    """Retrieve the flowering months for each plant."""
-    avg_days_between_appeared_and_opened, avg_days_between_appeared_and_closed, avg_days_between_opened_and_closed = (
-        compute_mean_days_as_filler(df_florescence)
+    return (
+        avg_days_between_appeared_and_opened,
+        avg_days_between_appeared_and_closed,
+        avg_days_between_opened_and_closed,
     )
+
+
+def flowering_months_per_plant(
+    plant_ids: list[int], df_florescence: pd.DataFrame
+) -> dict[int, set[date]]:
+    """Retrieve the flowering months for each plant."""
+    (
+        avg_days_between_appeared_and_opened,
+        avg_days_between_appeared_and_closed,
+        avg_days_between_opened_and_closed,
+    ) = compute_mean_days_as_filler(df_florescence)
 
     results: dict[int, set[date]] = defaultdict(set)
     for _, ser_florescence in df_florescence.iterrows():
-
-        if ser_florescence['plant_id'] not in plant_ids:
+        if ser_florescence["plant_id"] not in plant_ids:
             continue
 
         # in the best case we have an appearance date
-        if not pd.isna(ser_florescence['inflorescence_appeared_at']):
-            appearance_date = ser_florescence['inflorescence_appeared_at']
-        elif not pd.isna(ser_florescence['first_flower_opened_at']):
-            appearance_date = ser_florescence['first_flower_opened_at'] - pd.Timedelta(
+        if not pd.isna(ser_florescence["inflorescence_appeared_at"]):
+            appearance_date = ser_florescence["inflorescence_appeared_at"]
+        elif not pd.isna(ser_florescence["first_flower_opened_at"]):
+            appearance_date = ser_florescence["first_flower_opened_at"] - pd.Timedelta(
                 days=avg_days_between_appeared_and_opened
             )
-        elif not pd.isna(ser_florescence['last_flower_closed_at']):
-            appearance_date = ser_florescence['last_flower_closed_at'] - pd.Timedelta(
+        elif not pd.isna(ser_florescence["last_flower_closed_at"]):
+            appearance_date = ser_florescence["last_flower_closed_at"] - pd.Timedelta(
                 days=avg_days_between_appeared_and_closed
             )
         else:
             continue  # no appearance date available
 
         # in the best case we have a closed date
-        if not pd.isna(ser_florescence['last_flower_closed_at']):
-            closed_date = ser_florescence['last_flower_closed_at']
-        elif not pd.isna(ser_florescence['first_flower_opened_at']):
-            closed_date = ser_florescence['first_flower_opened_at'] + pd.Timedelta(
+        if not pd.isna(ser_florescence["last_flower_closed_at"]):
+            closed_date = ser_florescence["last_flower_closed_at"]
+        elif not pd.isna(ser_florescence["first_flower_opened_at"]):
+            closed_date = ser_florescence["first_flower_opened_at"] + pd.Timedelta(
                 days=avg_days_between_opened_and_closed
             )
-        elif not pd.isna(ser_florescence['inflorescence_appeared_at']):
-            closed_date = ser_florescence['inflorescence_appeared_at'] + pd.Timedelta(
+        elif not pd.isna(ser_florescence["inflorescence_appeared_at"]):
+            closed_date = ser_florescence["inflorescence_appeared_at"] + pd.Timedelta(
                 days=avg_days_between_appeared_and_closed
             )
         else:
@@ -244,13 +257,14 @@ def flowering_months_per_plant(plant_ids: list[int],
             months.add(current_month)
             current_month = (current_month + pd.DateOffset(months=1)).replace(day=1).date()
 
-        results[ser_florescence['plant_id']].update(months)
+        results[ser_florescence["plant_id"]].update(months)
 
     return results
 
 
-def get_plant_to_month_targets(plant_id_to_first_last_date: dict,
-                               plant_id_to_flowering_months: dict) -> pd.DataFrame:
+def get_plant_to_month_targets(
+    plant_id_to_first_last_date: dict, plant_id_to_flowering_months: dict
+) -> pd.DataFrame:
     # now we iterate over the plants and months and flag the plant/month combinations with flowering
     results = []
     for plant_id, (first_month, last_month) in plant_id_to_first_last_date.items():
@@ -268,52 +282,56 @@ def get_plant_to_month_targets(plant_id_to_first_last_date: dict,
                 results.append((plant_id, current_month, False))
             current_month = (current_month + pd.DateOffset(months=1)).replace(day=1).date()
 
-    df_results = pd.DataFrame(results, columns=['plant_id', 'year_month', 'flowering'])
+    df_results = pd.DataFrame(results, columns=["plant_id", "year_month", "flowering"])
     # duplicates = df_results[df_results.duplicated(subset=['plant_id', 'month'], keep=False)]
-    assert not df_results.duplicated(subset=['plant_id', 'year_month']).any()
-    df_results['year_month'] = pd.to_datetime(df_results['year_month'])
+    assert not df_results.duplicated(subset=["plant_id", "year_month"]).any()
+    df_results["year_month"] = pd.to_datetime(df_results["year_month"])
     return df_results
 
 
-def get_training_data(df_train: pd.DataFrame, df_plant: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+def get_training_data(
+    df_train: pd.DataFrame, df_plant: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.Series]:
     # extract calendar month and sine/cosine features
-    df_train['month'] = df_train['year_month'].dt.month
-    df_train['month_sin'] = np.sin(2 * np.pi * (df_train['month'] - 1) / 12)
-    df_train['month_cos'] = np.cos(2 * np.pi * (df_train['month'] - 1) / 12)
+    df_train["month"] = df_train["year_month"].dt.month
+    df_train["month_sin"] = np.sin(2 * np.pi * (df_train["month"] - 1) / 12)
+    df_train["month_cos"] = np.cos(2 * np.pi * (df_train["month"] - 1) / 12)
 
     # species, genus, is_custom
     # read 'species', 'genus', 'is_custom' from df_plant
     df_train = df_train.merge(
-        df_plant[['id', 'species', 'genus', 'is_custom', 'plant_name']],
-        how='left',
-        left_on='plant_id',
-        right_on='id',
-        suffixes=('', '_plant'),
+        df_plant[["id", "species", "genus", "is_custom", "plant_name"]],
+        how="left",
+        left_on="plant_id",
+        right_on="id",
+        suffixes=("", "_plant"),
     )
 
     # if "cv" in plant_name, make is_custom True
-    ser_is_cv = df_train['plant_name'].apply(lambda x: 'cv' in x.lower())
-    df_train['is_custom'] = (df_train['is_custom']==True) | ser_is_cv  # noqa
+    ser_is_cv = df_train["plant_name"].apply(lambda x: "cv" in x.lower())
+    df_train["is_custom"] = (df_train["is_custom"] == True) | ser_is_cv  # noqa
 
     # make nan and None the same
-    df_train = df_train.fillna('None')
+    df_train = df_train.fillna("None")
 
-    df_train = df_train.drop(columns=['year_month', 'id', 'plant_name'])  # id is a duplicate of plant_id
+    df_train = df_train.drop(
+        columns=["year_month", "id", "plant_name"]
+    )  # id is a duplicate of plant_id
 
     # plant id should be considered a category, not a number
-    df_train['plant_id'] = df_train['plant_id'].astype('category')
+    df_train["plant_id"] = df_train["plant_id"].astype("category")
 
     # finally, separate the target variable
-    ser_targets_train = df_train['flowering']
-    df_train['species'] = df_train['species'].astype('category')
-    df_train['genus'] = df_train['genus'].astype('category')
-    df_train = df_train.drop(columns=['flowering'])
+    ser_targets_train = df_train["flowering"]
+    df_train["species"] = df_train["species"].astype("category")
+    df_train["genus"] = df_train["genus"].astype("category")
+    df_train = df_train.drop(columns=["flowering"])
     return df_train, ser_targets_train
 
 
-def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataFrame:
+def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataFrame:  # noqa
     # add potting info
-    todo
+    todo  # noqa
     # df_train = df_train.merge(
     #     df_event[['plant_id', 'potting_date']],
     #     how='left',
@@ -341,10 +359,10 @@ def assemble_training_data() -> tuple[pd.DataFrame, pd.Series]:
     # df_event.to_pickle('/temp/event.pkl')
 
     plant_id_to_first_last_date = get_first_last_date_per_plant(df_plant, df_event, df_florescence)
-    plant_id_to_flowering_months = flowering_months_per_plant(list(plant_id_to_first_last_date.keys()),
-                                                              df_florescence)
-    df_train = get_plant_to_month_targets(plant_id_to_first_last_date,
-                                          plant_id_to_flowering_months)
+    plant_id_to_flowering_months = flowering_months_per_plant(
+        list(plant_id_to_first_last_date.keys()), df_florescence
+    )
+    df_train = get_plant_to_month_targets(plant_id_to_first_last_date, plant_id_to_flowering_months)
 
     df_train = add_potting_info(df_train, df_event)
     df_train, ser_targets_train = get_training_data(df_train, df_plant)
@@ -379,24 +397,24 @@ if __name__ == "__main__":
         n_estimators=1000,
         # max_depth=6,
         learning_rate=0.1,
-        eval_metric='auc',
+        eval_metric="auc",
         verbosity=0,
         # early stopping
         early_stopping_rounds=50,
-        objective='binary:logistic',
+        objective="binary:logistic",
         enable_categorical=True,
     )
     iterations = []
     for train_index, val_index in kfold.split(df_train):
         X_train, X_val = df_train.iloc[train_index], df_train.iloc[val_index]
         y_train, y_val = ser_targets_train.iloc[train_index], ser_targets_train.iloc[val_index]
-        model.fit(X_train, y_train,
-                  eval_set=[(X_val, y_val)],
-                  verbose=False,
-                  )
-        score = roc_auc_score(
-            y_val, model.predict_proba(X_val)[:, 1]
+        model.fit(
+            X_train,
+            y_train,
+            eval_set=[(X_val, y_val)],
+            verbose=False,
         )
+        score = roc_auc_score(y_val, model.predict_proba(X_val)[:, 1])
         best_iter = model.best_iteration
         iterations.append(best_iter)
         print(f"Fold score: {score:.4f}, Best Iteration: {best_iter}")

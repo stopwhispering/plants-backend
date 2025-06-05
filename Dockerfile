@@ -21,4 +21,3 @@ COPY config.toml /app/config.toml
 COPY plants/modules/pollination/prediction/ml_helpers /app/ml_helpers
 COPY plants /app/plants
 COPY scripts /app/scripts
-

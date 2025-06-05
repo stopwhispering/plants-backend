@@ -7,11 +7,10 @@ import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from plants import local_config
-from plants.modules.event.models import Event
+from plants.modules.event.models import Event, Pot
 from plants.modules.plant.models import Plant
 from plants.modules.pollination.models import Florescence
 from plants.modules.taxon.models import Taxon
-from plants.modules.event.models import Pot
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -23,6 +22,7 @@ if TYPE_CHECKING:
 
 async def _read_florescences_with_plants_and_taxa() -> pd.DataFrame:
     """Read and merge florescences with their plants and taxa."""
+
     def read_data(
         session: Session,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -61,11 +61,14 @@ async def _read_florescences_with_plants_and_taxa() -> pd.DataFrame:
         suffixes=(None, "_taxon"),
         validate="many_to_one",  # raise if not unique on right side
     )
-    return df_merged2.drop(['id_taxon', 'last_updated_at_taxon', 'created_at_taxon'], axis=1)
+    return df_merged2.drop(["id_taxon", "last_updated_at_taxon", "created_at_taxon"], axis=1)
 
 
 async def _read_plants_with_events() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Read plants with their taxa and events from the database. This includes plants that have no florescence."""
+    """Read plants with their taxa and events from the database.
+
+    This includes plants that have no florescence.
+    """
 
     def read_data(
         session: Session,
@@ -94,21 +97,21 @@ async def _read_plants_with_events() -> tuple[pd.DataFrame, pd.DataFrame]:
         suffixes=(None, "_taxon"),
         validate="many_to_one",  # raise if not unique on right side
     )
-    df_merged1 = df_merged1.drop(['id_taxon', 'last_updated_at_taxon', 'created_at_taxon'], axis=1)
+    df_merged1 = df_merged1.drop(["id_taxon", "last_updated_at_taxon", "created_at_taxon"], axis=1)
 
     # discard events that are not associated with a plant in df_plant
-    df_event = df_event[df_event['plant_id'].isin(df_plant['id'])]
+    df_event = df_event[df_event["plant_id"].isin(df_plant["id"])]
 
     # left outer join repottings; # joining table key, so count is unchanged
     df_event_merged = df_event.merge(
-        df_pot[['event_id', 'material', 'shape_top', 'shape_side', 'diameter_width']],
+        df_pot[["event_id", "material", "shape_top", "shape_side", "diameter_width"]],
         how="left",
         left_on=["id"],
         right_on=["event_id"],
         suffixes=(None, "_pot"),
         validate="many_to_one",  # raise if not unique on right side
     )
-    df_event_merged = df_event_merged.drop(['event_id'], axis=1)
+    df_event_merged = df_event_merged.drop(["event_id"], axis=1)
 
     return df_merged1, df_event_merged
 

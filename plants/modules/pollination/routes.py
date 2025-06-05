@@ -45,8 +45,9 @@ from plants.modules.pollination.pollination_services import (
     update_pollen_containers,
     update_pollination,
 )
-from plants.modules.pollination.prediction.train_florescence import \
-    train_model_for_florescence_probability
+from plants.modules.pollination.prediction.train_florescence import (
+    train_model_for_florescence_probability,
+)
 from plants.modules.pollination.prediction.train_germination import (
     train_model_for_germination_days,
     train_model_for_germination_probability,
@@ -60,6 +61,7 @@ from plants.modules.pollination.schemas import (
     BResultsPlantsForNewFlorescence,
     BResultsPollenContainers,
     BResultsPotentialPollenDonors,
+    BResultsRetrainingFlorescenceProbability,
     BResultsRetrainingGerminationDays,
     BResultsRetrainingGerminationProbability,
     BResultsRetrainingPollinationToSeedsModel,
@@ -76,7 +78,7 @@ from plants.modules.pollination.schemas import (
     SeedPlantingCreate,
     SeedPlantingPlantNameProposal,
     SeedPlantingUpdate,
-    SettingsRead, BResultsRetrainingFlorescenceProbability,
+    SettingsRead,
 )
 from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.pollination.seed_planting_services import (

@@ -15,10 +15,14 @@ async def train_model_for_florescence_probability() -> dict[str, str | float]:
     # feature_container = create_germination_features()
     # read florescence data (including plants and taxa) plus plants (including taxa) including
     # those that have not yet flowered
-    df_florescence, df_plant, df_event = await assemble_florescence_data()#feature_container=feature_container)
+    (
+        df_florescence,
+        df_plant,
+        df_event,
+    ) = await assemble_florescence_data()  # feature_container=feature_container)
     # df_florescence.to_pickle('/temp/florescence.pkl')
     # df_plant.to_pickle('/temp/plant.pkl')
-    a = 1
+    a = 1  # noqa
     # df, target = preprocess_data_for_probability_model(df_all)
     #
     # preprocessor = make_preprocessor(df)
@@ -50,9 +54,9 @@ async def train_model_for_florescence_probability() -> dict[str, str | float]:
     #     predict_germination.germination_feature_container,
     # ) = None, None
 
-    metric_name = 'todo'
+    metric_name = "todo"
     metric_value = 0.0
-    estimator = 'todo'
+    estimator = "todo"
     return {
         "model": PredictionModel.FLORESCENCE_PROBABILITY,
         "estimator": estimator,
