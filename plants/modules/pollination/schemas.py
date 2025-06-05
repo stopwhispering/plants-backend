@@ -332,6 +332,10 @@ class BResultsRetrainingGerminationProbability(BResultsRetraining):
     pass
 
 
+class BResultsRetrainingFlorescenceProbability(BResultsRetraining):
+    pass
+
+
 class FlowerHistoryMonth(BaseSchema):
     month: str  # e.g. '01'
     flowering_state: FloweringState

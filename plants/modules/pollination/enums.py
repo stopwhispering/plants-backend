@@ -98,3 +98,4 @@ class PredictionModel(str, Enum):
     RIPENING_DAYS = "ripening_days"
     GERMINATION_PROBABILITY = "germination_probability"
     GERMINATION_DAYS = "germination_days"
+    FLORESCENCE_PROBABILITY = "florescence_probability"

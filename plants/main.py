@@ -58,6 +58,7 @@ if local_config.allow_cors:
         [
             "http://localhost:5000",
             "http://localhost:8080",
+            "http://localhost:8081",
             "http://localhost:8085",
         ]
     )

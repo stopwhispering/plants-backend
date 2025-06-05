@@ -30,6 +30,7 @@ scikit-learn = "^1.2.1"
 aiohttp = "^3.9"
 psycopg = {extras = ["binary"], version = "^3.1.13"}
 pydantic-settings = "^2.1.0"
+xgboost = "^3.0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
@@ -160,6 +161,10 @@ ignore = [
 
     'PGH004',  # allow # noqa
     'RUF100',  # allow # noqa
+
+    'FBT001',  # booleans as args
+    'S101',  # assert statements
+
 ]
 #fixable = ["E", "F"]
 #unfixable = [

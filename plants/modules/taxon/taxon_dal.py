@@ -91,6 +91,9 @@ class TaxonDAL(BaseDAL):
     async def get_taxa_by_name_pattern(
         self, taxon_name_pattern: str, rank: FBRank | None = None
     ) -> list[Taxon]:
+        # the online db handles searches like "×tortuosa" as "× tortuosa"
+        # to match these results, we alter the pattern
+        taxon_name_pattern = taxon_name_pattern.replace("×", "×%")
         query = (
             select(Taxon)
             .where(Taxon.name.ilike(taxon_name_pattern))  # ilike ~ case-insensitive like

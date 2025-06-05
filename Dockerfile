@@ -2,6 +2,7 @@ FROM python:3.11 as requirements-stage
 WORKDIR /tmp
 RUN pip3 install poetry
 COPY ./pyproject.toml ./poetry.lock* /tmp/
+RUN poetry self add poetry-plugin-export
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11

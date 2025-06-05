@@ -108,6 +108,10 @@ class ImageMetadata:  # pylint: disable=too-many-instance-attributes
             else:
                 geo = ""
             verbatim_locality += geo
+
+            if len(verbatim_locality) > 120:
+                verbatim_locality = verbatim_locality[:117] + "..."
+
         return verbatim_locality
 
     @staticmethod

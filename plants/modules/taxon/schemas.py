@@ -25,7 +25,7 @@ class TaxonOccurrenceImageSchema(BaseSchema):
     gbif_id: int
     scientific_name: Annotated[str, Field(min_length=1, max_length=100)]
     basis_of_record: Annotated[str, Field(min_length=1, max_length=25)]
-    verbatim_locality: Annotated[str, Field(min_length=1, max_length=125)] | None = None
+    verbatim_locality: Annotated[str, Field(min_length=1, max_length=120)] | None = None
     photographed_at: datetime.datetime
     creator_identifier: Annotated[str, Field(min_length=1, max_length=100)]
     publisher_dataset: Annotated[str, Field(min_length=1, max_length=100)] | None = None
