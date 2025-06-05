@@ -1,0 +1,7 @@
+/plants.log
+/.env
+*.prof
+/deploy.bat
+/database.db
+/pollination_estimator.pkl
+/.venv

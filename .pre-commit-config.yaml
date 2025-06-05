@@ -1,0 +1,74 @@
+default_language_version:
+    python: python3.11
+repos:
+#-   repo: https://github.com/psf/black
+#    rev: 23.1.0
+#    hooks:
+#    -   id: black
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.2
+    hooks:
+    -   id: ruff
+        args:
+        - --fix
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.2
+    hooks:
+    # fixes files, replaces black
+    -   id: ruff-format
+
+#-   repo: https://github.com/pycqa/isort
+##   (included in ruff)
+#    rev: 5.12.0
+#    hooks:
+#      - id: isort
+#        name: isort (python)
+#        args: ["--profile", "black"]  # avoid conflicts with black
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-toml
+    -   id: check-json
+    -   id: pretty-format-json  # sets a standard for formatting json files
+        args:
+        - --autofix
+        - --no-sort-keys
+    -   id: check-added-large-files
+    -   id: check-ast  # simply checks whether the files parse as valid python.
+    -   id: check-case-conflict  #  checks for files that would conflict in case-insensitive filesystems
+    -   id: debug-statements  # checks for debugger imports and py37+ `breakpoint()` calls in python source.
+#- repo: local  # pylint works only with the local repo; pylint is too slow for usage
+                # pylint is too s low for regular usage
+#  hooks:
+#    - id: pylint
+#      name: pylint
+#      entry: pylint
+#      language: system
+#      types: [python]
+#      args:
+#        [
+#          "-rn", # Only display messages
+#          "-sn", # Don't display the score
+#        ]
+
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.1
+    hooks:
+      - id: docformatter
+        args: [--in-place, --wrap-summaries=100, --wrap-descriptions=100]
+
+#-   repo: https://github.com/pre-commit/mirrors-mypy
+#    # configured in pyproject.toml
+#    rev: v0.902
+#    hooks:
+#      - id: mypy
+#        additional_dependencies:
+#        # list plugin packages from pyproject.toml mypy section
+#          - "sqlalchemy"
+#          - "pydantic"
+#          - "numpy"
+#          - "pandera"

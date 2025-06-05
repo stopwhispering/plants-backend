@@ -1,0 +1,173 @@
+@startuml plants-entity-relationships
+skinparam linetype ortho
+
+entity "Florescence" as florescence {
+  * id : number <<generated>>
+  --
+  * plant_id : number <<FK>>
+  * florescence_status : <<Enum>>
+  inflorescence_appeared_at : date
+  flowers_count : number
+  ...
+}
+
+entity "Pollination" as pollination {
+  *id : number <<generated>>
+  --
+  * florescence_id : number <<FK>>
+  * pollen_donor_plant_id : number <<FK>>
+  * pollen_type : <<Enum>>
+  * pollen_quality : <<Enum>>
+  * location : <<Enum>>
+  * pollination_status : <<Enum>>
+  count_attempted : number
+  count_pollinated : number
+  count_capsules : number
+  ...
+}
+
+entity "SeedPlanting" as seed_planting {
+  * id : number <<generated>>
+  --
+  * pollination_id : number <<FK>>
+  * status : <<Enum>>
+  * sterilized : boolean
+  * planted_on : date
+  * soil_id : number <<FK>>
+  comment : text
+  count_germinated : number
+  ...
+}
+
+entity "Soil" as soil {
+  * id : number <<generated>>
+  --
+  * soil_name : string
+  * mix : text
+  ...
+}
+
+entity "Plant" as plant {
+  * id : number <<generated>>
+  --
+  * plant_name : string
+  * active : boolean
+  field_number : string
+  geographic_origin : string
+  parent_plant_id : number <<FK>>
+  parent_plant_pollen_id : number <<FK>>
+  preview_image_id : number <<FK>>
+  taxon_id : number <<FK>>
+  count_stored_pollen_containers : number
+  ...
+}
+
+entity "Event" as event {
+  * id : number <<generated>>
+  --
+  * plant_id : number <<FK>>
+  * date : date
+  soil_id : number <<FK>>
+  ...
+  }
+
+entity "Pot" as pot {
+  * id : number <<generated>>
+  --
+  * event_id : number <<FK>>
+  * material : <<Enum>>
+  * shape_top : <<Enum>>
+  * shape_side : <<Enum>>
+  diameter_width : number
+  ...
+}
+
+entity "Observation" as observation {
+  * id : number <<generated>>
+  --
+  * event_id : number <<FK>>
+  diseases : text
+  observation_notes: text
+  ...
+}
+
+entity "Taxon" as taxon {
+  * id : number <<generated>>
+  --
+  * name : string
+  * full_html_name : string
+  * genus : string
+  * family : string
+  * rank : string
+  * is_custom: boolean
+  species : string
+  infraspecies: string
+  custom_suffix : string
+  ...
+}
+
+entity "Distribution" as distribution{
+  * id : number <<generated>>
+    --
+  * taxon_id : number <<FK>>
+  * name : string
+  * establishment : string
+  * feature_id : string
+  * tdwg_code : string
+  * tdwg_level : number
+}
+
+entity "TaxonOccurrenceImage" as taxon_occurrence_image {
+  * occurrence_id : number
+  * img_no : number
+  * gbif_id : number
+  --
+  * scientific_name : string
+  * basis_of_record : string
+  * photographed_at : datetime
+  verbatim_locality : string
+  ...
+}
+
+entity "Tag" as tag {
+  * id : number <<generated>>
+  --
+  * plant_id  : number <<FK>>
+  text : string
+  state : <<Enum>>
+}
+
+entity "Image" as image {
+    * id : number <<generated>>
+    --
+    * filename : string <<unique>>
+    * record_date_time : datetime
+    description : string
+}
+
+entity "ImageKeyword" as image_keyword {
+    * image_id : number <<FK>>
+    * keyword : string
+}
+
+florescence "1" -right- "0..*" pollination
+pollination "1" -right- "0..*" seed_planting
+seed_planting "0..1" -down- "0..*" plant
+seed_planting "0..*" -up- "1" soil
+plant "1" -left- "0..*" tag
+plant "0..*" -- "0..1" plant : "as parent_plant"
+plant "0..*" -- "0..1" plant : "as parent_plant_pollen"
+florescence "0..*"--"1" plant
+event "0..*" -up- "0..1" soil
+event "0..*" -- "1" plant
+event "1" -- "0..*" pot
+event "1" -- "0..*" observation
+plant "0..*" -down- "0..1" taxon
+taxon "1" -- "0..*" distribution
+taxon "1" -- "0..*" taxon_occurrence_image
+image "1" -- "0..*" image_keyword
+image "0..1" -left- "0..*" plant : "as preview_image"
+image "0..*" -left- "0..*" plant
+image "0..*" -- "0..*" event
+image "0..*" -- "0..*" taxon
+@enduml

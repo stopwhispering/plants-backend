@@ -1,0 +1,23 @@
+services:
+
+  plants-backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+
+    labels:
+      # enable traefik for this specific service
+      - traefik.enable=true
+      # use the traefik-public network (declared below)
+      - traefik.docker.network=traefik-public
+
+    networks:
+      # use the public network created to be shared between Treafik
+      # and any other service that needs to be publicly available
+      - traefik-public
+
+networks:
+  # use the previously created public network "traefik-public"
+  # create at first time via "docker network create traefik-public"
+  traefik-public:
+    external: true

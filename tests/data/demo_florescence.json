@@ -1,0 +1,19 @@
+{
+  "inflorescence_appeared_at": null,
+  "branches_count": 3,
+  "flowers_count": null,
+  "first_flower_opened_at": "2023-02-07",
+  "last_flower_closed_at": null,
+  "florescence_status": "FLOWERING",
+  "first_seed_ripening_date": null,
+  "last_seed_ripening_date": null,
+  "comment": "Bl\u00fctenstandansatz bereits bei Erwerb",
+  "last_update_context": "api",
+  "creation_context": "api",
+  "perianth_length": null,
+  "perianth_diameter": null,
+  "flower_color": "#4ecdc4",
+  "flower_color_second": "#c78585",
+  "flower_colors_differentiation": "STRIPED",
+  "stigma_position": null
+}

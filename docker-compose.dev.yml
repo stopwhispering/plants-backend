@@ -1,0 +1,26 @@
+services:
+    plants-backend:
+      container_name: plants-backend-container
+      restart: on-failure
+      labels:
+        - traefik.http.routers.plants-backend-insecure.entrypoints=http-ep
+        - traefik.http.routers.plants-backend-insecure.rule=Host(`plants.localhost`) && PathPrefix(`/api`)
+
+      environment:
+#        set LOG_LEVEL for Gunicorn, default is "info"
+        - LOG_LEVEL=debug
+        - MAX_WORKERS=3
+
+        - ENVIRONMENT=${ENVIRONMENT:?err}
+        - CONNECTION_STRING=${CONNECTION_STRING:?err}
+        - MAX_IMAGES_PER_TAXON=${MAX_IMAGES_PER_TAXON:-20}
+        - ALLOW_CORS=${ALLOW_CORS:-False}
+        - LOG_SETTINGS__LOG_LEVEL_CONSOLE=${LOG_SETTINGS__LOG_LEVEL_CONSOLE:?err}
+        - LOG_SETTINGS__LOG_LEVEL_FILE=${LOG_SETTINGS__LOG_LEVEL_FILE:?err}
+        - LOG_SETTINGS__LOG_FILE_PATH=${LOG_SETTINGS__LOG_FILE_PATH:?err}
+        - LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES=${LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES:-False}
+
+      volumes:
+        - type: bind
+          source: /c/common/plants
+          target: /common/plants

@@ -1,0 +1,32 @@
+services:
+    plants-backend:
+      container_name: plants-backend-container
+      restart: unless-stopped
+      labels:
+        - traefik.http.routers.plants-backend.entrypoints=https-ep
+        - traefik.http.routers.plants-backend.rule=Host(`plants.${HOSTNAME:?err}`) && PathPrefix(`/api`)
+        - traefik.http.routers.plants-backend.tls=true
+        - traefik.http.routers.plants-backend.tls.certresolver=le
+
+        # enable basic auth as defined in traefik's docker compose file
+#        - traefik.http.routers.plants-backend.middlewares=my-basic-auth
+
+      environment:
+  #        set LOG_LEVEL for Gunicorn, default is "info"
+          - LOG_LEVEL=info
+#          - MAX_WORKERS=5
+
+          - ENVIRONMENT=${ENVIRONMENT:?err}
+          - CONNECTION_STRING=${CONNECTION_STRING:?err}
+          - MAX_IMAGES_PER_TAXON=${MAX_IMAGES_PER_TAXON:-20}
+          - ALLOW_CORS=${ALLOW_CORS:-False}
+          - HOSTNAME=${HOSTNAME:?err}
+          - LOG_SETTINGS__LOG_LEVEL_CONSOLE=${LOG_SETTINGS__LOG_LEVEL_CONSOLE:?err}
+          - LOG_SETTINGS__LOG_LEVEL_FILE=${LOG_SETTINGS__LOG_LEVEL_FILE:?err}
+          - LOG_SETTINGS__LOG_FILE_PATH=${LOG_SETTINGS__LOG_FILE_PATH:?err}
+          - LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES=${LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES:-False}
+
+      volumes:
+        - type: bind
+          source: /common/plants
+          target: /common/plants

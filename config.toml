@@ -1,0 +1,30 @@
+[images]
+size_thumbnail_image_taxon = [220, 220]  # constant width on details site for occurrence images from inat.
+resizing_size = [3440, 1440]  # set to none to disable resizing and reencoding quality
+sizes = [
+    # todo where used?
+    [1200, 800],
+#    # pollination left table with Avatar Size XS: 32x32 + 1.5 + 2.0  obsolete
+#    [32, 32], [64, 64],  # [48, 48],
+    # events list images: 120x120 + 1.5 + 2.0
+    [120, 120], [180, 180], [240, 240],
+    # detail view top bar with Avatar Size L (5rem): 80x80 + 1.5 + 2.0
+    [80, 80], [160, 160],  # , [120, 120]
+    # master view avatar size s (3 rem) / preview image: 48x48 + 1.5 + 2.0
+    [48, 48], [72, 72], [96, 96],
+    # detail view image list: 288x288 + 1.5 + 2.0
+    [288, 288], [432, 432], [566, 566]
+]
+jpg_quality = 82
+
+[plants]
+filter_hidden = true
+taxon_search_max_results = 50
+
+[frontend.restrictions]
+length_shortened_plant_name_for_tag = 25  # # keep in sync with frontend constant LENGTH_SHORTENED_PLANT_NAME_FOR_TAG
+
+[paths]
+path_photos = "/common/plants/photos"
+path_deleted_photos = "/common/plants/photos/deleted"
+path_pickled_ml_models = '/common/plants/pickled'

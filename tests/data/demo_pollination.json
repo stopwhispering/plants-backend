@@ -1,0 +1,21 @@
+{
+  "pollen_type": "fresh",
+  "location": "indoor_led",
+  "pollinated_at": "2022-12-29T21:16:00",
+  "label_color": "red",
+  "pollination_status": "seed_capsule",
+  "ongoing": true,
+  "harvest_date": null,
+  "seed_capsule_length": 13,
+  "seed_capsule_width": 12,
+  "seed_length": 12,
+  "seed_width": 1,
+  "seed_count": null,
+  "seed_capsule_description": null,
+  "seed_description": null,
+  "comment": null,
+  "last_update_context": "api",
+  "creation_at_context": "api",
+  "count_attempted": null,
+  "pollen_quality": "unknown"
+}
