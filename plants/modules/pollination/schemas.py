@@ -114,6 +114,7 @@ class PollinationRead(PollinationBase):
 
     florescence_id: int
     florescence_comment: str | None = None
+    florescence_status: FlorescenceStatus | None = None  # filled later
 
     # allow None for old data
     count_attempted: types.conint(ge=1) | None = None  # type: ignore[valid-type]

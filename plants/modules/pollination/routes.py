@@ -150,6 +150,7 @@ async def get_ongoing_pollinations(
     pollinations: list[PollinationRead] = []
     for p in pollinations_orm:
         pollination = PollinationRead.model_validate(p)
+        pollination.florescence_status = p.florescence.florescence_status
         # if pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
         pollination.predicted_ripening_days = get_predicted_ripening_days(p)
 
