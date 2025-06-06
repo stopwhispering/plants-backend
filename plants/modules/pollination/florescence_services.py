@@ -61,6 +61,7 @@ async def read_active_florescences(
             "id": flor.id,
             "plant_id": flor.plant_id,
             "plant_name": flor.plant.plant_name if flor.plant else None,
+            "plant_taxon_name": flor.plant.taxon.name if flor.plant and flor.plant.taxon else None,
             "self_pollinated": flor.self_pollinated,
             "plant_self_pollinates": flor.plant.self_pollinates if flor.plant else None,
             "plant_preview_image_id": flor.plant.preview_image_id,

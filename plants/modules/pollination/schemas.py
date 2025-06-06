@@ -213,6 +213,7 @@ class FlorescenceUpdate(FlorescenceBase):
 class FlorescenceRead(FlorescenceBase):
     id: int
     plant_name: str
+    plant_taxon_name: str | None = None
     plant_preview_image_id: int | None = None
     plant_self_pollinates: bool | None = None
     self_pollinated: bool | None = None
