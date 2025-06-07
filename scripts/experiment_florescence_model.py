@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import calendar
 from collections import defaultdict
 from datetime import date, datetime
 
@@ -289,7 +290,7 @@ def get_plant_to_month_targets(
     return df_results
 
 
-def get_training_data(
+def add_features(
     df_train: pd.DataFrame, df_plant: pd.DataFrame
 ) -> tuple[pd.DataFrame, pd.Series]:
     # extract calendar month and sine/cosine features
@@ -330,19 +331,46 @@ def get_training_data(
 
 
 def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataFrame:  # noqa
-    # add potting info
-    todo  # noqa
-    # df_train = df_train.merge(
-    #     df_event[['plant_id', 'potting_date']],
-    #     how='left',
-    #     left_on='plant_id',
-    #     right_on='plant_id',
-    #     suffixes=('', '_event'),
-    # )
-    # # fill NaN with None
-    # df_train['potting_date'] = df_train['potting_date'].fillna(pd.NaT)
-    # # convert to datetime.date
-    # df_train['potting_date'] = df_train['potting_date'].apply(lambda x: x.date() if pd.notna(x) else None)
+    """for each entry in df_train, we try to find the current pot's diameter"""
+    # we need onyl repotting events
+    df_event = df_event[df_event["diameter_width"].notna()]
+    df_event = df_event.sort_values("date")
+    # loop through the events by plant_id
+
+    results: list[tuple[int, datetime.date, int]] = []
+    for plant_id, df_event_plant in df_event.groupby("plant_id"):
+        first_repotting: str = df_event_plant.iloc[0]['date']  # yyyy-mm-dd
+        # for each month from first repotting to today, we look for the pot diameter
+        first_repotting_date = datetime.strptime(first_repotting, "%Y-%m-%d").date()
+        # for pd.date_range to start with first month, we need to set the day to 1
+        first_repotting_date = first_repotting_date.replace(day=1)
+
+        today = date.today()
+        for month in pd.date_range(start=first_repotting_date, end=today, freq="MS"):
+            # get last day of that month
+            _last_day = calendar.monthrange(month.year, month.month)[1]
+            current_month_last_day = month.replace(day=_last_day)
+
+            # find the last event before this month
+            df_event_plant_until_current_month = df_event_plant[
+                (df_event_plant["date"] <= current_month_last_day.strftime("%Y-%m-%d"))
+            ]
+            if not df_event_plant_until_current_month.empty:
+                # get the last event's diameter
+                diameter = df_event_plant_until_current_month.iloc[-1]["diameter_width"]
+                results.append((plant_id, month.date(), diameter))
+    df_results = pd.DataFrame(
+        results, columns=["plant_id", "pot_year_month", "pot_diameter"]
+    )
+    df_results["pot_year_month"] = pd.to_datetime(df_results["pot_year_month"])
+
+    df_train = df_train.merge(
+        df_results,
+        how="left",
+        left_on=["plant_id", "year_month"],
+        right_on=["plant_id", "pot_year_month"],
+        suffixes=("", "_potting"),
+    )
     return df_train
 
 
@@ -365,7 +393,7 @@ def assemble_training_data() -> tuple[pd.DataFrame, pd.Series]:
     df_train = get_plant_to_month_targets(plant_id_to_first_last_date, plant_id_to_flowering_months)
 
     df_train = add_potting_info(df_train, df_event)
-    df_train, ser_targets_train = get_training_data(df_train, df_plant)
+    df_train, ser_targets_train = add_features(df_train, df_plant)
 
     return df_train, ser_targets_train
 
