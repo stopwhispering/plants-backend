@@ -4,6 +4,8 @@ import logging
 from collections import defaultdict
 from typing import Any
 
+import random
+from datetime import datetime
 from fastapi import APIRouter, Depends
 
 from plants.dependencies import (
@@ -100,20 +102,69 @@ async def get_events(
     for row in flower_history_rows:
         converted_row = PlantFlowerYear(
             year=int(row.year),
-            month_01=PlantFlowerMonth(flowering_state=row.month_01),
-            month_02=PlantFlowerMonth(flowering_state=row.month_02),
-            month_03=PlantFlowerMonth(flowering_state=row.month_03),
-            month_04=PlantFlowerMonth(flowering_state=row.month_04),
-            month_05=PlantFlowerMonth(flowering_state=row.month_05),
-            month_06=PlantFlowerMonth(flowering_state=row.month_06),
-            month_07=PlantFlowerMonth(flowering_state=row.month_07),
-            month_08=PlantFlowerMonth(flowering_state=row.month_08),
-            month_09=PlantFlowerMonth(flowering_state=row.month_09),
-            month_10=PlantFlowerMonth(flowering_state=row.month_10),
-            month_11=PlantFlowerMonth(flowering_state=row.month_11),
-            month_12=PlantFlowerMonth(flowering_state=row.month_12),
+            month_01=PlantFlowerMonth(flowering_state=row.month_01, flowering_probability=None),
+            month_02=PlantFlowerMonth(flowering_state=row.month_02, flowering_probability=None),
+            month_03=PlantFlowerMonth(flowering_state=row.month_03, flowering_probability=None),
+            month_04=PlantFlowerMonth(flowering_state=row.month_04, flowering_probability=None),
+            month_05=PlantFlowerMonth(flowering_state=row.month_05, flowering_probability=None),
+            month_06=PlantFlowerMonth(flowering_state=row.month_06, flowering_probability=None),
+            month_07=PlantFlowerMonth(flowering_state=row.month_07, flowering_probability=None),
+            month_08=PlantFlowerMonth(flowering_state=row.month_08, flowering_probability=None),
+            month_09=PlantFlowerMonth(flowering_state=row.month_09, flowering_probability=None),
+            month_10=PlantFlowerMonth(flowering_state=row.month_10, flowering_probability=None),
+            month_11=PlantFlowerMonth(flowering_state=row.month_11, flowering_probability=None),
+            month_12=PlantFlowerMonth(flowering_state=row.month_12, flowering_probability=None),
         )
         flower_history.append(converted_row)
+
+    # for current months in current year and all months in upcoming year, we return
+    # the flowering probability
+    # todo: from model
+    # for now, we predict random numbers 0. to 1.
+    # get future months in current year
+    if flower_history:
+        flower_history_current_year = flower_history[-1]
+        assert flower_history_current_year.year == datetime.today().year
+        for month in range(datetime.today().month+1, 13):
+            month_field: PlantFlowerMonth = getattr(flower_history_current_year, f"month_{month:02d}")
+            month_field.flowering_probability = round(random.uniform(0, 1), 2)
+            month_field.flowering_state = None
+
+    else:
+        # if no flower history exists, we create a new one for the current year
+        flower_history_current_year = PlantFlowerYear(
+            year=datetime.today().year,
+            month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+            month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        )
+        flower_history.append(flower_history_current_year)
+
+    next_year_row = PlantFlowerYear(
+        year=flower_history_current_year.year + 1,
+        month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+        month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+    )
+    flower_history.append(next_year_row)
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {

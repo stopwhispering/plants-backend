@@ -104,7 +104,8 @@ class GetSoilsResponse(BaseSchema):
 
 
 class PlantFlowerMonth(BaseSchema):
-    flowering_state: FloweringState
+    flowering_state: FloweringState | None
+    flowering_probability: float | None
 
 
 class PlantFlowerYear(BaseSchema):
