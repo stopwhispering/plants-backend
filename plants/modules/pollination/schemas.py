@@ -254,6 +254,7 @@ class FlorescenceRead(FlorescenceBase):
 class PotentialPollenDonor(BaseSchema):
     plant_id: int
     plant_name: str
+    plant_taxon_name: str
     plant_preview_image_id: int | None = None
     pollen_type: str  # PollenType (fresh | frozen | unknown)
     count_stored_pollen_containers: int | None = None  # only relevant for frozen
