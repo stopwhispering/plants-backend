@@ -19,3 +19,4 @@ ts_api_interfaces
 *.csv
 *.pkl
 log.txt
+vps_pull_and_rerun_container.bat
