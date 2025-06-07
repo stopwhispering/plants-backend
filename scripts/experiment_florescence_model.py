@@ -7,7 +7,7 @@ from datetime import date, datetime
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
 from sklearn.model_selection import KFold
 from xgboost import XGBClassifier
 
@@ -290,9 +290,7 @@ def get_plant_to_month_targets(
     return df_results
 
 
-def add_features(
-    df_train: pd.DataFrame, df_plant: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.Series]:
+def add_features(df_train: pd.DataFrame, df_plant: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     # extract calendar month and sine/cosine features
     df_train["month"] = df_train["year_month"].dt.month
     df_train["month_sin"] = np.sin(2 * np.pi * (df_train["month"] - 1) / 12)
@@ -312,8 +310,12 @@ def add_features(
     ser_is_cv = df_train["plant_name"].apply(lambda x: "cv" in x.lower())
     df_train["is_custom"] = (df_train["is_custom"] == True) | ser_is_cv  # noqa
 
-    # make nan and None the same
-    df_train = df_train.fillna("None")
+    # # make nan and None the same
+    # df_train = df_train.fillna("None")
+
+    # remove all 2024
+    df_train = df_train[df_train["year_month"].dt.year != 2024]
+    df_train = df_train.reset_index(drop=True)
 
     df_train = df_train.drop(
         columns=["year_month", "id", "plant_name"]
@@ -331,7 +333,7 @@ def add_features(
 
 
 def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataFrame:  # noqa
-    """for each entry in df_train, we try to find the current pot's diameter"""
+    """For each entry in df_train, we try to find the current pot's diameter."""
     # we need onyl repotting events
     df_event = df_event[df_event["diameter_width"].notna()]
     df_event = df_event.sort_values("date")
@@ -339,13 +341,13 @@ def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataF
 
     results: list[tuple[int, datetime.date, int]] = []
     for plant_id, df_event_plant in df_event.groupby("plant_id"):
-        first_repotting: str = df_event_plant.iloc[0]['date']  # yyyy-mm-dd
+        first_repotting: str = df_event_plant.iloc[0]["date"]  # yyyy-mm-dd
         # for each month from first repotting to today, we look for the pot diameter
-        first_repotting_date = datetime.strptime(first_repotting, "%Y-%m-%d").date()
+        first_repotting_date = datetime.strptime(first_repotting, "%Y-%m-%d").date()  # noqa: DTZ007
         # for pd.date_range to start with first month, we need to set the day to 1
         first_repotting_date = first_repotting_date.replace(day=1)
 
-        today = date.today()
+        today = date.today()  # noqa: DTZ011
         for month in pd.date_range(start=first_repotting_date, end=today, freq="MS"):
             # get last day of that month
             _last_day = calendar.monthrange(month.year, month.month)[1]
@@ -359,9 +361,7 @@ def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataF
                 # get the last event's diameter
                 diameter = df_event_plant_until_current_month.iloc[-1]["diameter_width"]
                 results.append((plant_id, month.date(), diameter))
-    df_results = pd.DataFrame(
-        results, columns=["plant_id", "pot_year_month", "pot_diameter"]
-    )
+    df_results = pd.DataFrame(results, columns=["plant_id", "pot_year_month", "pot_diameter"])
     df_results["pot_year_month"] = pd.to_datetime(df_results["pot_year_month"])
 
     df_train = df_train.merge(
@@ -371,7 +371,7 @@ def add_potting_info(df_train: pd.DataFrame, df_event: pd.DataFrame) -> pd.DataF
         right_on=["plant_id", "pot_year_month"],
         suffixes=("", "_potting"),
     )
-    return df_train
+    return df_train.drop(columns=["pot_year_month"])
 
 
 def assemble_training_data() -> tuple[pd.DataFrame, pd.Series]:
@@ -417,8 +417,12 @@ if __name__ == "__main__":
     # df_train, ser_targets_train = get_training_data(df_train, df_plant)
 
     df_train, ser_targets_train = assemble_training_data()
+    print(df_train.shape)
 
-    # train xgb model using cv (3 folds)
+    # Compute class weight manually: scale_pos_weight = neg / pos
+    neg, pos = np.bincount(ser_targets_train)
+    scale_pos_weight = neg / pos
+    print(f"Scale pos weight: {scale_pos_weight:.2f}")
 
     kfold = KFold(n_splits=3, shuffle=True, random_state=42)
     model = XGBClassifier(
@@ -431,9 +435,11 @@ if __name__ == "__main__":
         early_stopping_rounds=50,
         objective="binary:logistic",
         enable_categorical=True,
+        scale_pos_weight=scale_pos_weight,
     )
     iterations = []
-    for train_index, val_index in kfold.split(df_train):
+    df_oof = pd.DataFrame(index=df_train.index, columns=["preds", "proba"])
+    for _, (train_index, val_index) in enumerate(kfold.split(df_train)):
         X_train, X_val = df_train.iloc[train_index], df_train.iloc[val_index]
         y_train, y_val = ser_targets_train.iloc[train_index], ser_targets_train.iloc[val_index]
         model.fit(
@@ -442,13 +448,47 @@ if __name__ == "__main__":
             eval_set=[(X_val, y_val)],
             verbose=False,
         )
-        score = roc_auc_score(y_val, model.predict_proba(X_val)[:, 1])
         best_iter = model.best_iteration
         iterations.append(best_iter)
-        print(f"Fold score: {score:.4f}, Best Iteration: {best_iter}")
+        y_pred = model.predict(X_val)
+        y_proba = model.predict_proba(X_val)[:, 1]
+        df_oof.loc[val_index, "preds"] = y_pred
+        df_oof.loc[val_index, "proba"] = y_proba
+        # score_roc_auc = roc_auc_score(y_val, y_proba)
+        # score_f1 = f1_score(y_val, y_pred, zero_division=0)
+        # score_pr_auc = average_precision_score(y_val, y_proba)
+        # print(f"{i}, {best_iter=}, {score_roc_auc=:.4f}, {score_f1=:.4f}, {score_pr_auc=:.4f}")
+
+    # 0, best_iter=143, score_roc_auc=0.9300, score_f1=0.1361, score_pr_auc=0.2252
+    # 1, best_iter=159, score_roc_auc=0.9343, score_f1=0.0985, score_pr_auc=0.1941
+    # 2, best_iter=388, score_roc_auc=0.9338, score_f1=0.1073, score_pr_auc=0.1764
+
+    # # find most important features
+    # feature_importances = model.feature_importances_
+    # feature_names = df_train.columns.tolist()
+    # feature_importance_dict = dict(zip(feature_names, feature_importances))
+    # sorted_features = sorted(feature_importance_dict.items(), key=lambda x: x[1], reverse=True)
+    # print("Feature importances:")
+    # for feature, importance in sorted_features:
+    #     print(f"{feature}: {importance:.4f}")
+
+    score_roc_auc = roc_auc_score(ser_targets_train, df_oof["proba"])
+    score_f1 = f1_score(ser_targets_train, df_oof["preds"].astype(bool), zero_division=0)
+    score_pr_auc = average_precision_score(ser_targets_train, df_oof["proba"])
+    print(f"{iterations=}, {score_roc_auc=:.4f}, {score_f1=:.4f}, {score_pr_auc=:.4f}")
+    # baseline:
+    # iterations=[278, 202, 317], score_roc_auc=0.9434, score_f1=0.1634, score_pr_auc=0.2346
+    # with scale_pos_weight (51.46):
+    # iterations=[68, 104, 81], score_roc_auc=0.9454, score_f1=0.4023, score_pr_auc=0.2714
+
+    # precision, recall, _ = precision_recall_curve(ser_targets_train, df_oof["proba"])
+    # import matplotlib.pyplot as plt
+    # plt.plot(recall, precision, label=f"{score_roc_auc=} (AP={score_pr_auc:.2f})")
+    # plt.show()
 
     # retrain on full data
-    print(int(np.mean(iterations)))
-    model.n_estimators = int(np.mean(iterations))
+    n_estimators = int(np.mean(iterations))
+    print(f"{n_estimators=}")
+    model.n_estimators = n_estimators
     model.early_stopping_rounds = None
     model.fit(df_train, ser_targets_train)

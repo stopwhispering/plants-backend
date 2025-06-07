@@ -99,7 +99,7 @@ async def get_events(
     flower_history = []
     for row in flower_history_rows:
         converted_row = PlantFlowerYear(
-            year=row.year,
+            year=int(row.year),
             month_01=PlantFlowerMonth(flowering_state=row.month_01),
             month_02=PlantFlowerMonth(flowering_state=row.month_02),
             month_03=PlantFlowerMonth(flowering_state=row.month_03),
