@@ -154,7 +154,8 @@ async def get_ongoing_pollinations(
         # if pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
         pollination.predicted_ripening_days = get_predicted_ripening_days(p)
 
-        if pollination.pollination_status == PollinationStatus.ATTEMPT:
+        # for clarity reasons we show the probability even if pollination already proved to be successful
+        if pollination.pollination_status == PollinationStatus.ATTEMPT or pollination.pollination_status == PollinationStatus.SEED_CAPSULE:
             pollination.probability_pollination_to_seed = get_probability_pollination_to_seed(
                 florescence=p.florescence,
                 pollen_donor=p.pollen_donor_plant,
