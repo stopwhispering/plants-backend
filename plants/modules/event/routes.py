@@ -41,6 +41,8 @@ from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.flower_history_services import (
     generate_flower_history,
 )
+from plants.modules.pollination.prediction.predict_florescence import \
+    predict_probability_of_florescence
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BackendSaveConfirmation
 from plants.shared.message_services import get_message
@@ -117,54 +119,40 @@ async def get_events(
         )
         flower_history.append(converted_row)
 
-    # for current months in current year and all months in upcoming year, we return
+    # for subsequent months in current year and all months in upcoming year, we return
     # the flowering probability
-    # todo: from model
-    # for now, we predict random numbers 0. to 1.
-    # get future months in current year
-    if flower_history:
-        flower_history_current_year = flower_history[-1]
-        assert flower_history_current_year.year == datetime.today().year
-        for month in range(datetime.today().month+1, 13):
-            month_field: PlantFlowerMonth = getattr(flower_history_current_year, f"month_{month:02d}")
-            month_field.flowering_probability = round(random.uniform(0, 1), 2)
-            month_field.flowering_state = None
-
-    else:
-        # if no flower history exists, we create a new one for the current year
-        flower_history_current_year = PlantFlowerYear(
-            year=datetime.today().year,
-            month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-            month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
+    year_month_proba = predict_probability_of_florescence(plant)
+    proba_by_new_years = defaultdict(list)
+    for year, month, probability in year_month_proba:
+        flower_history_current_year = next(
+            (row for row in flower_history if row.year == year), None
         )
-        flower_history.append(flower_history_current_year)
+        if flower_history_current_year is not None:
+            month_field: PlantFlowerMonth = getattr(flower_history_current_year, f"month_{month:02d}")
+            month_field.flowering_probability = round(probability, 2)
+            month_field.flowering_state = None
+        else:
+            proba_by_new_years[year].append((month, round(probability, 2)))
 
-    next_year_row = PlantFlowerYear(
-        year=flower_history_current_year.year + 1,
-        month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-        month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=round(random.uniform(0, 1), 2)),
-    )
-    flower_history.append(next_year_row)
+    for year, month_proba in proba_by_new_years.items():
+        # create a new year row for the flower history
+        flower_history.append(
+            PlantFlowerYear(
+                year=year,
+                month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 1), None)),
+                month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 2), None)),
+                month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 3), None)),
+                month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 4), None)),
+                month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 5), None)),
+                month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 6), None)),
+                month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 7), None)),
+                month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 8), None)),
+                month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 9), None)),
+                month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 10), None)),
+                month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 11), None)),
+                month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 12), None)),
+            )
+        )
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {
