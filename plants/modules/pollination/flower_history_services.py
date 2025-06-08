@@ -122,6 +122,30 @@ class FloweringPlant:
                 flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
 
+        # in case of new plants that are already flowering, we need to estimate on weak data
+        logger.warning(
+            f"Can't determine inflorescence period - Estimating all dates. "
+            f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
+        )
+
+        if florescence.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED:
+            return FloweringPeriod(
+                start=date.today() - timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER/2)),
+                start_verified=False,
+                end=date.today() + timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER/2)),
+                end_verified=False,
+                flowering_state=FloweringState.INFLORESCENCE_GROWING,
+            )
+
+        if florescence.florescence_status == FlorescenceStatus.FLOWERING:
+            return FloweringPeriod(
+                start=date.today() - timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER/2) + AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER),
+                start_verified=False,
+                end=date.today() + timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER/2)),
+                end_verified=False,
+                flowering_state=FloweringState.INFLORESCENCE_GROWING,
+            )
+
         logger.warning(
             f"Can't determine inflorescence period - Unknown dates for "
             f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
@@ -190,6 +214,23 @@ class FloweringPlant:
                 start_verified=False,
                 end=florescence.last_flower_closed_at - timedelta(days=1),
                 end_verified=True,
+                flowering_state=FloweringState.FLOWERING,
+            )
+
+        # in case of new plants that are already flowering, we need to estimate on weak data
+        logger.warning(
+            f"Can't determine flowering period - Estimating all dates. "
+            f"{florescence.plant.plant_name}. Comment: {florescence.comment}"
+        )
+
+        if florescence.florescence_status == FlorescenceStatus.FLOWERING:
+            return FloweringPeriod(
+                start=date.today() - timedelta(
+                    days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
+                start_verified=False,
+                end=date.today() + timedelta(
+                    days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
+                end_verified=False,
                 flowering_state=FloweringState.FLOWERING,
             )
 
