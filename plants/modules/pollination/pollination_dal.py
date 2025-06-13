@@ -95,18 +95,27 @@ class PollinationDAL(BaseDAL):
                 .selectinload(SeedPlanting.plants)
                 .selectinload(Plant.taxon),
                 selectinload(Pollination.seed_plantings).selectinload(SeedPlanting.soil),
-                selectinload(Pollination.florescence),
+                selectinload(Pollination.florescence).selectinload(Florescence.pollinations),
             )
         )
 
         if not include_ongoing_pollinations and not include_finished_pollinations:
             return []
         if include_ongoing_pollinations and not include_finished_pollinations:
+            # query = query.where(
+            #     or_(
+            #         Pollination.ongoing,
+            #         Florescence.florescence_status == FlorescenceStatus.FLOWERING,
+            #     ),
+            # )
             query = query.where(
                 or_(
-                    Pollination.ongoing,
+                    Pollination.ongoing.is_(True),
                     Florescence.florescence_status == FlorescenceStatus.FLOWERING,
-                ),
+                    Pollination.florescence.has(
+                        Florescence.pollinations.any(Pollination.ongoing.is_(True))
+                    ),
+                )
             )
         elif include_finished_pollinations and not include_ongoing_pollinations:
             query = query.where(Pollination.ongoing.is_(False))
