@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -33,10 +34,10 @@ class FloweringPeriod:
     end_verified: bool
     flowering_state: FloweringState
 
-    def get_state_at_date(self, date_: date) -> FloweringState:
-        if self.start <= date_ <= self.end:
-            return self.flowering_state
-        return FloweringState.NOT_FLOWERING
+    # def get_state_at_date(self, date_: date) -> FloweringState:
+    #     if self.start <= date_ <= self.end:
+    #         return self.flowering_state
+    #     return FloweringState.NOT_FLOWERING
 
 
 class FloweringPlant:
@@ -59,13 +60,24 @@ class FloweringPlant:
     def get_earliest_period_start(self) -> date:
         return min(period.start for period in self.periods)
 
-    def get_state_at_date(self, date_: date) -> FloweringState:
-        states = [period.get_state_at_date(date_) for period in self.periods]
-        if FloweringState.FLOWERING in states:
+    def get_state_at_date(self, year: int, month: int) -> FloweringState:
+        # get the periods that have at leat one day in the month
+        date_first = date(year, month, 1)
+        date_last = date(year, month, calendar.monthrange(year, month)[1])
+        periods_for_month = [
+            period
+            for period in self.periods
+            if period.start <= date_last and period.end >= date_first
+        ]
+
+        flowering_states = [p.flowering_state for p in periods_for_month]
+
+        # states = [period.get_state_at_date(date_) for period in self.periods]
+        if FloweringState.FLOWERING in flowering_states:
             return FloweringState.FLOWERING
-        if FloweringState.SEEDS_RIPENING in states:
+        if FloweringState.SEEDS_RIPENING in flowering_states:
             return FloweringState.SEEDS_RIPENING
-        if FloweringState.INFLORESCENCE_GROWING in states:
+        if FloweringState.INFLORESCENCE_GROWING in flowering_states:
             return FloweringState.INFLORESCENCE_GROWING
         return FloweringState.NOT_FLOWERING
 
@@ -130,18 +142,24 @@ class FloweringPlant:
 
         if florescence.florescence_status == FlorescenceStatus.INFLORESCENCE_APPEARED:
             return FloweringPeriod(
-                start=date.today() - timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER/2)),
+                start=date.today()
+                - timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER / 2)),
                 start_verified=False,
-                end=date.today() + timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER/2)),
+                end=date.today()
+                + timedelta(days=int(AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER / 2)),
                 end_verified=False,
                 flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
 
         if florescence.florescence_status == FlorescenceStatus.FLOWERING:
             return FloweringPeriod(
-                start=date.today() - timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER/2) + AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER),
+                start=date.today()
+                - timedelta(
+                    days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)
+                    + AVG_DURATION_INFLORESCENCE_TO_FIRST_FLOWER
+                ),
                 start_verified=False,
-                end=date.today() + timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER/2)),
+                end=date.today() + timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
                 end_verified=False,
                 flowering_state=FloweringState.INFLORESCENCE_GROWING,
             )
@@ -225,11 +243,9 @@ class FloweringPlant:
 
         if florescence.florescence_status == FlorescenceStatus.FLOWERING:
             return FloweringPeriod(
-                start=date.today() - timedelta(
-                    days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
+                start=date.today() - timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
                 start_verified=False,
-                end=date.today() + timedelta(
-                    days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
+                end=date.today() + timedelta(days=int(AVG_DURATION_FIRST_TO_LAST_FLOWER / 2)),
                 end_verified=False,
                 flowering_state=FloweringState.FLOWERING,
             )
@@ -344,18 +360,18 @@ async def generate_flower_history(
                     plant_id=flowering_plant.plant.id,
                     plant_name=flowering_plant.plant.plant_name,
                     year=str(year),
-                    month_01=flowering_plant.get_state_at_date(date(year, 1, 15)),
-                    month_02=flowering_plant.get_state_at_date(date(year, 2, 15)),
-                    month_03=flowering_plant.get_state_at_date(date(year, 3, 15)),
-                    month_04=flowering_plant.get_state_at_date(date(year, 4, 15)),
-                    month_05=flowering_plant.get_state_at_date(date(year, 5, 15)),
-                    month_06=flowering_plant.get_state_at_date(date(year, 6, 15)),
-                    month_07=flowering_plant.get_state_at_date(date(year, 7, 15)),
-                    month_08=flowering_plant.get_state_at_date(date(year, 8, 15)),
-                    month_09=flowering_plant.get_state_at_date(date(year, 9, 15)),
-                    month_10=flowering_plant.get_state_at_date(date(year, 10, 15)),
-                    month_11=flowering_plant.get_state_at_date(date(year, 11, 15)),
-                    month_12=flowering_plant.get_state_at_date(date(year, 12, 15)),
+                    month_01=flowering_plant.get_state_at_date(year=year, month=1),
+                    month_02=flowering_plant.get_state_at_date(year=year, month=2),
+                    month_03=flowering_plant.get_state_at_date(year=year, month=3),
+                    month_04=flowering_plant.get_state_at_date(year=year, month=4),
+                    month_05=flowering_plant.get_state_at_date(year=year, month=5),
+                    month_06=flowering_plant.get_state_at_date(year=year, month=6),
+                    month_07=flowering_plant.get_state_at_date(year=year, month=7),
+                    month_08=flowering_plant.get_state_at_date(year=year, month=8),
+                    month_09=flowering_plant.get_state_at_date(year=year, month=9),
+                    month_10=flowering_plant.get_state_at_date(year=year, month=10),
+                    month_11=flowering_plant.get_state_at_date(year=year, month=11),
+                    month_12=flowering_plant.get_state_at_date(year=year, month=12),
                 )
             )
 

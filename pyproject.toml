@@ -165,6 +165,9 @@ ignore = [
     'FBT001',  # booleans as args
     'S101',  # assert statements
 
+    'DTZ011', # allow datetime.now() without timezone
+    'PLR0911',  # Too many return statements
+
 ]
 #fixable = ["E", "F"]
 #unfixable = [
