@@ -112,7 +112,15 @@ class PollinationDAL(BaseDAL):
             query = query.where(Pollination.ongoing.is_(False))
         # else: no filter
 
+        # for legacy reasons, we need to filter out pollinations where
+        # the seed capsule plant's taxon is None
+        query = query.where(
+            Pollination.seed_capsule_plant.has(Plant.taxon_id.is_not(None)),
+            Pollination.pollen_donor_plant.has(Plant.taxon_id.is_not(None)),
+        )
+
         pollinations: list[Pollination] = list((await self.session.scalars(query)).all())
+
         return pollinations
 
     async def get_available_colors_for_florescence(self, florescence: Florescence) -> list[str]:

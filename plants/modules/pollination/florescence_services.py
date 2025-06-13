@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
 
-from plants.exceptions import BaseError
+from plants.exceptions import BaseError, FlorescenceWithoutTaxonError
 from plants.modules.pollination.enums import (
     Context,
     FlorescenceStatus,
@@ -82,7 +82,8 @@ async def read_active_florescences(
                 await pollination_dal.get_available_colors_for_florescence(florescence=flor)
             ),
         }
-        florescences.append(FlorescenceRead.parse_obj(f_dict))
+        # florescences.append(FlorescenceRead.parse_obj(f_dict))
+        florescences.append(FlorescenceRead.model_validate(f_dict))
 
     return florescences
 
@@ -131,7 +132,8 @@ async def update_active_florescence(
             detail="flower_color_second must be different from flower_color",
         )
 
-    updates = edited_florescence_data.dict(exclude={})
+    # updates = edited_florescence_data.dict(exclude={})
+    updates = edited_florescence_data.model_dump(exclude={})
     updates["first_flower_opened_at"] = parse_api_date(
         edited_florescence_data.first_flower_opened_at
     )
@@ -156,6 +158,12 @@ async def create_new_florescence(
 ) -> None:
     """Create a new active florescence."""
     plant = await plant_dal.by_id(new_florescence_data.plant_id)
+
+    if not plant.taxon:
+        raise FlorescenceWithoutTaxonError(
+            plant_id=new_florescence_data.plant_id, plant_name=plant.plant_name
+        )
+
     florescence = Florescence(
         plant_id=new_florescence_data.plant_id,
         plant=plant,

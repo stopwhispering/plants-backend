@@ -206,6 +206,15 @@ class SoilNotUniqueError(BaseError):
         super().__init__(detail=f"Soil {soil_name} not unique.")
 
 
+class FlorescenceWithoutTaxonError(BaseError):
+    """Raised when florescence is created for plant without Taxon."""
+
+    def __init__(self, plant_id: int, plant_name: str):
+        super().__init__(
+            detail=f"Can't create florescence for plant without taxon: {plant_id} ({plant_name})."
+        )
+
+
 class ImageNotFoundError(BaseError):
     """Raised when image, looked for by ID, not found in database."""
 
