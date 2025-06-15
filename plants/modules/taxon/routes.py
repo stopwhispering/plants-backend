@@ -75,6 +75,7 @@ async def create_botanical_name(botanical_attributes: CreateBotanicalNameRequest
 @router.get("/{taxon_id}", response_model=GetTaxonResponse)
 async def get_taxon(taxon: Taxon = Depends(valid_taxon)) -> Any:
     """Returns taxon for requested taxon_id."""
+
     return {
         "action": "Get taxa",
         "message": get_message(f"Read taxon {taxon.id} from database."),

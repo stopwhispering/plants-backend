@@ -139,6 +139,7 @@ class TaxonBase(BaseSchema):
     distribution_concat: str | None = None
 
     is_custom: bool
+    custom_suffix: str | None = None
     cultivar: str | None = None
     affinis: str | None = None
 
