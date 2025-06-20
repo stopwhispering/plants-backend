@@ -43,6 +43,8 @@ class PollinationDAL(BaseDAL):
             pollination.count_attempted = updates["count_attempted"]
         if "count_pollinated" in updates:
             pollination.count_pollinated = updates["count_pollinated"]
+        if "pollen_quality" in updates:
+            pollination.pollen_quality = updates["pollen_quality"]
         if "count_capsules" in updates:
             pollination.count_capsules = updates["count_capsules"]
         if "label_color" in updates:

@@ -154,6 +154,7 @@ class PollinationUpdate(PollinationBase):
     ongoing: bool
 
     pollinated_at: str | None = None  # e.g. '2022-11-16 13:23:00'
+    pollen_quality: PollenQuality
 
     count_pollinated: types.conint(ge=1) | None = None  # type: ignore[valid-type]
     count_capsules: types.conint(ge=1) | None = None  # type: ignore[valid-type]

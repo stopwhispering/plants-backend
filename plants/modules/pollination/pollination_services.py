@@ -298,6 +298,7 @@ async def update_pollination(
     updates = pollination_data.model_dump(exclude={})
     pollinated_at_ = pollination_data.pollinated_at or "1900-01-01"  # legacy data
     updates["pollinated_at"] = parse_api_datetime(pollinated_at_)
+    updates["pollen_quality"] = pollination_data.pollen_quality
     updates["label_color"] = label_color
     updates["harvest_date"] = parse_api_date(pollination_data.harvest_date)
     updates["last_update_context"] = Context.API
