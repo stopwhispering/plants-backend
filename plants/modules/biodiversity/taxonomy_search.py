@@ -279,6 +279,7 @@ class ApiSearcher:
                 FBRank.SUBSPECIES.value,
                 FBRank.VARIETY.value,
                 FBRank.FORMA.value,
+                FBRank.SUBFORMA.value,
             )
             or rank == "nothovar."
         ):

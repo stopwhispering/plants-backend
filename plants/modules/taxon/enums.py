@@ -15,6 +15,7 @@ class FBRank(str, Enum):
     SUBSPECIES = "subsp."
     VARIETY = "var."
     FORMA = "forma"
+    SUBFORMA = "subf."
 
 
 class Establishment(str, Enum):
