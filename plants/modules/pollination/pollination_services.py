@@ -108,12 +108,12 @@ async def read_potential_pollen_donors(
     )
 
     for florescence_pollen_donor in fresh_pollen_donors:
-        if florescence_pollen_donor is florescence:
-            continue
+        # if florescence_pollen_donor is florescence:
+        #     continue
 
-        # also skip other active florescences of our plant
-        if florescence_pollen_donor.plant_id == florescence.plant_id:
-            continue
+        # # also skip other active florescences of our plant
+        # if florescence_pollen_donor.plant_id == florescence.plant_id:
+        #     continue
 
         # if plant has multiple active florescences, return only the first one
         if any(
@@ -136,6 +136,8 @@ async def read_potential_pollen_donors(
             "pollen_type": PollenType.FRESH.value,
             "count_stored_pollen_containers": None,
             "already_ongoing_attempt": already_ongoing_attempt,
+            "is_same_plant": florescence_pollen_donor.plant_id == florescence.plant_id,
+            "is_same_florescence": florescence_pollen_donor is florescence,
             "probability_pollination_to_seed": get_probability_pollination_to_seed(
                 florescence=florescence,
                 pollen_donor=florescence_pollen_donor.plant,
@@ -159,8 +161,8 @@ async def read_potential_pollen_donors(
 
     frozen_pollen_plant: Plant
     for frozen_pollen_plant in frozen_pollen_plants:
-        if frozen_pollen_plant.id == florescence.plant_id:
-            continue
+        # if frozen_pollen_plant.id == florescence.plant_id:
+        #     continue
 
         already_ongoing_attempt = await _plants_have_ongoing_pollination(
             seed_capsule_plant_id=florescence.plant_id,
@@ -176,6 +178,8 @@ async def read_potential_pollen_donors(
             "pollen_type": PollenType.FROZEN.value,
             "count_stored_pollen_containers": frozen_pollen_plant.count_stored_pollen_containers,
             "already_ongoing_attempt": already_ongoing_attempt,
+            "is_same_plant": frozen_pollen_plant.id == florescence.plant_id,
+            "is_same_florescence": False,
             "probability_pollination_to_seed": get_probability_pollination_to_seed(
                 florescence=florescence,
                 pollen_donor=frozen_pollen_plant,

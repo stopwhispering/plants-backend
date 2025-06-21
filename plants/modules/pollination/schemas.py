@@ -260,6 +260,8 @@ class PotentialPollenDonor(BaseSchema):
     pollen_type: str  # PollenType (fresh | frozen | unknown)
     count_stored_pollen_containers: int | None = None  # only relevant for frozen
     already_ongoing_attempt: bool
+    is_same_plant: bool
+    is_same_florescence: bool
     # pollen_harvest_month: str | None  # only relevant for frozen
     probability_pollination_to_seed: int | None = None  # None only in error case
 
