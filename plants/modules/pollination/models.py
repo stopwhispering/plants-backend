@@ -112,6 +112,18 @@ class Florescence(Base):
         uselist=True,
     )
 
+    @property
+    def estimated_last_flower_closed_at(self) -> datetime.date | None:
+        if self.last_flower_closed_at is not None:
+            return self.last_flower_closed_at
+        if self.first_flower_opened_at is not None:
+            return self.first_flower_opened_at + datetime.timedelta(
+                days=30
+            )  # assume 30 days of flowering
+        if self.inflorescence_appeared_at is not None:
+            return self.inflorescence_appeared_at + datetime.timedelta(days=70)
+        return None
+
 
 class Pollination(Base):
     """pollination attempts of a plant

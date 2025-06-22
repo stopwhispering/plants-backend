@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import Select, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import Select, and_, select
+from sqlalchemy.orm import selectinload, with_loader_criteria
 
 from plants.exceptions import (
     PlantNotFoundError,
@@ -14,6 +14,8 @@ from plants.exceptions import (
 from plants.modules.event.models import Event
 from plants.modules.image.models import Image
 from plants.modules.plant.models import Plant, Tag
+from plants.modules.pollination.enums import FlorescenceStatus
+from plants.modules.pollination.models import Florescence
 from plants.modules.taxon.models import Taxon
 from plants.shared.base_dal import BaseDAL
 
@@ -143,8 +145,18 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             .where(Plant.deleted.is_(False))
             .where(Plant.count_stored_pollen_containers >= 1)
             .options(selectinload(Plant.taxon))
+            .options(selectinload(Plant.florescences))
+            .options(
+                with_loader_criteria(
+                    Florescence,
+                    lambda f: f.florescence_status == FlorescenceStatus.FINISHED,  # noqa
+                    include_aliases=True,
+                )
+            )
         )
-        plants: list[Plant] = list((await self.session.scalars(query)).all())
+
+        result = await self.session.scalars(query)
+        plants: list[Plant] = list(result.all())
         return plants
 
     async def get_children(
@@ -154,8 +166,10 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             select(Plant)
             .where(Plant.deleted.is_(False))
             .where(
-                Plant.parent_plant_id == seed_capsule_plant.id,
-                Plant.parent_plant_pollen_id == pollen_donor_plant.id,
+                and_(
+                    Plant.parent_plant_id == seed_capsule_plant.id,
+                    Plant.parent_plant_pollen_id == pollen_donor_plant.id,
+                )
             )
         )
 
@@ -169,8 +183,10 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             select(Plant)
             .where(Plant.deleted.is_(False))
             .where(
-                Plant.parent_plant_id == seed_capsule_plant_id,
-                Plant.parent_plant_pollen_id == pollen_donor_plant_id,
+                and_(
+                    Plant.parent_plant_id == seed_capsule_plant_id,
+                    Plant.parent_plant_pollen_id == pollen_donor_plant_id,
+                )
             )
         )
 

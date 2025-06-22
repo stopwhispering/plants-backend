@@ -150,6 +150,7 @@ async def read_potential_pollen_donors(
                 pollen_donor_id=florescence_pollen_donor.plant.id,
                 pollination_dal=pollination_dal,
             ),
+            "previous_flower_closing_dates": None,  # not relevant for currently flowering plants
         }
         potential_pollen_donors.append(
             PotentialPollenDonor.model_validate(potential_pollen_donor_flowering)
@@ -192,6 +193,10 @@ async def read_potential_pollen_donors(
                 pollen_donor_id=frozen_pollen_plant.id,
                 pollination_dal=pollination_dal,
             ),
+            "previous_flower_closing_dates": [
+                f.estimated_last_flower_closed_at.isoformat()
+                for f in frozen_pollen_plant.florescences
+            ],
         }
         potential_pollen_donors.append(
             PotentialPollenDonor.model_validate(potential_pollen_donor_frozen)

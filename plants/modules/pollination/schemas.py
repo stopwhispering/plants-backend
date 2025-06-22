@@ -81,6 +81,8 @@ class PollenContainerBase(BaseSchema):
 class PollenContainerRead(PollenContainerBase):
     plant_name: Annotated[str, Field(min_length=1, max_length=100)]
     genus: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    # list of Date objects
+    # previous_flower_closing_dates: list[str]  # e.g. ['2022-11-16', '2022-11-17']
     # plants: list[PlantEssentials]
 
 
@@ -268,6 +270,8 @@ class PotentialPollenDonor(BaseSchema):
     # pollination_attempts: list[BPollinationAttempt]
     pollination_attempts: list[HistoricalPollination]
     # resulting_plants: list[BPollinationResultingPlant]
+
+    previous_flower_closing_dates: list[str] | None  # e.g. ['2022-11-16', '2022-11-17']
 
 
 class GetPollinationsResponse(ResponseContainer):
