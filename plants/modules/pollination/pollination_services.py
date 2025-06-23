@@ -53,14 +53,20 @@ async def _read_pollination_attempts(
     attempts_orm = await pollination_dal.get_pollinations_by_plants(
         seed_capsule_plant_id=plant_id, pollen_donor_plant_id=pollen_donor_id
     )
-    attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(
-        seed_capsule_plant_id=pollen_donor_id, pollen_donor_plant_id=plant_id
-    )
+    if pollen_donor_id != plant_id:
+        attempts_orm_reverse = await pollination_dal.get_pollinations_by_plants(
+            seed_capsule_plant_id=pollen_donor_id, pollen_donor_plant_id=plant_id
+        )
+    else:
+        attempts_orm_reverse = []
 
     attempts = []
     for p in attempts_orm + attempts_orm_reverse:
         pollination = HistoricalPollination.model_validate(p, context={"reverse": True})
-        pollination.reverse = pollination.seed_capsule_plant_id == pollen_donor_id
+        pollination.reverse = (
+            pollination.seed_capsule_plant_id == pollen_donor_id
+            and pollination.seed_capsule_plant_id != pollination.pollen_donor_plant_id
+        )
         # todo predict?
         attempts.append(pollination)
 
