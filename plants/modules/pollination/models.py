@@ -302,7 +302,6 @@ class SeedPlanting(Base):
 
     @property
     def predicted_germination_probability(self) -> int | None:
-        logger.warning('ASASASDASDJMiaosdfjasoidhjIO!')
         if self.status == SeedPlantingStatus.PLANTED:
             return predict_germination_probability(self)
         return None
