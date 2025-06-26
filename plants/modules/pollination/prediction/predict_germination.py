@@ -33,7 +33,9 @@ def predict_germination_probability(seed_planting: SeedPlanting) -> int:
         pollination=seed_planting.pollination,
         feature_container=feature_container,
     )
+    logger.info(f'{df_all.shape=}')
     proba: list[list[float]] = ensemble.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
+    logger.info(f'{proba=}')
     return round(proba[0][1] * 100)
 
 
