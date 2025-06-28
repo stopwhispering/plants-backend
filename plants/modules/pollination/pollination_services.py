@@ -329,10 +329,12 @@ async def read_pollinations(
     pollination_dal: PollinationDAL,
     *,
     include_ongoing_pollinations: bool,
+    include_recently_finished_pollinations: bool,
     include_finished_pollinations: bool,
 ) -> list[Pollination]:
     pollinations_orm: list[Pollination] = await pollination_dal.get_pollinations(
         include_ongoing_pollinations=include_ongoing_pollinations,
+        include_recently_finished_pollinations=include_recently_finished_pollinations,
         include_finished_pollinations=include_finished_pollinations,
     )
     return pollinations_orm

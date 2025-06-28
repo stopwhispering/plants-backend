@@ -78,6 +78,7 @@ class PollinationDAL(BaseDAL):
         self,
         *,
         include_ongoing_pollinations: bool,
+        include_recently_finished_pollinations: bool,
         include_finished_pollinations: bool,
     ) -> list[Pollination]:
         # noinspection PyTypeChecker
@@ -103,13 +104,11 @@ class PollinationDAL(BaseDAL):
 
         if not include_ongoing_pollinations and not include_finished_pollinations:
             return []
-        if include_ongoing_pollinations and not include_finished_pollinations:
-            # query = query.where(
-            #     or_(
-            #         Pollination.ongoing,
-            #         Florescence.florescence_status == FlorescenceStatus.FLOWERING,
-            #     ),
-            # )
+        if (
+            include_ongoing_pollinations
+            and include_recently_finished_pollinations
+            and not include_finished_pollinations
+        ):
             query = query.where(
                 or_(
                     Pollination.ongoing.is_(True),
@@ -119,6 +118,12 @@ class PollinationDAL(BaseDAL):
                     ),
                 )
             )
+        elif (
+            include_ongoing_pollinations
+            and not include_recently_finished_pollinations
+            and not include_finished_pollinations
+        ):
+            query = query.where(Pollination.ongoing.is_(True))
         elif include_finished_pollinations and not include_ongoing_pollinations:
             query = query.where(Pollination.ongoing.is_(False))
         # else: no filter

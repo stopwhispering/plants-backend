@@ -138,11 +138,13 @@ async def get_ongoing_pollinations(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
     *,
     include_ongoing_pollinations: bool = True,
+    include_recently_finished_pollinations: bool = True,
     include_finished_pollinations: bool = False,
 ) -> Any:
     pollinations_orm = await read_pollinations(
         pollination_dal=pollination_dal,
         include_ongoing_pollinations=include_ongoing_pollinations,
+        include_recently_finished_pollinations=include_recently_finished_pollinations,
         include_finished_pollinations=include_finished_pollinations,
     )
 
