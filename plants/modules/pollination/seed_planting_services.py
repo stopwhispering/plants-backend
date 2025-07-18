@@ -168,6 +168,6 @@ async def create_new_plant_for_seed_planting(
         plant=plant,
         date=seed_planting.germinated_first_on.strftime(FORMAT_YYYY_MM_DD),
         event_notes="gekeimt",
-        soil=seed_planting.soil,
+        # soil=seed_planting.soil,
     )
     await event_dal.create_events([event_planted, event_germinated])
