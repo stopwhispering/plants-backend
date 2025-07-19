@@ -26,9 +26,10 @@ from plants.modules.image.schemas import (
     DeleteImagesResponse,
     GetUntaggedImagesResponse,
     ImageRead,
+    LastImageUploadTimestampResponse,
     UpdateImageRequest,
     UploadedImageMetadata,
-    UploadImagesResponse, LastImageUploadTimestampResponse,
+    UploadImagesResponse,
 )
 from plants.modules.image.services import (
     delete_image_file_and_db_entries,
@@ -153,7 +154,8 @@ async def update_images(
 async def get_last_image_upload_timestamp(
     image_dal: ImageDAL = Depends(get_image_dal),
 ) -> Any:
-    """Get the timestamp of the last image upload; we use the creation timestamp of the last image."""
+    """Get the timestamp of the last image upload; we use the creation timestamp of the last
+    image."""
     last_upload_timestamp = await image_dal.get_last_image_creation_ts()
 
     return {
@@ -293,13 +295,21 @@ async def trigger_generate_missing_thumbnails(
 
 
 @router.get("/simple_upload/")
-async def get_simple_upload_form() -> Any:
+async def get_simple_upload_form(
+    image_dal: ImageDAL = Depends(get_image_dal),
+) -> Any:
     """Very simple upload template for mobile upload."""
-    content = """
+    last_upload_timestamp = await image_dal.get_last_image_creation_ts()
+    if last_upload_timestamp:
+        # last_upload_timestamp = last_upload_timestamp.astimezone().isoformat()
+        last_upload_timestamp = last_upload_timestamp.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+
+    content = f"""
         <body>
         <form action="/api/simple_upload/" enctype="multipart/form-data" method="post">
         <input name="files" type="file" accept=".jpg, .jpeg" multiple>
         <input type="submit">
+        <p>Last upload timestamp: {last_upload_timestamp}</p>
         </form>
         </body>
             """
