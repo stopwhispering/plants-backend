@@ -80,6 +80,10 @@ class UploadImagesResponse(ResponseContainer):
     images: list[ImageRead]
 
 
+class LastImageUploadTimestampResponse(ResponseContainer):
+    timestamp: datetime | None
+
+
 class DeleteImagesResponse(ResponseContainer):
     pass
 

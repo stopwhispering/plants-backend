@@ -28,7 +28,7 @@ from plants.modules.image.schemas import (
     ImageRead,
     UpdateImageRequest,
     UploadedImageMetadata,
-    UploadImagesResponse,
+    UploadImagesResponse, LastImageUploadTimestampResponse,
 )
 from plants.modules.image.services import (
     delete_image_file_and_db_entries,
@@ -146,6 +146,20 @@ async def update_images(
     return {
         "resource": MajorResource.IMAGE,
         "message": get_message(f"Saved updates for {len(modified_ext.ImagesCollection)} images."),
+    }
+
+
+@router.get("/images/last_image_upload_timestamp", response_model=LastImageUploadTimestampResponse)
+async def get_last_image_upload_timestamp(
+    image_dal: ImageDAL = Depends(get_image_dal),
+) -> Any:
+    """Get the timestamp of the last image upload; we use the creation timestamp of the last image."""
+    last_upload_timestamp = await image_dal.get_last_image_creation_ts()
+
+    return {
+        "message": get_message("timestamp of last image upload"),
+        # "timestamp": last_upload_timestamp.isoformat() if last_upload_timestamp else None,
+        "timestamp": last_upload_timestamp,
     }
 
 

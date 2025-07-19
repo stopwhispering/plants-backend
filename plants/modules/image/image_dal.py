@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Select, select
@@ -107,3 +108,9 @@ class ImageDAL(BaseDAL):
     async def create_image(self, image: Image) -> None:
         self.session.add(image)
         await self.session.flush()
+
+    async def get_last_image_creation_ts(self) -> datetime | None:
+        """Get the last image creation timestamp."""
+        query = select(Image.created_at).order_by(Image.created_at.desc()).limit(1)
+        last_creation_date = (await self.session.scalar(query))
+        return last_creation_date
