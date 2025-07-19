@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, UploadFile
 from starlette.responses import FileResponse, HTMLResponse
@@ -302,7 +303,9 @@ async def get_simple_upload_form(
     last_upload_timestamp = await image_dal.get_last_image_creation_ts()
     if last_upload_timestamp:
         # last_upload_timestamp = last_upload_timestamp.astimezone().isoformat()
-        last_upload_timestamp = last_upload_timestamp.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+        last_upload_timestamp = last_upload_timestamp.astimezone(
+            ZoneInfo("Europe/Berlin")
+        ).strftime("%Y-%m-%d %H:%M:%S")
 
     content = f"""
         <body>
