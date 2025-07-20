@@ -23,11 +23,12 @@ from plants.modules.pollination.prediction.predict_ripening import predict_ripen
 from plants.modules.pollination.schemas import (
     BPlantWoPollenContainer,
     HistoricalPollination,
+    PlantPreview,
     PollenContainerCreateUpdate,
     PollenContainerRead,
     PollinationCreate,
     PollinationUpdate,
-    PotentialPollenDonor, PlantPreview,
+    PotentialPollenDonor,
 )
 from plants.shared.api_constants import (
     FORMAT_API_YYYY_MM_DD_HH_MM,
@@ -203,7 +204,8 @@ async def read_potential_pollen_donors(
             ),
             "previous_flower_closing_dates": [
                 f.estimated_last_flower_closed_at.isoformat()
-                for f in frozen_pollen_plant.florescences if f.estimated_last_flower_closed_at is not None
+                for f in frozen_pollen_plant.florescences
+                if f.estimated_last_flower_closed_at is not None
             ],
         }
         potential_pollen_donors.append(
@@ -410,6 +412,7 @@ async def add_existing_same_taxon_plants_to_potential_pollinations(
                     plant_name=plant.plant_name,
                     plant_taxon_id=plant.taxon_id,
                     plant_taxon_name=plant.taxon.name if plant.taxon else None,
+                    active=plant.active,
                     parent_plant_capsule_id=plant.parent_plant.id,
                     parent_plant_capsule_name=plant.parent_plant.plant_name,
                     parent_plant_capsule_taxon_id=plant.parent_plant.taxon_id,

@@ -260,12 +260,13 @@ class PlantPreview(BaseSchema):
     full_botanical_html_name: str | None = None
     plant_taxon_id: int | None = None
     plant_taxon_name: str | None = None
+    active: bool
 
     parent_plant_capsule_id: int | None = None
     parent_plant_capsule_name: str | None = None
     parent_plant_capsule_taxon_id: int | None = None
     parent_plant_capsule_taxon_name: str | None = None
-    parent_plant_pollen_id : int | None = None
+    parent_plant_pollen_id: int | None = None
     parent_plant_pollen_name: str | None = None
     parent_plant_pollen_taxon_id: int | None = None
     parent_plant_pollen_taxon_name: str | None = None
@@ -291,7 +292,9 @@ class PotentialPollenDonor(BaseSchema):
 
     previous_flower_closing_dates: list[str] | None  # e.g. ['2022-11-16', '2022-11-17']
 
-    same_parent_taxa_plants: list[PlantPreview] = []  # plants with same parent taxa (both capsule and pollen donor)
+    same_parent_taxa_plants: list[
+        PlantPreview
+    ] = []  # plants with same parent taxa (both capsule and pollen donor)  # noqa: RUF012
 
 
 class GetPollinationsResponse(ResponseContainer):
