@@ -201,7 +201,7 @@ async def read_potential_pollen_donors(
             ),
             "previous_flower_closing_dates": [
                 f.estimated_last_flower_closed_at.isoformat()
-                for f in frozen_pollen_plant.florescences
+                for f in frozen_pollen_plant.florescences if f.estimated_last_flower_closed_at is not None
             ],
         }
         potential_pollen_donors.append(
