@@ -43,7 +43,7 @@ from plants.modules.pollination.pollination_services import (
     remove_pollination,
     save_new_pollination,
     update_pollen_containers,
-    update_pollination,
+    update_pollination, add_existing_same_taxon_plants_to_potential_pollinations,
 )
 from plants.modules.pollination.prediction.train_florescence import (
     train_model_for_florescence_probability,
@@ -419,6 +419,11 @@ async def get_potential_pollen_donors(
         florescence_dal=florescence_dal,
         pollination_dal=pollination_dal,
         plant_dal=plant_dal,
+    )
+    await add_existing_same_taxon_plants_to_potential_pollinations(
+        florescence=florescence,
+        potential_pollen_donors=potential_pollen_donors,
+        plant_dal= plant_dal,
     )
     return {
         "action": "Get potential pollen donors",

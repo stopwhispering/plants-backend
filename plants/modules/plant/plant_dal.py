@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import Select, and_, select
-from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.orm import selectinload, with_loader_criteria, aliased
 
 from plants.exceptions import (
     PlantNotFoundError,
@@ -319,5 +319,25 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         if not include_deleted:
             query = query.where(Plant.deleted.is_(False))
 
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
+        return plants
+
+    async def get_plants_by_capsule_and_pollen_taxon_id(self, capsule_taxon_id: int, pollen_taxon_id: int) -> list[Plant]:
+        ParentPlantCapsule = aliased(Plant)
+        ParentPlantPollen = aliased(Plant)
+
+        query = (
+            select(Plant)
+            .join(ParentPlantCapsule, Plant.parent_plant)
+            .join(ParentPlantPollen, Plant.parent_plant_pollen)
+            .where(Plant.deleted.is_(False))
+            .where(ParentPlantCapsule.taxon_id == capsule_taxon_id)  # noqa
+            .where(ParentPlantPollen.taxon_id == pollen_taxon_id)
+            .options(
+                selectinload(Plant.parent_plant).selectinload(Plant.taxon),
+                selectinload(Plant.parent_plant_pollen).selectinload(Plant.taxon),
+                selectinload(Plant.taxon),
+            )
+        )
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants

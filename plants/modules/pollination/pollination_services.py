@@ -27,7 +27,7 @@ from plants.modules.pollination.schemas import (
     PollenContainerRead,
     PollinationCreate,
     PollinationUpdate,
-    PotentialPollenDonor,
+    PotentialPollenDonor, PlantPreview,
 )
 from plants.shared.api_constants import (
     FORMAT_API_YYYY_MM_DD_HH_MM,
@@ -137,6 +137,7 @@ async def read_potential_pollen_donors(
         potential_pollen_donor_flowering = {
             "plant_id": florescence_pollen_donor.plant_id,
             "plant_name": florescence_pollen_donor.plant.plant_name,
+            "plant_taxon_id": florescence_pollen_donor.plant.taxon_id,
             "plant_taxon_name": florescence_pollen_donor.plant.taxon.name,
             "plant_preview_image_id": florescence_pollen_donor.plant.preview_image_id,
             "pollen_type": PollenType.FRESH.value,
@@ -180,6 +181,7 @@ async def read_potential_pollen_donors(
         potential_pollen_donor_frozen = {
             "plant_id": frozen_pollen_plant.id,
             "plant_name": frozen_pollen_plant.plant_name,
+            "plant_taxon_id": frozen_pollen_plant.taxon_id,
             "plant_taxon_name": frozen_pollen_plant.taxon.name,
             "plant_preview_image_id": frozen_pollen_plant.preview_image_id,
             "pollen_type": PollenType.FROZEN.value,
@@ -389,3 +391,32 @@ async def update_pollen_containers(
         await plant_dal.set_count_stored_pollen_containers(
             plant, pollen_container_data.count_stored_pollen_containers
         )
+
+
+async def add_existing_same_taxon_plants_to_potential_pollinations(
+    florescence: Florescence,
+    potential_pollen_donors: list[PotentialPollenDonor],
+    plant_dal: PlantDAL,
+):
+    for pollen_donor in potential_pollen_donors:
+        same_parent_taxa_plants = await plant_dal.get_plants_by_capsule_and_pollen_taxon_id(
+            capsule_taxon_id=florescence.plant.taxon_id,
+            pollen_taxon_id=pollen_donor.plant_taxon_id,
+        )
+        for plant in same_parent_taxa_plants:
+            pollen_donor.same_parent_taxa_plants.append(
+                PlantPreview(
+                    plant_id=plant.id,
+                    plant_name=plant.plant_name,
+                    plant_taxon_id=plant.taxon_id,
+                    plant_taxon_name=plant.taxon.name if plant.taxon else None,
+                    parent_plant_capsule_id=plant.parent_plant.id,
+                    parent_plant_capsule_name=plant.parent_plant.plant_name,
+                    parent_plant_capsule_taxon_id=plant.parent_plant.taxon_id,
+                    parent_plant_capsule_taxon_name=plant.parent_plant.taxon.name,
+                    parent_plant_pollen_id=plant.parent_plant_pollen.id,
+                    parent_plant_pollen_name=plant.parent_plant_pollen.plant_name,
+                    parent_plant_pollen_taxon_id=plant.parent_plant_pollen.taxon_id,
+                    parent_plant_pollen_taxon_name=plant.parent_plant_pollen.taxon.name,
+                )
+            )

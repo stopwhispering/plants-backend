@@ -254,9 +254,27 @@ class FlorescenceRead(FlorescenceBase):
     last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
 
 
+class PlantPreview(BaseSchema):
+    plant_id: int
+    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    full_botanical_html_name: str | None = None
+    plant_taxon_id: int | None = None
+    plant_taxon_name: str | None = None
+
+    parent_plant_capsule_id: int | None = None
+    parent_plant_capsule_name: str | None = None
+    parent_plant_capsule_taxon_id: int | None = None
+    parent_plant_capsule_taxon_name: str | None = None
+    parent_plant_pollen_id : int | None = None
+    parent_plant_pollen_name: str | None = None
+    parent_plant_pollen_taxon_id: int | None = None
+    parent_plant_pollen_taxon_name: str | None = None
+
+
 class PotentialPollenDonor(BaseSchema):
     plant_id: int
     plant_name: str
+    plant_taxon_id: int
     plant_taxon_name: str
     plant_preview_image_id: int | None = None
     pollen_type: str  # PollenType (fresh | frozen | unknown)
@@ -272,6 +290,8 @@ class PotentialPollenDonor(BaseSchema):
     # resulting_plants: list[BPollinationResultingPlant]
 
     previous_flower_closing_dates: list[str] | None  # e.g. ['2022-11-16', '2022-11-17']
+
+    same_parent_taxa_plants: list[PlantPreview] = []  # plants with same parent taxa (both capsule and pollen donor)
 
 
 class GetPollinationsResponse(ResponseContainer):
