@@ -26,5 +26,8 @@ async def save_settings(settings: SettingsBase, settings_dal: SettingsDAL) -> No
 
     if not (1 <= settings_dict["last_image_warning_after_n_days"] <= 999):
         raise NotValidDaysError
+    settings_dict["last_image_warning_after_n_days"] = str(
+        settings_dict["last_image_warning_after_n_days"]
+    )
 
     await settings_dal.update_settings(settings_dict)
