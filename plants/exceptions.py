@@ -247,3 +247,10 @@ class TrainingError(BaseError):
         super().__init__(
             detail=f"Model training failed: {msg}.", status_code=status.HTTP_409_CONFLICT
         )
+
+
+class NotValidDaysError(BaseError):
+    def __init__(self):
+        super().__init__(
+            detail="Last Image Warning after n Days must be an integer between 1 and 999."
+        )

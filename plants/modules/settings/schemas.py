@@ -1,15 +1,26 @@
+from __future__ import annotations
+
 from plants.shared.base_schema import (
-    ResponseContainer, BaseSchema,
+    BaseSchema,
+    ResponseContainer,
 )
 
 
-class DisplaySettingsBase(BaseSchema):
+class SettingsBase(BaseSchema):
     last_image_warning_after_n_days: int
 
 
-class DisplaySettingsRead(DisplaySettingsBase):
+class UpdateSettingsRequest(BaseSchema):
+    settings: SettingsBase
+
+
+class SettingsRead(SettingsBase):
     last_updated_at: str | None = None
 
 
 class GetSettingsResponse(ResponseContainer):
-    display_settings: DisplaySettingsRead
+    settings: SettingsRead
+
+
+class UpdateSettingsResponse(GetSettingsResponse):
+    pass

@@ -4,8 +4,6 @@ import logging
 from collections import defaultdict
 from typing import Any
 
-import random
-from datetime import datetime
 from fastapi import APIRouter, Depends
 
 from plants.dependencies import (
@@ -41,8 +39,9 @@ from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.flower_history_services import (
     generate_flower_history,
 )
-from plants.modules.pollination.prediction.predict_florescence import \
-    predict_probability_of_florescence
+from plants.modules.pollination.prediction.predict_florescence import (
+    predict_probability_of_florescence,
+)
 from plants.shared.enums import MajorResource, MessageType
 from plants.shared.message_schemas import BackendSaveConfirmation
 from plants.shared.message_services import get_message
@@ -128,7 +127,9 @@ async def get_events(
             (row for row in flower_history if row.year == year), None
         )
         if flower_history_current_year is not None:
-            month_field: PlantFlowerMonth = getattr(flower_history_current_year, f"month_{month:02d}")
+            month_field: PlantFlowerMonth = getattr(
+                flower_history_current_year, f"month_{month:02d}"
+            )
             month_field.flowering_probability = round(probability, 2)
             month_field.flowering_state = None
         else:
@@ -139,18 +140,54 @@ async def get_events(
         flower_history.append(
             PlantFlowerYear(
                 year=year,
-                month_01=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 1), None)),
-                month_02=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 2), None)),
-                month_03=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 3), None)),
-                month_04=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 4), None)),
-                month_05=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 5), None)),
-                month_06=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 6), None)),
-                month_07=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 7), None)),
-                month_08=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 8), None)),
-                month_09=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 9), None)),
-                month_10=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 10), None)),
-                month_11=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 11), None)),
-                month_12=PlantFlowerMonth(flowering_state=None, flowering_probability=next((prob for m, prob in month_proba if m == 12), None)),
+                month_01=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 1), None),
+                ),
+                month_02=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 2), None),
+                ),
+                month_03=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 3), None),
+                ),
+                month_04=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 4), None),
+                ),
+                month_05=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 5), None),
+                ),
+                month_06=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 6), None),
+                ),
+                month_07=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 7), None),
+                ),
+                month_08=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 8), None),
+                ),
+                month_09=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 9), None),
+                ),
+                month_10=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 10), None),
+                ),
+                month_11=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 11), None),
+                ),
+                month_12=PlantFlowerMonth(
+                    flowering_state=None,
+                    flowering_probability=next((prob for m, prob in month_proba if m == 12), None),
+                ),
             )
         )
 
