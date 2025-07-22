@@ -48,6 +48,8 @@ class Plant(Base):
     nursery_source: str = Column(VARCHAR(100))
     propagation_type: FBPropagationType | None = Column(sa.Enum(FBPropagationType))
 
+    alternative_botanical_name = Column(TEXT)
+
     deleted: bool = Column(BOOLEAN, nullable=False)
 
     active: bool = Column(BOOLEAN, nullable=False)

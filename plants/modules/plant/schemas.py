@@ -68,6 +68,8 @@ class PlantBase(BaseSchema):
 
     seed_planting_id: int | None = None
 
+    alternative_botanical_name: str | None = None
+
 
 class PlantRead(PlantBase):
     id: int
