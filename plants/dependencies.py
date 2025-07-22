@@ -18,6 +18,7 @@ from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
+from plants.modules.settings.settings_dal import SettingsDAL
 from plants.modules.taxon.models import Taxon
 from plants.modules.taxon.taxon_dal import TaxonDAL
 from plants.shared.history_dal import HistoryDAL
@@ -76,6 +77,10 @@ def get_taxon_dal(db: AsyncSession = Depends(get_db)) -> TaxonDAL:
 
 def get_event_dal(db: AsyncSession = Depends(get_db)) -> EventDAL:
     return EventDAL(db)
+
+
+def get_settings_dal(db: AsyncSession = Depends(get_db)) -> SettingsDAL:
+    return SettingsDAL(db)
 
 
 async def valid_plant(plant_id: int, plant_dal: PlantDAL = Depends(get_plant_dal)) -> Plant:

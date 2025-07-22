@@ -31,6 +31,7 @@ import plants.modules.image.models  # noqa
 import plants.modules.plant.models  # noqa
 import plants.modules.pollination.models  # noqa
 import plants.modules.taxon.models  # noqa
+import plants.modules.settings.models  # noqa
 import plants.shared.history_models  # noqa
 from plants.extensions.orm import Base  # noqa
 
