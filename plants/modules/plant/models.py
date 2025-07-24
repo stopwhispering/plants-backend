@@ -41,7 +41,7 @@ class Plant(Base):
         primary_key=True,
         nullable=False,
     )
-    plant_name: str = Column(VARCHAR(100), unique=True, nullable=False)
+    plant_name: str = Column(VARCHAR(1000), unique=True, nullable=False)
 
     field_number: str = Column(VARCHAR(20))
     geographic_origin: str = Column(VARCHAR(100))
