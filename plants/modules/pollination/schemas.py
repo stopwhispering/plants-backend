@@ -408,7 +408,7 @@ class FlowerHistory(ResponseContainer):
 
 
 class SeedPlantingPlantNameProposal(BaseSchema):
-    plant_name_proposal: Annotated[str, Field(min_length=1, max_length=100)]
+    plant_name_proposal: Annotated[str, Field(min_length=1, max_length=1000)]
 
 
 class CreatePlantFromSeedPlantingRequest(BaseSchema):
