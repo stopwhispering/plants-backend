@@ -48,7 +48,7 @@ class PlantLatestImage(BaseSchema):
 
 
 class PlantBase(BaseSchema):
-    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    plant_name: Annotated[str, Field(min_length=1, max_length=1000)]
     field_number: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     geographic_origin: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     nursery_source: Annotated[str, Field(min_length=1, max_length=100)] | None = None
