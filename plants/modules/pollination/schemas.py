@@ -186,6 +186,7 @@ class FlorescenceBase(BaseSchema):
     plant_id: int
     florescence_status: FlorescenceStatus
     inflorescence_appeared_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
+    first_flower_opened_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
     comment: str | None = None  # e.g. location if multiple plants in one container
 
 
@@ -207,7 +208,6 @@ class FlorescenceUpdate(FlorescenceBase):
     flower_colors_differentiation: FlowerColorDifferentiation | None = None
     stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
     last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None = None
 
     model_config = ConfigDict(extra="ignore")
@@ -250,7 +250,6 @@ class FlorescenceRead(FlorescenceBase):
     flower_colors_differentiation: FlowerColorDifferentiation | None = None
     stigma_position: StigmaPosition | None = None
 
-    first_flower_opened_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
     last_flower_closed_at: Annotated[str, Field(pattern=REGEX_DATE)] | None
 
 

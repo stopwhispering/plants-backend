@@ -169,6 +169,7 @@ async def create_new_florescence(
         plant=plant,
         florescence_status=new_florescence_data.florescence_status,
         inflorescence_appeared_at=parse_api_date(new_florescence_data.inflorescence_appeared_at),
+        first_flower_opened_at=parse_api_date(new_florescence_data.first_flower_opened_at),
         comment=new_florescence_data.comment,
         creation_context=Context.API,
     )
