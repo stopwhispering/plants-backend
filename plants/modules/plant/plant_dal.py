@@ -116,7 +116,13 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return await self.by_id(new_plant_id)
 
     async def get_all_plants_with_taxon(self) -> list[Plant]:
-        query = select(Plant).where(Plant.deleted.is_(False)).options(selectinload(Plant.taxon))
+        # noinspection PyTypeChecker
+        query = (
+            select(Plant)
+            .where(Plant.deleted.is_(False))
+            .where(Plant.active)
+            .options(selectinload(Plant.taxon))
+        )
         return list((await self.session.scalars(query)).all())
 
     async def set_count_stored_pollen_containers(self, plant: Plant, count: int) -> None:
