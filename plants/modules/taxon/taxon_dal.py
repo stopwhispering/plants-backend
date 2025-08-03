@@ -88,6 +88,17 @@ class TaxonDAL(BaseDAL):
         taxa: list[Taxon] = list((await self.session.scalars(query)).all())
         return taxa
 
+    async def by_lsid(self, lsid: str) -> list[Taxon]:
+        # noinspection PyTypeChecker
+        query = (
+            select(Taxon)
+            .where(Taxon.lsid == lsid)
+            .options(selectinload(Taxon.plants))
+        )
+
+        taxa: list[Taxon] = list((await self.session.scalars(query)).all())
+        return taxa
+
     async def get_taxa_by_name_pattern(
         self, taxon_name_pattern: str, rank: FBRank | None = None
     ) -> list[Taxon]:

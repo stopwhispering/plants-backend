@@ -119,6 +119,19 @@ class TaxonomySearch:
                 local_results=local_results,
             )
 
+            # since local db search and ipni search return different results, we need to check
+            # if the result is already in the local db
+            for kew_result in kew_results:
+                local_search_result = await self._find_local_taxon_if_available(kew_result)
+                if local_search_result:
+                    results.append(
+                        FinalSearchResult(
+                            **local_search_result.__dict__,
+                            in_db=True
+                        )
+                    )
+                    kew_results.remove(kew_result)
+
             results.extend(
                 [
                     FinalSearchResult(**kew_result.__dict__, in_db=False, count=0, count_inactive=0)
@@ -174,6 +187,23 @@ class TaxonomySearch:
             else "Query term not found in plants taxon database."
         )
         return results
+
+    async def _find_local_taxon_if_available(self, kew_result: _ParsedApiSearchResult
+                                             ) -> _DBSearchResult | None:
+        local_taxa = await self.taxon_dal.by_lsid(lsid=kew_result.lsid)
+        if len(local_taxa) > 1:
+            raise ValueError(
+                f"Found multiple taxa with LSID {kew_result.lsid} in local database. "
+                "This should not happen."
+            )
+        elif not local_taxa:
+            return None
+
+        local_taxon = local_taxa[0]
+        local_db_results = self._get_search_result_from_db_taxon(local_taxon)
+        assert local_db_results, "Expected results to be not empty, but got empty list."
+
+        return local_db_results
 
 
 class ApiSearcher:
