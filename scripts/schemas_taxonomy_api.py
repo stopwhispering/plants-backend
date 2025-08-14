@@ -70,8 +70,13 @@ class SpeciesEssentials(BaseModel):
     family: str
     genus: str
     species: str
+    variety: Optional[str] = None  # lazy-loaded, not always available
+    form: Optional[str] = None  # lazy-loaded, not always available
     basionym: Optional[str] = None
     scientificName: str
     # canonicalName: str  # "Haworthia truncata maughanii" is not very helpful
     publishedIn: Optional[str] = None
     rank: str
+
+    # plants: list = Field(default_factory=list)
+    plant_names: Optional[str] = None
