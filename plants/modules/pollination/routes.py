@@ -78,7 +78,8 @@ from plants.modules.pollination.schemas import (
     SeedPlantingCreate,
     SeedPlantingPlantNameProposal,
     SeedPlantingUpdate,
-    SettingsRead,
+    SettingsRead, RequestPredictProbabilityPollinationToSeed,
+    BResponsePredictProbabilityPollinationToSeed,
 )
 from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.pollination.seed_planting_services import (
@@ -429,6 +430,38 @@ async def get_potential_pollen_donors(
         "action": "Get potential pollen donors",
         "message": get_message(f"Provided {len(potential_pollen_donors)} potential donors."),
         "potential_pollen_donor_collection": potential_pollen_donors,
+    }
+
+
+@router.get(
+    "/probability_pollination_to_seed",
+    response_model=BResponsePredictProbabilityPollinationToSeed,
+)
+async def predict_probability_pollination_to_seed(
+        # todo use many more properties for prediction
+        predict_probability_pollination_to_seed_data: RequestPredictProbabilityPollinationToSeed = Depends(),
+        florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+        plant_dal: PlantDAL = Depends(get_plant_dal),
+) -> Any:
+    # Example:
+    # http://localhost:5000/api/probability_pollination_to_seed?florescence_id=304&pollen_donor_plant_id=1085&pollen_type=fresh
+
+    florescence = await florescence_dal.by_id(
+        predict_probability_pollination_to_seed_data.florescence_id
+    )
+    pollen_donor = await plant_dal.by_id(
+        predict_probability_pollination_to_seed_data.pollen_donor_plant_id
+    )
+
+    probability = get_probability_pollination_to_seed(
+        florescence=florescence,
+        pollen_donor=pollen_donor,
+        pollen_type=predict_probability_pollination_to_seed_data.pollen_type,
+    )
+    return {
+        "action": "Predict probability of pollination to seed",
+        "message": get_message(f"Predicted probability: {probability}"),
+        "probability_pollination_to_seed": probability,
     }
 
 

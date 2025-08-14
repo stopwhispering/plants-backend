@@ -412,3 +412,13 @@ class SeedPlantingPlantNameProposal(BaseSchema):
 
 class CreatePlantFromSeedPlantingRequest(BaseSchema):
     plant_name: str
+
+
+class RequestPredictProbabilityPollinationToSeed(BaseSchema):
+    florescence_id: int
+    pollen_donor_plant_id: int
+    pollen_type: PollenType
+
+
+class BResponsePredictProbabilityPollinationToSeed(ResponseContainer):
+    probability_pollination_to_seed: int
