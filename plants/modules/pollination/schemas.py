@@ -387,6 +387,8 @@ class FlowerHistoryPlant(BaseSchema):
 class FlowerHistoryRow(BaseSchema):
     plant_id: int
     plant_name: str
+    genus: str
+    species: str | None = None
     year: str
     month_01: FloweringState
     month_02: FloweringState

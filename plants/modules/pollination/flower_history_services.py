@@ -359,6 +359,8 @@ async def generate_flower_history(
                 FlowerHistoryRow(
                     plant_id=flowering_plant.plant.id,
                     plant_name=flowering_plant.plant.plant_name,
+                    genus=flowering_plant.plant.taxon.genus,
+                    species=flowering_plant.plant.taxon.species,
                     year=str(year),
                     month_01=flowering_plant.get_state_at_date(year=year, month=1),
                     month_02=flowering_plant.get_state_at_date(year=year, month=2),
