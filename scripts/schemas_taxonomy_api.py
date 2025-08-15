@@ -7,7 +7,7 @@ from datetime import datetime
 # https://techdocs.gbif.org/en/openapi/v1/species#/Species/getNameUsageChildren
 class GbifNameUsage(BaseModel):
     key: int
-    nubKey: Optional[int]
+    nubKey: Optional[int] = None  # == key except rare cases where nubKey is not set
     nameKey: Optional[int]
     taxonID: Optional[str]
     sourceTaxonKey: Optional[int] = None
@@ -17,7 +17,7 @@ class GbifNameUsage(BaseModel):
     family: Optional[str]
     genus: Optional[str]
     subgenus: Optional[str] = None
-    species: Optional[str]
+    species: Optional[str] = None  # discarded later if missing
     kingdomKey: Optional[int]
     phylumKey: Optional[int]
     classKey: Optional[int]
@@ -25,7 +25,7 @@ class GbifNameUsage(BaseModel):
     familyKey: Optional[int]
     genusKey: Optional[int]
     subgenusKey: Optional[int] = None
-    speciesKey: Optional[int]
+    speciesKey: Optional[int] = None
     datasetKey: UUID
     constituentKey: Optional[UUID]
     parentKey: Optional[int]
@@ -66,10 +66,12 @@ class GbifPagingResponseNameUsage(BaseModel):
 
 
 class SpeciesEssentials(BaseModel):
-    nubKey: int
+    key: int
+    nubKey: Optional[int] = None  # == key except rare cases where nubKey is not set
     family: str
     genus: str
     species: str
+    subspecies: Optional[str] = None  # lazy-loaded, not always available
     variety: Optional[str] = None  # lazy-loaded, not always available
     form: Optional[str] = None  # lazy-loaded, not always available
     basionym: Optional[str] = None
