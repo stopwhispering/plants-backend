@@ -20,3 +20,4 @@ ts_api_interfaces
 *.pkl
 log.txt
 vps_pull_and_rerun_container.bat
+gbif_species.xlsx
