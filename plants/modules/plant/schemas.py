@@ -48,7 +48,7 @@ class PlantLatestImage(BaseSchema):
 
 
 class PlantBase(BaseSchema):
-    plant_name: Annotated[str, Field(min_length=1, max_length=1000)]
+    plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
     field_number: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     geographic_origin: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     nursery_source: Annotated[str, Field(min_length=1, max_length=100)] | None = None
@@ -106,7 +106,7 @@ class UpdatePlantsRequest(RequestContainer):
 
 
 class PlantRenameRequest(BaseSchema):
-    new_plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    new_plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
 
 
 class GetPlantsResponse(ResponseContainer):
@@ -127,4 +127,4 @@ class ClonePlantResponse(ResponseContainer):
 
 class ProposeSubsequentPlantNameResponse(BaseSchema):
     original_plant_name: str
-    subsequent_plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    subsequent_plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
