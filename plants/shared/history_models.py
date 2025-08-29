@@ -24,5 +24,5 @@ class History(Base):
 
     timestamp: datetime.datetime = Column(DateTime(timezone=True), nullable=False)
     plant_id: int = Column(INTEGER, nullable=False)
-    plant_name: str = Column(VARCHAR(100), nullable=False)
+    plant_name: str = Column(VARCHAR(1_000), nullable=False)
     description: str = Column(TEXT, nullable=False)
