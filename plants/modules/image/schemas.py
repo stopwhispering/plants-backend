@@ -14,7 +14,7 @@ from plants.shared.base_schema import BaseSchema, RequestContainer, ResponseCont
 
 class ImagePlantTag(BaseSchema):
     plant_id: int
-    plant_name: Annotated[str, Field(min_length=1, max_length=100)]
+    plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
     plant_name_short: Annotated[
         str,
         Field(
