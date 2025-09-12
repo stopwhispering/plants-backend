@@ -6,10 +6,14 @@ from plants.shared.base_schema import (
 )
 
 
+class PollinationStatisticsRow(BaseSchema):
+    period: str
+    label: str
+    value: str
+
+
 class PollinationStatisticsRead(BaseSchema):
-    n_recent_pollinations_still_open: int
-    n_recent_pollinations_successful: int
-    n_recent_pollinations_failed: int
+    texts_tabular: list[PollinationStatisticsRow]
 
 
 class GetPollinationStatisticsResponse(ResponseContainer):
