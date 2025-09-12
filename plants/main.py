@@ -25,9 +25,10 @@ from plants.modules.pollination.prediction.predict_pollination import (
 )
 from plants.modules.pollination.prediction.predict_ripening import get_ripening_days_model
 from plants.modules.pollination.routes import router as pollination_router
+from plants.modules.settings.routes import router as settings_router
+from plants.modules.statistics.routes import router as statistics_router
 from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
-from plants.modules.settings.routes import router as settings_router
 
 configure_root_logger(
     log_severity_console=local_config.log_settings.log_level_console,
@@ -80,6 +81,7 @@ app.include_router(pollination_router, prefix=COMMON_PREFIX)
 app.include_router(shared_router, prefix=COMMON_PREFIX)
 app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 app.include_router(settings_router, prefix=COMMON_PREFIX)
+app.include_router(statistics_router, prefix=COMMON_PREFIX)
 
 
 @app.on_event("startup")
