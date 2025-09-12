@@ -34,6 +34,7 @@ from plants.modules.pollination.flower_history_services import (
 from plants.modules.pollination.models import Florescence, Pollination, SeedPlanting
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.pollination.pollination_services import (
+    add_existing_same_taxon_plants_to_potential_pollinations,
     get_predicted_ripening_days,
     get_probability_pollination_to_seed,
     read_plants_without_pollen_containers,
@@ -43,7 +44,7 @@ from plants.modules.pollination.pollination_services import (
     remove_pollination,
     save_new_pollination,
     update_pollen_containers,
-    update_pollination, add_existing_same_taxon_plants_to_potential_pollinations,
+    update_pollination,
 )
 from plants.modules.pollination.prediction.train_florescence import (
     train_model_for_florescence_probability,
@@ -57,6 +58,7 @@ from plants.modules.pollination.prediction.train_pollination import (
 )
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
+    BResponsePredictProbabilityPollinationToSeed,
     BResultsActiveFlorescences,
     BResultsPlantsForNewFlorescence,
     BResultsPollenContainers,
@@ -75,11 +77,11 @@ from plants.modules.pollination.schemas import (
     PollinationCreate,
     PollinationRead,
     PollinationUpdate,
+    RequestPredictProbabilityPollinationToSeed,
     SeedPlantingCreate,
     SeedPlantingPlantNameProposal,
     SeedPlantingUpdate,
-    SettingsRead, RequestPredictProbabilityPollinationToSeed,
-    BResponsePredictProbabilityPollinationToSeed,
+    SettingsRead,
 )
 from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
 from plants.modules.pollination.seed_planting_services import (
@@ -167,6 +169,16 @@ async def get_ongoing_pollinations(
                 pollen_donor=p.pollen_donor_plant,
                 pollen_type=p.pollen_type,
             )
+
+        # for sorting in the frontend, we look at all the pollinations with the same
+        # florecence_id and take the minimum current_ripening_days
+        pollination.florescence_min_current_ripening_days = min(
+            [
+                pp.current_ripening_days
+                for pp in p.florescence.pollinations
+                if pp.current_ripening_days is not None
+            ]
+        )
 
         pollinations.append(pollination)
 
@@ -424,7 +436,7 @@ async def get_potential_pollen_donors(
     await add_existing_same_taxon_plants_to_potential_pollinations(
         florescence=florescence,
         potential_pollen_donors=potential_pollen_donors,
-        plant_dal= plant_dal,
+        plant_dal=plant_dal,
     )
     return {
         "action": "Get potential pollen donors",
@@ -438,10 +450,10 @@ async def get_potential_pollen_donors(
     response_model=BResponsePredictProbabilityPollinationToSeed,
 )
 async def predict_probability_pollination_to_seed(
-        # todo use many more properties for prediction
-        predict_probability_pollination_to_seed_data: RequestPredictProbabilityPollinationToSeed = Depends(),
-        florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
-        plant_dal: PlantDAL = Depends(get_plant_dal),
+    # todo use many more properties for prediction
+    predict_probability_pollination_to_seed_data: RequestPredictProbabilityPollinationToSeed = Depends(),
+    florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+    plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
     # Example:
     # http://localhost:5000/api/probability_pollination_to_seed?florescence_id=304&pollen_donor_plant_id=1085&pollen_type=fresh

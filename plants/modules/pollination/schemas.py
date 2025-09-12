@@ -142,6 +142,10 @@ class PollinationRead(PollinationBase):
 
     seed_plantings: list[SeedPlantingRead]
 
+    # for sorting in frontend, we need the pollination's florescence and get its
+    # latest pollination's current_ripening_days
+    florescence_min_current_ripening_days: int | None = None
+
 
 class HistoricalPollination(PollinationRead):
     reverse: bool | None = None
