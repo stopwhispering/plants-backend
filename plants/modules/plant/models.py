@@ -52,7 +52,7 @@ class Plant(Base):
 
     deleted: bool = Column(BOOLEAN, nullable=False)
 
-    active: bool = Column(BOOLEAN, nullable=False)
+    active = Column(BOOLEAN, nullable=False)
     # only set if active == False
     cancellation_reason: FBCancellationReason | None = Column(sa.Enum(FBCancellationReason))
     cancellation_date: datetime.date | None = Column(Date())
@@ -98,8 +98,8 @@ class Plant(Base):
     preview_image_id = Column(INTEGER, ForeignKey("image.id"))
     preview_image: Mapped[Image | None] = relationship("Image", foreign_keys=[preview_image_id])
 
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)  # noqa
+    last_updated_at = Column(DateTime(timezone=True), onupdate=datetime.datetime.utcnow)  # noqa
 
     # plant to taxon: n:1
     taxon_id = Column(INTEGER, ForeignKey("taxon.id"))

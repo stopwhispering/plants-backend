@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import Select, and_, select
-from sqlalchemy.orm import selectinload, with_loader_criteria, aliased
+from sqlalchemy.orm import aliased, selectinload, with_loader_criteria
 
 from plants.exceptions import (
     PlantNotFoundError,
@@ -123,6 +123,18 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
             .where(Plant.active)
             .options(selectinload(Plant.taxon))
         )
+        return list((await self.session.scalars(query)).all())
+
+    async def get_all_plants(self, *, include_inactive=False) -> list[Plant]:
+        # noinspection PyTypeChecker
+        query = (
+            select(Plant)
+            .where(Plant.deleted.is_(False))
+            .options(selectinload(Plant.florescences))
+            .options(selectinload(Plant.taxon))
+        )
+        if not include_inactive:
+            query = query.where(Plant.active)
         return list((await self.session.scalars(query)).all())
 
     async def set_count_stored_pollen_containers(self, plant: Plant, count: int) -> None:
@@ -330,9 +342,11 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
-    async def get_plants_by_capsule_and_pollen_taxon_id(self, capsule_taxon_id: int, pollen_taxon_id: int) -> list[Plant]:
-        ParentPlantCapsule = aliased(Plant)
-        ParentPlantPollen = aliased(Plant)
+    async def get_plants_by_capsule_and_pollen_taxon_id(
+        self, capsule_taxon_id: int, pollen_taxon_id: int
+    ) -> list[Plant]:
+        ParentPlantCapsule = aliased(Plant)  # noqa
+        ParentPlantPollen = aliased(Plant)  # noqa
 
         query = (
             select(Plant)

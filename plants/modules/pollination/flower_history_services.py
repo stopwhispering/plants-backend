@@ -13,6 +13,7 @@ from plants.modules.pollination.schemas import FlowerHistoryRow
 
 if TYPE_CHECKING:
     from plants.modules.plant.models import Plant
+    from plants.modules.plant.plant_dal import PlantDAL
     from plants.modules.pollination.florescence_dal import FlorescenceDAL
     from plants.modules.pollination.models import Florescence
 
@@ -314,22 +315,35 @@ class FloweringPlant:
         return None
 
 
-def _populate_flowering_plants(distinct_plants: set[Plant]) -> list[FloweringPlant]:
+def _populate_flowering_plants(
+    distinct_plants: set[Plant], include_not_yet_flowered_plants: bool
+) -> list[FloweringPlant]:
     flowering_plants = []
     for plant in distinct_plants:
         flowering_plant = FloweringPlant(plant)
-        if flowering_plant.has_any_valid_period():
+        if include_not_yet_flowered_plants or flowering_plant.has_any_valid_period():
             flowering_plants.append(flowering_plant)
     return flowering_plants
 
 
 async def generate_flower_history(
-    florescence_dal: FlorescenceDAL, plant: Plant | None = None, *, include_inactive_plants: bool
+    florescence_dal: FlorescenceDAL,
+    plant_dal: PlantDAL | None = None,  # supply if include_not_yet_flowered_plants is True
+    plant: Plant | None = None,
+    *,
+    include_inactive_plants: bool,
+    include_not_yet_flowered_plants: bool,
 ) -> list[FlowerHistoryRow]:
     """If plant is supplied, the flower history is generated only for that plant, otherwise for all
     plants."""
     if plant:
+        assert not include_not_yet_flowered_plants
         distinct_plants = {plant}
+
+    elif include_not_yet_flowered_plants:
+        assert plant_dal is not None
+        all_plants = await plant_dal.get_all_plants(include_inactive=include_inactive_plants)
+        distinct_plants = set(all_plants)
 
     else:
         florescences = await florescence_dal.get_all_florescences(
@@ -337,7 +351,9 @@ async def generate_flower_history(
         )
         distinct_plants = {f.plant for f in florescences} if not plant else {plant}
 
-    flowering_plants: list[FloweringPlant] = _populate_flowering_plants(distinct_plants)
+    flowering_plants: list[FloweringPlant] = _populate_flowering_plants(
+        distinct_plants, include_not_yet_flowered_plants=include_not_yet_flowered_plants
+    )
     if not flowering_plants:
         return []
 
@@ -352,6 +368,8 @@ async def generate_flower_history(
                 flowering_plant.get_earliest_period_start().year,
                 datetime.now(tz=pytz.timezone("CET")).year + 1,
             )
+            if flowering_plant.periods
+            else [datetime.now(tz=pytz.timezone("CET")).year]
         )
 
         for year in years:
@@ -359,8 +377,10 @@ async def generate_flower_history(
                 FlowerHistoryRow(
                     plant_id=flowering_plant.plant.id,
                     plant_name=flowering_plant.plant.plant_name,
-                    genus=flowering_plant.plant.taxon.genus,
-                    species=flowering_plant.plant.taxon.species,
+                    genus=flowering_plant.plant.taxon.genus if flowering_plant.plant.taxon else "",
+                    species=flowering_plant.plant.taxon.species
+                    if flowering_plant.plant.taxon
+                    else "",
                     year=str(year),
                     month_01=flowering_plant.get_state_at_date(year=year, month=1),
                     month_02=flowering_plant.get_state_at_date(year=year, month=2),

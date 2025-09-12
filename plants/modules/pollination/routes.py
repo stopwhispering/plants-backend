@@ -480,11 +480,16 @@ async def predict_probability_pollination_to_seed(
 @router.get("/flower_history", response_model=FlowerHistory)
 async def get_flower_history(
     florescence_dal: FlorescenceDAL = Depends(get_florescence_dal),
+    plant_dal: PlantDAL = Depends(get_plant_dal),
     *,
     include_inactive_plants: bool,
+    include_not_yet_flowered_plants: bool,
 ) -> Any:
     flower_history_rows = await generate_flower_history(
-        florescence_dal=florescence_dal, include_inactive_plants=include_inactive_plants
+        florescence_dal=florescence_dal,
+        plant_dal=plant_dal,
+        include_inactive_plants=include_inactive_plants,
+        include_not_yet_flowered_plants=include_not_yet_flowered_plants,
     )
     return {
         "action": "Generate flower history",
