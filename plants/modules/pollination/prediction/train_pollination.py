@@ -10,7 +10,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
@@ -154,16 +153,37 @@ def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingClassifier:
     def make_pipe(classifier: ClassifierMixin) -> Pipeline:
         return Pipeline([("preprocessor", preprocessor), ("classifier", classifier)])
 
-    pipe_lr = make_pipe(LogisticRegression())
+    # pipe_lr = make_pipe(LogisticRegression())
     pipe_rf = make_pipe(RandomForestClassifier())
-    pipe_knn = make_pipe(KNeighborsClassifier())
+
+    import lightgbm as lgb
+
+    params_lgbm = {
+        # "max_depth": 10,  # default: -1 seems optimal
+        # "colsample_bytree": 0.4,  # default: 1 seems optimal
+        "n_estimators": 1_500,  # default: 100 (no early stoppin here for simplicity)
+        # "learning_rate": 0.10,  # default: 0.1 seems optimal
+        "objective": "binary",  # default: binary (log-loss)
+        # "verbose": -1,
+    }
+    clf = lgb.LGBMClassifier(**params_lgbm)
+    pipe_lgbm = make_pipe(clf)
+
+    params_knn = {
+        "n_neighbors": 5,  # default: 5 seems optimal
+        "weights": "uniform",  # default: uniform seems optimal
+    }
+    pipe_knn = make_pipe(KNeighborsClassifier(**params_knn))
+
     return VotingClassifier(
         estimators=[
-            ("logistic_regression", pipe_lr),
+            # ("logistic_regression", pipe_lr),
             ("random_forest", pipe_rf),
             ("knn", pipe_knn),
+            ("lightgbm", pipe_lgbm),
         ],
-        voting="soft",
+        voting="soft",  # 'hard' (majority voting) or 'soft' (argmax of the sums of the
+        # predicted probabilities)
     )
 
 
@@ -263,11 +283,18 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
     ensemble = create_ensemble_model(preprocessor)
 
     # score with kfold split
-    metric_name = "f1"
+    # metric_name = "f1"
+    metric_name = "roc_auc"
     scores = cross_val_score(
         estimator=ensemble, X=df, y=target, cv=4, scoring=metric_name
     )  # 1 is best, 0 is worst
     metric_value = round(float(scores.mean()), 2)
+
+    notes = ""
+    notes += (
+        f"Training data has {len(df)} rows with {target.sum()} positive labels "
+        f"({round(target.sum() / len(target), 2) * 100} %)."
+    )
 
     # train with whole dataset
     ensemble.fit(X=df, y=target)
@@ -288,4 +315,5 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
+        "notes": notes,
     }

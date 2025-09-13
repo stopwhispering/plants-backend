@@ -350,6 +350,7 @@ class BResultsRetraining(BaseSchema):
     estimator: str
     metric_name: str
     metric_value: float
+    notes: str | None = None
 
 
 class BResultsRetrainingPollinationToSeedsModel(BResultsRetraining):

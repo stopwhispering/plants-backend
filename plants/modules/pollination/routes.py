@@ -262,7 +262,7 @@ async def retrain_germination_days_model() -> dict[str, str | float]:
     response_model=BResultsRetrainingGerminationProbability,
 )
 async def retrain_germination_probability_model() -> dict[str, str | float]:
-    """Retrain the ripening_days ml model."""
+    """Retrain the germination probability model."""
     return await train_model_for_germination_probability()
 
 
