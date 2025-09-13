@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import logging
-import math
 from typing import TYPE_CHECKING
 
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import GroupKFold, cross_val_score
+from sklearn.model_selection import GroupKFold, cross_val_score, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
@@ -28,6 +28,7 @@ from plants.modules.pollination.prediction.ml_helpers.preprocessing.features imp
     Scale,
 )
 from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
+from plants.modules.pollination.prediction.shared_pollination import validate_and_set_dtypes
 
 if TYPE_CHECKING:
     from sklearn.base import BaseEstimator, ClassifierMixin
@@ -216,7 +217,6 @@ def create_ensemble_model(df: pd.DataFrame) -> VotingClassifier:
     preprocessor_lgbm: ColumnTransformer = make_preprocessor(
         df, accept_nan=True, one_hot_encode=True
     )
-    import lightgbm as lgb
 
     params_lgbm = {
         # "max_depth": 10,  # default: -1 seems optimal
@@ -267,64 +267,81 @@ def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     df.loc[df["same_genus"].isna(), "same_genus"] = False
     df.loc[df["same_species"].isna(), "same_species"] = False
 
-    # if we don't have a number of pollination attempts ('count_attempted'), we set it to one
-    # if attempt was succesful, we set count_pollinated to one, too; otherwise to zero
-    for index, row in df.iterrows():
-        if math.isnan(row["count_attempted"]):
-            row["count_attempted"] = 1
-            row["count_pollinated"] = 1 if row["pollination_status"] in succesful_status else 0
-        df.loc[index, :] = row
-
-    # if we don't have count_pollinated...
-    #    if not succesful, set to zero
-    #    if successful...
-    #          set to count_capsules if available
-    #         otherwise set to one and...
-    #             if count_attempted > 1, set that to one, too
-
-    for index, row in df.iterrows():
-        if math.isnan(row["count_pollinated"]):
-            if row["pollination_status"] not in succesful_status:
-                row["count_pollinated"] = 0
-            elif (
-                not math.isnan(row["count_capsules"])
-                and not row["count_capsules"] > row["count_attempted"]
-            ):
-                row["count_pollinated"] = row["count_capsules"]
-
-            else:
-                row["count_pollinated"] = 1
-                if row["count_attempted"] != 1:
-                    row["count_attempted"] = 1
-        df.loc[index, :] = row
-
-    # a row with count_attempted > 1 is multiplied
-    logger.info(f"Shape before: {df.shape}")
-    rows = []
-    for _, row in df.iterrows():
-        for i in range(1, int(row["count_attempted"]) + 1):
-            new_row = row.copy()
-            new_row["successful_attempt"] = i <= row["count_pollinated"]
-            rows.append(new_row)
-
-    df = pd.concat(rows, axis=1, ignore_index=True).T
-    logger.info(f"Shape after: {df.shape}")
-
-    target = df["successful_attempt"].astype("int")
-
-    # Remove columns not used in training
+    ser_success = df['pollination_status'].isin(succesful_status)
+    # Remove columns not allowed in training to avoid data leakage
     drop_columns = [
-        "count_attempted",
         "count_pollinated",
         "count_capsules",
         "pollination_status",
         "ongoing",
-        "successful_attempt",
-        "location",
     ]
     df = df.drop(drop_columns, axis=1)
 
-    return df, target
+    return df, ser_success
+
+
+def preprocess_data_lgbm(
+        df: pd.DataFrame
+) -> pd.DataFrame:
+    df = df.copy()
+    return validate_and_set_dtypes(df)
+
+
+def train_probability_model_lgbm(
+        df_train: pd.DataFrame,
+        ser_targets_train: pd.Series,
+) -> tuple[lgb.LGBMClassifier, float]:
+
+    params_lgbm = {
+        # "max_depth": 10,  # default: -1
+        # "colsample_bytree": 0.4,  # default: 1
+        "n_estimators": 1500,  # default: 100 (early stopping))
+        # "learning_rate": 0.10,  # default: 0.1
+        "objective": "binary",  # default: binary (log-loss)
+        "verbose": -1,
+    }
+
+    splits = StratifiedKFold(n_splits=4, shuffle=True, random_state=42).split(df_train, ser_targets_train)
+    best_iterations, fold_scores = [], []
+    for fold_no, (train_idx, val_idx) in enumerate(splits):
+        logger.info(f"Fold {fold_no}")
+        df_train_current_fold = df_train.iloc[train_idx]
+        df_val_current_fold = df_train.iloc[val_idx]
+        ser_targets_train_current_fold = ser_targets_train.iloc[train_idx]
+        ser_targets_val_current_fold = ser_targets_train.iloc[val_idx]
+
+        df_train_current_fold_processed = preprocess_data_lgbm(df_train_current_fold)
+        df_val_current_fold_processed = preprocess_data_lgbm(df_val_current_fold)
+        early_stopping_callback = lgb.early_stopping(
+            150, verbose=False
+        )
+        clf = lgb.LGBMClassifier(**params_lgbm)
+        clf.fit(
+            X=df_train_current_fold_processed,
+            y=ser_targets_train_current_fold,
+            callbacks=[early_stopping_callback],
+            eval_set=[(df_val_current_fold_processed, ser_targets_val_current_fold)],
+            eval_metric="auc",
+        )
+
+        best_iterations.append(clf.best_iteration_)
+        fold_scores.append(clf.best_score_["valid_0"]["auc"])
+        logger.info(f"Best iteration: {best_iterations[-1]}, score: {fold_scores[-1] :.2f}")
+
+    mean_best_iteration = int(np.mean(best_iterations))
+    mean_score = round(float(np.mean(fold_scores)), 2)
+    logger.info(f"Mean best iteration: {mean_best_iteration}, mean score: {mean_score}")
+
+    # retrain on full data
+    df_train_processed = preprocess_data_lgbm(df_train)
+    params_lgbm["n_estimators"] = int(mean_best_iteration * 1.1)
+    clf = lgb.LGBMClassifier(**params_lgbm)
+    clf.fit(
+        X=df_train_processed,
+        y=ser_targets_train,
+    )
+
+    return clf, mean_score
 
 
 async def train_model_for_probability_of_seed_production() -> dict[str, str | float]:
@@ -342,15 +359,7 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
 
     df, target = preprocess_data(df_all)
 
-    ensemble = create_ensemble_model(df=df)
-
-    # score with kfold split
-    # metric_name = "f1"
-    metric_name = "roc_auc"
-    scores = cross_val_score(
-        estimator=ensemble, X=df, y=target, cv=4, scoring=metric_name
-    )  # 1 is best, 0 is worst
-    metric_value = round(float(scores.mean()), 2)
+    # ensemble = create_ensemble_model(df=df)
 
     notes = ""
     notes += (
@@ -358,24 +367,33 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         f"({round(target.sum() / len(target), 2) * 100} %)."
     )
 
-    # train with whole dataset
-    ensemble.fit(X=df, y=target)
+    # score with kfold split
+    clf_lgbm, mean_score_lgbm = train_probability_model_lgbm(df_train=df, ser_targets_train=target)
+    # metric_name = "roc_auc"  # "f1"
+    # scores = cross_val_score(
+    #     estimator=ensemble, X=df, y=target, cv=4, scoring=metric_name
+    # )  # 1 is best, 0 is worst
+    # metric_value = round(float(scores.mean()), 2)
+
+    # # train with whole dataset
+    # ensemble.fit(X=df, y=target)
 
     pickle_pipeline(
-        pipeline=ensemble,
-        feature_container=feature_container,
+        pipeline=clf_lgbm,  # ensemble,
+        feature_container=feature_container,  # todo remove
         prediction_model=PredictionModel.POLLINATION_PROBABILITY,
     )
 
+    # remove old models from memory to have them reloaded upon next prediction
     # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_pollination
-
     predict_pollination.pollination_pipeline, predict_pollination.feature_container = None, None
 
     return {
         "model": PredictionModel.POLLINATION_PROBABILITY,
-        "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
-        "metric_name": metric_name,
-        "metric_value": metric_value,
+        # "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
+        "estimator": str(clf_lgbm),
+        "metric_name": "roc_auc",
+        "metric_value": mean_score_lgbm,
         "notes": notes,
     }

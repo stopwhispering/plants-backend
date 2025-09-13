@@ -4,6 +4,7 @@ import logging
 import pickle
 from typing import TYPE_CHECKING
 
+from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
 
 from plants import settings
@@ -60,7 +61,7 @@ def unpickle_pipeline(
 
 
 def pickle_pipeline(
-    pipeline: Pipeline | VotingRegressor | VotingClassifier | XGBClassifier,
+    pipeline: Pipeline | VotingRegressor | VotingClassifier | XGBClassifier | LGBMClassifier,
     prediction_model: PredictionModel,
     feature_container: FeatureContainer | None = None,
     category_map: dict | None = None,

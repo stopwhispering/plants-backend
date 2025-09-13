@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+from lightgbm import LGBMClassifier
 
 from plants.modules.pollination.enums import PollenQuality, PollenType, PredictionModel
 from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
+from plants.modules.pollination.prediction.shared_pollination import validate_and_set_dtypes
 
 if TYPE_CHECKING:
     from sklearn.pipeline import Pipeline
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
 pollination_pipeline, feature_container = None, None
 
 
-def get_probability_of_seed_production_model() -> tuple[Pipeline, FeatureContainer]:
+def get_probability_of_seed_production_model() -> tuple[Pipeline | LGBMClassifier, FeatureContainer]:
     global pollination_pipeline  # pylint: disable=global-statement
     global feature_container  # pylint: disable=global-statement
     if pollination_pipeline is None:
@@ -52,6 +54,9 @@ class FeaturesPollination:  # pylint: disable=too-many-instance-attributes
     pollen_quality: PollenQuality | None
     pollinated_at_hour_sin: float | None
     pollinated_at_hour_cos: float | None
+    seed_capsule_plant_id_as_cat: any  # Category
+    pollen_donor_plant_id_as_cat: any  # Category
+    count_attempted: int | None
 
 
 def get_data(
@@ -83,12 +88,26 @@ def get_data(
         # todo supply by frontend; the following is total 100% bullshit !!!
         pollinated_at_hour_sin=np.sin(2 * np.pi * now_utc.hour / 24),
         pollinated_at_hour_cos=np.cos(2 * np.pi * now_utc.hour / 24),
+        seed_capsule_plant_id_as_cat=str(florescence.plant.id),  # will be converted to category later
+        pollen_donor_plant_id_as_cat=str(pollen_donor.id),  # will be converted to category later
+        count_attempted=1,    # todo supply by frontend
     )
-    df_all = pd.Series(training_data.__dict__).to_frame().T
-
+    # df_all = pd.Series(training_data.__dict__).to_frame().T
+    df_all = pd.DataFrame([training_data.__dict__])
     if missing := [f for f in feature_container_.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
     return df_all
+
+
+def predict_probability_lgbm(clf: LGBMClassifier, df_all: pd.DataFrame) -> float:
+    """
+    Notes:
+    * data must match df_train_processed in train_probability_model_lgbm() in train_pollination.py
+    """
+    df_processed = validate_and_set_dtypes(df_all)
+    arr_pred_proba = clf.predict_proba(df_processed)  # e.g. [[0.09839491 0.90160509]]
+    probability = arr_pred_proba[0][1]
+    return probability
 
 
 def predict_probability_of_seed_production(
@@ -101,6 +120,11 @@ def predict_probability_of_seed_production(
         pollen_type=pollen_type,
         feature_container_=feature_container_,
     )
+    if type(model) is LGBMClassifier:
+        probability = predict_probability_lgbm(model, df_all)
+        return int(probability * 100)
+
+    # todo remove rest if no longer needed
     pred_proba = model.predict_proba(df_all)  # e.g. [[0.09839491 0.90160509]]
     probability = pred_proba[0][1]
     return int(probability * 100)
