@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import datetime
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
-from plants.modules.pollination.enums import PollenType, PredictionModel
+from plants.modules.pollination.enums import PollenQuality, PollenType, PredictionModel
 from plants.modules.pollination.prediction.ml_common import unpickle_pipeline
 
 if TYPE_CHECKING:
@@ -47,6 +49,10 @@ class FeaturesPollination:  # pylint: disable=too-many-instance-attributes
     same_species: bool
     same_plant: bool
 
+    pollen_quality: PollenQuality | None
+    pollinated_at_hour_sin: float | None
+    pollinated_at_hour_cos: float | None
+
 
 def get_data(
     florescence: Florescence,
@@ -57,6 +63,8 @@ def get_data(
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
 
+    now_utc = datetime.datetime.now(datetime.UTC)
+    # see make_preprocessor() in train_pollination.py for the features used in training
     training_data = FeaturesPollination(
         # location=poll.location,
         genus_seed_capsule=florescence.plant.taxon.genus,
@@ -71,6 +79,10 @@ def get_data(
         same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
         same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
         same_plant=florescence.plant.id == pollen_donor.id,
+        pollen_quality=PollenQuality.GOOD,  # todo supply by frontend
+        # todo supply by frontend; the following is total 100% bullshit !!!
+        pollinated_at_hour_sin=np.sin(2 * np.pi * now_utc.hour / 24),
+        pollinated_at_hour_cos=np.cos(2 * np.pi * now_utc.hour / 24),
     )
     df_all = pd.Series(training_data.__dict__).to_frame().T
 

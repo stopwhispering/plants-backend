@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -129,6 +130,18 @@ async def assemble_pollination_data(feature_container: FeatureContainer) -> pd.D
     df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
     df_all["same_species"] = df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
     df_all["same_plant"] = df_all["pollen_donor_plant_id"] == df_all["seed_capsule_plant_id"]
+
+    # encode pollination timestamp as cyclical features
+    ser_pollinated_at_hour = df_all["pollinated_at"].dt.hour
+    df_all["pollinated_at_hour_sin"] = np.sin(2 * np.pi * ser_pollinated_at_hour / 24)
+    df_all["pollinated_at_hour_cos"] = np.cos(2 * np.pi * ser_pollinated_at_hour / 24)
+
+    df_all["seed_capsule_plant_id_as_cat"] = (
+        df_all["seed_capsule_plant_id"].astype("string").astype("category")
+    )
+    df_all["pollen_donor_plant_id_as_cat"] = (
+        df_all["pollen_donor_plant_id"].astype("string").astype("category")
+    )
 
     if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")

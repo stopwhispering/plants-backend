@@ -13,7 +13,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 
 # noinspection PyProtectedMember
 from sklearn.utils._testing import ignore_warnings
@@ -109,7 +109,24 @@ def _cv_classifier(x: pd.DataFrame, y: pd.Series, pipeline: Pipeline) -> tuple[s
     return "mean_f1_score", round(float(np.mean(scores)), 2)
 
 
-def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
+def to_bool(x):
+    return x.astype("bool")
+
+
+def to_float(x):
+    return x.astype("float")
+
+
+def to_category(x):
+    return x.astype("category")
+
+
+def make_preprocessor(
+    df: pd.DataFrame,
+    accept_nan: bool,
+    one_hot_encode: bool,
+) -> ColumnTransformer:
+    # see get_data() in predict_pollination.py for the features used in prediction, todo unify
     categorical_features = [
         # "location",
         "genus_seed_capsule",
@@ -117,6 +134,9 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
         "genus_pollen_donor",
         "species_pollen_donor",
         "pollen_type",
+        "pollen_quality",
+        # "seed_capsule_plant_id_as_cat",  # currently making model worse
+        # "pollen_donor_plant_id_as_cat",  # currently making model worse
     ]
 
     boolean_features = [
@@ -126,54 +146,97 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
         "hybridgenus_pollen_donor",
         "same_genus",
         "same_species",
+        "same_plant",
     ]
 
-    dropped = [c for c in df.columns if c not in categorical_features + boolean_features]
+    # see also estimator init arguments
+    numeric_features = [
+        "pollinated_at_hour_sin",
+        "pollinated_at_hour_cos",
+    ]
+
+    dropped = [
+        c for c in df.columns if c not in categorical_features + boolean_features + numeric_features
+    ]
     logger.info(f"Columns not used for prediction:\n{dropped}")
 
-    missing = [c for c in categorical_features + boolean_features if c not in df.columns]
+    missing = [
+        c for c in categorical_features + boolean_features + numeric_features if c not in df.columns
+    ]
     if missing:
         raise ValueError(f"Missing:\n{missing}")
 
-    one_hot_encoder = OneHotEncoder(
-        handle_unknown="ignore",  # all zeros for unknown
-        sparse_output=False,
+    if one_hot_encode:
+        one_hot_encoder = OneHotEncoder(
+            handle_unknown="ignore",  # all zeros for unknown
+            sparse_output=False,
+        )
+        cat_transformer = ("cat", one_hot_encoder, categorical_features)
+    else:
+        category_transformer = FunctionTransformer(to_category, validate=False)
+
+        cat_transformer = ("cat", category_transformer, categorical_features)
+        # cat = ("cat", 'passthrough', categorical_features)
+
+    if accept_nan:
+        numeric_transformer = (
+            "numeric",
+            FunctionTransformer(to_float, validate=False),
+            numeric_features,
+        )
+    else:
+        imputer = SimpleImputer(strategy="mean")
+        numeric_transformer = ("numeric", imputer, numeric_features)
+
+    # for whatever reason, we need to explicitly convert everything explicitly
+    bool_transformer = (
+        "bool",
+        FunctionTransformer(to_bool, validate=False),
+        boolean_features,
     )
 
     return ColumnTransformer(
         transformers=[
-            ("cat", one_hot_encoder, categorical_features),
-            ("bool", "passthrough", boolean_features),
+            cat_transformer,
+            bool_transformer,
+            numeric_transformer,
         ],
         remainder="drop",
-    )
+    ).set_output(transform="pandas")
 
 
-def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingClassifier:
-    def make_pipe(classifier: ClassifierMixin) -> Pipeline:
+def create_ensemble_model(df: pd.DataFrame) -> VotingClassifier:
+    def make_pipe(classifier: ClassifierMixin, preprocessor: ColumnTransformer) -> Pipeline:
         return Pipeline([("preprocessor", preprocessor), ("classifier", classifier)])
 
     # pipe_lr = make_pipe(LogisticRegression())
-    pipe_rf = make_pipe(RandomForestClassifier())
+    preprocessor_rf: ColumnTransformer = make_preprocessor(df, accept_nan=True, one_hot_encode=True)
+    pipe_rf = make_pipe(RandomForestClassifier(), preprocessor_rf)
 
+    preprocessor_lgbm: ColumnTransformer = make_preprocessor(
+        df, accept_nan=True, one_hot_encode=True
+    )
     import lightgbm as lgb
 
     params_lgbm = {
         # "max_depth": 10,  # default: -1 seems optimal
         # "colsample_bytree": 0.4,  # default: 1 seems optimal
-        "n_estimators": 1_500,  # default: 100 (no early stoppin here for simplicity)
+        "n_estimators": 1500,  # default: 100 (no early stoppin here for simplicity)
         # "learning_rate": 0.10,  # default: 0.1 seems optimal
         "objective": "binary",  # default: binary (log-loss)
         # "verbose": -1,
     }
     clf = lgb.LGBMClassifier(**params_lgbm)
-    pipe_lgbm = make_pipe(clf)
+    pipe_lgbm = make_pipe(clf, preprocessor_lgbm)
 
+    preprocessor_knn: ColumnTransformer = make_preprocessor(
+        df, accept_nan=False, one_hot_encode=True
+    )
     params_knn = {
         "n_neighbors": 5,  # default: 5 seems optimal
         "weights": "uniform",  # default: uniform seems optimal
     }
-    pipe_knn = make_pipe(KNeighborsClassifier(**params_knn))
+    pipe_knn = make_pipe(KNeighborsClassifier(**params_knn), preprocessor_knn)
 
     return VotingClassifier(
         estimators=[
@@ -279,8 +342,7 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
 
     df, target = preprocess_data(df_all)
 
-    preprocessor = make_preprocessor(df)
-    ensemble = create_ensemble_model(preprocessor)
+    ensemble = create_ensemble_model(df=df)
 
     # score with kfold split
     # metric_name = "f1"
