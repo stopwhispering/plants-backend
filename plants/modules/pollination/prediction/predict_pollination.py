@@ -45,6 +45,7 @@ class FeaturesPollination:  # pylint: disable=too-many-instance-attributes
     hybridgenus_pollen_donor: bool
     same_genus: bool
     same_species: bool
+    same_plant: bool
 
 
 def get_data(
@@ -69,6 +70,7 @@ def get_data(
         hybridgenus_pollen_donor=pollen_donor.taxon.hybridgenus,
         same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
         same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
+        same_plant=florescence.plant.id == pollen_donor.id,
     )
     df_all = pd.Series(training_data.__dict__).to_frame().T
 

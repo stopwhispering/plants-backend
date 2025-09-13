@@ -128,6 +128,7 @@ async def assemble_pollination_data(feature_container: FeatureContainer) -> pd.D
     # add some custom features
     df_all["same_genus"] = df_all["genus_pollen_donor"] == df_all["genus_seed_capsule"]
     df_all["same_species"] = df_all["species_pollen_donor"] == df_all["species_seed_capsule"]
+    df_all["same_plant"] = df_all["pollen_donor_plant_id"] == df_all["seed_capsule_plant_id"]
 
     if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
         raise ValueError(f"Feature(s) not in dataframe: {missing}")
