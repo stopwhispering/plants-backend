@@ -146,7 +146,7 @@ def create_ensemble_model(preprocessor: ColumnTransformer) -> VotingRegressor:
 async def train_model_for_ripening_days() -> dict[str, str | float]:
     """Predict whether a pollination attempt is goint to reach SEED status."""
     feature_container = _create_features()
-    df_all = await assemble_pollination_data(feature_container=feature_container)
+    df_all = await assemble_pollination_data()
 
     df = preprocess_data(df_all)
 

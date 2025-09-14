@@ -15,10 +15,6 @@ from plants.modules.taxon.models import Taxon
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
-    from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
-        FeatureContainer,
-    )
-
 
 async def _read_db_and_join() -> pd.DataFrame:
     # read from db into dataframe
@@ -123,7 +119,7 @@ async def _read_db_and_join() -> pd.DataFrame:
     )
 
 
-async def assemble_pollination_data(feature_container: FeatureContainer) -> pd.DataFrame:
+async def assemble_pollination_data() -> pd.DataFrame:
     df_all = await _read_db_and_join()
 
     # add some custom features
@@ -142,8 +138,5 @@ async def assemble_pollination_data(feature_container: FeatureContainer) -> pd.D
     df_all["pollen_donor_plant_id_as_cat"] = (
         df_all["pollen_donor_plant_id"].astype("string").astype("category")
     )
-
-    if missing := [f for f in feature_container.get_columns() if f not in df_all.columns]:
-        raise ValueError(f"Feature(s) not in dataframe: {missing}")
 
     return df_all

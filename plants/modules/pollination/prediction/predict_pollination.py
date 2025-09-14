@@ -17,21 +17,18 @@ if TYPE_CHECKING:
 
     from plants.modules.plant.models import Plant
     from plants.modules.pollination.models import Florescence
-    from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
-        FeatureContainer,
-    )
 
 pollination_pipeline, feature_container = None, None
 
 
-def get_probability_of_seed_production_model() -> tuple[Pipeline | LGBMClassifier, FeatureContainer]:
+def get_probability_of_seed_production_model() -> Pipeline | LGBMClassifier:
     global pollination_pipeline  # pylint: disable=global-statement
     global feature_container  # pylint: disable=global-statement
     if pollination_pipeline is None:
-        pollination_pipeline, feature_container = unpickle_pipeline(
+        pollination_pipeline, _ = unpickle_pipeline(
             prediction_model=PredictionModel.POLLINATION_PROBABILITY
         )
-    return pollination_pipeline, feature_container
+    return pollination_pipeline
 
 
 @dataclass
@@ -63,7 +60,6 @@ def get_data(
     florescence: Florescence,
     pollen_donor: Plant,
     pollen_type: PollenType,
-    feature_container_: FeatureContainer,
 ) -> pd.DataFrame:
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
@@ -94,8 +90,6 @@ def get_data(
     )
     # df_all = pd.Series(training_data.__dict__).to_frame().T
     df_all = pd.DataFrame([training_data.__dict__])
-    if missing := [f for f in feature_container_.get_columns() if f not in df_all.columns]:
-        raise ValueError(f"Feature(s) not in dataframe: {missing}")
     return df_all
 
 
@@ -113,12 +107,11 @@ def predict_probability_lgbm(clf: LGBMClassifier, df_all: pd.DataFrame) -> float
 def predict_probability_of_seed_production(
     florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
 ) -> int:
-    model, feature_container_ = get_probability_of_seed_production_model()
+    model = get_probability_of_seed_production_model()
     df_all = get_data(
         florescence=florescence,
         pollen_donor=pollen_donor,
         pollen_type=pollen_type,
-        feature_container_=feature_container_,
     )
     if type(model) is LGBMClassifier:
         probability = predict_probability_lgbm(model, df_all)
