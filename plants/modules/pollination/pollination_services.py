@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import pytz
@@ -13,7 +13,7 @@ from plants.modules.pollination.enums import (
     Context,
     FlorescenceStatus,
     PollenType,
-    PollinationStatus,
+    PollinationStatus, PollenQuality,
 )
 from plants.modules.pollination.models import Florescence, Pollination
 from plants.modules.pollination.prediction.predict_pollination import (
@@ -75,11 +75,22 @@ async def _read_pollination_attempts(
 
 
 def get_probability_pollination_to_seed(
-    florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
+        florescence: Florescence,
+        pollen_donor: Plant,
+        pollen_type: PollenType,
+        count_attempted: int,
+        pollen_quality: PollenQuality | None,
+        pollinated_at_datetime_utc: datetime,
 ) -> int:
     """Get the ml prediction for the probability of successful pollination to seed."""
+    # todo what's the use of this function? we always call the same function inside
     return predict_probability_of_seed_production(
-        florescence=florescence, pollen_donor=pollen_donor, pollen_type=pollen_type
+        florescence=florescence,
+        pollen_donor=pollen_donor,
+        pollen_type=pollen_type,
+        count_attempted=count_attempted,
+        pollen_quality=pollen_quality,
+        pollinated_at_datetime_utc=pollinated_at_datetime_utc,
     )
 
 
@@ -150,6 +161,9 @@ async def read_potential_pollen_donors(
                 florescence=florescence,
                 pollen_donor=florescence_pollen_donor.plant,
                 pollen_type=PollenType.FRESH,
+                count_attempted=1,  # default
+                pollen_quality=PollenQuality.GOOD,  # default
+                pollinated_at_datetime_utc=datetime.now(timezone.utc),  # default
             )
             if florescence_pollen_donor.plant.taxon and florescence.plant.taxon
             else None,
@@ -194,6 +208,9 @@ async def read_potential_pollen_donors(
                 florescence=florescence,
                 pollen_donor=frozen_pollen_plant,
                 pollen_type=PollenType.FROZEN,
+                count_attempted=1,  # default
+                pollen_quality=PollenQuality.GOOD,  # default
+                pollinated_at_datetime_utc=datetime.now(timezone.utc),  # default
             )
             if frozen_pollen_plant.taxon and florescence.plant.taxon
             else None,

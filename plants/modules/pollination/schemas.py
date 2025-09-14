@@ -425,6 +425,9 @@ class RequestPredictProbabilityPollinationToSeed(BaseSchema):
     florescence_id: int
     pollen_donor_plant_id: int
     pollen_type: PollenType
+    pollen_quality: PollenQuality
+    count_attempted: int
+    pollinated_at_datetime_utc: datetime.datetime  # e.g. '2025-09-14T13:53:00.000Z' for 2025-09-14 15:53 CET
 
 
 class BResponsePredictProbabilityPollinationToSeed(ResponseContainer):

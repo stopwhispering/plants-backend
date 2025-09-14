@@ -168,6 +168,9 @@ async def get_ongoing_pollinations(
                 florescence=p.florescence,
                 pollen_donor=p.pollen_donor_plant,
                 pollen_type=p.pollen_type,
+                count_attempted=p.count_attempted,
+                pollen_quality=p.pollen_quality,
+                pollinated_at_datetime_utc=p.pollinated_at,
             )
 
         # for sorting in the frontend, we look at all the pollinations with the same
@@ -456,7 +459,7 @@ async def predict_probability_pollination_to_seed(
     plant_dal: PlantDAL = Depends(get_plant_dal),
 ) -> Any:
     # Example:
-    # http://localhost:5000/api/probability_pollination_to_seed?florescence_id=304&pollen_donor_plant_id=1085&pollen_type=fresh
+    # http://localhost:5000/api/probability_pollination_to_seed?florescence_id=304&pollen_donor_plant_id=1085&pollen_type=fresh&count_attempted=1
 
     florescence = await florescence_dal.by_id(
         predict_probability_pollination_to_seed_data.florescence_id
@@ -469,6 +472,9 @@ async def predict_probability_pollination_to_seed(
         florescence=florescence,
         pollen_donor=pollen_donor,
         pollen_type=predict_probability_pollination_to_seed_data.pollen_type,
+        pollen_quality=predict_probability_pollination_to_seed_data.pollen_quality,
+        count_attempted=predict_probability_pollination_to_seed_data.count_attempted,
+        pollinated_at_datetime_utc=predict_probability_pollination_to_seed_data.pollinated_at_datetime_utc,
     )
     return {
         "action": "Predict probability of pollination to seed",

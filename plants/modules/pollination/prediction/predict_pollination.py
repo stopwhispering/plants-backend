@@ -60,11 +60,13 @@ def get_data(
     florescence: Florescence,
     pollen_donor: Plant,
     pollen_type: PollenType,
+    pollen_quality: PollenQuality,
+    count_attempted: int,
+    pollinated_at_datetime_utc: datetime.datetime,
 ) -> pd.DataFrame:
     if not florescence.plant.taxon or not pollen_donor.taxon:
         raise ValueError("Plant must have a taxon")
 
-    now_utc = datetime.datetime.now(datetime.UTC)
     # see make_preprocessor() in train_pollination.py for the features used in training
     training_data = FeaturesPollination(
         # location=poll.location,
@@ -80,13 +82,12 @@ def get_data(
         same_genus=florescence.plant.taxon.genus == pollen_donor.taxon.genus,
         same_species=florescence.plant.taxon.species == pollen_donor.taxon.species,
         same_plant=florescence.plant.id == pollen_donor.id,
-        pollen_quality=PollenQuality.GOOD,  # todo supply by frontend
-        # todo supply by frontend; the following is total 100% bullshit !!!
-        pollinated_at_hour_sin=np.sin(2 * np.pi * now_utc.hour / 24),
-        pollinated_at_hour_cos=np.cos(2 * np.pi * now_utc.hour / 24),
+        pollen_quality=pollen_quality,
+        pollinated_at_hour_sin=np.sin(2 * np.pi * pollinated_at_datetime_utc.hour / 24),
+        pollinated_at_hour_cos=np.cos(2 * np.pi * pollinated_at_datetime_utc.hour / 24),
         seed_capsule_plant_id_as_cat=str(florescence.plant.id),  # will be converted to category later
         pollen_donor_plant_id_as_cat=str(pollen_donor.id),  # will be converted to category later
-        count_attempted=1,    # todo supply by frontend
+        count_attempted=count_attempted,
     )
     # df_all = pd.Series(training_data.__dict__).to_frame().T
     df_all = pd.DataFrame([training_data.__dict__])
@@ -105,13 +106,18 @@ def predict_probability_lgbm(clf: LGBMClassifier, df_all: pd.DataFrame) -> float
 
 
 def predict_probability_of_seed_production(
-    florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType
+    florescence: Florescence, pollen_donor: Plant, pollen_type: PollenType,
+    count_attempted: int, pollen_quality: PollenQuality,
+    pollinated_at_datetime_utc: datetime.datetime,
 ) -> int:
     model = get_probability_of_seed_production_model()
     df_all = get_data(
         florescence=florescence,
         pollen_donor=pollen_donor,
         pollen_type=pollen_type,
+        pollen_quality=pollen_quality,
+        count_attempted=count_attempted,
+        pollinated_at_datetime_utc=pollinated_at_datetime_utc,
     )
     if type(model) is LGBMClassifier:
         probability = predict_probability_lgbm(model, df_all)
