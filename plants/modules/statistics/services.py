@@ -49,6 +49,13 @@ def compute_pollination_statistics_for_month(
                 if p.pollination_status != PollinationStatus.ATTEMPT and p.ongoing
             ]
         )
+        n_successful_and_ripening = len(
+            [
+                p
+                for p in pollinations
+                if p.pollination_status == PollinationStatus.SEED_CAPSULE and p.ongoing
+            ]
+        )
     else:
         assert year is not None and month is not None  # noqa
         period = f"{year}-{month}"
@@ -61,6 +68,9 @@ def compute_pollination_statistics_for_month(
         ]
         n_successful = len(
             [p for p in pollinations if p.pollination_status != PollinationStatus.ATTEMPT]
+        )
+        n_successful_and_ripening = len(
+            [p for p in pollinations if p.ongoing and p.pollination_status == PollinationStatus.SEED_CAPSULE]
         )
 
     results = []
@@ -94,6 +104,15 @@ def compute_pollination_statistics_for_month(
             )
         )
 
+    if n_successful_and_ripening:
+        results.append(
+            PollinationStatisticsRow(
+                period=period,
+                label="Pollinations Successful, still Ripening",
+                value=f"{n_successful_and_ripening}",
+            )
+        )
+
     n_still_open = len(
         [p for p in pollinations if p.ongoing and p.pollination_status == PollinationStatus.ATTEMPT]
     )
@@ -106,7 +125,7 @@ def compute_pollination_statistics_for_month(
     return results
 
 
-async def assemble_pollination_settings(
+async def assemble_pollination_statistics(
     statistics_dal: StatisticsDAL,  # noqa
     pollination_dal: PollinationDAL,
 ) -> PollinationStatisticsRead:

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from plants.dependencies import get_pollination_dal, get_statistics_dal
 from plants.modules.pollination.pollination_dal import PollinationDAL
 from plants.modules.statistics.schemas import GetPollinationStatisticsResponse
-from plants.modules.statistics.services import assemble_pollination_settings
+from plants.modules.statistics.services import assemble_pollination_statistics
 from plants.modules.statistics.statistics_dal import StatisticsDAL
 from plants.shared.message_services import get_message
 
@@ -28,7 +28,7 @@ async def get_pollination_statistics(
     pollination_dal: PollinationDAL = Depends(get_pollination_dal),
 ) -> Any:
     """Read settings from settings table."""
-    statistics = await assemble_pollination_settings(statistics_dal, pollination_dal)
+    statistics = await assemble_pollination_statistics(statistics_dal, pollination_dal)
     return {
         "action": "Get pollination statistics",
         "message": get_message("Loaded pollination statistics from database."),
