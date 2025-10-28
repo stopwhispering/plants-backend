@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import datetime
+from statistics import mean
 from typing import TYPE_CHECKING
 
-from plants.modules.pollination.enums import FlorescenceStatus, PollinationStatus
-from plants.modules.statistics.schemas import PollinationStatisticsRead, PollinationStatisticsRow
+from plants.modules.pollination.enums import FlorescenceStatus, PollinationStatus, \
+    SeedPlantingStatus
+from plants.modules.pollination.seed_planting_dal import SeedPlantingDAL
+from plants.modules.statistics.schemas import StatisticsRead, StatisticsRow
 
 if TYPE_CHECKING:
     from plants.modules.pollination.models import Pollination
@@ -18,7 +21,7 @@ def compute_pollination_statistics_for_month(
     recent: bool = False,
     year: int | None = None,
     month: int | None = None,
-) -> list[PollinationStatisticsRow]:
+) -> list[StatisticsRow]:
     """# recent pollinations include (a) all ongoing pollinations, and
 
     # (b) all finished pollinations of a florescence that is still flowering or has ongoing
@@ -88,7 +91,7 @@ def compute_pollination_statistics_for_month(
     )
     if n_failed:
         results.append(
-            PollinationStatisticsRow(
+            StatisticsRow(
                 period=period, label="Pollinations Failed", value=f"{n_failed} ({quota_failed}%)"
             )
         )
@@ -97,7 +100,7 @@ def compute_pollination_statistics_for_month(
     )
     if n_successful:
         results.append(
-            PollinationStatisticsRow(
+            StatisticsRow(
                 period=period,
                 label="Pollinations Successful",
                 value=f"{n_successful} ({quota_successful}%)",
@@ -106,7 +109,7 @@ def compute_pollination_statistics_for_month(
 
     if n_successful_and_ripening:
         results.append(
-            PollinationStatisticsRow(
+            StatisticsRow(
                 period=period,
                 label="Pollinations Successful, still Ripening",
                 value=f"{n_successful_and_ripening}",
@@ -118,7 +121,7 @@ def compute_pollination_statistics_for_month(
     )
     if n_still_open > 0:
         results.append(
-            PollinationStatisticsRow(
+            StatisticsRow(
                 period=period, label="Pollinations Still Open", value=f"{n_still_open}"
             )
         )
@@ -128,7 +131,7 @@ def compute_pollination_statistics_for_month(
 async def assemble_pollination_statistics(
     statistics_dal: StatisticsDAL,  # noqa
     pollination_dal: PollinationDAL,
-) -> PollinationStatisticsRead:
+) -> list[StatisticsRow]:
     """Read pollinations from pollination table and generate statistics." some explanations:
 
     * cancelling (submit and set finished) an attempt (green) keeps status unchanged but sets ongoing to False
@@ -159,4 +162,70 @@ async def assemble_pollination_statistics(
             all_pollinations, year=year, month=month
         )
 
-    return PollinationStatisticsRead(texts_tabular=results)
+    return results
+
+
+async def assemble_seed_planting_statistics(
+    statistics_dal: StatisticsDAL,  # noqa
+    seed_planting_dal: SeedPlantingDAL,
+) -> list[StatisticsRow]:
+    """
+    Read seed plantings from seed_planting table and generate statistics.
+    """
+    all_seed_plantings = await seed_planting_dal.get_plantings()
+    results = []
+
+    today = datetime.date.today()
+    for i in range(12):
+        year = today.year if today.month - i > 0 else today.year - 1
+        month = (today.month - i - 1) % 12 + 1
+
+        plantings = [sp for sp in all_seed_plantings if sp.planted_on is not None and sp.planted_on.year == year and sp.planted_on.month == month]
+        count_abandoned = len([sp for sp in plantings if sp.status == SeedPlantingStatus.ABANDONED])
+        count_germinated = len([sp for sp in plantings if sp.status == SeedPlantingStatus.GERMINATED])
+        count_open = len([sp for sp in plantings if sp.status == SeedPlantingStatus.PLANTED])
+        germination_days = [sp.germination_days for sp in plantings if sp.germination_days is not None and sp.status == SeedPlantingStatus.GERMINATED]
+        avg_germination_days = round(mean(germination_days), 2) if germination_days else None
+
+        period = f"{year}-{month}"
+
+        if count_germinated > 0:
+            # quota_germinated = round(
+            #     count_germinated / (count_germinated + count_abandoned + count_open) * 100
+            #     if (count_germinated + count_abandoned + count_open) > 0
+            #     else None
+            # )
+            results.append(
+                StatisticsRow(
+                    period=period,
+                    label="Plantings Germinated",
+                    # value=f"{count_germinated} ({quota_germinated}%) {f'(Avg Days: {avg_germination_days})' if avg_germination_days is not None else ''}",
+                    value=f"{count_germinated} {f'(Avg Days: {avg_germination_days})' if avg_germination_days is not None else ''}",
+                )
+            )
+
+        if count_abandoned > 0:
+            # quota_abandoned = round(
+            #     count_abandoned / (count_germinated + count_abandoned + count_open) * 100
+            #     if (count_germinated + count_abandoned + count_open) > 0
+            #     else None
+            # )
+            results.append(
+                StatisticsRow(
+                    period=period,
+                    label="Plantings Abandoned",
+                    # value=f"{count_abandoned} ({quota_abandoned}%)",
+                    value=f"{count_abandoned}",
+                )
+            )
+
+        if count_open > 0:
+            results.append(
+                StatisticsRow(
+                    period=period,
+                    label="Plantings Still Open",
+                    value=f"{count_open}",
+                )
+            )
+
+    return results

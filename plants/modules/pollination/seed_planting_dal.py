@@ -16,6 +16,19 @@ if TYPE_CHECKING:
 
 
 class SeedPlantingDAL(BaseDAL):
+    async def get_plantings(self):
+        query = (
+            select(SeedPlanting)
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.seed_capsule_plant)
+            )
+            .options(
+                selectinload(SeedPlanting.pollination).selectinload(Pollination.pollen_donor_plant)
+            )
+            .options(selectinload(SeedPlanting.soil))
+        )
+        return list((await self.session.scalars(query)).all())
+
     async def by_id(self, seed_planting_id: int) -> SeedPlanting:
         # noinspection PyTypeChecker
         query = (

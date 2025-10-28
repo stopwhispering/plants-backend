@@ -6,15 +6,15 @@ from plants.shared.base_schema import (
 )
 
 
-class PollinationStatisticsRow(BaseSchema):
+class StatisticsRow(BaseSchema):
     period: str
     label: str
     value: str
 
 
-class PollinationStatisticsRead(BaseSchema):
-    texts_tabular: list[PollinationStatisticsRow]
+class StatisticsRead(BaseSchema):
+    texts_tabular: list[StatisticsRow]
 
 
-class GetPollinationStatisticsResponse(ResponseContainer):
-    statistics: PollinationStatisticsRead
+class GetStatisticsResponse(ResponseContainer):
+    statistics: StatisticsRead
