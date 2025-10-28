@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from plants.constants import REGEX_DATE
 from plants.modules.event.enums import FBShapeSide, FBShapeTop, PotMaterial
@@ -36,6 +37,8 @@ class SoilRead(SoilBase):
 
 class SoilWithCount(SoilBase):
     plants_count: int
+    last_usage_datetime_seed_planting: datetime.datetime | None
+    last_usage_datetime_repotting: datetime.datetime | None
 
 
 class PotBase(BaseSchema):

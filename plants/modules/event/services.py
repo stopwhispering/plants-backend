@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any
+import datetime
 
 from plants.exceptions import SoilNotUniqueError
 from plants.modules.event.models import Event, Observation, Pot, Soil
@@ -253,14 +254,23 @@ async def fetch_soils(plant_dal: PlantDAL, event_dal: EventDAL) -> list[dict[str
     for plant in plants:
         # if events := [e for e in plant.events if e.soil_id]:
         if events := [e for e in plant.events if e.soil is not None and e.soil.id is not None]:
-            latest_event: Event = max(events, key=attrgetter("date"))
+            latest_event: Event = max(events, key=attrgetter("date"))  # noqa
             soil_counter[latest_event.soil.id] += 1
 
     all_soils = event_dal.get_all_soils()
     for soil in await all_soils:
         # soil.plants_count = soil_counter.get(soil.id, 0)
+        # use 1900... as default date if no usage yet
+        last_usage_datetime_seed_planting = max(
+            (sp.creation_at for sp in soil.seed_plantings), default=None
+        ) if soil.seed_plantings else datetime.datetime.min
+        last_usage_datetime_repotting = max(
+            (e.created_at for e in soil.events), default=None
+        ) if soil.events else datetime.datetime.min
         soil_dict = soil.__dict__.copy()
         soil_dict["plants_count"] = soil_counter.get(soil.id, 0)
+        soil_dict["last_usage_datetime_seed_planting"] = last_usage_datetime_seed_planting
+        soil_dict["last_usage_datetime_repotting"] = last_usage_datetime_repotting
         soils.append(soil_dict)
 
     return soils

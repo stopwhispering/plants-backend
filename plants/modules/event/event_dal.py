@@ -51,7 +51,7 @@ class EventDAL(BaseDAL):
         await self.session.flush()
 
     async def get_all_soils(self) -> list[Soil]:
-        query = select(Soil)
+        query = select(Soil).options(selectinload(Soil.seed_plantings)).options(selectinload(Soil.events))
         soils: list[Soil] = list((await self.session.scalars(query)).all())
         return soils
 
