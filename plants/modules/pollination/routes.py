@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-import matplotlib.pyplot as plt
 from fastapi import APIRouter, Depends, HTTPException
 from starlette.responses import StreamingResponse
 
@@ -244,7 +243,7 @@ async def delete_pollination(
 )
 async def retrain_probability_pollination_to_seed_model():
     """Retrain the probability_pollination_to_seed ml model."""
-    results, shap_values, df_preprocessed, (fpr, tpr, final_concatenated_auc) = await train_model_for_probability_of_seed_production()
+    results, (shap_values, df_preprocessed), (fpr, tpr, final_concatenated_auc) = await train_model_for_probability_of_seed_production()
 
     # we save the generated image in FastAPI app state for retrieval in the frontend
     # Note: not thread-safe, but ok for our single-user

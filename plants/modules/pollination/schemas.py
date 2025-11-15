@@ -353,8 +353,15 @@ class BResultsRetraining(BaseSchema):
     notes: str | None = None
 
 
+class BResultsRetrainingMultipleMetrics(BaseSchema):
+    model: PredictionModel
+    estimator: str
+    metrics: dict[str, float]
+    notes: str | None = None
+
+
 class BResultsRetrainingPollinationToSeedsModel(BaseSchema):
-    results: BResultsRetraining
+    results: BResultsRetrainingMultipleMetrics
     image_urls: list[str]
 
 

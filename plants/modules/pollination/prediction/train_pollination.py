@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
-from contextlib import contextmanager
+from typing import Any
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, f1_score, accuracy_score, precision_score, \
+    recall_score
 from sklearn.model_selection import StratifiedKFold
 import shap
 import io
@@ -58,7 +59,7 @@ def preprocess_data_lgbm(
 def train_probability_model_lgbm(
         df_train: pd.DataFrame,
         ser_targets_train: pd.Series,
-) -> tuple[lgb.LGBMClassifier, float, tuple[np.ndarray, np.ndarray, float]]:
+) -> tuple[lgb.LGBMClassifier, tuple[np.ndarray, np.ndarray, float], dict[str, float]]:
     params_lgbm = {
         # "max_depth": 10,  # default: -1
         # "colsample_bytree": 0.4,  # default: 1
@@ -103,11 +104,36 @@ def train_probability_model_lgbm(
         oof_predictions[val_idx] = oof_probs
 
     mean_best_iteration = int(np.mean(best_iterations))
-    mean_score = round(float(np.mean(fold_scores)), 2)
-    logger.info(f"Mean best iteration: {mean_best_iteration}, mean score: {mean_score}")
+    # mean_score = round(float(np.mean(fold_scores)), 2)
 
+    # we need the auc_roc for both the info part and the roc curve plot
     final_concatenated_auc = roc_auc_score(ser_targets_train, oof_predictions)
+    logger.info(f"Mean best iteration: {mean_best_iteration}, auc_roc score: {final_concatenated_auc}")
     fpr, tpr, _thresholds = roc_curve(ser_targets_train, oof_predictions)
+
+    final_f1 = f1_score(
+        ser_targets_train,
+        (oof_predictions >= 0.5).astype(int)
+    )
+    final_accuracy = accuracy_score(
+        ser_targets_train,
+        (oof_predictions >= 0.5).astype(int)
+    )
+    final_precision = precision_score(
+        ser_targets_train,
+        (oof_predictions >= 0.5).astype(int)
+    )
+    final_recall = recall_score(
+        ser_targets_train,
+        (oof_predictions >= 0.5).astype(int)
+    )
+    metrics = {
+        "AUC_ROC": final_concatenated_auc,
+        "F1": final_f1,
+        "Accuracy": final_accuracy,
+        "Precision": final_precision,
+        "Recall": final_recall,
+    }
 
     # retrain on full data
     df_train_processed = preprocess_data_lgbm(df_train)
@@ -118,7 +144,7 @@ def train_probability_model_lgbm(
         y=ser_targets_train,
     )
 
-    return clf, mean_score, (fpr, tpr, final_concatenated_auc)
+    return clf, (fpr, tpr, final_concatenated_auc), metrics
 
 
 def generate_shap_values_for_model(
@@ -137,7 +163,7 @@ def generate_shap_values_for_model(
 
 
 async def train_model_for_probability_of_seed_production(
-) -> tuple[dict[str, str | float], shap._explanation.Explanation, pd.DataFrame, tuple[
+) -> tuple[dict[str, Any], tuple[shap._explanation.Explanation, pd.DataFrame], tuple[  # noqa
     np.ndarray, np.ndarray, float]]:  # noqa
     """Predict whether a pollination attempt is goint to reach SEED status."""
     df_all = await assemble_pollination_data()
@@ -161,7 +187,7 @@ async def train_model_for_probability_of_seed_production(
         f"({share_positive} %)."
     )
 
-    clf_lgbm, mean_score_lgbm, (fpr, tpr, final_concatenated_auc) = train_probability_model_lgbm(
+    clf_lgbm, (fpr, tpr, final_concatenated_auc), metrics = train_probability_model_lgbm(
         df_train=df, ser_targets_train=target)
 
     pickle_pipeline(
@@ -181,12 +207,10 @@ async def train_model_for_probability_of_seed_production(
 
     return {
         "model": PredictionModel.POLLINATION_PROBABILITY,
-        # "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
         "estimator": str(clf_lgbm),
-        "metric_name": "roc_auc",
-        "metric_value": mean_score_lgbm,
+        "metrics": metrics,
         "notes": notes,
-    }, shap_values, df_preprocessed, (fpr, tpr, final_concatenated_auc)
+    }, (shap_values, df_preprocessed), (fpr, tpr, final_concatenated_auc)
 
 
 def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
