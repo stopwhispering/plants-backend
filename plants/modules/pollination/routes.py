@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-
+import matplotlib.pyplot as plt
 from fastapi import APIRouter, Depends, HTTPException
+from starlette.responses import StreamingResponse
 
 from plants.dependencies import (
     get_event_dal,
@@ -46,6 +47,8 @@ from plants.modules.pollination.pollination_services import (
     update_pollen_containers,
     update_pollination,
 )
+from plants.modules.pollination.prediction.predict_pollination import \
+    get_probability_of_seed_production_model
 from plants.modules.pollination.prediction.train_florescence import (
     train_model_for_florescence_probability,
 )
@@ -54,7 +57,8 @@ from plants.modules.pollination.prediction.train_germination import (
     train_model_for_germination_probability,
 )
 from plants.modules.pollination.prediction.train_pollination import (
-    train_model_for_probability_of_seed_production,
+    train_model_for_probability_of_seed_production, generate_shap_summary_plot,
+    generate_lgbm_feature_importance_gain_plot, generate_lgbm_feature_importance_split_plot,
 )
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
@@ -237,9 +241,56 @@ async def delete_pollination(
     "/retrain_probability_pollination_to_seed_model",
     response_model=BResultsRetrainingPollinationToSeedsModel,
 )
-async def retrain_probability_pollination_to_seed_model() -> dict[str, str | float]:
+async def retrain_probability_pollination_to_seed_model():
     """Retrain the probability_pollination_to_seed ml model."""
-    return await train_model_for_probability_of_seed_production()
+    results, shap_values, df_preprocessed = await train_model_for_probability_of_seed_production()
+    # we save the generated image in FastAPI app state for retrieval in the frontend
+    # Note: not thread-safe, but ok for our single-user
+
+    # import here to avoid circular imports
+    from plants import app
+    app.state.shap_values = shap_values
+    app.state.df_preprocessed = df_preprocessed
+    return {
+        'results': results,
+        'image_urls': [
+            "shap_summary_plot_probability_pollination_to_seed_model/",
+            "lgbm_feature_importance_gain_plot_probability_pollination_to_seed_model/",
+            "lgbm_feature_importance_split_plot_probability_pollination_to_seed_model/",
+        ],
+    }
+
+
+@router.get("/shap_summary_plot_probability_pollination_to_seed_model/")
+def shap_summary_plot() -> StreamingResponse:
+    # import here to avoid circular imports
+    from plants import app
+    if app.state.shap_values is None:
+        raise HTTPException(
+            status_code=404,
+            detail="SHAP values not found. Please retrain the model first.",
+        )
+
+    # we stored the shap values and preprocessed df in app state during retraining
+    shap_values = app.state.shap_values
+    df_preprocessed = app.state.df_preprocessed
+
+    shap_summary_plot = generate_shap_summary_plot(shap_values, df_preprocessed)
+    return shap_summary_plot
+
+
+@router.get("/lgbm_feature_importance_gain_plot_probability_pollination_to_seed_model/")
+def feature_importance_gain_plot() -> StreamingResponse:
+    model = get_probability_of_seed_production_model()
+    plot = generate_lgbm_feature_importance_gain_plot(model)
+    return plot
+
+
+@router.get("/lgbm_feature_importance_split_plot_probability_pollination_to_seed_model/")
+def feature_importance_gain_split() -> StreamingResponse:
+    model = get_probability_of_seed_production_model()
+    plot = generate_lgbm_feature_importance_split_plot(model)
+    return plot
 
 
 @router.post(

@@ -353,8 +353,9 @@ class BResultsRetraining(BaseSchema):
     notes: str | None = None
 
 
-class BResultsRetrainingPollinationToSeedsModel(BResultsRetraining):
-    pass
+class BResultsRetrainingPollinationToSeedsModel(BaseSchema):
+    results: BResultsRetraining
+    image_urls: list[str]
 
 
 class BResultsRetrainingRipeningDays(BResultsRetraining):

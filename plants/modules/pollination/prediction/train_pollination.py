@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import logging
+from contextlib import contextmanager
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
+import shap
+import io
+from fastapi.responses import StreamingResponse
 
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib.pyplot as plt
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import (
     pickle_pipeline,
@@ -104,7 +110,23 @@ def train_probability_model_lgbm(
     return clf, mean_score
 
 
-async def train_model_for_probability_of_seed_production() -> dict[str, str | float]:
+def generate_shap_values_for_model(
+        model: lgb.LGBMClassifier,
+        df: pd.DataFrame,
+) -> tuple[shap._explanation.Explanation, pd.DataFrame]:  # noqa
+    """compute SHAP values from final deployed model for best model explainability;
+    shap values and training data are returned and to be stored in app state for later use"""
+
+    df_preprocessed = preprocess_data_lgbm(df)
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer(df_preprocessed)
+
+    return shap_values, df_preprocessed
+
+
+async def train_model_for_probability_of_seed_production(
+) -> tuple[dict[str, str | float], shap._explanation.Explanation, pd.DataFrame]:  # noqa
     """Predict whether a pollination attempt is goint to reach SEED status."""
     df_all = await assemble_pollination_data()
     # make sure we have only the labels we want (not each must be existent, though)
@@ -121,9 +143,10 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
     # ensemble = create_ensemble_model(df=df)
 
     notes = ""
+    share_positive = round(target.sum() * 100 / len(target), 2)
     notes += (
         f"Training data has {len(df)} rows with {target.sum()} positive labels "
-        f"({round(target.sum() / len(target), 2) * 100} %)."
+        f"({share_positive} %)."
     )
 
     clf_lgbm, mean_score_lgbm = train_probability_model_lgbm(df_train=df, ser_targets_train=target)
@@ -132,6 +155,11 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         pipeline=clf_lgbm,  # ensemble,
         prediction_model=PredictionModel.POLLINATION_PROBABILITY,
     )
+
+    # comute SHAP values from final deployed model for best model explainability
+    # get the summary image as a StreamingResponse
+    # (for feature importance stability we could also average over the models from CV folds)
+    shap_values, df_preprocessed = generate_shap_values_for_model(clf_lgbm, df)
 
     # remove old models from memory to have them reloaded upon next prediction
     # pylint: disable=import-outside-toplevel
@@ -145,4 +173,79 @@ async def train_model_for_probability_of_seed_production() -> dict[str, str | fl
         "metric_name": "roc_auc",
         "metric_value": mean_score_lgbm,
         "notes": notes,
-    }
+    }, shap_values, df_preprocessed
+
+
+@contextmanager
+def isolated_matplotlib():
+    """Create a temporary isolated pyplot environment."""
+    # save current pyplot state
+    original_figures = plt.get_fignums()
+    try:
+        yield
+    finally:
+        # close any new figures created inside the context
+        new_figures = [f for f in plt.get_fignums() if f not in original_figures]
+        for fnum in new_figures:
+            plt.close(fnum)
+
+
+def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
+    """Generate SHAP summary plot as StreamingResponse."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # SHAP expects plt.gcf(), so temporarily override pyplot
+    plt_backup = plt.gcf
+    plt.gcf = lambda: fig  # override plt.gcf() to return our fig
+
+    try:
+        shap.summary_plot(shap_values, df_preprocessed, show=False)
+
+        buf = io.BytesIO()
+        canvas = FigureCanvas(fig)
+        canvas.print_png(buf)
+        buf.seek(0)
+    finally:
+        # Restore plt.gcf
+        plt.gcf = plt_backup
+        plt.close(fig)
+
+    return StreamingResponse(buf, media_type="image/png")
+
+
+def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
+    """Generate LGBM Feature Importance (Gain) plot as StreamingResponse."""
+    fig, ax = plt.subplots(figsize=(18, 6))
+    lgb.plot_importance(
+        clf_lgbm,
+        importance_type='gain',
+        ax=ax,
+        title='LightGBM Feature Importance (Gain)'
+    )
+
+    buf = io.BytesIO()
+    canvas = FigureCanvas(fig)
+    canvas.print_png(buf)
+    buf.seek(0)
+    plt.close(fig)
+
+    return StreamingResponse(buf, media_type="image/png")
+
+
+def generate_lgbm_feature_importance_split_plot(clf_lgbm) -> StreamingResponse:
+    """Generate LGBM Feature Importance (Split) plot as StreamingResponse."""
+    fig, ax = plt.subplots(figsize=(18, 6))
+    lgb.plot_importance(
+        clf_lgbm,
+        importance_type='split',
+        ax=ax,
+        title='LightGBM Feature Importance (Split)'
+    )
+
+    buf = io.BytesIO()
+    canvas = FigureCanvas(fig)
+    canvas.print_png(buf)
+    buf.seek(0)
+    plt.close(fig)
+
+    return StreamingResponse(buf, media_type="image/png")

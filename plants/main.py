@@ -30,6 +30,11 @@ from plants.modules.statistics.routes import router as statistics_router
 from plants.modules.taxon.routes import router as taxon_router
 from plants.shared.routes import router as shared_router
 
+from plants.extensions.config_values import LocalConfig, parse_settings
+
+# local_config = LocalConfig()
+# settings = parse_settings()
+
 configure_root_logger(
     log_severity_console=local_config.log_settings.log_level_console,
     log_severity_file=local_config.log_settings.log_level_file,
