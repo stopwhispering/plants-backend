@@ -201,13 +201,14 @@ def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingRespons
 
 def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Gain) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(18, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
     lgb.plot_importance(
         clf_lgbm,
         importance_type='gain',
         ax=ax,
-        title='LightGBM Feature Importance (Gain)'
+        title='LightGBM Feature Importance (Gain)',
     )
+    fig.tight_layout()
 
     buf = io.BytesIO()
     canvas = FigureCanvas(fig)
@@ -220,13 +221,14 @@ def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
 
 def generate_lgbm_feature_importance_split_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Split) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(18, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
     lgb.plot_importance(
         clf_lgbm,
         importance_type='split',
         ax=ax,
-        title='LightGBM Feature Importance (Split)'
+        title='LightGBM Feature Importance (Split)',
     )
+    fig.tight_layout()
 
     buf = io.BytesIO()
     canvas = FigureCanvas(fig)
