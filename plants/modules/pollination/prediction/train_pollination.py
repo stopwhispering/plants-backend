@@ -178,7 +178,7 @@ async def train_model_for_probability_of_seed_production(
 
 def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
     """Generate SHAP summary plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     # SHAP expects plt.gcf(), so temporarily override pyplot
     plt_backup = plt.gcf
@@ -201,7 +201,7 @@ def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingRespons
 
 def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Gain) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
     lgb.plot_importance(
         clf_lgbm,
         importance_type='gain',
@@ -221,7 +221,7 @@ def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
 
 def generate_lgbm_feature_importance_split_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Split) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
     lgb.plot_importance(
         clf_lgbm,
         importance_type='split',
