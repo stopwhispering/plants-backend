@@ -176,20 +176,6 @@ async def train_model_for_probability_of_seed_production(
     }, shap_values, df_preprocessed
 
 
-@contextmanager
-def isolated_matplotlib():
-    """Create a temporary isolated pyplot environment."""
-    # save current pyplot state
-    original_figures = plt.get_fignums()
-    try:
-        yield
-    finally:
-        # close any new figures created inside the context
-        new_figures = [f for f in plt.get_fignums() if f not in original_figures]
-        for fnum in new_figures:
-            plt.close(fnum)
-
-
 def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
     """Generate SHAP summary plot as StreamingResponse."""
     fig, ax = plt.subplots(figsize=(10, 6))
