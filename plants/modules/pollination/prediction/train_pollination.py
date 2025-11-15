@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.model_selection import StratifiedKFold
 import shap
 import io
@@ -19,7 +20,6 @@ from plants.modules.pollination.prediction.ml_common import (
 )
 from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 from plants.modules.pollination.prediction.shared_pollination import validate_and_set_dtypes
-
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,7 @@ def preprocess_data_lgbm(
 def train_probability_model_lgbm(
         df_train: pd.DataFrame,
         ser_targets_train: pd.Series,
-) -> tuple[lgb.LGBMClassifier, float]:
-
+) -> tuple[lgb.LGBMClassifier, float, tuple[np.ndarray, np.ndarray, float]]:
     params_lgbm = {
         # "max_depth": 10,  # default: -1
         # "colsample_bytree": 0.4,  # default: 1
@@ -67,7 +66,11 @@ def train_probability_model_lgbm(
         "verbose": -1,
     }
 
-    splits = StratifiedKFold(n_splits=4, shuffle=True, random_state=42).split(df_train, ser_targets_train)
+    # out of fold predictions for generating auc curve later if needed
+    oof_predictions = np.zeros(df_train.shape[0])
+
+    splits = StratifiedKFold(n_splits=4, shuffle=True, random_state=42).split(df_train,
+                                                                              ser_targets_train)
     best_iterations, fold_scores = [], []
     for fold_no, (train_idx, val_idx) in enumerate(splits):
         logger.info(f"Fold {fold_no}")
@@ -94,9 +97,15 @@ def train_probability_model_lgbm(
         fold_scores.append(clf.best_score_["valid_0"]["auc"])
         logger.info(f"Best iteration: {best_iterations[-1]}, score: {fold_scores[-1] :.2f}")
 
+        oof_probs = clf.predict_proba(df_val_current_fold_processed)[:, 1]
+        oof_predictions[val_idx] = oof_probs
+
     mean_best_iteration = int(np.mean(best_iterations))
     mean_score = round(float(np.mean(fold_scores)), 2)
     logger.info(f"Mean best iteration: {mean_best_iteration}, mean score: {mean_score}")
+
+    final_concatenated_auc = roc_auc_score(ser_targets_train, oof_predictions)
+    fpr, tpr, _thresholds = roc_curve(ser_targets_train, oof_predictions)
 
     # retrain on full data
     df_train_processed = preprocess_data_lgbm(df_train)
@@ -107,7 +116,7 @@ def train_probability_model_lgbm(
         y=ser_targets_train,
     )
 
-    return clf, mean_score
+    return clf, mean_score, (fpr, tpr, final_concatenated_auc)
 
 
 def generate_shap_values_for_model(
@@ -126,7 +135,8 @@ def generate_shap_values_for_model(
 
 
 async def train_model_for_probability_of_seed_production(
-) -> tuple[dict[str, str | float], shap._explanation.Explanation, pd.DataFrame]:  # noqa
+) -> tuple[dict[str, str | float], shap._explanation.Explanation, pd.DataFrame, tuple[
+    np.ndarray, np.ndarray, float]]:  # noqa
     """Predict whether a pollination attempt is goint to reach SEED status."""
     df_all = await assemble_pollination_data()
     # make sure we have only the labels we want (not each must be existent, though)
@@ -149,7 +159,8 @@ async def train_model_for_probability_of_seed_production(
         f"({share_positive} %)."
     )
 
-    clf_lgbm, mean_score_lgbm = train_probability_model_lgbm(df_train=df, ser_targets_train=target)
+    clf_lgbm, mean_score_lgbm, (fpr, tpr, final_concatenated_auc) = train_probability_model_lgbm(
+        df_train=df, ser_targets_train=target)
 
     pickle_pipeline(
         pipeline=clf_lgbm,  # ensemble,
@@ -173,7 +184,7 @@ async def train_model_for_probability_of_seed_production(
         "metric_name": "roc_auc",
         "metric_value": mean_score_lgbm,
         "notes": notes,
-    }, shap_values, df_preprocessed
+    }, shap_values, df_preprocessed, (fpr, tpr, final_concatenated_auc)
 
 
 def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
@@ -228,6 +239,41 @@ def generate_lgbm_feature_importance_split_plot(clf_lgbm) -> StreamingResponse:
         ax=ax,
         title='LightGBM Feature Importance (Split)',
     )
+    fig.tight_layout()
+
+    buf = io.BytesIO()
+    canvas = FigureCanvas(fig)
+    canvas.print_png(buf)
+    buf.seek(0)
+    plt.close(fig)
+
+    return StreamingResponse(buf, media_type="image/png")
+
+
+def generate_auc_roc_curve_plot(fpr: np.ndarray, tpr: np.ndarray,
+                                final_concatenated_auc: float) -> StreamingResponse:
+    """Generate AUC_ROC Curve plot as StreamingResponse."""
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # Plot the ROC Curve (TPR vs. FPR)
+    plt.plot(fpr, tpr,
+             label=f'Concatenated ROC Curve (AUC = {final_concatenated_auc:.4f})',
+             color='darkorange',
+             linewidth=2)
+    # Plot the diagonal baseline (random classifier)
+    plt.plot([0, 1], [0, 1],
+             color='navy',
+             linestyle='--',
+             label='Random Guess (AUC = 0.5)')
+
+    # 3. Add Labels and Title
+    plt.xlabel('False Positive Rate (1 - Specificity)')
+    plt.ylabel('True Positive Rate (Sensitivity)')
+    plt.title('Receiver Operating Characteristic (ROC) Curve from K-Fold OOF Predictions')
+    plt.legend(loc='lower right')
+    plt.grid(True)
+    # plt.show()  # for interactive debugging use
+
     fig.tight_layout()
 
     buf = io.BytesIO()

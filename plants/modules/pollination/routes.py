@@ -58,7 +58,8 @@ from plants.modules.pollination.prediction.train_germination import (
 )
 from plants.modules.pollination.prediction.train_pollination import (
     train_model_for_probability_of_seed_production, generate_shap_summary_plot,
-    generate_lgbm_feature_importance_gain_plot, generate_lgbm_feature_importance_split_plot,
+    generate_lgbm_feature_importance_gain_plot,
+    generate_auc_roc_curve_plot, generate_lgbm_feature_importance_split_plot,
 )
 from plants.modules.pollination.prediction.train_ripening import train_model_for_ripening_days
 from plants.modules.pollination.schemas import (
@@ -243,18 +244,22 @@ async def delete_pollination(
 )
 async def retrain_probability_pollination_to_seed_model():
     """Retrain the probability_pollination_to_seed ml model."""
-    results, shap_values, df_preprocessed = await train_model_for_probability_of_seed_production()
+    results, shap_values, df_preprocessed, (fpr, tpr, final_concatenated_auc) = await train_model_for_probability_of_seed_production()
+
     # we save the generated image in FastAPI app state for retrieval in the frontend
     # Note: not thread-safe, but ok for our single-user
-
     # import here to avoid circular imports
     from plants import app
     app.state.shap_values = shap_values
     app.state.df_preprocessed = df_preprocessed
+    app.state.fpr = fpr
+    app.state.tpr = tpr
+    app.state.final_concatenated_auc = final_concatenated_auc
     return {
         'results': results,
         'image_urls': [
             "shap_summary_plot_probability_pollination_to_seed_model/",
+            "auc_roc_curve_plot_probability_pollination_to_seed_model/",
             "lgbm_feature_importance_gain_plot_probability_pollination_to_seed_model/",
             "lgbm_feature_importance_split_plot_probability_pollination_to_seed_model/",
         ],
@@ -290,6 +295,19 @@ def feature_importance_gain_plot() -> StreamingResponse:
 def feature_importance_gain_split() -> StreamingResponse:
     model = get_probability_of_seed_production_model()
     plot = generate_lgbm_feature_importance_split_plot(model)
+    return plot
+
+
+@router.get("/auc_roc_curve_plot_probability_pollination_to_seed_model/")
+def auc_roc_curve() -> StreamingResponse:
+    # import here to avoid circular imports
+    from plants import app
+    if app.state.shap_values is None:
+        raise HTTPException(
+            status_code=404,
+            detail="SHAP values not found. Please retrain the model first.",
+        )
+    plot = generate_auc_roc_curve_plot(app.state.fpr, app.state.tpr, app.state.final_concatenated_auc)
     return plot
 
 
