@@ -23,6 +23,8 @@ from plants.modules.pollination.prediction.shared_pollination import validate_an
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_FIG_SIZE = (8, 6)
+
 
 def preprocess_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     # we only need pollination attempts that have been finished (i.e. have a final
@@ -189,7 +191,7 @@ async def train_model_for_probability_of_seed_production(
 
 def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingResponse:
     """Generate SHAP summary plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=DEFAULT_FIG_SIZE)
 
     # SHAP expects plt.gcf(), so temporarily override pyplot
     plt_backup = plt.gcf
@@ -212,7 +214,7 @@ def generate_shap_summary_plot(shap_values, df_preprocessed) -> StreamingRespons
 
 def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Gain) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=DEFAULT_FIG_SIZE)
     lgb.plot_importance(
         clf_lgbm,
         importance_type='gain',
@@ -232,7 +234,7 @@ def generate_lgbm_feature_importance_gain_plot(clf_lgbm) -> StreamingResponse:
 
 def generate_lgbm_feature_importance_split_plot(clf_lgbm) -> StreamingResponse:
     """Generate LGBM Feature Importance (Split) plot as StreamingResponse."""
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=DEFAULT_FIG_SIZE)
     lgb.plot_importance(
         clf_lgbm,
         importance_type='split',
@@ -254,24 +256,26 @@ def generate_auc_roc_curve_plot(fpr: np.ndarray, tpr: np.ndarray,
                                 final_concatenated_auc: float) -> StreamingResponse:
     """Generate AUC_ROC Curve plot as StreamingResponse."""
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    # Note: since we have concurrent requests, we need to use the object-oriented API,
+    # not the plt... functions directly that use global state.
+    fig, ax = plt.subplots(figsize=DEFAULT_FIG_SIZE)
     # Plot the ROC Curve (TPR vs. FPR)
-    plt.plot(fpr, tpr,
-             label=f'Concatenated ROC Curve (AUC = {final_concatenated_auc:.4f})',
-             color='darkorange',
-             linewidth=2)
+    ax.plot(fpr, tpr,
+            label=f'Concatenated ROC Curve (AUC = {final_concatenated_auc:.4f})',
+            color='darkorange',
+            linewidth=2)
     # Plot the diagonal baseline (random classifier)
-    plt.plot([0, 1], [0, 1],
-             color='navy',
-             linestyle='--',
-             label='Random Guess (AUC = 0.5)')
+    ax.plot([0, 1], [0, 1],
+            color='navy',
+            linestyle='--',
+            label='Random Guess (AUC = 0.5)')
 
     # 3. Add Labels and Title
-    plt.xlabel('False Positive Rate (1 - Specificity)')
-    plt.ylabel('True Positive Rate (Sensitivity)')
-    plt.title('Receiver Operating Characteristic (ROC) Curve from K-Fold OOF Predictions')
-    plt.legend(loc='lower right')
-    plt.grid(True)
+    ax.set_xlabel('False Positive Rate (1 - Specificity)')
+    ax.set_ylabel('True Positive Rate (Sensitivity)')
+    ax.set_title('Receiver Operating Characteristic (ROC) Curve from K-Fold OOF Predictions')
+    ax.legend(loc='lower right')
+    ax.grid(True)
     # plt.show()  # for interactive debugging use
 
     fig.tight_layout()
