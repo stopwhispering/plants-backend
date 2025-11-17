@@ -87,6 +87,13 @@ def train_probability_model_lgbm(
         early_stopping_callback = lgb.early_stopping(
             150, verbose=False
         )
+
+        # higher count_attempted is always equal or better; the model doesn't get that for
+        # higher figures due to lack of data; so we set a monotonic constraint
+        constraints = [0] * df_train_current_fold_processed.shape[1]
+        constraints[df_train_current_fold_processed.columns.get_loc('count_attempted')] = 1
+        params_lgbm["monotone_constraints"] = constraints  # noqa
+
         clf = lgb.LGBMClassifier(**params_lgbm)
         clf.fit(
             X=df_train_current_fold_processed,
