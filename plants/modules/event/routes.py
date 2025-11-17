@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from datetime import date
 import logging
 from collections import defaultdict
 from typing import Any
@@ -35,6 +35,7 @@ from plants.modules.event.services import (
 from plants.modules.image.image_dal import ImageDAL
 from plants.modules.plant.models import Plant
 from plants.modules.plant.plant_dal import PlantDAL
+from plants.modules.pollination.enums import FloweringState
 from plants.modules.pollination.florescence_dal import FlorescenceDAL
 from plants.modules.pollination.flower_history_services import (
     generate_flower_history,
@@ -193,6 +194,23 @@ async def get_events(
                 ),
             )
         )
+
+    # the months before a plant's acquisition will be flagged n/a. since we don't have an "official"
+    # acquisition date field, we use the earliest event date as a proxy
+    acquisition_date = min(event.date for event in events) if events else None
+    if acquisition_date:
+        # acquisition_date here is a str yyyy-mm-dd for legacy reasons; convert to date
+        acquisition_date = date.fromisoformat(acquisition_date)
+        for year_row in flower_history:
+            for month in range(1, 13):
+                month_field: PlantFlowerMonth = getattr(year_row, f"month_{month:02d}")
+                if (year_row.year < acquisition_date.year) or (
+                    year_row.year == acquisition_date.year and month < acquisition_date.month
+                ):
+                    month_field.flowering_state = FloweringState.NOT_AVAILABLE
+                    month_field.flowering_probability = None
+                else:
+                    break
 
     logger.info(msg := f"Receiving {len(events)} events for {plant.plant_name}.")
     return {

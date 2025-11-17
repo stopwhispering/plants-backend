@@ -11,6 +11,7 @@ class FloweringState(Enum):
     FLOWERING = "flowering"
     SEEDS_RIPENING = "seeds_ripening"
     NOT_FLOWERING = "not_flowering"
+    NOT_AVAILABLE = "not_available"
 
 
 # keep in sync with formatter.js in frontend
