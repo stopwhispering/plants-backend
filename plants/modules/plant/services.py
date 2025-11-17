@@ -96,6 +96,7 @@ async def deep_clone_plant(
             # "filename_previewimage": None,
         },
     )
+    plant_clone.seed_planting = None  # do not clone seed plantings
 
     cloned_tags = []
     for tag in plant_original.tags:
