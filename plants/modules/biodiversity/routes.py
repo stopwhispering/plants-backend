@@ -37,6 +37,29 @@ async def search_taxa_by_name(
 ) -> Any:
     """Searches taxon pattern in (1) local database and (2) in kew databases (powo and ipni) if
     requested."""
+
+    # temporary workaround:
+    # the powo/ipni servers sometimes block requests with a 403 error when using the official
+    # pykew library. Monkey-patch requests.get to use a common User-Agent header "fixes" the
+    # problem. As a TEMPORARY workaround this patch is applied only during the execution of this
+    # function and restored afterwards. Note to myself: find a better solution later if the
+    # problem persists.
+    import requests
+
+    original_get = requests.get
+
+    def patched_get(*args, **kwargs):
+        headers = kwargs.pop("headers", {})
+        headers["User-Agent"] = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        )
+        return original_get(*args, headers=headers, **kwargs)
+
+    requests.get = patched_get
+    # Now any library using requests.get will get the custom User-Agent
+
     taxonomy_search = TaxonomySearch(
         include_external_apis=taxon_info_request.include_external_apis,
         search_for_genus_not_species=taxon_info_request.search_for_genus_not_species,
@@ -45,6 +68,8 @@ async def search_taxa_by_name(
     search_results: list[FinalSearchResult] = await taxonomy_search.search(
         taxon_info_request.taxon_name_pattern
     )
+
+    requests.get = original_get
 
     if not search_results:
         throw_exception(
