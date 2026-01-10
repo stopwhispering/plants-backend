@@ -89,6 +89,7 @@ class LogSettings(BaseSettings):
     ignore_missing_image_files: bool = (
         False  # if True, missing image files will not result in Error; set in DEV only
     )
+    training_logs_folder_path: Path
 
 
 class LocalConfig(BaseSettings):

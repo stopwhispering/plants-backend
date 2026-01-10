@@ -15,10 +15,12 @@ from fastapi.responses import StreamingResponse
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.pyplot as plt
+
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import (
     pickle_pipeline,
 )
+from plants.modules.pollination.prediction.ml_helpers.log_results import log_results
 from plants.modules.pollination.prediction.pollination_data import assemble_pollination_data
 from plants.modules.pollination.prediction.shared_pollination import validate_and_set_dtypes
 
@@ -187,10 +189,12 @@ async def train_model_for_probability_of_seed_production(
 
     # ensemble = create_ensemble_model(df=df)
 
+    n_training_rows = len(df)
+    n_training_rows_positive = target.sum()
+    share_positive = round(n_training_rows_positive * 100 / len(target), 2)
     notes = ""
-    share_positive = round(target.sum() * 100 / len(target), 2)
     notes += (
-        f"Training data has {len(df)} rows with {target.sum()} positive labels "
+        f"Training data has {n_training_rows} rows with {n_training_rows_positive} positive labels "
         f"({share_positive} %)."
     )
 
@@ -211,6 +215,18 @@ async def train_model_for_probability_of_seed_production(
     # pylint: disable=import-outside-toplevel
     from plants.modules.pollination.prediction import predict_pollination
     predict_pollination.pollination_pipeline, predict_pollination.feature_container = None, None
+
+    log_results(
+        model_category=PredictionModel.POLLINATION_PROBABILITY,
+        estimator=str(clf_lgbm),
+        metrics=metrics,
+        notes=notes,
+        training_stats={
+            "n_training_rows": int(n_training_rows),
+            "n_training_rows_positive": int(n_training_rows_positive),
+            "share_positive_percent": share_positive,
+        },
+    )
 
     return {
         "model": PredictionModel.POLLINATION_PROBABILITY,
