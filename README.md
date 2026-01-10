@@ -52,6 +52,7 @@ The following settings are required:
 - LOG_SETTINGS__LOG_LEVEL_CONSOLE (DEBUG, INFO, WARNING, or ERROR)
 - LOG_SETTINGS__LOG_LEVEL_FILE (DEBUG, INFO, WARNING, or ERROR)
 - LOG_SETTINGS__LOG_FILE_PATH (e.g. /common/plants/plants.log)
+- LOG_SETTINGS__TRAINING_LOGS_FOLDER_PATH (e.g. /common/plants/training_logs)
 
 Optional settings:
 - MAX_IMAGES_PER_TAXON (default: 20)
