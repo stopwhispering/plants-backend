@@ -11,6 +11,11 @@ services:
         # enable basic auth as defined in traefik's docker compose file
 #        - traefik.http.routers.plants-backend.middlewares=my-basic-auth
 
+        # Gemini added...
+        # IMPORTANT: Define the internal port for the service
+        # Assuming your FastAPI app listens on port 8000 inside the container
+        - traefik.http.services.plants-backend.loadbalancer.server.port=80
+
       environment:
   #        set LOG_LEVEL for Gunicorn, default is "info"
           - LOG_LEVEL=info
