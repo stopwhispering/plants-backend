@@ -351,7 +351,7 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
 
     return {
         "model": PredictionModel.GERMINATION_PROBABILITY,
-        "estimator": "Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
+        "estimator": "Ensemble " + str([exc[1][-1] for exc in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
         "notes": notes,
