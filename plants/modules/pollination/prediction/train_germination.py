@@ -20,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from plants.exceptions import TrainingError
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import pickle_pipeline
+from plants.modules.pollination.prediction.ml_helpers.log_results import log_results
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
     Feature,
     FeatureContainer,
@@ -328,11 +329,32 @@ async def train_model_for_germination_probability() -> dict[str, str | float]:
         predict_germination.germination_feature_container,
     ) = None, None
 
+    n_training_rows = len(target)
+    n_training_rows_positive = int(target.sum())
+    share_positive = round(n_training_rows_positive * 100 / len(target), 2)
+    notes = (
+        f"Training data has {n_training_rows} rows with {n_training_rows_positive} positive labels "
+        f"({share_positive} %)."
+    )
+
+    log_results(
+        model_category=PredictionModel.GERMINATION_PROBABILITY,
+        estimator="Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
+        metrics={metric_name: metric_value},
+        notes=notes,
+        training_stats={
+            "n_training_rows": n_training_rows,
+            "n_training_rows_positive": n_training_rows_positive,
+            "share_positive_percent": share_positive,
+        },
+    )
+
     return {
         "model": PredictionModel.GERMINATION_PROBABILITY,
         "estimator": "Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
+        "notes": notes,
     }
 
 
@@ -372,9 +394,22 @@ async def train_model_for_germination_days() -> dict[str, str | float]:
         None,
     )
 
+    notes = f"Training data has {len(df)} rows."
+
+    log_results(
+        model_category=PredictionModel.GERMINATION_DAYS,
+        estimator="Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
+        metrics={metric_name: metric_value},
+        notes=notes,
+        training_stats={
+            "n_training_rows": len(df),
+        },
+    )
+
     return {
         "model": PredictionModel.GERMINATION_DAYS,
         "estimator": "Ensemble " + str([exc[1][1] for exc in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
+        "notes": notes,
     }

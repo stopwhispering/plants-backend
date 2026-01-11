@@ -178,10 +178,13 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
 
     predict_ripening.ripening_days_regressor, predict_ripening.feature_container = None, None
 
+    notes = f"Training data has {len(df)} rows."
+
     log_results(
         model_category=PredictionModel.RIPENING_DAYS,
         estimator="Ensemble " + str([e[1][1] for e in ensemble.estimators]),
         metrics={metric_name: metric_value},
+        notes=notes,
         training_stats={
             "n_training_rows": int(len(df)),
         },
@@ -192,4 +195,5 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
         "estimator": "Ensemble " + str([e[1][1] for e in ensemble.estimators]),
         "metric_name": metric_name,
         "metric_value": metric_value,
+        "notes": notes,
     }

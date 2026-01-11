@@ -14,6 +14,7 @@ from xgboost import XGBClassifier
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.florescence_data import assemble_florescence_data
 from plants.modules.pollination.prediction.ml_common import pickle_pipeline
+from plants.modules.pollination.prediction.ml_helpers.log_results import log_results
 
 if TYPE_CHECKING:
     import pandas as pd  # noqa
@@ -573,9 +574,30 @@ async def train_model_for_florescence_probability() -> dict[str, str | float]:
     df_train, ser_targets_train = await assemble_training_data()
     estimator_name, metric_name, metric_value = train_and_pickle_xgb_florescence_model(df_train, ser_targets_train)
 
+    n_training_rows = len(ser_targets_train)
+    n_training_rows_positive = int(ser_targets_train.sum())
+    share_positive = round(n_training_rows_positive * 100 / len(ser_targets_train), 2)
+    notes = (
+        f"Training data has {n_training_rows} rows with {n_training_rows_positive} positive labels "
+        f"({share_positive} %)."
+    )
+
+    log_results(
+        model_category=PredictionModel.FLORESCENCE_PROBABILITY,
+        estimator=estimator_name,
+        metrics={metric_name: metric_value},
+        notes=notes,
+        training_stats={
+            "n_training_rows": n_training_rows,
+            "n_training_rows_positive": n_training_rows_positive,
+            "share_positive_percent": share_positive,
+        },
+    )
+
     return {
         "model": PredictionModel.FLORESCENCE_PROBABILITY,
         "estimator": estimator_name,
         "metric_name": metric_name,
         "metric_value": metric_value,
+        "notes": notes,
     }
