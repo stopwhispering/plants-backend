@@ -8,8 +8,8 @@ from plants.modules.pollination.enums import PredictionModel
 def log_results(model_category: PredictionModel,
                 estimator: str,
                 metrics: dict,
-                notes: str,
-                training_stats: dict,
+                training_stats: dict = None,
+                notes: str = "",
                 ) -> None:
     """Log the results of a machine learning retraining."""
     now_utc = datetime.datetime.now(datetime.timezone.utc)

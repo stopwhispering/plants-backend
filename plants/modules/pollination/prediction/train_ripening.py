@@ -14,6 +14,7 @@ from sklearn.preprocessing import OneHotEncoder
 from plants.exceptions import TrainingError
 from plants.modules.pollination.enums import PredictionModel
 from plants.modules.pollination.prediction.ml_common import pickle_pipeline
+from plants.modules.pollination.prediction.ml_helpers.log_results import log_results
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
     Feature,
     FeatureContainer,
@@ -176,6 +177,15 @@ async def train_model_for_ripening_days() -> dict[str, str | float]:
     from plants.modules.pollination.prediction import predict_ripening
 
     predict_ripening.ripening_days_regressor, predict_ripening.feature_container = None, None
+
+    log_results(
+        model_category=PredictionModel.RIPENING_DAYS,
+        estimator="Ensemble " + str([e[1][1] for e in ensemble.estimators]),
+        metrics={metric_name: metric_value},
+        training_stats={
+            "n_training_rows": int(len(df)),
+        },
+    )
 
     return {
         "model": PredictionModel.RIPENING_DAYS,
