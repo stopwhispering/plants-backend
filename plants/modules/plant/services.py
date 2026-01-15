@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from plants import settings
 from plants.exceptions import PlantAlreadyExistsError
@@ -136,7 +136,7 @@ async def _treat_taxon_tags(taxon: Taxon, taxon_tags: list[TaxonTag], taxon_dal:
 
     # deleted tags not supplied anymore
     new_tag_texts = {t.text for t in taxon_tags}
-    deleted_tags = [t for t in taxon.tags if t.text not in new_tag_texts]
+    deleted_tags = cast(list[Tag], [t for t in taxon.tags if t.text not in new_tag_texts])
     if deleted_tags:
         await taxon_dal.remove_tags_from_taxon(taxon, deleted_tags)
 
@@ -168,7 +168,8 @@ async def _treat_tags(plant: Plant, tags: list[PlantTag], plant_dal: PlantDAL) -
     # delete tags not supplied anymore
     updated_ids = {t.id for t in tags if t.id is not None}
     created_ids = {t.id for t in new_tags}
-    deleted_tags = [t for t in plant.tags if t.id not in updated_ids.union(created_ids)]
+    deleted_tags = cast(list[Tag],
+                        [t for t in plant.tags if t.id not in updated_ids.union(created_ids)])
     for deleted_tag in deleted_tags:
         await plant_dal.remove_tag_from_plant(plant, deleted_tag)
 
