@@ -191,13 +191,22 @@ def generate_subsequent_plant_name(original_plant_name: str) -> str:
     return f"{plant_name} {int_to_roman(plant_index + 1)}"
 
 
+def remove_roman_index(plant_name: str) -> str:
+    """Remove roman index from plant name, if present."""
+    if has_roman_plant_index(plant_name):
+        plant_name, _ = parse_roman_plant_index(plant_name)
+    return plant_name
+
+
 async def generate_plant_name_proposal_for_seed_planting(
     seed_planting: SeedPlanting, plant_dal: PlantDAL
 ) -> str:
     """Generate a plant name proposal for a seed planting."""
     seed_capsule_plant: Plant = seed_planting.pollination.seed_capsule_plant
     pollen_donor_plant: Plant = seed_planting.pollination.pollen_donor_plant
-    plant_name = f"{seed_capsule_plant.plant_name} × {pollen_donor_plant.plant_name}"
+    seed_capsule_plant_name = remove_roman_index(seed_capsule_plant.plant_name)
+    pollen_donor_plant_name = remove_roman_index(pollen_donor_plant.plant_name)
+    plant_name = f"{seed_capsule_plant_name} × {pollen_donor_plant_name}"
     while await plant_dal.exists(plant_name):  # pylint: disable=W0149
         plant_name = generate_subsequent_plant_name(plant_name)
     return plant_name
