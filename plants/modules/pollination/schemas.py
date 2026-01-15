@@ -26,6 +26,7 @@ class PlantEssentials(BaseSchema):
     id: int
     plant_name: Annotated[str, Field(min_length=1, max_length=1000)]
     full_botanical_html_name: str | None = None
+    active: bool
 
 
 class SeedPlantingBase(BaseSchema):
