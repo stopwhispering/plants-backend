@@ -130,12 +130,13 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
     # information, we need to discard those columns
     df = df.drop(
         [
-            "sterilized",
-            "soaked",
-            "covered",
-            "soil_id",
+            # "sterilized",
+            # "soaked",
+            # "covered",
+            # "count_planted",
+            # "soil_id",
+
             "count_germinated",
-            "count_planted",
         ],
         axis=1,
     )
