@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import (
@@ -18,7 +20,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from plants.exceptions import TrainingError
-from plants.modules.pollination.enums import PredictionModel
+from plants.modules.pollination.enums import PredictionModel, SeedPlantingStatus
 from plants.modules.pollination.prediction.ml_common import pickle_pipeline
 from plants.modules.pollination.prediction.ml_helpers.log_results import log_results
 from plants.modules.pollination.prediction.ml_helpers.preprocessing.features import (
@@ -30,8 +32,7 @@ from plants.modules.pollination.prediction.predict_ripening import logger
 from plants.modules.pollination.prediction.seed_planting_data import assemble_seed_planting_data
 
 if TYPE_CHECKING:
-    import pandas as pd
-    from sklearn.base import RegressorMixin
+    from sklearn.base import RegressorMixin, ClassifierMixin
 
 
 def create_germination_features() -> FeatureContainer:
@@ -105,10 +106,24 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
     maybe_not_drop_later = ["pollen_quality", "pollen_type", "location", "seed_count"]
     df = df.drop(irrelevant_columns + maybe_not_drop_later, axis=1)
 
-    # Remove irrelevant Rows
-    # Rows with status 'planted' are still ongoing, we remove them
-    mask_ongoing: pd.Series = df["status"] == "planted"
-    df = df[~mask_ongoing]  # type: ignore[assignment]
+    # rows with status 'planted' are still ongoing
+    # if they are 90+ days old, we consider them failed
+    mask_ongoing: pd.Series = df["status"] == SeedPlantingStatus.PLANTED
+    ser_planted_on = df["planted_on"].astype("datetime64[ns]")
+    mask_ongoing_abandoned: pd.Series = (
+        mask_ongoing & (ser_planted_on <= (pd.Timestamp.now() - pd.Timedelta(days=90)))
+    )
+    df.loc[mask_ongoing_abandoned, "status"] = SeedPlantingStatus.ABANDONED
+
+    # remove current rows that are still ongoing
+    mask_ongoing_current: pd.Series = df["status"] == SeedPlantingStatus.PLANTED
+    df = df[~mask_ongoing_current]
+
+    # assert we don't have unexpected status values
+    if not all(df["status"].isin([SeedPlantingStatus.GERMINATED, SeedPlantingStatus.ABANDONED])):
+        raise ValueError(
+            f"Unexpected status values: {df['status'].unique().tolist()}"
+        )
 
     # As long as we have a vast or almost majority of legacy data with no
     # sterilized/soaked/covered/soil_id/count_germinated/count_planted
@@ -125,7 +140,7 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
         axis=1,
     )
 
-    mask_germinated = df["status"] == "germinated"
+    mask_germinated = df["status"] == SeedPlantingStatus.GERMINATED
     mask_abandoned = ~mask_germinated
 
     # target labels
@@ -138,7 +153,8 @@ def preprocess_data_for_probability_model(df: pd.DataFrame) -> tuple[pd.DataFram
         )
 
     # We can simply use the status as our target
-    target: pd.Series = df["status"].map({"germinated": 1, "abandoned": 0})
+    target: pd.Series = df["status"].map({SeedPlantingStatus.GERMINATED: 1,
+                                          SeedPlantingStatus.ABANDONED: 0})
     if target.isna().sum():
         raise ValueError(f"NaN in target: {target.isna().sum()}")
     df = df.drop(["status"], axis=1)
@@ -267,7 +283,7 @@ def make_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
 def create_germination_probability_ensemble_model(
     preprocessor: ColumnTransformer
 ) -> VotingClassifier:
-    def make_pipe(regressor: RegressorMixin) -> Pipeline:
+    def make_pipe(regressor: ClassifierMixin) -> Pipeline:
         return Pipeline(
             [("preprocessor", preprocessor), ("pca", PCA(n_components=9)), ("regressor", regressor)]
         )
