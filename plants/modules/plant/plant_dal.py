@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import Select, and_, select
+from sqlalchemy import Select, and_, select, or_
 from sqlalchemy.orm import aliased, selectinload, with_loader_criteria
 
 from plants.exceptions import (
@@ -361,5 +361,43 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
                 selectinload(Plant.taxon),
             )
         )
+        plants: list[Plant] = list((await self.session.scalars(query)).all())
+        return plants
+
+    async def get_plants_by_botanical_name(
+        self, botanical_name: str, *, limit: int = 25, include_inactive: bool = False
+    ) -> list[Plant]:
+        """Return plants whose taxon's name matches the supplied botanical_name.
+
+        The comparison is fuzzy (case-insensitive substring) across taxon.name, taxon.full_html_name and the plant's alternative_botanical_name.
+        Returns an empty list when no match found.
+        """
+        if not botanical_name:
+            return []
+
+        # allow fuzzy substring matching
+        pattern = f"%{botanical_name}%"
+
+        # noinspection PyTypeChecker
+        query = (
+            select(Plant)
+            .join(Taxon)
+            .where(
+                or_(
+                    Taxon.name.ilike(pattern),
+                    Taxon.full_html_name.ilike(pattern),
+                    Plant.alternative_botanical_name.ilike(pattern),
+                )
+            )
+            .where(Plant.deleted.is_(False))
+            .options(selectinload(Plant.taxon))
+        )
+
+        if not include_inactive:
+            query = query.where(Plant.active)
+
+        if limit:
+            query = query.limit(limit)
+
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants

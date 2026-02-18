@@ -39,8 +39,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         # logger.info('yielding db')
         yield db
         await db.commit()
-    except Exception:  # pylint: disable=global-statement, broad-exception-caught
+    except Exception as exc:  # pylint: disable=global-statement, broad-exception-caught
+        # Log the original exception, rollback the transaction and re-raise so
+        # FastAPI/Starlette can properly handle the response lifecycle.
+        logger.exception("Exception during request handling, rolling back DB session")
         await db.rollback()
+        raise
     finally:
         # await db.commit()
         # logger.info('closing db')

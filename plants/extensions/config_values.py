@@ -110,6 +110,7 @@ class LocalConfig(BaseSettings):
         env_file=Path(__file__).resolve().parent.parent.parent.joinpath(".env"),
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
+        extra="ignore",  # ignore extra fields in .env that are not defined here, e.g. API Keys
     )
     # class Config:
     #     env_file = Path(__file__).resolve().parent.parent.parent.joinpath(".env")

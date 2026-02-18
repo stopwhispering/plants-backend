@@ -16,6 +16,7 @@ from plants.modules.biodiversity.routes import router as biodiversity_router
 from plants.modules.event.routes import router as event_router
 from plants.modules.image.routes import router as image_router
 from plants.modules.plant import routes as plant_router
+from plants.modules.chatbot.routes import router as chatbot_router
 from plants.modules.pollination.prediction.predict_germination import (
     get_germination_days_model,
     get_germination_probability_model,
@@ -87,6 +88,7 @@ app.include_router(shared_router, prefix=COMMON_PREFIX)
 app.include_router(biodiversity_router, prefix=COMMON_PREFIX)
 app.include_router(settings_router, prefix=COMMON_PREFIX)
 app.include_router(statistics_router, prefix=COMMON_PREFIX)
+app.include_router(chatbot_router, prefix=COMMON_PREFIX)
 
 
 @app.on_event("startup")
