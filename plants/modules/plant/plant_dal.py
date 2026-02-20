@@ -364,34 +364,45 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
 
-    async def get_plants_by_botanical_name(
-        self, botanical_name: str, *, limit: int = 25, include_inactive: bool = False
+    async def get_plants_fuzzy(
+            self,
+            *,
+            name: str = None,
+            nursery_source: str = None,
+            limit: int = 100,
+            include_inactive: bool = False
     ) -> list[Plant]:
-        """Return plants whose taxon's name matches the supplied botanical_name.
+        """Return plants optionally filtered by fuzzy plat name and/or nursery source.
 
-        The comparison is fuzzy (case-insensitive substring) across taxon.name, taxon.full_html_name and the plant's alternative_botanical_name.
-        Returns an empty list when no match found.
+        Both filters are case-insensitive substring matches. When `name` is
+        provided the query matches against Taxon.name and Plant.plant_name. When
+        `nursery_source` is provided the query matches against Plant.nursery_source.
+
+        If neither filter is provided the function returns up to `limit` non-deleted
+        plants (and only active plants unless `include_inactive` is True). Returns an
+        empty list when no match is found.
         """
-        if not botanical_name:
-            return []
-
-        # allow fuzzy substring matching
-        pattern = f"%{botanical_name}%"
-
         # noinspection PyTypeChecker
-        query = (
-            select(Plant)
-            .join(Taxon)
-            .where(
-                or_(
-                    Taxon.name.ilike(pattern),
-                    Taxon.full_html_name.ilike(pattern),
-                    Plant.alternative_botanical_name.ilike(pattern),
+        # start with a base query and apply the name filter only if supplied
+        query = select(Plant).where(Plant.deleted.is_(False)).options(selectinload(Plant.taxon))
+
+        if name:
+            # allow fuzzy substring matching
+            pattern_name = f"%{name}%"
+            query = (
+                query.join(Taxon)
+                .where(
+                    or_(
+                        Taxon.name.ilike(pattern_name),
+                        Plant.plant_name.ilike(pattern_name),
+                    )
                 )
             )
-            .where(Plant.deleted.is_(False))
-            .options(selectinload(Plant.taxon))
-        )
+
+        # if a nursery_source was provided, filter by fuzzy match on the nursery_source field
+        if nursery_source:
+            pattern_nursery = f"%{nursery_source}%"
+            query = query.where(Plant.nursery_source.ilike(pattern_nursery))
 
         if not include_inactive:
             query = query.where(Plant.active)
@@ -401,3 +412,4 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
 
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
+

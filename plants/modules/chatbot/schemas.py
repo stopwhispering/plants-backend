@@ -22,3 +22,4 @@ class ChatResponse(BaseModel):
     history: List[ChatMessage]
     reasoning: Optional[str] = None
     plant_ids: list[int]
+    plant_names: list[str]

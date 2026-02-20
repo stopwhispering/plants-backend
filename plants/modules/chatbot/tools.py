@@ -9,33 +9,35 @@ from plants.extensions import orm
 from plants.modules.plant.plant_dal import PlantDAL
 
 
-class FindPlantsByBotanicalNameInput(BaseModel):
-    """Input for find_plants_by_botanical_name tool.
-    - botanical_name: the botanical (taxon) name to search for (required)
-    - include_inactive: whether to include inactive plants in the results (optional, default False)"""
-    botanical_name: str = Field(description="Botanical Name")
+class FindPlantsInput(BaseModel):
+    """Input for find_plants tool."""
+    name: str = Field(description="Optional Vernacular or Botanical Name")
+    nursery_source: str = Field(default=None, description="Optional nursery source to filter by")
     include_inactive: bool = Field(default=False, description="Whether to include inactive plants in the results")
 
 
-@tool(args_schema=FindPlantsByBotanicalNameInput)
-async def find_plants_by_botanical_name(
-        botanical_name: str,
+@tool(args_schema=FindPlantsInput)
+async def find_plants(
+        name: str = None,
+        nursery_source: str = None,
         include_inactive: bool = False
 ) -> Dict[str, Any]:
-    """Asynchronously find plants by botanical name and return a JSON-serializable dict.
+    """Find plants by botanical name and return a JSON-serializable dict.
 
-    This version is a plain async function (no sync-to-async bridging). Callers that
-    need a sync wrapper should handle that at a higher level.
+    - name: either the plant's vernacular name or the botanical (taxon) name to search for
+    - nursery_source: optional filter to only include plants from a specific nursery source
+    - include_inactive: whether to include inactive plants in the results (optional, default False)
     """
-    botanical_name_clean = (botanical_name or "").strip()
-    if not botanical_name_clean:
-        return {"status": "error", "plants": [], "error": {"code": "ValidationError", "message": "botanical_name is required"}}
+    name_clean = (name or "").strip() if name else None
+    # if not name_clean:
+    #     return {"status": "error", "plants": [], "error": {"code": "ValidationError", "message": "botanical_name is required"}}
+    nursery_source_clean = (nursery_source or "").strip() if nursery_source else None
 
     # Run the DB access inside the async session/loop where this function runs.
     async with orm.SessionFactory.session_factory() as session:  # type: ignore[attr-defined]
         plant_dal = PlantDAL(session)
-        plants = await plant_dal.get_plants_by_botanical_name(
-            botanical_name_clean, limit=50, include_inactive=include_inactive
+        plants = await plant_dal.get_plants_fuzzy(
+            name=name_clean, nursery_source=nursery_source_clean, limit=50, include_inactive=include_inactive
         )
 
     serialized: List[Dict[str, Any]] = [
@@ -46,26 +48,18 @@ async def find_plants_by_botanical_name(
             # "full_botanical_html_name": p.full_botanical_html_name,
             # "taxon_id": p.taxon_id,
             "preview_image_id": p.preview_image_id,
+            "nursery_source": p.nursery_source,
         }
         for p in plants
     ]
 
-    print(f"find_plants_by_botanical_name: found {len(serialized)} plants for botanical_name='{botanical_name_clean}' include_inactive={include_inactive}")
+    print(f"find_plants input: name='{name}' nursery_source='{nursery_source}' include_inactive={include_inactive}")
+    print(f"find_plants output: {serialized}")
+
     return {"status": "ok", "plants": serialized, "error": None}
-
-
-# class WeatherInput(BaseModel):
-#     """Input for weather queries."""
-#     location: str = Field(description="City name")
-#
-# @tool(args_schema=WeatherInput)
-# def get_weather(location: str) -> str:
-#     """Get current weather and optional forecast."""
-#     result = f"Current weather in {location}: 12 degrees celsius."
-#     return result
 
 
 def get_langchain_tools() -> list[BaseTool]:
     """Return a list of LangChain tools."""
     # async tools are returned as-is; callers/agents should support async tools or wrap them as needed
-    return [find_plants_by_botanical_name]
+    return [find_plants]

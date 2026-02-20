@@ -49,6 +49,7 @@ async def chat(request: ChatRequest) -> Any:
             reply=reply_data.get("reply", ""),
             reasoning=reply_data.get("reasoning", ""),
             plant_ids=reply_data.get("plant_ids", []),
+            plant_names=reply_data.get("plant_names", []),
             history=new_history,
             # tool_results=reply_data.get("tool_results"),
         )
