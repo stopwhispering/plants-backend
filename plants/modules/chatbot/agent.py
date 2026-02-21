@@ -3,17 +3,18 @@ from __future__ import annotations
 import logging
 import os
 from textwrap import dedent
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, SystemMessage, BaseMessage, HumanMessage
 
 from langchain_groq import ChatGroq  # type: ignore
 from langchain.agents import create_agent
+from langgraph.types import Command
 from pydantic import BaseModel
 
 from plants.modules.chatbot.schemas import ChatMessage
-from plants.modules.chatbot.tools import get_langchain_tools
+from plants.modules.chatbot.tools.registry import get_langchain_tools
 
 # from .schemas import ChatMessage
 # from .tools import get_langchain_tools
@@ -55,6 +56,30 @@ SYSTEM_PROMPT = dedent("""\
 )""")
 
 
+async def _build_messages(
+        user_message: str,
+        history: List[ChatMessage]
+        # ) -> List[Dict[str, str]]:
+) -> list[BaseMessage]:
+    # messages: List[Dict[str, str]] = []
+    # messages.append({"role": "system", "content": SYSTEM_PROMPT})
+    messages: list[BaseMessage] = [SystemMessage(content=SYSTEM_PROMPT)]
+
+    # include history as user/bot messages
+    for m in history:
+        # role = "user" if m.role == "user" else "assistant"
+        # messages.append({"role": role, "content": m.text})
+        if m.role == "user":
+            messages.append(HumanMessage(content=m.text))
+        else:
+            messages.append(AIMessage(content=m.text))
+
+    # append the new user message
+    messages.append(HumanMessage(content=user_message))
+    # messages.append({"role": "user", "content": user_message})
+    return messages
+
+
 class ChatAgent:
     def __init__(
             self,
@@ -62,28 +87,13 @@ class ChatAgent:
         tools = get_langchain_tools()
         self.agent = GroqLLM(tools=tools)
 
-    async def _build_messages(self, user_message: str, history: List[ChatMessage]) -> List[Dict[str, str]]:
-        messages: List[Dict[str, str]] = []
-
-        messages.append({"role": "system", "content": SYSTEM_PROMPT})
-
-        # include history as user/bot messages
-        for m in history:
-            role = "user" if m.role == "user" else "assistant"
-            messages.append({"role": role, "content": m.text})
-
-        # append the new user message
-        messages.append({"role": "user", "content": user_message})
-        return messages
-
     async def ask(
             self,
             user_message: str,
             history: List[ChatMessage],
-            timeout: float = 10.0
     ) -> PlantQueryResponse:
         """Get a reply for the given user_message. Returns dict with keys: reply, tool_results (optional)."""
-        messages = await self._build_messages(user_message, history)
+        messages = await _build_messages(user_message, history)
 
         # LangChain agent invocation - uses agent.ainvoke for async agent call
         try:
@@ -127,31 +137,28 @@ class GroqLLM:
             system_prompt=SYSTEM_PROMPT,
         )
 
-    async def chat(self, messages: List[Dict[str, str]]) -> PlantQueryResponse:
+    async def chat(
+            self,
+            # messages: List[Dict[str, str]]
+            messages: List[BaseMessage]
+    ) -> PlantQueryResponse:
         """Send messages to the model and return the assistant reply text.
         messages: list of dicts like {"role": "system|user|assistant", "content": "..."}
         """
-        # try:
         # call the langgraph agent with the full message history and get the
         # full message history including tool calls and final response
-        # response = self._client.invoke(input={"messages": messages})  # noqa
         try:
             response = await self._client.ainvoke(
-                input={"messages": messages}
+                Command(
+                    update={
+                        "messages": messages
+                    }
+                )
             )
         except Exception as exc:
-            logger.exception(f"GroqLLM.ainvoke failed: {exc}")
             a = 1
 
         final_response = response['messages'][-1]
         parsed = PlantQueryResponse.model_validate_json(final_response.text)
         parsed.reasoning = final_response.additional_kwargs['reasoning_content'] if 'reasoning_content' in final_response.additional_kwargs else None
         return parsed
-        # except Exception as exc:
-        #     logger.exception(f"GroqLLM.chat failed: {exc}")
-        #     # fallback to dummy reply
-        #     return AIMessage(
-        #         content=f"(fallback) I couldn't reach the LLM: {str(exc)}",
-        #     )
-
-

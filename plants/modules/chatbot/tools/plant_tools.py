@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from langchain_core.tools import tool, BaseTool
+from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
 from plants.extensions import orm
@@ -57,9 +57,3 @@ async def find_plants(
     print(f"find_plants output: {serialized}")
 
     return {"status": "ok", "plants": serialized, "error": None}
-
-
-def get_langchain_tools() -> list[BaseTool]:
-    """Return a list of LangChain tools."""
-    # async tools are returned as-is; callers/agents should support async tools or wrap them as needed
-    return [find_plants]

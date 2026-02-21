@@ -44,15 +44,18 @@ async def chat(request: ChatRequest) -> Any:
     new_history: List[ChatMessage] = reply_data.get("history", hist)
     _sessions[session_id] = new_history
 
-    return ChatResponse(
-            session_id=session_id,
-            reply=reply_data.get("reply", ""),
-            reasoning=reply_data.get("reasoning", ""),
-            plant_ids=reply_data.get("plant_ids", []),
-            plant_names=reply_data.get("plant_names", []),
-            history=new_history,
-            # tool_results=reply_data.get("tool_results"),
-        )
+    try:
+        return ChatResponse(
+                session_id=session_id,
+                reply=reply_data.get("reply", ""),
+                reasoning=reply_data.get("reasoning", ""),
+                plant_ids=reply_data.get("plant_ids", []),
+                plant_names=reply_data.get("plant_names", []),
+                history=new_history,
+                # tool_results=reply_data.get("tool_results"),
+            )
+    except Exception as exc:
+        a = 1
 
 
 @router.get("/chat/history/{session_id}", response_model=List[ChatMessage])

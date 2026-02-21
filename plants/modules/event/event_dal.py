@@ -111,3 +111,58 @@ class EventDAL(BaseDAL):
     async def delete_event(self, event: Event) -> None:
         await self.session.delete(event)
         await self.session.flush()
+
+    async def lookup_events(self, plant_id: int | None = None, event_notes_keyword: str | None = None) -> list[dict]:
+        """Lookup events optionally filtered by plant_id and/or a substring in event_notes.
+        Events may include repotting, purchase information, disease observations, etc.
+
+        Returns a list of dicts with keys: plant_id, plant_name, event_notes, date, soil (soil_name or None).
+        """
+        # local import to avoid top-level circular import
+        from plants.modules.plant.models import Plant
+
+        # use table column expressions to keep static analysis happy
+        ev_t = Event.__table__
+        pl_t = Plant.__table__
+        soil_t = Soil.__table__
+        ev_c = ev_t.c
+        pl_c = pl_t.c
+        soil_c = soil_t.c
+
+        query = (
+            select(
+                ev_c.plant_id.label("plant_id"),
+                pl_c.plant_name.label("plant_name"),
+                ev_c.event_notes.label("event_notes"),
+                ev_c.date.label("date"),
+                soil_c.soil_name.label("soil"),
+            )
+            .select_from(ev_t.join(pl_t, ev_c.plant_id == pl_c.id).outerjoin(soil_t, ev_c.soil_id == soil_c.id))
+        )
+
+        query = query.where(pl_c.deleted == False)  # noqa: E712
+
+        if plant_id is not None:
+            query = query.where(ev_c.plant_id == plant_id)
+
+        if event_notes_keyword:
+            query = query.where(ev_c.event_notes.ilike(f"%{event_notes_keyword}%"))
+
+        query = query.order_by(ev_c.date.desc())
+
+        result = await self.session.execute(query)
+        rows = result.all()
+
+        mapped: list[dict] = []
+        for row in rows:
+            rm = row._mapping  # type: ignore[attr-defined]
+            mapped.append(
+                {
+                    "plant_id": rm["plant_id"],
+                    "plant_name": rm["plant_name"],
+                    "event_notes": rm["event_notes"],
+                    "date": rm["date"],
+                    "soil": rm["soil"],
+                }
+            )
+        return mapped
