@@ -11,11 +11,16 @@ logger = logging.getLogger(__name__)
 if not os.getenv("GROQ_API_KEY"):
     BASE_DIR = Path(__file__).resolve().parent
     env_path = BASE_DIR.parent / ".env"
+
+    logger.error("CWD:", os.getcwd())
+    logger.error("ENV exists at os.path:", os.path.exists(".env"))
+    logger.error("ENV exists at env_path:", os.path.exists(env_path))
+
     load_dotenv(env_path)
     if os.getenv("GROQ_API_KEY"):
         logger.info("Loaded GROQ_API_KEY from .env")
     else:
-        logger.warning(
+        logger.error(
             "GROQ_API_KEY not found in environment or .env."
         )
 
