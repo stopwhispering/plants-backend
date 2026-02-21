@@ -11,7 +11,11 @@ from plants.modules.plant.plant_dal import PlantDAL
 
 logger = logging.getLogger(__name__)
 
-_agent = ChatAgent()
+try:
+    _agent = ChatAgent()
+except Exception as e:
+    logger.exception(f"Failed to initialize ChatAgent: {e}")
+    _agent = None  # type: ignore[assignment]
 
 
 async def get_chat_reply(
