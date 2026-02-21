@@ -15,6 +15,8 @@ if not os.getenv("GROQ_API_KEY"):
     logger.error("CWD:", os.getcwd())
     logger.error("ENV exists at os.path:", os.path.exists(".env"))
     logger.error("ENV exists at env_path:", os.path.exists(env_path))
+    logger.error("ENV exists at base_dir:", os.path.exists(BASE_DIR / ".env"))
+    logger.error("ENV exists at root:", os.path.exists("/.env"))
 
     load_dotenv(env_path)
     if os.getenv("GROQ_API_KEY"):
