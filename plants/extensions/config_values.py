@@ -107,7 +107,8 @@ class LocalConfig(BaseSettings):
     hostname: str
 
     model_config = SettingsConfigDict(
-        env_file=Path(__file__).resolve().parent.parent.parent.joinpath(".env"),
+        env_file=Path(__file__).resolve().parent.parent.joinpath(".env"),
+        # env_file=Path(__file__).resolve().parent.parent.parent.joinpath(".env"),
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
         extra="ignore",  # ignore extra fields in .env that are not defined here, e.g. API Keys
