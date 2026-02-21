@@ -15,19 +15,23 @@ if not os.getenv("GROQ_API_KEY"):
     env_path = BASE_DIR / "plants" / "plants" / ".env"
 
     logger.error(f"CWD: {os.getcwd()}")  # /app
+
+    logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")
+
     logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")  # False
     logger.error(f"ENV exists at env_path: {os.path.exists(env_path)}")  # False
     logger.error(f"ENV exists at base_dir: {os.path.exists(BASE_DIR / '.env')}")  # False
     logger.error(f"ENV exists at root: {os.path.exists('/.env')}")  # False
     logger.error(f"BASE_DIR: {BASE_DIR}")  # /app/plants
-    files = os.listdir(".")
-    logger.error(f"files .: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
 
-    files = os.listdir(BASE_DIR.parent)
-    logger.error(f"files BASE_DIR.parent: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
-
-    files = os.listdir(BASE_DIR.parent.parent)
-    logger.error(f"files BASE_DIR.parent.parent: {files}")  # 'proc', 'dev', 'srv', 'opt', 'run', 'sbin', 'lib', 'root', 'home', 'boot', 'usr', 'lib64', 'etc', 'media', 'tmp', 'var', 'bin', 'mnt', 'sys', 'common', '.dockerenv', 'app', 'start-reload.sh', 'gunicorn_conf.py', 'start.sh'
+    files = os.listdir("/")
+    logger.error(f"files at /: {files}")
+    files = os.listdir("/app")
+    logger.error(f"files at /app: {files}")
+    files = os.listdir("/app/plants")
+    logger.error(f"files at /app/plants: {files}")
+    files = os.listdir("/app/plants/plants")
+    logger.error(f"files at /app/plants/plants: {files}")
 
     load_dotenv(BASE_DIR.parent / ".env")
     if os.getenv("GROQ_API_KEY"):
