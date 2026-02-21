@@ -33,7 +33,7 @@ if not os.getenv("GROQ_API_KEY"):
     # files = os.listdir("/app/plants/plants")  # No such file or directory: '/app/plants/plants'
     # logger.error(f"files at /app/plants/plants: {files}")
 
-    load_dotenv(BASE_DIR.parent / ".env")
+    # load_dotenv(BASE_DIR.parent / ".env")
     if os.getenv("GROQ_API_KEY"):
         logger.info("Loaded GROQ_API_KEY from .env")
     else:

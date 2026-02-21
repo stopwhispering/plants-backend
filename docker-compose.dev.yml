@@ -21,6 +21,13 @@ services:
         - LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES=${LOG_SETTINGS__IGNORE_MISSING_IMAGE_FILES:-False}
         - LOG_SETTINGS__TRAINING_LOGS_FOLDER_PATH=${LOG_SETTINGS__TRAINING_LOGS_FOLDER_PATH:?err}
 
+        - GROQ_API_KEY=${GROQ_API_KEY:?err}
+        - CHATBOT_MODEL=${CHATBOT_MODEL:?err}
+#        langsmith tracing is optional
+        - LANGSMITH_API_KEY
+        - LANGSMITH_TRACING
+        - LANGSMITH_ENDPOINT
+
       volumes:
         - type: bind
           source: /c/common/plants
