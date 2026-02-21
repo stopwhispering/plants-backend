@@ -19,15 +19,15 @@ if not os.getenv("GROQ_API_KEY"):
     logger.error(f"ENV exists at root: {os.path.exists('/.env')}")  # False
     logger.error(f"BASE_DIR: {BASE_DIR}")  # /app/plants
     files = os.listdir(".")
-    logger.error(f"files: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
+    logger.error(f"files .: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
 
     files = os.listdir(env_path)
-    logger.error(f"files: {files}")
+    logger.error(f"files env_path: {files}")
 
     files = os.listdir(BASE_DIR)
-    logger.error(f"files: {files}")
+    logger.error(f"files BASE_DIR: {files}")
 
-    load_dotenv(BASE_DIR / ".env")
+    load_dotenv(BASE_DIR.parent / ".env")
     if os.getenv("GROQ_API_KEY"):
         logger.info("Loaded GROQ_API_KEY from .env")
     else:
