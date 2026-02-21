@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -8,7 +9,9 @@ logger = logging.getLogger(__name__)
 
 # ChatGroq expects the API key to be set in the environment variable GROQ_API_KEY.
 if not os.getenv("GROQ_API_KEY"):
-    load_dotenv()
+    BASE_DIR = Path(__file__).resolve().parent
+    env_path = BASE_DIR.parent / ".env"
+    load_dotenv(env_path)
     if os.getenv("GROQ_API_KEY"):
         logger.info("Loaded GROQ_API_KEY from .env")
     else:
