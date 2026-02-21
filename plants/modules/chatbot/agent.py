@@ -5,6 +5,7 @@ import os
 from textwrap import dedent
 from typing import Any, List
 
+from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, SystemMessage, BaseMessage, HumanMessage
 
 from langchain_groq import ChatGroq  # type: ignore
@@ -111,6 +112,17 @@ class ChatAgent:
 
 class GroqLLM:
     def __init__(self, tools: list[Any]):
+
+        # on dev system with no Docker environment handling, load .env file manually
+        if not os.getenv("GROQ_API_KEY"):
+            load_dotenv()
+            if os.getenv("GROQ_API_KEY"):
+                logger.info("Loaded GROQ_API_KEY from .env")
+            else:
+                logger.exception(
+                    "GROQ_API_KEY not found in environment or .env."
+                )
+
         # ChatGroq expects the API key to be set in the environment variable GROQ_API_KEY.
         model = os.getenv("CHATBOT_MODEL") or "openai/gpt-oss-20b"
         llm = ChatGroq(model=model)
