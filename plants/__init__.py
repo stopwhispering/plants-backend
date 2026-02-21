@@ -12,16 +12,22 @@ if not os.getenv("GROQ_API_KEY"):
     BASE_DIR = Path(__file__).resolve().parent
     env_path = BASE_DIR.parent / ".env"
 
-    logger.error("CWD:", os.getcwd())
-    logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")
-    logger.error(f"ENV exists at env_path: {os.path.exists(env_path)}")
-    logger.error(f"ENV exists at base_dir: {os.path.exists(BASE_DIR / '.env')}")
-    logger.error(f"ENV exists at root: {os.path.exists('/.env')}")  # false
-    logger.error(f"BASE_DIR: {BASE_DIR}")
+    logger.error(f"CWD: {os.getcwd()}")
+    logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")  # False
+    logger.error(f"ENV exists at env_path: {os.path.exists(env_path)}")  # False
+    logger.error(f"ENV exists at base_dir: {os.path.exists(BASE_DIR / '.env')}")  # False
+    logger.error(f"ENV exists at root: {os.path.exists('/.env')}")  # False
+    logger.error(f"BASE_DIR: {BASE_DIR}")  # /app/plants
     files = os.listdir(".")
+    logger.error(f"files: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
+
+    files = os.listdir(env_path)
     logger.error(f"files: {files}")
 
-    load_dotenv(env_path)
+    files = os.listdir(BASE_DIR)
+    logger.error(f"files: {files}")
+
+    load_dotenv(BASE_DIR / ".env")
     if os.getenv("GROQ_API_KEY"):
         logger.info("Loaded GROQ_API_KEY from .env")
     else:
