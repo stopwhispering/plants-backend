@@ -25,13 +25,13 @@ if not os.getenv("GROQ_API_KEY"):
     logger.error(f"BASE_DIR: {BASE_DIR}")  # /app/plants
 
     files = os.listdir("/")
-    logger.error(f"files at /: {files}")
+    logger.error(f"files at /: {files}")  # ['proc', 'dev', 'srv', 'opt', 'run', 'sbin', 'lib', 'root', 'home', 'boot', 'usr', 'lib64', 'etc', 'media', 'tmp', 'var', 'bin', 'mnt', 'sys', 'common', '.dockerenv', 'app', 'start-reload.sh', 'gunicorn_conf.py', 'start.sh']
     files = os.listdir("/app")
-    logger.error(f"files at /app: {files}")
+    logger.error(f"files at /app: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
     files = os.listdir("/app/plants")
-    logger.error(f"files at /app/plants: {files}")
-    files = os.listdir("/app/plants/plants")
-    logger.error(f"files at /app/plants/plants: {files}")
+    logger.error(f"files at /app/plants: {files}")  # ['__init__.py', 'modules', 'extensions', 'constants.py', 'scripts', 'dependencies.py', 'shared', 'main.py', 'exceptions.py']
+    # files = os.listdir("/app/plants/plants")  # No such file or directory: '/app/plants/plants'
+    # logger.error(f"files at /app/plants/plants: {files}")
 
     load_dotenv(BASE_DIR.parent / ".env")
     if os.getenv("GROQ_API_KEY"):
