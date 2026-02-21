@@ -22,7 +22,10 @@ if not os.getenv("GROQ_API_KEY"):
     logger.error(f"files .: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
 
     files = os.listdir(BASE_DIR.parent)
-    logger.error(f"files BASE_DIR.parent: {files}")
+    logger.error(f"files BASE_DIR.parent: {files}")  # ['prestart.sh', 'main.py', 'scripts', 'plants', 'ml_helpers', 'config.toml', 'alembic', 'alembic.ini', 'requirements.txt']
+
+    files = os.listdir(BASE_DIR.parent.parent)
+    logger.error(f"files BASE_DIR.parent.parent: {files}")
 
     load_dotenv(BASE_DIR.parent / ".env")
     if os.getenv("GROQ_API_KEY"):
