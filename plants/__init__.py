@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 if not os.getenv("GROQ_API_KEY"):
     BASE_DIR = Path(__file__).resolve().parent
     # env_path = BASE_DIR.parent / ".env"
-    env_path = BASE_DIR / "plants" / ".env"
+    # env_path = BASE_DIR / "plants" / ".env"
+    env_path = BASE_DIR / "plants" / "plants" / ".env"
 
     logger.error(f"CWD: {os.getcwd()}")  # /app
     logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")  # False
