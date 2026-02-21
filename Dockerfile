@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 # default app module is app.app.main:app and app.main:app -> we need to specify explicitly
 ENV APP_MODULE="plants.main:app"
 
-COPY ./prestart.sh ./alembic.ini /app/
+COPY ./prestart.sh ./alembic.ini ./.env /app/
 COPY alembic /app/alembic
 COPY config.toml /app/config.toml
 COPY plants/modules/pollination/prediction/ml_helpers /app/ml_helpers
