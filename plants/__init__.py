@@ -12,14 +12,14 @@ if not os.getenv("GROQ_API_KEY"):
     BASE_DIR = Path(__file__).resolve().parent
     env_path = BASE_DIR.parent / ".env"
 
-    logger.info("CWD:", os.getcwd())
-    logger.info(f"ENV exists at os.path: {os.path.exists('.env')}")
-    logger.info(f"ENV exists at env_path: {os.path.exists(env_path)}")
-    logger.info(f"ENV exists at base_dir: {os.path.exists(BASE_DIR / '.env')}")
-    logger.info(f"ENV exists at root: {os.path.exists('/.env')}")
-    logger.info(f"BASE_DIR: {BASE_DIR}")
+    logger.error("CWD:", os.getcwd())
+    logger.error(f"ENV exists at os.path: {os.path.exists('.env')}")
+    logger.error(f"ENV exists at env_path: {os.path.exists(env_path)}")
+    logger.error(f"ENV exists at base_dir: {os.path.exists(BASE_DIR / '.env')}")
+    logger.error(f"ENV exists at root: {os.path.exists('/.env')}")  # false
+    logger.error(f"BASE_DIR: {BASE_DIR}")
     files = os.listdir(".")
-    logger.info(f"files: {files}")
+    logger.error(f"files: {files}")
 
     load_dotenv(env_path)
     if os.getenv("GROQ_API_KEY"):
