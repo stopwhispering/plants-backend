@@ -59,12 +59,12 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return plant
 
     async def by_name(
-        self,
-        plant_name: str,
-        *,
-        eager_load: bool = True,
-        only_active: bool = True,
-        raise_not_found: bool = False,
+            self,
+            plant_name: str,
+            *,
+            eager_load: bool = True,
+            only_active: bool = True,
+            raise_not_found: bool = False,
     ) -> Plant | None:
         # noinspection PyTypeChecker
         query = (
@@ -178,7 +178,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return plants
 
     async def get_children(
-        self, seed_capsule_plant: Plant, pollen_donor_plant: Plant
+            self, seed_capsule_plant: Plant, pollen_donor_plant: Plant
     ) -> list[Plant]:
         query = (
             select(Plant)
@@ -195,7 +195,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return children
 
     async def get_children_by_ids(
-        self, seed_capsule_plant_id: int, pollen_donor_plant_id: int
+            self, seed_capsule_plant_id: int, pollen_donor_plant_id: int
     ) -> list[Plant]:
         query = (
             select(Plant)
@@ -343,7 +343,7 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         return plants
 
     async def get_plants_by_capsule_and_pollen_taxon_id(
-        self, capsule_taxon_id: int, pollen_taxon_id: int
+            self, capsule_taxon_id: int, pollen_taxon_id: int
     ) -> list[Plant]:
         ParentPlantCapsule = aliased(Plant)  # noqa
         ParentPlantPollen = aliased(Plant)  # noqa
@@ -367,9 +367,10 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
     async def get_plants_fuzzy(
             self,
             *,
+            plant_id: int = None,
             name: str = None,
             nursery_source: str = None,
-            limit: int = 100,
+            limit: int = 50,
             include_inactive: bool = False
     ) -> list[Plant]:
         """Return plants optionally filtered by fuzzy plat name and/or nursery source.
@@ -384,13 +385,25 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
         """
         # noinspection PyTypeChecker
         # start with a base query and apply the name filter only if supplied
-        query = select(Plant).where(Plant.deleted.is_(False)).options(selectinload(Plant.taxon))
+        query = (
+            select(Plant)
+            .where(Plant.deleted.is_(False))
+            .options(selectinload(Plant.taxon))
+            .options(selectinload(Plant.descendant_plants))
+            .options(selectinload(Plant.parent_plant))
+            .options(selectinload(Plant.parent_plant_pollen))
+        )
+
+        if plant_id is not None:
+            plant_id: int
+            query = query.filter_by(id=plant_id)
 
         if name:
             # allow fuzzy substring matching
             pattern_name = f"%{name}%"
             query = (
-                query.join(Taxon)
+                # use an outer join so plants without a Taxon are not excluded
+                query.outerjoin(Taxon)
                 .where(
                     or_(
                         Taxon.name.ilike(pattern_name),
@@ -412,4 +425,3 @@ class PlantDAL(BaseDAL):  # pylint: disable=too-many-public-methods
 
         plants: list[Plant] = list((await self.session.scalars(query)).all())
         return plants
-

@@ -112,8 +112,8 @@ class EventDAL(BaseDAL):
         await self.session.delete(event)
         await self.session.flush()
 
-    async def lookup_events(self, plant_id: int | None = None, event_notes_keyword: str | None = None) -> list[dict]:
-        """Lookup events optionally filtered by plant_id and/or a substring in event_notes.
+    async def lookup_events(self, plant_ids: list[int] | None = None, event_notes_keyword: str | None = None) -> list[dict]:
+        """Lookup events optionally filtered by plant_ids and/or a substring in event_notes.
         Events may include repotting, purchase information, disease observations, etc.
 
         Returns a list of dicts with keys: plant_id, plant_name, event_notes, date, soil (soil_name or None).
@@ -140,10 +140,10 @@ class EventDAL(BaseDAL):
             .select_from(ev_t.join(pl_t, ev_c.plant_id == pl_c.id).outerjoin(soil_t, ev_c.soil_id == soil_c.id))
         )
 
-        query = query.where(pl_c.deleted == False)  # noqa: E712
+        query = query.where(pl_c.deleted == False).where(pl_c.active == True)  # noqa: E712
 
-        if plant_id is not None:
-            query = query.where(ev_c.plant_id == plant_id)
+        if plant_ids is not None:
+            query = query.where(ev_c.plant_id.in_(plant_ids))
 
         if event_notes_keyword:
             query = query.where(ev_c.event_notes.ilike(f"%{event_notes_keyword}%"))

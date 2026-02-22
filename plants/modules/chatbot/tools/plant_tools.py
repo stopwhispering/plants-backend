@@ -1,6 +1,6 @@
 from __future__ import annotations
-
-from typing import Any, Dict, List
+import logging
+from typing import List
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -8,52 +8,86 @@ from pydantic import BaseModel, Field
 from plants.extensions import orm
 from plants.modules.plant.plant_dal import PlantDAL
 
+logger = logging.getLogger(__name__)
+
 
 class FindPlantsInput(BaseModel):
-    """Input for find_plants tool."""
-    name: str = Field(description="Optional Vernacular or Botanical Name")
-    nursery_source: str = Field(default=None, description="Optional nursery source to filter by")
-    include_inactive: bool = Field(default=False, description="Whether to include inactive plants in the results")
+    """Tool input schema."""
+    plant_id: int | None = Field(default=None, description="Plant ID")
+    name: str | None = Field(default=None, description="Vernacular or botanical name")
+    nursery_source: str | None = Field(default=None, description="Nursery source")
 
 
-@tool(args_schema=FindPlantsInput)
+class RelatedPlant(BaseModel):
+    id: int
+    plant_name: str
+
+
+class PlantSchema(BaseModel):
+    id: int
+    plant_name: str
+    botanical_name: str | None = None
+    nursery_source: str | None = None
+    descendant_plants: List[RelatedPlant] = Field(default_factory=list)
+    parent_plant: RelatedPlant | None = None
+    parent_plant_pollen: RelatedPlant | None = None
+
+
+class FindPlantsOutput(BaseModel):
+    """Output schema for find_plants tool.
+    Note: This is NOT supplied to the agent."""
+    plants: List[PlantSchema] = Field(default_factory=list)
+
+
+@tool(
+    args_schema=FindPlantsInput,
+    description=(
+          "Find plants and returns JSON. Max=50."
+      )
+)
 async def find_plants(
+        plant_id: int = None,
         name: str = None,
         nursery_source: str = None,
-        include_inactive: bool = False
-) -> Dict[str, Any]:
-    """Find plants by botanical name and return a JSON-serializable dict.
-
-    - name: either the plant's vernacular name or the botanical (taxon) name to search for
+) -> FindPlantsOutput:
+    """Return up to 50 plants matching optional filters.
+    - name: either plant_name or the botanical (taxon) name to search for
     - nursery_source: optional filter to only include plants from a specific nursery source
-    - include_inactive: whether to include inactive plants in the results (optional, default False)
     """
     name_clean = (name or "").strip() if name else None
-    # if not name_clean:
-    #     return {"status": "error", "plants": [], "error": {"code": "ValidationError", "message": "botanical_name is required"}}
     nursery_source_clean = (nursery_source or "").strip() if nursery_source else None
 
-    # Run the DB access inside the async session/loop where this function runs.
+    # Run DB access inside the async session/loop.
     async with orm.SessionFactory.session_factory() as session:  # type: ignore[attr-defined]
         plant_dal = PlantDAL(session)
         plants = await plant_dal.get_plants_fuzzy(
-            name=name_clean, nursery_source=nursery_source_clean, limit=50, include_inactive=include_inactive
+            plant_id=plant_id, name=name_clean, nursery_source=nursery_source_clean, limit=50
         )
 
-    serialized: List[Dict[str, Any]] = [
-        {
-            "id": p.id,
-            "plant_name": p.plant_name,
-            "botanical_name": p.botanical_name,
-            # "full_botanical_html_name": p.full_botanical_html_name,
-            # "taxon_id": p.taxon_id,
-            "preview_image_id": p.preview_image_id,
-            "nursery_source": p.nursery_source,
-        }
-        for p in plants
-    ]
+    output = FindPlantsOutput(
+        plants=[
+            PlantSchema(
+                id=p.id,
+                plant_name=p.plant_name,
+                botanical_name=p.botanical_name,
+                nursery_source=p.nursery_source,
+                descendant_plants=[
+                    RelatedPlant(id=dp.id, plant_name=dp.plant_name)
+                    for dp in p.descendant_plants or []
+                ],
+                parent_plant=(
+                    RelatedPlant(id=p.parent_plant.id, plant_name=p.parent_plant.plant_name)
+                    if p.parent_plant is not None else None
+                ),
+                parent_plant_pollen=(
+                    RelatedPlant(id=p.parent_plant_pollen.id, plant_name=p.parent_plant_pollen.plant_name)
+                    if p.parent_plant_pollen is not None else None
+                ),
+            )
+            for p in plants
+        ]
+    )
 
-    print(f"find_plants input: name='{name}' nursery_source='{nursery_source}' include_inactive={include_inactive}")
-    print(f"find_plants output: {serialized}")
-
-    return {"status": "ok", "plants": serialized, "error": None}
+    logger.info(f"find_plants input: plant_id='{plant_id}' name='{name}' nursery_source='{nursery_source}'")
+    logger.info(f"find_plants output: (len={len(output.plants)}) {output.model_dump()}")
+    return output

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import datetime
-from typing import Any, Dict, List
+import logging
+from typing import List
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -10,29 +11,50 @@ from plants.modules.pollination.florescence_dal import FlorescenceDAL
 
 RESULTS_LIMIT = 50
 
+logger = logging.getLogger(__name__)
+
 
 class FindFlorescencesInput(BaseModel):
     """Input for find_florescences tool."""
-    plant_id: int | None = Field(default=None, description="Optional plant id to filter by")
+    plant_ids: List[int] | None = Field(default=None, description="Plant ids")
     max_first_flower_opened_at: datetime.date | None = Field(
-        default=None, description="Optional: match florescences that started on or before this date"
+        default=None, description="Match florescences that started on or before this date"
     )
     min_last_flower_closed_at: datetime.date | None = Field(
-        default=None, description="Optional: match florescences that finished on or after this date"
+        default=None, description="Match florescences that finished on or after this date"
     )
-    include_inactive_plants: bool = Field(default=False, description="Whether to include inactive plants in the results; default: False")
+    include_inactive_plants: bool = Field(default=False, description="Include inactive plants")
 
 
-@tool(args_schema=FindFlorescencesInput)
+class FlorescenceSchema(BaseModel):
+    plant_id: int
+    plant_name: str
+    first_flower_opened_at: datetime.date | None = None
+    last_flower_closed_at: datetime.date | None = None
+    inflorescence_appeared_at: datetime.date | None = None
+    florescence_status: str | None = None
+    comment: str | None = None
+
+
+class FindFlorescencesOutput(BaseModel):
+    """Output schema for find_florescences tool."""
+    status: str
+    florescences: List[FlorescenceSchema] = Field(default_factory=list)
+
+
+@tool(
+    args_schema=FindFlorescencesInput,
+    description="Find florescences and return JSON."
+    )
 async def find_florescences(
-    plant_id: int | None = None,
+    plant_ids: List[int] | None = None,
     max_first_flower_opened_at: datetime.date | None = None,
     min_last_flower_closed_at: datetime.date | None = None,
     include_inactive_plants: bool = False,
-) -> Dict[str, Any]:
+) -> FindFlorescencesOutput:
     """Find florescences and return a JSON-serializable dict.
 
-    - plant_id: optional filter by plant id
+    - plant_ids: optional list of plant ids to filter by
     - max_first_flower_opened_at: optional date; match florescences that started on or before this date
     - min_last_flower_closed_at: optional date; match florescences that finished on or after this date
     - include_inactive_plants: whether to include inactive plants in the results
@@ -46,7 +68,7 @@ async def find_florescences(
 
     def matches(flo):
         # plant id filter
-        if plant_id is not None and flo.plant_id != plant_id:
+        if plant_ids is not None and flo.plant_id not in plant_ids:
             return False
 
         # date filters: florescence period is from first_flower_opened_at till last_flower_closed_at
@@ -66,31 +88,33 @@ async def find_florescences(
 
     filtered = [f for f in florescences if matches(f)]
 
-    serialized: List[Dict[str, Any]] = [
-        {
-            "plant_id": f.plant_id,
-            "plant_name": f.plant.plant_name if f.plant else None,
-            "first_flower_opened_at": f.first_flower_opened_at.isoformat() if f.first_flower_opened_at else None,
-            "last_flower_closed_at": f.last_flower_closed_at.isoformat() if f.last_flower_closed_at else None,
-            "inflorescence_appeared_at": f.inflorescence_appeared_at.isoformat() if f.inflorescence_appeared_at else None,
-            "florescence_status": str(f.florescence_status) if f.florescence_status is not None else None,
-            "comment": f.comment,
-        }
+    florescences_list: List[FlorescenceSchema] = [
+        FlorescenceSchema(
+            plant_id=f.plant_id,
+            plant_name=f.plant.plant_name,
+            first_flower_opened_at=f.first_flower_opened_at,
+            last_flower_closed_at=f.last_flower_closed_at,
+            inflorescence_appeared_at=f.inflorescence_appeared_at,
+            florescence_status=(str(f.florescence_status) if f.florescence_status is not None else None),
+            comment=f.comment,
+        )
         for f in filtered
     ]
 
     if RESULTS_LIMIT is not None:
-        serialized = serialized[:RESULTS_LIMIT]
-        status = "limit_exceeded" if len(filtered) > RESULTS_LIMIT else "ok"
+        limited = florescences_list[:RESULTS_LIMIT]
+        status = "limit_exceeded" if len(florescences_list) > RESULTS_LIMIT else "ok"
     else:
+        limited = florescences_list
         status = "ok"
 
-    print(
-        f"find_florescences input: plant_id={plant_id} "
+    logger.info(
+        f"find_florescences input: plant_ids={plant_ids} "
         f"max_first_flower_opened_at={max_first_flower_opened_at} "
         f"min_last_flower_closed_at={min_last_flower_closed_at} "
         f"include_inactive={include_inactive_plants}"
     )
-    print(f"find_florescences output: {serialized}")
+    output = FindFlorescencesOutput(status=status, florescences=limited)
+    logger.info(f"find_florescences output: (len={len(output.florescences)}) {output.model_dump()}")
 
-    return {"status": status, "florescences": serialized, "error": None}
+    return output

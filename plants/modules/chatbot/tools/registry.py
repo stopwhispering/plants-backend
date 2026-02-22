@@ -11,3 +11,4 @@ from .plant_tools import find_plants
 def get_langchain_tools() -> List[BaseTool]:
     """Return LangChain tools"""
     return [find_plants, find_florescences, find_events]
+

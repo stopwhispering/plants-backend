@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dotenv import load_dotenv
-
+load_dotenv('.env')
 
 # Use a non-interactive backend, save the output to a file or a byte stream, rather than
 # calling plt.show()
@@ -15,5 +15,3 @@ settings = parse_settings()
 
 # expose app to other modules, e.g. for app.state access
 from plants.main import app  # , local_config, settings
-
-load_dotenv()
