@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from typing import Annotated
 
-from pydantic import BeforeValidator, ConfigDict, Field, types
+from pydantic import BeforeValidator, ConfigDict, Field, types, field_validator
 
 from plants.constants import REGEX_DATE
 from plants.modules.pollination.enums import (
@@ -274,6 +274,21 @@ class PlantPreview(BaseSchema):
     parent_plant_pollen_name: str | None = None
     parent_plant_pollen_taxon_id: int | None = None
     parent_plant_pollen_taxon_name: str | None = None
+
+    @field_validator('plant_name', mode='before')
+    @classmethod
+    def _truncate_plant_name(cls, v):
+        if v is None:
+            return v
+        v_str = str(v)
+        max_len = 100
+        if len(v_str) <= max_len:
+            return v_str
+        ellipsis_ = '...'
+        keep = max_len - len(ellipsis_)
+        if keep <= 0:
+            return v_str[:max_len]
+        return v_str[:keep] + ellipsis_
 
 
 class PotentialPollenDonor(BaseSchema):
