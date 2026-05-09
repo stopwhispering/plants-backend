@@ -190,7 +190,7 @@ class TaxonomySearch:
 
     async def _find_local_taxon_if_available(self, kew_result: _ParsedApiSearchResult
                                              ) -> _DBSearchResult | None:
-        local_taxa = await self.taxon_dal.by_lsid(lsid=kew_result.lsid)
+        local_taxa = await self.taxon_dal.by_lsid(lsid=kew_result.lsid, include_custom=False)
         if len(local_taxa) > 1:
             raise ValueError(
                 f"Found multiple taxa with LSID {kew_result.lsid} in local database. "

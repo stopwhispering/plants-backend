@@ -88,11 +88,11 @@ class TaxonDAL(BaseDAL):
         taxa: list[Taxon] = list((await self.session.scalars(query)).all())
         return taxa
 
-    async def by_lsid(self, lsid: str) -> list[Taxon]:
+    async def by_lsid(self, lsid: str, include_custom=True) -> list[Taxon]:
         # noinspection PyTypeChecker
         query = (
             select(Taxon)
-            .where(Taxon.lsid == lsid)
+            .where(Taxon.lsid == lsid, Taxon.is_custom == include_custom)
             .options(selectinload(Taxon.plants))
         )
 
