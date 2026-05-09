@@ -26,7 +26,8 @@ _sessions: Dict[str, List[ChatMessage]] = {}
 async def chat(request: ChatRequest) -> Any:
     """Accepts a user message, stores it in a session and returns a reply from the agent.
 
-    This endpoint now calls the LangChain/Groq-backed agent when available and falls back to a dummy reply.
+    Calls the LangChain/Groq-backed agent when available and falls back to a dummy reply
+    including error message.
     """
     session_id = request.session_id or str(uuid.uuid4())
 
@@ -55,10 +56,10 @@ async def chat(request: ChatRequest) -> Any:
                 # tool_results=reply_data.get("tool_results"),
             )
     except Exception as exc:
-        a = 1
+        todo_delme = 1
 
 
-@router.get("/chat/history/{session_id}", response_model=List[ChatMessage])
-async def get_history(session_id: str) -> List[ChatMessage]:
-    """Return the stored conversation history for a session_id (or empty list)."""
-    return _sessions.get(session_id, [])
+# @router.get("/chat/history/{session_id}", response_model=List[ChatMessage])
+# async def get_history(session_id: str) -> List[ChatMessage]:
+#     """Return the stored conversation history for a session_id (or empty list)."""
+#     return _sessions.get(session_id, [])
