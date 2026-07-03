@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
+import requests
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
-from pykew import ipni, powo
+from pykew import ipni  # , powo
 from pykew.ipni_terms import Filters
 
 from plants import settings
@@ -326,7 +327,19 @@ class ApiSearcher:
         """For the supplied search result entry, fetch additional information from "Plants of the
         World" API."""
         # POWO uses LSID as ID just like IPNI
-        powo_lookup = powo.lookup(result.lsid, include=["distribution"])
+
+        # powo_lookup = powo.lookup(result.lsid, include=["distribution"])
+        # pykew is lightly maintained and the POWO API is undocumented and can change without
+        # notice; this is a workaround that needs to be fixed sometimes
+        resp = requests.get(
+            f"https://powo.science.kew.org/api/2/taxon/{result.lsid}",
+            params={"fields": "distribution"},
+            headers={"User-Agent": "your-app-name/1.0 (contact@example.com)"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        powo_lookup = resp.json()
+
         if "error" in powo_lookup:
             throw_exception(f"No Plants of the World result for LSID {result.lsid}")
 
