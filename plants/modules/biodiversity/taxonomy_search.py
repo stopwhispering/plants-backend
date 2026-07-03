@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from fastapi.concurrency import run_in_threadpool
 from pykew import ipni  # , powo
 from pykew.ipni_terms import Filters
+from requests.exceptions import HTTPError
 
 from plants import settings
 from plants.exceptions import TooManyResultsError
@@ -331,14 +332,29 @@ class ApiSearcher:
         # powo_lookup = powo.lookup(result.lsid, include=["distribution"])
         # pykew is lightly maintained and the POWO API is undocumented and can change without
         # notice; this is a workaround that needs to be fixed sometimes
-        resp = requests.get(
-            f"https://powo.science.kew.org/api/2/taxon/{result.lsid}",
-            params={"fields": "distribution"},
-            headers={"User-Agent": "your-app-name/1.0 (contact@example.com)"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        powo_lookup = resp.json()
+        # update: powo returns 403 from server, 200 on local test system
+        # e.g. https://powo.science.kew.org/api/2/taxon/urn:lsid:ipni.org:names:77095488-1?fields=distribution
+        # no api available, pykew 8y not maintained -> no solution, yet
+        try:
+            resp = requests.get(
+                f"https://powo.science.kew.org/api/2/taxon/{result.lsid}",
+                params={"fields": "distribution"},
+                headers={"User-Agent": "your-app-name/1.0 (contact@example.com)"},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            powo_lookup = resp.json()
+        except HTTPError as e:
+            logger.error(f"HTTP error occurred while fetching POWO data for LSID {result.lsid}: {e}")
+            return _ParsedApiSearchResult(
+                **result.__dict__,
+                basionym='',
+                taxonomic_status='',
+                authors='',
+                synonym=False,
+                synonyms_concat='',
+                distribution_concat='',
+            )
 
         if "error" in powo_lookup:
             throw_exception(f"No Plants of the World result for LSID {result.lsid}")
