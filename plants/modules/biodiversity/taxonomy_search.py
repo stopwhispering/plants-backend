@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import requests
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -8,6 +9,7 @@ from typing import TYPE_CHECKING
 from fastapi.concurrency import run_in_threadpool
 from pykew import ipni  # , powo
 from pykew.ipni_terms import Filters
+from pygbif import species as gbif_species
 from requests.exceptions import HTTPError
 
 from plants import settings
@@ -322,56 +324,157 @@ class ApiSearcher:
         return rank, species, infraspecies
 
     @staticmethod
+    def _fetch_from_gbif(result: _ParsedIpniSearchResult) -> _ParsedApiSearchResult | None:
+        """Fetch taxonomic details for the given IPNI result via pygbif.
+
+        Searches the IPNI dataset at GBIF by taxon name, matches on LSID, then
+        fetches backbone details, synonyms, and distributions.
+        Returns None if the taxon cannot be matched.
+        """
+        _IPNI_DATASET_KEY = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
+
+        # Step 1 — resolve LSID → GBIF nubKey via the IPNI dataset at GBIF
+        name_lookup = gbif_species.name_lookup(
+            q=result.name, datasetKey=_IPNI_DATASET_KEY, limit=20
+        )
+        matched = next(
+            (r for r in name_lookup.get("results", []) if r.get("taxonID") == result.lsid),
+            None,
+        )
+        if not matched:
+            return None
+
+        nub_key: int = matched["nubKey"]
+
+        # Step 2 — taxon details from backbone (authors, taxonomic status, synonym flag)
+        usage = gbif_species.name_usage(key=nub_key)
+
+        # Try to extract publication year:
+        # • IPNI dataset match has authorship like "Schnland, 1910"
+        # • backbone usage has publishedIn like "Trans. Roy. Soc. South Africa 1: 391 (1910)"
+        # Take the first 4-digit year found in either string.
+        _year_src = matched.get("authorship") or usage.get("publishedIn") or ""
+        _year_match = re.search(r"\b(1[0-9]{3}|20[0-9]{2})\b", _year_src)
+        name_published_in_year: int | None = (
+            int(_year_match.group(1)) if _year_match else result.name_published_in_year
+        )
+
+        # Step 3 — synonyms list
+        syn_names = [
+            s.get("scientificName")
+            for s in gbif_species.name_usage(key=nub_key, data="synonyms").get("results", [])
+        ]
+
+        # Step 4 — distribution records; prefer WCVP source for quality,
+        # fall back to any record that carries a TDWG locationId, then all records
+        dist_records: list[dict] = gbif_species.name_usage(
+            key=nub_key, data="distributions"
+        ).get("results", [])
+        wcvp_dists  = [d for d in dist_records if "WCVP" in d.get("source", "")]
+        tdwg_dists  = [d for d in dist_records if d.get("locationId")]
+        src_records = wcvp_dists or tdwg_dists or dist_records
+
+        # Build distribution_concat in the same format as get_concatenated_distribution()
+        introduced_statuses = {"INTRODUCED", "MANAGED", "CULTIVATED"}
+
+        def _label(d: dict) -> str | None:
+            return d.get("locality") or d.get("locationId") or d.get("country")
+
+        native_labels = [
+            _label(d) for d in src_records
+            if d.get("establishmentMeans", "").upper() not in introduced_statuses
+            and _label(d) is not None
+        ]
+        intro_labels = [
+            _label(d) for d in src_records
+            if d.get("establishmentMeans", "").upper() in introduced_statuses
+            and _label(d) is not None
+        ]
+        dist_parts: list[str] = []
+        if native_labels:
+            dist_parts.append(", ".join(native_labels) + " (natives)")
+        if intro_labels:
+            dist_parts.append(", ".join(intro_labels) + " (introduced)")
+        distribution_concat: str | None = ", ".join(dist_parts) if dist_parts else None
+
+        # Build synonyms_concat: synonym taxon → "Accepted: <name>",
+        # accepted taxon → joined list of its synonyms
+        if usage.get("synonym"):
+            accepted_name = usage.get("accepted") or usage.get("species")
+            synonyms_concat: str | None = (
+                f"Accepted: {accepted_name}" if accepted_name else None
+            )
+        else:
+            synonyms_concat = ", ".join(syn_names) if syn_names else None
+
+        return _ParsedApiSearchResult(
+            **{**result.__dict__, "name_published_in_year": name_published_in_year},
+            taxonomic_status=(usage.get("taxonomicStatus") or "").capitalize(),
+            authors=usage.get("authorship") or "",
+            synonym=bool(usage.get("synonym")),
+            synonyms_concat=synonyms_concat,
+            distribution_concat=distribution_concat,
+        )
+
+    @staticmethod
     def _update_taxon_from_powo_api(
         result: _ParsedIpniSearchResult,
     ) -> _ParsedApiSearchResult:
         """For the supplied search result entry, fetch additional information from "Plants of the
         World" API."""
-        # POWO uses LSID as ID just like IPNI
+        # # POWO uses LSID as ID just like IPNI
+        #
+        # # powo_lookup = powo.lookup(result.lsid, include=["distribution"])
+        # # pykew is lightly maintained and the POWO API is undocumented and can change without
+        # # notice; this is a workaround that needs to be fixed sometimes
+        # # update: powo returns 403 from server, 200 on local test system
+        # # e.g. https://powo.science.kew.org/api/2/taxon/urn:lsid:ipni.org:names:77095488-1?fields=distribution
+        # # no api available, pykew 8y not maintained -> no solution, yet
+        # try:
+        #     resp = requests.get(
+        #         f"https://powo.science.kew.org/api/2/taxon/{result.lsid}",
+        #         params={"fields": "distribution"},
+        #         headers={"User-Agent": "your-app-name/1.0 (contact@example.com)"},
+        #         timeout=10,
+        #     )
+        #     resp.raise_for_status()
+        #     powo_lookup = resp.json()
+        #
+        # except HTTPError as e:
+        #     logger.error(f"HTTP error occurred while fetching POWO data for LSID {result.lsid}: {e}")
+        #     return _ParsedApiSearchResult(
+        #         **result.__dict__,
+        #         # basionym='',
+        #         taxonomic_status='',
+        #         authors='',
+        #         synonym=False,
+        #         synonyms_concat='',
+        #         distribution_concat='',
+        #     )
+        #
+        # if "error" in powo_lookup:
+        #     throw_exception(f"No Plants of the World result for LSID {result.lsid}")
+        #
+        # # basionym = powo_lookup["basionym"].get("name") if "basionym" in powo_lookup else None
+        #
+        # ext_result = _ParsedApiSearchResult(
+        #     **result.__dict__,
+        #     # basionym=basionym,
+        #     taxonomic_status=powo_lookup.get("taxonomicStatus"),
+        #     authors=powo_lookup.get("authors"),
+        #     synonym=powo_lookup.get("synonym"),
+        #     synonyms_concat=get_accepted_synonym_label(powo_lookup),
+        #     distribution_concat=get_concatenated_distribution(powo_lookup),
+        # )
+        #
+        # if "name_published_in_year" in powo_lookup:
+        #     ext_result.name_published_in_year = powo_lookup["name_published_in_year"]
 
-        # powo_lookup = powo.lookup(result.lsid, include=["distribution"])
-        # pykew is lightly maintained and the POWO API is undocumented and can change without
-        # notice; this is a workaround that needs to be fixed sometimes
-        # update: powo returns 403 from server, 200 on local test system
-        # e.g. https://powo.science.kew.org/api/2/taxon/urn:lsid:ipni.org:names:77095488-1?fields=distribution
-        # no api available, pykew 8y not maintained -> no solution, yet
-        try:
-            resp = requests.get(
-                f"https://powo.science.kew.org/api/2/taxon/{result.lsid}",
-                params={"fields": "distribution"},
-                headers={"User-Agent": "your-app-name/1.0 (contact@example.com)"},
-                timeout=10,
+        gbif_result = ApiSearcher._fetch_from_gbif(result)
+        if not gbif_result:
+            logger.warning(
+                "[GBIF TEST] No IPNI-dataset match found for LSID %s (name=%r).",
+                result.lsid, result.name,
             )
-            resp.raise_for_status()
-            powo_lookup = resp.json()
-        except HTTPError as e:
-            logger.error(f"HTTP error occurred while fetching POWO data for LSID {result.lsid}: {e}")
-            return _ParsedApiSearchResult(
-                **result.__dict__,
-                # basionym='',
-                taxonomic_status='',
-                authors='',
-                synonym=False,
-                synonyms_concat='',
-                distribution_concat='',
-            )
 
-        if "error" in powo_lookup:
-            throw_exception(f"No Plants of the World result for LSID {result.lsid}")
-
-        # basionym = powo_lookup["basionym"].get("name") if "basionym" in powo_lookup else None
-
-        ext_result = _ParsedApiSearchResult(
-            **result.__dict__,
-            # basionym=basionym,
-            taxonomic_status=powo_lookup.get("taxonomicStatus"),
-            authors=powo_lookup.get("authors"),
-            synonym=powo_lookup.get("synonym"),
-            synonyms_concat=get_accepted_synonym_label(powo_lookup),
-            distribution_concat=get_concatenated_distribution(powo_lookup),
-        )
-
-        if "name_published_in_year" in powo_lookup:
-            ext_result.name_published_in_year = powo_lookup["name_published_in_year"]
-
-        return ext_result
+        return gbif_result
