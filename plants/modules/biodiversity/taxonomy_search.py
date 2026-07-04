@@ -372,9 +372,11 @@ class ApiSearcher:
         dist_records: list[dict] = gbif_species.name_usage(
             key=nub_key, data="distributions"
         ).get("results", [])
-        wcvp_dists = [d for d in dist_records if "WCVP" in d.get("source", "") and 'locality' in d]
+        wcvp_dists = [d for d in dist_records if "WCVP" in d.get("source", "")]
         tdwg_dists = [d for d in dist_records if d.get("locationId")]
         src_records = wcvp_dists or tdwg_dists or dist_records
+
+        src_records = [d for d in src_records if 'locality' in d or 'country' in d]
 
         # Build distribution_concat in the same format as get_concatenated_distribution()
         introduced_statuses = {"INTRODUCED", "MANAGED", "CULTIVATED"}
