@@ -403,7 +403,7 @@ class ApiSearcher:
 
         # Build synonyms_concat: synonym taxon → "Accepted: <name>",
         # accepted taxon → joined list of its synonyms
-        if usage.get("synonym"):
+        if usage.get("taxonomicStatus") == "SYNONYM":
             accepted_name = usage.get("accepted") or usage.get("species")
             synonyms_concat: str | None = (
                 f"Accepted: {accepted_name}" if accepted_name else None
