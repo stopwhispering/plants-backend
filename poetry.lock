@@ -4605,6 +4605,47 @@ files = [
 ]
 
 [[package]]
+name = "pysqlite3"
+version = "0.6.0"
+description = "DB-API 2.0 interface for Sqlite 3.x"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pysqlite3-0.6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ec9ec8cb87132f912dead528c8d8e7b71348a5b83b808515114f8b95bd8f742a"},
+    {file = "pysqlite3-0.6.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:e52ec831759304540b53b550a230c698c3c4b9349732e7a2365bda5faa14854f"},
+    {file = "pysqlite3-0.6.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:86d1a3ab3351984ddfa1a32ce51b378450dc9c53147a0e663febe077436db79a"},
+    {file = "pysqlite3-0.6.0-cp310-cp310-win32.whl", hash = "sha256:503e570d0c771ea2a79397523443687e5ca149e93530487dd61b9763b393be58"},
+    {file = "pysqlite3-0.6.0-cp310-cp310-win_amd64.whl", hash = "sha256:30bc9471bca6cfb35865e1a7ec6383b7fd37271edb7748941329709ef680c478"},
+    {file = "pysqlite3-0.6.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e3e0ff8dfd84926a06cac62905b7659be7152ced4f6c1ac8ea381a1281555cce"},
+    {file = "pysqlite3-0.6.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:51f24094c55039bd10c0a2d83e3c502039bf4bfa2b199ecf326815c52ec30bfb"},
+    {file = "pysqlite3-0.6.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b4b1f27e8cfe15a4b13448a3ff48daa0a3cfd0bdb202aeb2378d768c14407b28"},
+    {file = "pysqlite3-0.6.0-cp311-cp311-win32.whl", hash = "sha256:c02894e33691c742c62e4219a03b9683e1fdd4bad7d799c3395df8aefcd5ed17"},
+    {file = "pysqlite3-0.6.0-cp311-cp311-win_amd64.whl", hash = "sha256:193488f62ebafcca1b72beb3daba98e4bc3be62ca6e3adee5bff603eadb535f7"},
+    {file = "pysqlite3-0.6.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a7855d3016392fa81571404fc1647a1d07d1128ff862652e1f89e59edcc3405e"},
+    {file = "pysqlite3-0.6.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:60cc74e051af0bef460950ea975d2d6c80a2145203f23653673a19cc367a6bb7"},
+    {file = "pysqlite3-0.6.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:c86cd86b2833b43fb4c01b8c90e71f70e95105995f4b1e27b8d9d5c906512992"},
+    {file = "pysqlite3-0.6.0-cp312-cp312-win32.whl", hash = "sha256:ed0da0211335335900e699f93c7fe7292ab3437b015ee1310ee5199fd9d05c29"},
+    {file = "pysqlite3-0.6.0-cp312-cp312-win_amd64.whl", hash = "sha256:f88d0f8f45bf3644ddd3e7c7de4b6b8d5b10a1bfe23db55b5a1ed95cbd4a0cb9"},
+    {file = "pysqlite3-0.6.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:64d48638e2c787f1e7ca0100294740f4db7f6bce1516ba8076e082d6443925d4"},
+    {file = "pysqlite3-0.6.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:1cc753922baa703496b6edbf92687389490b0e7ad61b7ed4925e6cf2a7def0a1"},
+    {file = "pysqlite3-0.6.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4f03a69a9c64d0476bbf9c619e1024770368b08e6b572c3f5f0fa641f1b67f27"},
+    {file = "pysqlite3-0.6.0-cp313-cp313-win32.whl", hash = "sha256:5ae52d27b48a634f1015051d791d23a5bd3f0a992099a632bf39bca21a156420"},
+    {file = "pysqlite3-0.6.0-cp313-cp313-win_amd64.whl", hash = "sha256:2886b6ccf9c3c7ce678ea795a2aa9ddb4563c50c81bce399560fdb2c5662e55d"},
+    {file = "pysqlite3-0.6.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:b6f768d6e00d4574f5cc1bff174a4703382afe221b04b009bcb8b41164af08a0"},
+    {file = "pysqlite3-0.6.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:268fa5873143cccd79f32624c9a25714e4595715795ae09c8366c75cae8f5aed"},
+    {file = "pysqlite3-0.6.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:65a9af11004d350538b6bd852b0ec22cdd62928be9ab522d85c0840d5bf92a72"},
+    {file = "pysqlite3-0.6.0-cp314-cp314-win32.whl", hash = "sha256:cc9787dc409f800e310c8a457b7c98d1c4d4a76e15821b7fb460c0e63554ddd8"},
+    {file = "pysqlite3-0.6.0-cp314-cp314-win_amd64.whl", hash = "sha256:81226436fae52d3bec4ce578104c5bcf4c22d3fcf29d4a590fcbde56b90472ef"},
+    {file = "pysqlite3-0.6.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:4a2dd23831c3fef68db0761c685b9ca5286dc8d58b090bc5c055f389d1b319a5"},
+    {file = "pysqlite3-0.6.0-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:adc5faf38dcc1c47818e993c6998ee044643b6863ae89db693b36173d26b2400"},
+    {file = "pysqlite3-0.6.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:c4f85a31e80520351e7bc8e452e048bbc4470e17ca1882105cfe90833b476361"},
+    {file = "pysqlite3-0.6.0-cp39-cp39-win32.whl", hash = "sha256:87368097abc224c25719e186a9173f80b1253cf0d84989791804e9c12440fcd6"},
+    {file = "pysqlite3-0.6.0-cp39-cp39-win_amd64.whl", hash = "sha256:97550d7f7b4714a174920799841fa61ddeb340bc662e421e2ebc12d8474fc89c"},
+    {file = "pysqlite3-0.6.0.tar.gz", hash = "sha256:ecf5112b62a4e6c04438957e343fe9672707bd3191f789ecae6c95b226aa6bb6"},
+]
+
+[[package]]
 name = "pytest"
 version = "7.4.4"
 description = "pytest: simple powerful testing with Python"
@@ -6548,4 +6589,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "dfcbe7bc6fd540ca315bc59b9257bc753cf85549a10fe55d51bc45f839233b0a"
+content-hash = "78eee108136cabbbebdf5feb099f1bf02f3cd38aa26777986886cc2e1329b067"

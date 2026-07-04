@@ -113,7 +113,7 @@ class KewSearchResultEntry(BaseSchema):
     hybridgenus: bool
 
     name_published_in_year: int | None = None  # rarely None
-    basionym: str | None = None
+    # basionym: str | None = None
     # phylum: str
     synonyms_concat: str | None = None
     distribution_concat: str | None = None
@@ -132,7 +132,7 @@ class TaxonBase(BaseSchema):
     synonym: bool
     authors: Annotated[str, Field(min_length=1, max_length=100)]
     name_published_in_year: int | None = None  # rarely None
-    basionym: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    # basionym: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     hybrid: bool
     hybridgenus: bool
     synonyms_concat: Annotated[str, Field(min_length=1, max_length=500)] | None = None

@@ -33,8 +33,8 @@ class GbifNameUsage(BaseModel):
     proParteKey: Optional[int] = None
     acceptedKey: Optional[int] = None
     accepted: Optional[str] = None
-    basionymKey: Optional[int] = None
-    basionym: Optional[str] = None
+    # basionymKey: Optional[int] = None
+    # basionym: Optional[str] = None
     scientificName: str
     canonicalName: Optional[str] = None
     vernacularName: Optional[str] = None
@@ -74,7 +74,7 @@ class SpeciesEssentials(BaseModel):
     subspecies: Optional[str] = None  # lazy-loaded, not always available
     variety: Optional[str] = None  # lazy-loaded, not always available
     form: Optional[str] = None  # lazy-loaded, not always available
-    basionym: Optional[str] = None
+    # basionym: Optional[str] = None
     scientificName: str
     # canonicalName: str  # "Haworthia truncata maughanii" is not very helpful
     publishedIn: Optional[str] = None

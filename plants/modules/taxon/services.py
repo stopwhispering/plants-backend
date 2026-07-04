@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
 from pykew import powo
+import sqlite3
 
 from plants.exceptions import TaxonAlreadyExistsError
 from plants.modules.biodiversity.lookup_gbif_id import lookup_gbif_id
@@ -52,8 +53,54 @@ def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
     )
     return name, full_html_name
 
+WCVP_DB = "wcvp.sqlite"
+_IPNI_PREFIX = "urn:lsid:ipni.org:names:"
+def _lookup_locations_sync(lsid: str) -> list[Distribution]:
+    ipni_id = lsid.removeprefix(_IPNI_PREFIX)  # 'urn:lsid:...:77095488-1' -> '77095488-1'
+    con = sqlite3.connect(WCVP_DB)
+    con.row_factory = sqlite3.Row
+    try:
+        cur = con.cursor()
+        name_row = cur.execute(
+            "SELECT plant_name_id, accepted_plant_name_id FROM names WHERE ipni_id = ?",
+            (ipni_id,),
+        ).fetchone()
+        if name_row is None:
+            logger.info(f"No WCVP name row for {lsid} (ipni_id={ipni_id}).")
+            return []
+        # Distributions in WCVP hang off the *accepted* taxon, so resolve synonyms.
+        target_pnid = name_row["accepted_plant_name_id"] or name_row["plant_name_id"]
+        dist_rows = cur.execute(
+            "SELECT area, area_code_l3, introduced, extinct, location_doubtful "
+            "FROM distribution WHERE plant_name_id = ?",
+            (target_pnid,),
+        ).fetchall()
+    finally:
+        con.close()
+
+    if not dist_rows:
+        logger.info(f"No locations found for {lsid}.")
+        return []
+
+    locations: list[Distribution] = []
+    for d in dist_rows:
+        introduced = str(d["introduced"]) == "1"
+        locations.append(
+            Distribution(
+                name=d["area"],
+                establishment="Introduced" if introduced else "Native",
+                feature_id='',  # None,              # POWO-internal id; not present in WCVP files
+                tdwg_code=d["area_code_l3"],
+                tdwg_level=3,                 # WCVP distributions are always WGSRPD L3
+            )
+        )
+    return locations
+
 
 async def _retrieve_locations(lsid: str) -> list[Distribution]:
+    return await run_in_threadpool(_lookup_locations_sync, lsid)
+
+
     powo_lookup = await run_in_threadpool(powo.lookup, lsid, include=["distribution"])
     locations: list[Distribution] = []
 
@@ -135,7 +182,7 @@ async def save_new_taxon(
         synonym=new_taxon.synonym,
         authors=new_taxon.authors,
         name_published_in_year=new_taxon.name_published_in_year,
-        basionym=new_taxon.basionym,
+        # basionym=new_taxon.basionym,
         hybrid=new_taxon.hybrid,
         hybridgenus=new_taxon.hybridgenus,
         synonyms_concat=new_taxon.synonyms_concat,

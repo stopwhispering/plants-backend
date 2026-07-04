@@ -83,7 +83,7 @@ class Taxon(Base):
     synonym: bool = Column(BOOLEAN, nullable=False)
     lsid: str = Column(VARCHAR(50), nullable=False)
     authors: str = Column(VARCHAR(100), nullable=False)
-    basionym: str | None = Column(VARCHAR(100))
+    # basionym: str | None = Column(VARCHAR(100))
     synonyms_concat: str | None = Column(VARCHAR(500))
     distribution_concat: str | None = Column(VARCHAR(200))
     hybrid: bool = Column(BOOLEAN, nullable=False)

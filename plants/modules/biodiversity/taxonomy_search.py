@@ -50,7 +50,7 @@ class _ParsedIpniSearchResult(_BaseSearchResult):
 class _ParsedApiSearchResult(_BaseSearchResult):
     """ParsedIpniSearchResult + additional fields from POWO API."""
 
-    basionym: str | None
+    # basionym: str | None
     taxonomic_status: str
     authors: str
     synonym: bool
@@ -167,7 +167,7 @@ class TaxonomySearch:
             cultivar=taxon.cultivar,
             affinis=taxon.affinis,
             name_published_in_year=taxon.name_published_in_year,
-            basionym=taxon.basionym,
+            # basionym=taxon.basionym,
             # 'phylum': taxon.phylum,
             synonyms_concat=taxon.synonyms_concat,
             distribution_concat=taxon.distribution_concat,
@@ -348,7 +348,7 @@ class ApiSearcher:
             logger.error(f"HTTP error occurred while fetching POWO data for LSID {result.lsid}: {e}")
             return _ParsedApiSearchResult(
                 **result.__dict__,
-                basionym='',
+                # basionym='',
                 taxonomic_status='',
                 authors='',
                 synonym=False,
@@ -359,11 +359,11 @@ class ApiSearcher:
         if "error" in powo_lookup:
             throw_exception(f"No Plants of the World result for LSID {result.lsid}")
 
-        basionym = powo_lookup["basionym"].get("name") if "basionym" in powo_lookup else None
+        # basionym = powo_lookup["basionym"].get("name") if "basionym" in powo_lookup else None
 
         ext_result = _ParsedApiSearchResult(
             **result.__dict__,
-            basionym=basionym,
+            # basionym=basionym,
             taxonomic_status=powo_lookup.get("taxonomicStatus"),
             authors=powo_lookup.get("authors"),
             synonym=powo_lookup.get("synonym"),
