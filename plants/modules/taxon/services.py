@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from fastapi.concurrency import run_in_threadpool
-from pykew import powo
+from pygbif import species as gbif_species
 
 from plants.exceptions import TaxonAlreadyExistsError
 from plants.modules.biodiversity.lookup_gbif_id import lookup_gbif_id
@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from plants.modules.taxon.taxon_dal import TaxonDAL
 
 logger = logging.getLogger(__name__)
+
+_IPNI_DATASET_KEY = "046bbc50-cae2-47ff-aa43-729fbf53f7c5"
+_IPNI_PREFIX = "urn:lsid:ipni.org:names:"
 
 
 def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
@@ -53,31 +56,70 @@ def _create_names(new_taxon: TaxonCreate) -> tuple[str, str]:
     return name, full_html_name
 
 
-async def _retrieve_locations(lsid: str) -> list[Distribution]:
-    powo_lookup = await run_in_threadpool(powo.lookup, lsid, include=["distribution"])
+def _lookup_locations_sync(lsid: str, name: str) -> list[Distribution]:
+    """Fetch distribution areas from the GBIF species API.
+
+    Resolves the GBIF backbone nubKey by searching the IPNI dataset at GBIF
+    (name + LSID match), then calls the distributions endpoint.
+    Returns an empty list when the taxon cannot be matched or has no records.
+    """
+    # Step 1 — resolve LSID → GBIF nubKey
+    lookup = gbif_species.name_lookup(q=name, datasetKey=_IPNI_DATASET_KEY, limit=20)
+    matched = next(
+        (r for r in lookup.get("results", []) if r.get("taxonID") == lsid),
+        None,
+    )
+    if not matched:
+        logger.warning("Could not resolve GBIF nubKey for LSID %s (name=%r).", lsid, name)
+        return []
+
+    nub_key: int = matched["nubKey"]
+
+    # Step 2 — fetch distribution records
+    dist_records: list[dict] = gbif_species.name_usage(
+        key=nub_key, data="distributions"
+    ).get("results", [])
+
+    if not dist_records:
+        logger.info("No GBIF distribution records found for %s.", lsid)
+        return []
+
+    # Step 3 — map to Distribution objects
     locations: list[Distribution] = []
+    for d in dist_records:
+        location_id: str = d.get("locationId") or ""
+        if location_id.lower().startswith("tdwg:"):
+            tdwg_code: str | None = location_id[5:]   # strip "tdwg:" / "TDWG:"
+            tdwg_level: int | None = 3
+        else:
+            continue
 
-    # collect native and introduced distribution into one list
-    dist = []
-    if distribution := powo_lookup.get("distribution"):
-        if natives := distribution.get("natives"):
-            dist.extend(natives)
-        if introduced := distribution.get("introduced"):
-            dist.extend(introduced)
+        area_name = d.get("locality") or d.get("country") or tdwg_code or location_id
+        if not area_name:
+            continue
 
-    if not dist:
-        logger.info(f"No locations found for {lsid}.")
-    else:
-        for area in dist:
-            record = Distribution(
-                name=area.get("name"),
-                establishment=area.get("establishment"),
-                feature_id=area.get("featureId"),
-                tdwg_code=area.get("tdwgCode"),
-                tdwg_level=area.get("tdwgLevel"),
+        establishment_raw = (d.get("establishmentMeans") or "").upper()
+        if establishment_raw in ("INTRODUCED", "MANAGED", "CULTIVATED"):
+            establishment = "Introduced"
+        else:
+            establishment = "Native"   # default when field is absent
+
+        locations.append(
+            Distribution(
+                name=area_name,
+                establishment=establishment,
+                feature_id="",
+                tdwg_code=tdwg_code,
+                tdwg_level=tdwg_level,
             )
-            locations.append(record)
+        )
+
+    logger.info("Found %d GBIF distribution records for %s.", len(locations), lsid)
     return locations
+
+
+async def _retrieve_locations(lsid: str, name: str) -> list[Distribution]:
+    return await run_in_threadpool(_lookup_locations_sync, lsid, name)
 
 
 async def save_new_taxon(
@@ -107,7 +149,7 @@ async def save_new_taxon(
             ]
         ):
             raise ValueError("Custom fields unexpectedly set for non-custom taxon.")
-        locations = await _retrieve_locations(new_taxon.lsid)
+        locations = await _retrieve_locations(new_taxon.lsid, name)
 
         # gbif_id = await run_in_threadpool(
         #     lookup_gbif_id, taxon_name=name, lsid=new_taxon.lsid

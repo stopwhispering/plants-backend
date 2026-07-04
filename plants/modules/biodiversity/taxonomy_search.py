@@ -232,7 +232,9 @@ class ApiSearcher:
         api_results: list[_ParsedApiSearchResult] = []
         ipni_result: _ParsedIpniSearchResult
         for ipni_result in ipni_results:
-            api_results.append(self._update_taxon_from_powo_api(ipni_result))
+            gbif_result = self._update_taxon_from_gbif_api(ipni_result)
+            if gbif_result:
+                api_results.append(gbif_result)
 
         logger.info(
             f"Found {len(api_results)} results from IPNI/POWO search for search term "
@@ -370,8 +372,8 @@ class ApiSearcher:
         dist_records: list[dict] = gbif_species.name_usage(
             key=nub_key, data="distributions"
         ).get("results", [])
-        wcvp_dists  = [d for d in dist_records if "WCVP" in d.get("source", "")]
-        tdwg_dists  = [d for d in dist_records if d.get("locationId")]
+        wcvp_dists = [d for d in dist_records if "WCVP" in d.get("source", "")]
+        tdwg_dists = [d for d in dist_records if d.get("locationId")]
         src_records = wcvp_dists or tdwg_dists or dist_records
 
         # Build distribution_concat in the same format as get_concatenated_distribution()
@@ -417,11 +419,10 @@ class ApiSearcher:
         )
 
     @staticmethod
-    def _update_taxon_from_powo_api(
+    def _update_taxon_from_gbif_api(
         result: _ParsedIpniSearchResult,
     ) -> _ParsedApiSearchResult:
-        """For the supplied search result entry, fetch additional information from "Plants of the
-        World" API."""
+        """For the supplied search result entry, fetch additional information from GBIF API."""
         # # POWO uses LSID as ID just like IPNI
         #
         # # powo_lookup = powo.lookup(result.lsid, include=["distribution"])
