@@ -372,7 +372,7 @@ class ApiSearcher:
         dist_records: list[dict] = gbif_species.name_usage(
             key=nub_key, data="distributions"
         ).get("results", [])
-        wcvp_dists = [d for d in dist_records if "WCVP" in d.get("source", "")]
+        wcvp_dists = [d for d in dist_records if "WCVP" in d.get("source", "") and 'locality' in d]
         tdwg_dists = [d for d in dist_records if d.get("locationId")]
         src_records = wcvp_dists or tdwg_dists or dist_records
 
