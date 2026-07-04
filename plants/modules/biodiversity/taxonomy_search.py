@@ -411,6 +411,9 @@ class ApiSearcher:
         else:
             synonyms_concat = ", ".join(syn_names) if syn_names else None
 
+        if synonyms_concat and len(synonyms_concat) > 500:
+            synonyms_concat = synonyms_concat[:497] + "..."
+
         return _ParsedApiSearchResult(
             **{**result.__dict__, "name_published_in_year": name_published_in_year},
             taxonomic_status=(usage.get("taxonomicStatus") or "").capitalize(),
