@@ -238,3 +238,63 @@ async def test_rename_plant_invalid(
     # check that the plant is not renamed
     await test_db.refresh(valid_plant_in_db_with_image)
     assert valid_plant_in_db_with_image.plant_name == old_name
+
+
+@pytest.mark.asyncio()
+async def test_divide_plant(
+    ac: AsyncClient,
+    plant_valid_in_db: Plant,
+    plant_dal: PlantDAL,
+    history_dal: HistoryDAL,
+) -> None:
+    source = plant_valid_in_db
+    source.generation_notes = "Existing note"
+    source.parent_plant_id = None
+    source.parent_plant_pollen_id = None
+    await plant_dal.save_plant(source)
+
+    response = await ac.post(
+        f"/api/plants/{source.id}/divide",
+        json={"new_plant_name": "Aloe vera split"},
+    )
+    assert response.status_code == 201
+
+    payload = response.json()
+    assert payload["plant"]["plant_name"] == "Aloe vera split"
+    assert payload["plant"]["generation_notes"] == (
+        f"Existing note\nDivided from plant {source.id} ({source.plant_name})"
+    )
+
+    divided_plant = await plant_dal.by_id(payload["plant"]["id"])
+    assert divided_plant.parent_plant_id == source.parent_plant_id
+    assert divided_plant.parent_plant_pollen_id == source.parent_plant_pollen_id
+    assert divided_plant.propagation_type == source.propagation_type
+    assert divided_plant.field_number == source.field_number
+
+    history_entries = await history_dal.get_all()
+    assert any(entry.description.startswith("Divided from plant") for entry in history_entries)
+
+
+@pytest.mark.asyncio()
+async def test_divide_plant_with_empty_generation_notes(
+    ac: AsyncClient,
+    plant_valid_in_db: Plant,
+    history_dal: HistoryDAL,
+) -> None:
+    source = plant_valid_in_db
+    source.generation_notes = ""
+
+    response = await ac.post(
+        f"/api/plants/{source.id}/divide",
+        json={"new_plant_name": "Aloe vera split 2"},
+    )
+    assert response.status_code == 201
+
+    payload = response.json()
+    assert payload["plant"]["generation_notes"] == (
+        f"Divided from plant {source.id} ({source.plant_name})"
+    )
+
+    history_entries = await history_dal.get_all()
+    assert len(history_entries) == 1
+    assert history_entries[0].description.startswith("Divided from plant")

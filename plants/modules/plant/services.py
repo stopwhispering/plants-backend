@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from plants.modules.pollination.models import SeedPlanting
     from plants.modules.taxon.models import Taxon
     from plants.modules.taxon.taxon_dal import TaxonDAL
+    from plants.shared.history_dal import HistoryDAL
 
 logger = logging.getLogger(__name__)
 
@@ -211,3 +212,58 @@ async def generate_plant_name_proposal_for_seed_planting(
     while await plant_dal.exists(plant_name):  # pylint: disable=W0149
         plant_name = generate_subsequent_plant_name(plant_name)
     return plant_name
+
+
+async def divide_plant(
+    source_plant: Plant,
+    new_plant_name: str,
+    plant_dal: PlantDAL,
+    history_dal: HistoryDAL,
+) -> Plant:
+    """Create a new plant by splitting an existing one without making it a direct descendant."""
+    if await plant_dal.exists(new_plant_name):
+        raise PlantAlreadyExistsError(new_plant_name)
+
+    source_plant_id = source_plant.id
+    source_plant_name = source_plant.plant_name
+
+    inherited_fields = {
+        "field_number": source_plant.field_number,
+        "geographic_origin": source_plant.geographic_origin,
+        "nursery_source": source_plant.nursery_source,
+        "propagation_type": source_plant.propagation_type,
+        "active": True,
+        "taxon_id": source_plant.taxon_id,
+        "parent_plant_id": source_plant.parent_plant_id,
+        "parent_plant_pollen_id": source_plant.parent_plant_pollen_id,
+        "seed_planting_id": source_plant.seed_planting_id,
+        "alternative_botanical_name": source_plant.alternative_botanical_name,
+        "plant_notes": source_plant.plant_notes,
+        "preview_image_id": source_plant.preview_image_id,
+    }
+    new_generation_notes = source_plant.generation_notes or ""
+    division_note = (
+        f"Divided from plant {source_plant_id} ({source_plant_name})"
+        if not new_generation_notes
+        else f"{new_generation_notes}\nDivided from plant {source_plant_id} ({source_plant_name})"
+    )
+    inherited_fields["generation_notes"] = division_note
+
+    new_plant = Plant(
+        plant_name=new_plant_name,
+        deleted=False,
+        tags=[],
+        **inherited_fields,
+    )
+    await plant_dal.save_plant(new_plant)
+
+    await history_dal.create_entry(
+        plant=new_plant,
+        description=(
+            f"Divided from plant {source_plant_id} ({source_plant_name}) into "
+            f"{new_plant.id} ({new_plant_name}); lineage preserved."
+        ),
+    )
+
+    return new_plant
+

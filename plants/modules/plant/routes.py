@@ -26,6 +26,7 @@ from plants.modules.plant.schemas import (
     CreatePlantResponse,
     GetPlantsResponse,
     PlantCreate,
+    PlantDivideRequest,
     PlantRenameRequest,
     ProposeSubsequentPlantNameResponse,
     UpdatePlantsRequest,
@@ -34,6 +35,7 @@ from plants.modules.plant.schemas import (
 from plants.modules.plant.services import (
     create_new_plant,
     deep_clone_plant,
+    divide_plant,
     fetch_plants,
     generate_subsequent_plant_name,
     update_plants_from_list_of_dicts,
@@ -213,4 +215,36 @@ async def propose_subsequent_plant_name(original_plant_name: str) -> Any:
     return {
         "original_plant_name": original_plant_name,
         "subsequent_plant_name": subsequent_plant_name,
+    }
+
+
+@router.post(
+    "/{plant_id}/divide",
+    response_model=CreatePlantResponse,
+    status_code=starlette_status.HTTP_201_CREATED,
+)
+async def divide_plant_route(
+    plant_id: int,
+    args: PlantDivideRequest,
+    plant_dal: PlantDAL = Depends(get_plant_dal),
+    history_dal: HistoryDAL = Depends(get_history_dal),
+) -> Any:
+    """Create a new plant by dividing an existing one without setting it as a direct descendant."""
+    plant_original = await plant_dal.by_id(plant_id)
+    plant_divided = await divide_plant(
+        source_plant=plant_original,
+        new_plant_name=args.new_plant_name,
+        plant_dal=plant_dal,
+        history_dal=history_dal,
+    )
+
+    logger.info(
+        msg := f"Divided {plant_original.plant_name} ({plant_original.id}) "
+        f"into {plant_divided.plant_name} ({plant_divided.id})"
+    )
+    return {
+        "action": "Divided plant",
+        "resource": MajorResource.PLANT,
+        "message": get_message(msg, description=msg),
+        "plant": plant_divided,
     }

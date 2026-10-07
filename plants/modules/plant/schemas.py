@@ -110,6 +110,10 @@ class PlantRenameRequest(BaseSchema):
     new_plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
 
 
+class PlantDivideRequest(BaseSchema):
+    new_plant_name: Annotated[str, Field(min_length=1, max_length=1_000)]
+
+
 class GetPlantsResponse(ResponseContainer):
     PlantsCollection: list[PlantRead]
 

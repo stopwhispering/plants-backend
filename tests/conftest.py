@@ -14,7 +14,7 @@ import pytest
 import pytest_asyncio
 import pytz
 from dateutil.relativedelta import relativedelta
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 
@@ -309,7 +309,8 @@ def app() -> FastAPI:
 
 @pytest_asyncio.fixture(scope="session")
 async def ac(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url="http://localhost") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://localhost") as ac:
         yield ac
 
 
@@ -408,7 +409,10 @@ async def taxa_in_db(test_db: AsyncSession) -> list[Taxon]:
     with path.open() as f:
         taxon_dicts = json.load(f)
 
-    taxa = [Taxon(**taxon_dict) for taxon_dict in taxon_dicts]
+    taxa = [
+        Taxon(**{k: v for k, v in taxon_dict.items() if hasattr(Taxon, k)})
+        for taxon_dict in taxon_dicts
+    ]
     test_db.add_all(taxa)
 
     # taxon_dict = taxa[0]
